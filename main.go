@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/easonlin404/gin-swagger/swagger"
 	"github.com/urfave/cli"
 	"os"
 )
@@ -28,7 +29,7 @@ func main() {
 			Action: func(c *cli.Context) error {
 
 				if framework == "gin" {
-
+					swagger.New()
 				} else {
 					fmt.Printf("%v not support.\n", framework)
 				}

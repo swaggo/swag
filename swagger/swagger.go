@@ -10,7 +10,7 @@ type Engine struct {
 
 func New(routes gin.RoutesInfo) *Engine {
 	engine := &Engine{
-		basePath: "/swagger",
+		basePath: "/swagger-ui",
 		routes:   routes,
 	}
 	return engine
@@ -21,11 +21,10 @@ func (s *Engine) Routes() gin.RoutesInfo {
 	return s.routes
 }
 
-// hello
 func (s *Engine) Build() *Engine {
 	//TODO: 1.parsing annotate to swagger doc
 	// TODO : generate  router for swagger
-	//HH
+	s.parseApiSpec()
 	return s
 }
 

@@ -1,11 +1,22 @@
 package spec
 
+
+const SwaggerVesion  = "2.0"
+
+func New() *SwaggerSpec {
+	return &SwaggerSpec{
+	}
+}
+
 type SwaggerSpec struct {
+	Swagger string   `yaml:"swagger"`
 	BasePath string `yaml:"basePath"`
 	Host     string `yaml:"host"`
 	Info     struct {
 		Contact struct {
 			Email string `yaml:"email"`
+			Name  string `yaml:"name"`
+			URL   string `yaml:"url"`
 		} `yaml:"contact"`
 		Description string `yaml:"description"`
 		License     struct {
@@ -17,7 +28,6 @@ type SwaggerSpec struct {
 		Version        string `yaml:"version"`
 	} `yaml:"info"`
 	Schemes []string `yaml:"schemes"`
-	Swagger string   `yaml:"swagger"`
 	Tags    []struct {
 		Description  string `yaml:"description"`
 		ExternalDocs struct {
