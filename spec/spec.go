@@ -1,15 +1,13 @@
 package spec
 
-
-const SwaggerVesion  = "2.0"
+const SwaggerVesion = "2.0"
 
 func New() *SwaggerSpec {
-	return &SwaggerSpec{
-	}
+	return &SwaggerSpec{}
 }
 
 type SwaggerSpec struct {
-	Swagger string   `yaml:"swagger"`
+	Swagger  string `yaml:"swagger"`
 	BasePath string `yaml:"basePath"`
 	Host     string `yaml:"host"`
 	Info     struct {

@@ -1,16 +1,12 @@
 package parse
 
-
-
 import (
 	"github.com/easonlin404/gin-swagger/spec"
-	"go/token"
-	"strings"
 	goparser "go/parser"
+	"go/token"
 	"log"
+	"strings"
 )
-
-
 
 type Parser struct {
 	spec *spec.SwaggerSpec
@@ -55,9 +51,9 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 					parser.spec.Info.Contact.Email = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.url":
 					parser.spec.Info.Contact.URL = strings.TrimSpace(commentLine[len(attribute):])
-				case "@licensename":
+				case "@license.name":
 					parser.spec.Info.License.Name = strings.TrimSpace(commentLine[len(attribute):])
-				case "@licenseurl":
+				case "@license.url":
 					parser.spec.Info.License.URL = strings.TrimSpace(commentLine[len(attribute):])
 				case "@basepath":
 					parser.spec.BasePath = strings.TrimSpace(commentLine[len(attribute):])

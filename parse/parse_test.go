@@ -1,13 +1,12 @@
 package parse
 
 import (
-
-	"testing"
-	"os"
 	"github.com/stretchr/testify/assert"
+	"os"
 	"path"
+	"testing"
 
-	_"fmt"
+	_ "fmt"
 )
 
 func TestNew(t *testing.T) {
@@ -16,7 +15,7 @@ func TestNew(t *testing.T) {
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
-	assert.NotNil(t,gopath)
+	assert.NotNil(t, gopath)
 
 	New().ParseGeneralApiInfo(path.Join(gopath, "src", "github.com/yvasiyarov/swagger/example/web/main.go"))
 
