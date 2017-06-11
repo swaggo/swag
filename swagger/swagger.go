@@ -1,4 +1,3 @@
-//hahahaha
 package swagger
 
 import "github.com/gin-gonic/gin"
