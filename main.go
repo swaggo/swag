@@ -29,7 +29,7 @@ func main() {
 			Action: func(c *cli.Context) error {
 
 				if framework == "gin" {
-					swagger.New()
+					
 				} else {
 					fmt.Printf("%v not support.\n", framework)
 				}
