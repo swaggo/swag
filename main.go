@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/easonlin404/gin-swagger/swagger"
 	"github.com/urfave/cli"
 	"os"
 )
