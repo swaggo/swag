@@ -20,6 +20,10 @@ func New() *Parser {
 	return parser
 }
 
+func (parser *Parser) GetSpec() *spec.SwaggerSpec {
+	return parser.spec
+}
+
 //Read web/main.go to get General info
 func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 
@@ -55,6 +59,8 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 					parser.spec.Info.License.Name = strings.TrimSpace(commentLine[len(attribute):])
 				case "@license.url":
 					parser.spec.Info.License.URL = strings.TrimSpace(commentLine[len(attribute):])
+				case "@host":
+					parser.spec.Host = strings.TrimSpace(commentLine[len(attribute):])
 				case "@basepath":
 					parser.spec.BasePath = strings.TrimSpace(commentLine[len(attribute):])
 				}
