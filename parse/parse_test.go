@@ -33,3 +33,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	assert.Equal(t, "http://easonlin404.github.com", p.spec.Host)
 	assert.Equal(t, "petstore", p.spec.BasePath)
 }
+
+func TestParser_ParseApi(t *testing.T) {
+	p := New()
+	p.ParseApi()
+}

@@ -6,6 +6,9 @@ import (
 	"go/token"
 	"log"
 	"strings"
+	"os"
+	"fmt"
+	"path/filepath"
 )
 
 type Parser struct {
@@ -24,7 +27,7 @@ func (parser *Parser) GetSpec() *spec.SwaggerSpec {
 	return parser.spec
 }
 
-//Read web/main.go to get General info
+// ParseGeneralApiInfo parses general api info for gived mainApiFile path
 func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 
 	fileSet := token.NewFileSet()
@@ -67,4 +70,19 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 			}
 		}
 	}
+}
+
+
+func (parser *Parser) ParseApi(){
+	err := filepath.Walk("./", visit)
+	fmt.Printf("filepath.Walk() returned %v\n", err)
+}
+
+func visit(path string, f os.FileInfo, err error) error {
+
+	if filepath.Ext(strings.TrimSpace(path)) == ".go"{
+		fmt.Printf("Visited: %s\n", path)
+	}
+
+	return nil
 }
