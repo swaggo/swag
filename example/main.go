@@ -1,7 +1,7 @@
 package main
 
-import ("fmt"
-
+import (
+	"fmt"
 )
 
 // @title Swagger Example API
@@ -17,7 +17,7 @@ import ("fmt"
 
 // @host http://easonlin404.github.com
 // @BasePath petstore
-func main()  {
+func main() {
 	fmt.Printf("fffffff")
 	//hello.Hello()
 }

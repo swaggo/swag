@@ -1,49 +1,52 @@
 package parse
 
 import (
-	"github.com/easonlin404/gin-swagger/spec"
 	goparser "go/parser"
 	"go/token"
 	"log"
 	"strings"
-
-
+	openapi "github.com/go-openapi/spec"
 	"go/ast"
 	"os"
-	"path/filepath"
 	"path"
-
+	"path/filepath"
 )
 
 type Parser struct {
-	spec            *spec.SwaggerSpec
+	swagger         *openapi.Swagger
 	files           map[string]*ast.File
 	TypeDefinitions map[string]map[string]*ast.TypeSpec
 }
 
 func New() *Parser {
 	parser := &Parser{
-		spec:  spec.New(),
-		files: make(map[string]*ast.File),
-		TypeDefinitions:make(map[string]map[string]*ast.TypeSpec),
+
+		swagger: &openapi.Swagger{
+			SwaggerProps: openapi.SwaggerProps{
+				Info: &openapi.Info{
+					InfoProps: openapi.InfoProps{
+						Contact: &openapi.ContactInfo{},
+						License: &openapi.License{},
+					},
+				},
+			},
+		},
+		files:           make(map[string]*ast.File),
+		TypeDefinitions: make(map[string]map[string]*ast.TypeSpec),
 	}
 	return parser
 }
 
-func (parser *Parser) ParseApi(searchDir string){
-	mainApiFile:="./main.go"
-	parser.GetAllGoFileInfo(searchDir)
-	parser.ParseGeneralApiInfo(path.Join(searchDir,mainApiFile))
+func (parser *Parser) ParseApi(searchDir string) {
+	mainApiFile := "./main.go"
 
+	parser.ParseGeneralApiInfo(path.Join(searchDir, mainApiFile))
+
+	parser.GetAllGoFileInfo(searchDir)
 	for _, astFile := range parser.files {
 		parser.ParseType(astFile)
 	}
 
-
-}
-
-func (parser *Parser) GetSpec() *spec.SwaggerSpec {
-	return parser.spec
 }
 
 // ParseGeneralApiInfo parses general api info for gived mainApiFile path
@@ -53,7 +56,7 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 	fileTree, err := goparser.ParseFile(fileSet, mainApiFile, nil, goparser.ParseComments)
 
 	if err != nil {
-		log.Panicf("ParseGeneralApiInfo occur error:%+v",err)
+		log.Panicf("ParseGeneralApiInfo occur error:%+v", err)
 	}
 
 	log.Printf("package name:%+v", fileTree.Name)
@@ -68,8 +71,8 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 		log.Fatalf("Can not parse general API information: %v\n", err)
 	}
 
-	parser.spec.BasePath = "{{.}}"
-	parser.spec.Swagger = spec.SwaggerVesion
+	parser.swagger.BasePath = "{{.}}"
+	parser.swagger.Swagger = "2.0"
 
 	if fileTree.Comments != nil {
 		for _, comment := range fileTree.Comments {
@@ -77,38 +80,41 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 				attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 				switch attribute {
 				case "@version":
-					parser.spec.Info.Version = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Version = strings.TrimSpace(commentLine[len(attribute):])
 				case "@title":
-					parser.spec.Info.Title = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Title = strings.TrimSpace(commentLine[len(attribute):])
 				case "@description":
-					parser.spec.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
 				case "@termsofservice":
-					parser.spec.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.name":
-					parser.spec.Info.Contact.Name = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Contact.Name = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.email":
-					parser.spec.Info.Contact.Email = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Contact.Email = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.url":
-					parser.spec.Info.Contact.URL = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Contact.URL = strings.TrimSpace(commentLine[len(attribute):])
 				case "@license.name":
-					parser.spec.Info.License.Name = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.License.Name = strings.TrimSpace(commentLine[len(attribute):])
 				case "@license.url":
-					parser.spec.Info.License.URL = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.License.URL = strings.TrimSpace(commentLine[len(attribute):])
 				case "@host":
-					parser.spec.Host = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
 				case "@basepath":
-					parser.spec.BasePath = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
 				}
 			}
 		}
 	}
 }
 
+func (parser *Parser) ParseRouterApiInfo() {
+	//TODO: add in parser.spec
+
+}
 func (parser *Parser) ParseType(astFile *ast.File) {
 	if _, ok := parser.TypeDefinitions[astFile.Name.String()]; !ok {
 		parser.TypeDefinitions[astFile.Name.String()] = make(map[string]*ast.TypeSpec)
 	}
-
 
 	for _, astDeclaration := range astFile.Decls {
 		if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
@@ -121,7 +127,7 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 	}
 }
 
-func (parser *Parser) GetAllGoFileInfo(searchDir string)  {
+func (parser *Parser) GetAllGoFileInfo(searchDir string) {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
 		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(path, "/vendor") {

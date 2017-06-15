@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/easonlin404/gin-swagger/gen"
 	"github.com/urfave/cli"
 	"os"
-	"github.com/easonlin404/gin-swagger/gen"
 )
 
 var framework string
