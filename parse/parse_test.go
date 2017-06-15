@@ -41,7 +41,19 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	p:=New()
 	files:=p.GetAllGoFileInfo(searchDir)
 
-
 	assert.NotEmpty(t, files["../example/main.go"])
 	assert.NotEmpty(t, files["../example/web/handler.go"])
+}
+
+func TestParser_ParseType(t *testing.T) {
+	searchDir := "../example"
+
+	p:=New()
+	files:=p.GetAllGoFileInfo(searchDir)
+
+	for _,file :=range files{
+		p.ParseType(file)
+	}
+
+	fmt.Printf("%+v",p.TypeDefinitions)
 }

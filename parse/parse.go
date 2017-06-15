@@ -7,22 +7,23 @@ import (
 	"log"
 	"strings"
 
-	"fmt"
-	"path/filepath"
-	"os"
+
 	"go/ast"
+	"os"
+	"path/filepath"
 )
 
 type Parser struct {
-	spec *spec.SwaggerSpec
-	files map[string]*ast.File
+	spec            *spec.SwaggerSpec
+	files           map[string]*ast.File
+	TypeDefinitions map[string]map[string]*ast.TypeSpec
 }
 
 func New() *Parser {
-
 	parser := &Parser{
-		spec: spec.New(),
-		files:make(map[string]*ast.File),
+		spec:  spec.New(),
+		files: make(map[string]*ast.File),
+		TypeDefinitions:make(map[string]map[string]*ast.TypeSpec),
 	}
 	return parser
 }
@@ -37,13 +38,13 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainApiFile, nil, goparser.ParseComments)
 
-	log.Printf("package name:%+v",fileTree.Name)
-	log.Printf("imports in this file:%+v",fileTree.Imports)
+	log.Printf("package name:%+v", fileTree.Name)
+	log.Printf("imports in this file:%+v", fileTree.Imports)
 	for _, importSpec := range fileTree.Imports {
-		log.Printf("importSpec:%+v",importSpec.Name)
-		log.Printf("importSpec:%+v",importSpec.Path)
+		log.Printf("importSpec:%+v", importSpec.Name)
+		log.Printf("importSpec:%+v", importSpec.Path)
 	}
-	log.Printf(" position of 'package' keyword:%+v",fileTree.Package)
+	log.Printf(" position of 'package' keyword:%+v", fileTree.Package)
 
 	if err != nil {
 		log.Fatalf("Can not parse general API information: %v\n", err)
@@ -85,17 +86,34 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 	}
 }
 
-func (parser *Parser)GetAllGoFileInfo(searchDir string) map[string]*ast.File {
+func (parser *Parser) ParseType(astFile *ast.File) {
+	if _, ok := parser.TypeDefinitions[astFile.Name.String()]; !ok {
+		parser.TypeDefinitions[astFile.Name.String()] = make(map[string]*ast.TypeSpec)
+	}
+
+
+	for _, astDeclaration := range astFile.Decls {
+		if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
+			for _, astSpec := range generalDeclaration.Specs {
+				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
+					parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
+				}
+			}
+		}
+	}
+}
+
+func (parser *Parser) GetAllGoFileInfo(searchDir string) map[string]*ast.File {
 	files := make(map[string]*ast.File)
 
 	fileList := []string{}
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
-		if ext:=filepath.Ext(path); ext ==".go" && !strings.Contains(path, "/vendor"){
-			astFile,err :=goparser.ParseFile(token.NewFileSet(),path,nil,goparser.ParseComments)
+		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(path, "/vendor") {
+			astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
 
-			if err!=nil{
-				log.Panicf("ParseFile panic:%+v",err)
+			if err != nil {
+				log.Panicf("ParseFile panic:%+v", err)
 			}
 
 			files[path] = astFile
@@ -110,15 +128,4 @@ func (parser *Parser)GetAllGoFileInfo(searchDir string) map[string]*ast.File {
 	parser.files = files
 	return files
 
-}
-
-func (parser *Parser) ParseDirs(path string) {
-	pkgs, err := goparser.ParseDir(token.NewFileSet(), path, nil, 0)
-
-	if err != nil{
-		log.Panicf("ParseDir occurs err:%+v",err)
-	}
-	for pkgName:=range pkgs{
-		fmt.Printf("pkgName:%+v",pkgName)
-	}
 }
