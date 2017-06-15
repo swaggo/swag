@@ -35,3 +35,31 @@ type SwaggerSpec struct {
 		Name string `yaml:"name"`
 	} `yaml:"tags"`
 }
+
+
+//TODO: fix Paths
+type Get struct {
+	Description string   `yaml:"description"`
+	OperationID string   `yaml:"operationId"`
+	Produces    []string `yaml:"produces"`
+
+	//TODO: fix response
+	Responses   struct {
+		Two00 struct {
+			Description string `yaml:"description"`
+			Schema      struct {
+				Items struct {
+					Ref string `yaml:"$ref"`
+				} `yaml:"items"`
+				Type string `yaml:"type"`
+			} `yaml:"schema"`
+		} `yaml:"200"`
+		Default struct {
+			Description string `yaml:"description"`
+			Schema      struct {
+				Ref string `yaml:"$ref"`
+			} `yaml:"schema"`
+		} `yaml:"default"`
+	} `yaml:"responses"`
+	Summary string `yaml:"summary"`
+}

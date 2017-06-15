@@ -34,7 +34,14 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	assert.Equal(t, "petstore", p.spec.BasePath)
 }
 
-func TestParser_ParseApi(t *testing.T) {
-	p := New()
-	p.ParseApi()
+
+func TestGetAllGoFileInfo(t *testing.T) {
+	searchDir := "../example"
+
+	p:=New()
+	files:=p.GetAllGoFileInfo(searchDir)
+
+
+	assert.NotEmpty(t, files["../example/main.go"])
+	assert.NotEmpty(t, files["../example/web/handler.go"])
 }

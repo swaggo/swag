@@ -1,5 +1,9 @@
 package main
 
+import ("fmt"
+
+)
+
 // @title Swagger Example API
 // @description This is a sample server Petstore server.
 // @termsOfService http://swagger.io/terms/
@@ -14,4 +18,6 @@ package main
 // @host http://easonlin404.github.com
 // @BasePath petstore
 func main()  {
+	fmt.Printf("fffffff")
+	//hello.Hello()
 }

@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli"
+	"github.com/easonlin404/gin-swagger/parse"
 	"os"
+	"github.com/easonlin404/gin-swagger/gen"
 )
 
 var framework string
@@ -26,9 +28,8 @@ func main() {
 			Aliases: []string{"i"},
 			Usage:   "create doc.go",
 			Action: func(c *cli.Context) error {
-
 				if framework == "gin" {
-
+					gen.New().Build()
 				} else {
 					fmt.Printf("%v not support.\n", framework)
 				}
