@@ -11,6 +11,8 @@ import (
 	"go/ast"
 	"os"
 	"path/filepath"
+	"path"
+
 )
 
 type Parser struct {
@@ -28,6 +30,18 @@ func New() *Parser {
 	return parser
 }
 
+func (parser *Parser) ParseApi(searchDir string){
+	mainApiFile:="./main.go"
+	parser.GetAllGoFileInfo(searchDir)
+	parser.ParseGeneralApiInfo(path.Join(searchDir,mainApiFile))
+
+	for _, astFile := range parser.files {
+		parser.ParseType(astFile)
+	}
+
+
+}
+
 func (parser *Parser) GetSpec() *spec.SwaggerSpec {
 	return parser.spec
 }
@@ -37,6 +51,10 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainApiFile, nil, goparser.ParseComments)
+
+	if err != nil {
+		log.Panicf("ParseGeneralApiInfo occur error:%+v",err)
+	}
 
 	log.Printf("package name:%+v", fileTree.Name)
 	log.Printf("imports in this file:%+v", fileTree.Imports)
@@ -103,10 +121,7 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 	}
 }
 
-func (parser *Parser) GetAllGoFileInfo(searchDir string) map[string]*ast.File {
-	files := make(map[string]*ast.File)
-
-	fileList := []string{}
+func (parser *Parser) GetAllGoFileInfo(searchDir string)  {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
 		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(path, "/vendor") {
@@ -116,16 +131,10 @@ func (parser *Parser) GetAllGoFileInfo(searchDir string) map[string]*ast.File {
 				log.Panicf("ParseFile panic:%+v", err)
 			}
 
-			files[path] = astFile
-			fileList = append(fileList, path)
+			parser.files[path] = astFile
+
 		}
 		return nil
 	})
-
-	//for _, file := range fileList {
-	//	fmt.Println(file)
-	//}
-	parser.files = files
-	return files
 
 }

@@ -39,21 +39,27 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "../example"
 
 	p:=New()
-	files:=p.GetAllGoFileInfo(searchDir)
+	p.GetAllGoFileInfo(searchDir)
 
-	assert.NotEmpty(t, files["../example/main.go"])
-	assert.NotEmpty(t, files["../example/web/handler.go"])
+	assert.NotEmpty(t, p.files["../example/main.go"])
+	assert.NotEmpty(t, p.files["../example/web/handler.go"])
 }
 
 func TestParser_ParseType(t *testing.T) {
 	searchDir := "../example"
 
 	p:=New()
-	files:=p.GetAllGoFileInfo(searchDir)
+	p.GetAllGoFileInfo(searchDir)
 
-	for _,file :=range files{
+	for _,file :=range p.files{
 		p.ParseType(file)
 	}
 
 	fmt.Printf("%+v",p.TypeDefinitions)
+}
+
+func TestParser_ParseApi(t *testing.T) {
+	searchDir := "../example"
+	p:=New()
+	p.ParseApi(searchDir)
 }

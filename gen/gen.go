@@ -18,4 +18,5 @@ func (g *Gen) Build() {
 	// get
 	parser.GetAllGoFileInfo(searchDir)
 	parser.ParseGeneralApiInfo(mainApiFile)
+
 }
