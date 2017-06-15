@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/urfave/cli"
-	"github.com/easonlin404/gin-swagger/parse"
 	"os"
 	"github.com/easonlin404/gin-swagger/gen"
 )
