@@ -1,32 +1,32 @@
 package parse
 
 import (
+	"github.com/go-openapi/spec"
+	"go/ast"
 	goparser "go/parser"
 	"go/token"
 	"log"
-	"strings"
-	openapi "github.com/go-openapi/spec"
-	"go/ast"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 type Parser struct {
-	swagger         *openapi.Swagger
-	files           map[string]*ast.File // map[real_go_file_path][astFile]
+	swagger         *spec.Swagger
+	files           map[string]*ast.File                // map[real_go_file_path][astFile]
 	TypeDefinitions map[string]map[string]*ast.TypeSpec // map [package name][type name][ast.TypeSpec]
 }
 
 func New() *Parser {
 	parser := &Parser{
 
-		swagger: &openapi.Swagger{
-			SwaggerProps: openapi.SwaggerProps{
-				Info: &openapi.Info{
-					InfoProps: openapi.InfoProps{
-						Contact: &openapi.ContactInfo{},
-						License: &openapi.License{},
+		swagger: &spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Info: &spec.Info{
+					InfoProps: spec.InfoProps{
+						Contact: &spec.ContactInfo{},
+						License: &spec.License{},
 					},
 				},
 			},
@@ -40,9 +40,7 @@ func New() *Parser {
 func (parser *Parser) ParseApi(searchDir string) {
 	mainApiFile := "./main.go"
 	parser.GetAllGoFileInfo(searchDir)
-
 	parser.ParseGeneralApiInfo(path.Join(searchDir, mainApiFile))
-
 
 	for _, astFile := range parser.files {
 		parser.ParseType(astFile)
@@ -99,21 +97,19 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 }
 
 func (parser *Parser) parseRouterApiInfo(astFile *ast.File) {
-		if astFile.Comments != nil {
-			for _, comment := range astFile.Comments {
-				for _, commentLine := range strings.Split(comment.Text(), "\n") {
-					attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
-					switch attribute {
-					case "@version":
-						parser.swagger.Info.Version = strings.TrimSpace(commentLine[len(attribute):])
-
-					}
+	for _, astDescription := range astFile.Decls {
+		switch astDeclaration := astDescription.(type) {
+		case *ast.FuncDecl:
+			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
+				operation := new(Operation)
+				for _, comment := range astDeclaration.Doc.List {
+					operation.ParseComment(comment.Text)
 				}
 			}
 		}
-
-
+	}
 }
+
 func (parser *Parser) ParseType(astFile *ast.File) {
 	if _, ok := parser.TypeDefinitions[astFile.Name.String()]; !ok {
 		parser.TypeDefinitions[astFile.Name.String()] = make(map[string]*ast.TypeSpec)
