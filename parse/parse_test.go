@@ -82,6 +82,10 @@ func TestParser_ParseType(t *testing.T) {
 		p.ParseType(file)
 	}
 
+	assert.NotNil(t,p.TypeDefinitions["api"]["Pet3"])
+	assert.NotNil(t,p.TypeDefinitions["web"]["Pet"])
+	assert.NotNil(t,p.TypeDefinitions["web"]["Pet2"])
+	assert.NotNil(t,p.TypeDefinitions["main"])
 	fmt.Printf("%+v", p.TypeDefinitions)
 }
 

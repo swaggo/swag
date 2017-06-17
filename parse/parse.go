@@ -14,8 +14,8 @@ import (
 
 type Parser struct {
 	swagger         *openapi.Swagger
-	files           map[string]*ast.File
-	TypeDefinitions map[string]map[string]*ast.TypeSpec
+	files           map[string]*ast.File // map[real_go_file_path][astFile]
+	TypeDefinitions map[string]map[string]*ast.TypeSpec // map [package name][type name][ast.TypeSpec]
 }
 
 func New() *Parser {
@@ -39,36 +39,27 @@ func New() *Parser {
 
 func (parser *Parser) ParseApi(searchDir string) {
 	mainApiFile := "./main.go"
+	parser.GetAllGoFileInfo(searchDir)
 
 	parser.ParseGeneralApiInfo(path.Join(searchDir, mainApiFile))
 
-	parser.GetAllGoFileInfo(searchDir)
+
 	for _, astFile := range parser.files {
 		parser.ParseType(astFile)
 	}
 
+	for _, astFile := range parser.files {
+		parser.parseRouterApiInfo(astFile)
+	}
 }
 
 // ParseGeneralApiInfo parses general api info for gived mainApiFile path
 func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
-
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainApiFile, nil, goparser.ParseComments)
 
 	if err != nil {
 		log.Panicf("ParseGeneralApiInfo occur error:%+v", err)
-	}
-
-	log.Printf("package name:%+v", fileTree.Name)
-	log.Printf("imports in this file:%+v", fileTree.Imports)
-	for _, importSpec := range fileTree.Imports {
-		log.Printf("importSpec:%+v", importSpec.Name)
-		log.Printf("importSpec:%+v", importSpec.Path)
-	}
-	log.Printf(" position of 'package' keyword:%+v", fileTree.Package)
-
-	if err != nil {
-		log.Fatalf("Can not parse general API information: %v\n", err)
 	}
 
 	parser.swagger.BasePath = "{{.}}"
@@ -107,8 +98,20 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 	}
 }
 
-func (parser *Parser) ParseRouterApiInfo() {
-	//TODO: add in parser.spec
+func (parser *Parser) parseRouterApiInfo(astFile *ast.File) {
+		if astFile.Comments != nil {
+			for _, comment := range astFile.Comments {
+				for _, commentLine := range strings.Split(comment.Text(), "\n") {
+					attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+					switch attribute {
+					case "@version":
+						parser.swagger.Info.Version = strings.TrimSpace(commentLine[len(attribute):])
+
+					}
+				}
+			}
+		}
+
 
 }
 func (parser *Parser) ParseType(astFile *ast.File) {
@@ -132,11 +135,9 @@ func (parser *Parser) GetAllGoFileInfo(searchDir string) {
 		//exclude vendor folder
 		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(path, "/vendor") {
 			astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
-
 			if err != nil {
 				log.Panicf("ParseFile panic:%+v", err)
 			}
-
 			parser.files[path] = astFile
 
 		}

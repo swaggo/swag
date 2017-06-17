@@ -18,6 +18,6 @@ import (
 // @host http://easonlin404.github.com
 // @BasePath petstore
 func main() {
-	fmt.Printf("fffffff")
+	fmt.Printf("hello")
 	//hello.Hello()
 }

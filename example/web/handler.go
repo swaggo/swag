@@ -2,7 +2,6 @@ package web
 
 // @hello
 // yo yo yo yo
-
 type Pet struct {
 	ID       int `json:"id"`
 	Category struct {
