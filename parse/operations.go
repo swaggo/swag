@@ -66,7 +66,6 @@ func (operation *Operation) ParseComment(comment string) error {
 	return nil
 }
 
-
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
 	accepts := strings.Split(commentLine, ",")
 	for _, a := range accepts {
@@ -85,7 +84,6 @@ func (operation *Operation) ParseAcceptComment(commentLine string) error {
 	}
 	return nil
 }
-
 
 func (operation *Operation) ParseProduceComment(commentLine string) error {
 	produces := strings.Split(commentLine, ",")
@@ -143,7 +141,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	//if err != nil {
 	//	return err
 	//}
-	response.Schema=&spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}
+	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}
 	//response.Schema.Type = strings.Trim(matches[2], "{}")
 
 	//response.Schema.Ref = "/test/test"

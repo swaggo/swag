@@ -52,7 +52,7 @@ func TestGetAllGoFileInfo(t *testing.T) {
 
 	assert.NotEmpty(t, p.files["../example/main.go"])
 	assert.NotEmpty(t, p.files["../example/web/handler.go"])
-	assert.Equal(t, 3,len(p.files))
+	assert.Equal(t, 3, len(p.files))
 }
 
 func TestParser_ParseType(t *testing.T) {
@@ -65,10 +65,10 @@ func TestParser_ParseType(t *testing.T) {
 		p.ParseType(file)
 	}
 
-	assert.NotNil(t,p.TypeDefinitions["api"]["Pet3"])
-	assert.NotNil(t,p.TypeDefinitions["web"]["Pet"])
-	assert.NotNil(t,p.TypeDefinitions["web"]["Pet2"])
-	assert.NotNil(t,p.TypeDefinitions["main"])
+	assert.NotNil(t, p.TypeDefinitions["api"]["Pet3"])
+	assert.NotNil(t, p.TypeDefinitions["web"]["Pet"])
+	assert.NotNil(t, p.TypeDefinitions["web"]["Pet2"])
+	assert.NotNil(t, p.TypeDefinitions["main"])
 	fmt.Printf("%+v", p.TypeDefinitions)
 }
 
