@@ -15,9 +15,25 @@ type Operation struct {
 	spec.Operation
 }
 
-type Response struct {
-	Code int
-	spec.Response
+
+//map[int]Response
+func NewOperation() *Operation{
+	return &Operation{
+		HttpMethod:"get",
+		Operation:spec.Operation{
+			OperationProps: spec.OperationProps{
+				Responses:&spec.Responses{
+					ResponsesProps:spec.ResponsesProps{
+						StatusCodeResponses: make(map[int]spec.Response),
+					},
+				},
+			},
+		},
+
+
+		//Operation:spec.Operation:&spec.Operation{}
+
+	}
 }
 
 func (operation *Operation) ParseComment(comment string) error {
@@ -29,20 +45,18 @@ func (operation *Operation) ParseComment(comment string) error {
 	//fmt.Println(comment)
 	attribute := strings.Fields(commentLine)[0]
 	switch strings.ToLower(attribute) {
-	//case "@router":
-	//	if err := operation.ParseRouterComment(commentLine); err != nil {
-	//		return err
-	//	}
+	case "@router":
+		if err := operation.ParseAcceptComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+			return err
+		}
 	//case "@resource":
 	//	resource := strings.TrimSpace(commentLine[len(attribute):])
 	//	if resource[0:1] == "/" {
 	//		resource = resource[1:]
 	//	}
 	//	operation.ForceResource = resource
-	//case "@title":
-	//	operation.Nickname = strings.TrimSpace(commentLine[len(attribute):])
-	//case "@description":
-	//	operation.Summary = strings.TrimSpace(commentLine[len(attribute):])
+	case "@description":
+		operation.Description = strings.TrimSpace(commentLine[len(attribute):])
 	//case "@success", "@failure":
 	//	if err := operation.ParseResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 	//		return err
@@ -104,17 +118,15 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 	return nil
 }
 
-// @Router /customer/get-wishlist/{wishlist_id} [get]
-func (operation *Operation) ParseRouterComment(commentLine string) error {
-	sourceString := strings.TrimSpace(commentLine[len("@Router"):])
 
+func (operation *Operation) ParseRouterComment(commentLine string) error {
 	re := regexp.MustCompile(`([\w\.\/\-{}]+)[^\[]+\[([^\]]+)`)
 	var matches []string
 
-	if matches = re.FindStringSubmatch(sourceString); len(matches) != 3 {
+	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
 		return fmt.Errorf("Can not parse router comment \"%s\", skipped.", commentLine)
 	}
-
+	fmt.Println(matches)
 	operation.Path = matches[1]
 	operation.HttpMethod = strings.ToUpper(matches[2])
 	return nil
@@ -129,19 +141,21 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 		return fmt.Errorf("Can not parse response comment \"%s\", skipped.", commentLine)
 	}
 
-	response := Response{}
-	if code, err := strconv.Atoi(matches[1]); err != nil {
+	response := spec.Response{}
+
+	code, err := strconv.Atoi(matches[1])
+	if err != nil {
 		return errors.New("Success http code must be int")
-	} else {
-		response.Code = code
 	}
+
+
 	response.Description = strings.Trim(matches[4], "\"")
 
 	//typeName, err := operation.registerType(matches[3])
 	//if err != nil {
 	//	return err
 	//}
-	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}
+	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{strings.Trim(matches[2], "{}")}}}
 	//response.Schema.Type = strings.Trim(matches[2], "{}")
 
 	//response.Schema.Ref = "/test/test"
@@ -153,35 +167,48 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	//		operation.Type = typeName
 	//	}
 	//}
-	operation.Responses.StatusCodeResponses[response.Code] = response.Response
+	operation.Responses.StatusCodeResponses[code] = response
 
 	return nil
 }
 
-func (operation *Operation) registerType(typeName string) (string, error) {
-	//registerType := ""
-	//
-	//if translation, ok := typeDefTranslations[typeName]; ok {
-	//	registerType = translation
-	//} else if IsBasicType(typeName) {
-	//	registerType = typeName
-	//} else {
-	//	model := NewModel(operation.parser)
-	//	knownModelNames := map[string]bool{}
-	//
-	//	err, innerModels := model.ParseModel(typeName, operation.parser.CurrentPackage, knownModelNames)
-	//	if err != nil {
-	//		return registerType, err
-	//	}
-	//	if translation, ok := typeDefTranslations[typeName]; ok {
-	//		registerType = translation
-	//	} else {
-	//		registerType = model.Id
-	//
-	//		operation.Models = append(operation.Models, model)
-	//		operation.Models = append(operation.Models, innerModels...)
-	//	}
-	//}
+func (operation *Operation) registerType(typeName string) error {
+	if IsBasicType(typeName){
+		return nil
+	}
+	//TODO: extract type
+	return fmt.Errorf("Not supported %+v type, only supported basic type now",typeName)
+}
 
-	return "", nil
+
+// refer to builtin.go
+var basicTypes = map[string]bool{
+	"bool":       true,
+	"uint":       true,
+	"uint8":      true,
+	"uint16":     true,
+	"uint32":     true,
+	"uint64":     true,
+	"int":        true,
+	"int8":       true,
+	"int16":      true,
+	"int32":      true,
+	"int64":      true,
+	"float32":    true,
+	"float64":    true,
+	"string":     true,
+	"complex64":  true,
+	"complex128": true,
+	"byte":       true,
+	"rune":       true,
+	"uintptr":    true,
+	"error":      true,
+	"Time":       true,
+	"file":       true,
+}
+
+
+func IsBasicType(typeName string) bool {
+	_, ok := basicTypes[typeName]
+	return ok || strings.Contains(typeName, "interface")
 }

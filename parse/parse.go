@@ -20,7 +20,6 @@ type Parser struct {
 
 func New() *Parser {
 	parser := &Parser{
-
 		swagger: &spec.Swagger{
 			SwaggerProps: spec.SwaggerProps{
 				Info: &spec.Info{
