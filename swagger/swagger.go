@@ -16,13 +16,11 @@ func New(routes gin.RoutesInfo) *Engine {
 	return engine
 }
 
-// @WTF
 func (s *Engine) Routes() gin.RoutesInfo {
 	return s.routes
 }
 
 func (s *Engine) Build() *Engine {
-	x
 	s.parseApiSpec()
 	return s
 }
