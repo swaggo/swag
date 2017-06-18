@@ -153,11 +153,16 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	//	return err
 	//}
 	schemaType := strings.Trim(matches[2], "{}")
+	refType := matches[3]
+
+	//TODO: checking refType has existing in 'TypeDefinitions'
+
+	//TODO: if 'object' might ommited schema.type
 	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{schemaType}}}
 
 	if schemaType == "object" {
 		response.Schema.Ref = spec.Ref{
-			Ref: jsonreference.MustCreateRef("#/definitions/" + matches[3]),
+			Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
 		}
 	}
 
@@ -165,22 +170,13 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 		response.Schema.Items = &spec.SchemaOrArray{
 			Schema: &spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + matches[3])},
+					Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)},
 				},
 			},
 		}
 
 	}
 
-	//response.Schema.Ref = matches[3]
-	//if response.Code == 200 {
-	//	if matches[2] == "{array}" {
-	//		operation.SetItemsType(typeName)
-	//		operation.Type = "array"
-	//	} else {
-	//		operation.Type = typeName
-	//	}
-	//}
 	operation.Responses.StatusCodeResponses[code] = response
 
 	return nil
