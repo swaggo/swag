@@ -153,7 +153,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{strings.Trim(matches[2], "{}")}}}
 	//response.Schema.Type = strings.Trim(matches[2], "{}")
 
-	//response.Schema.Ref = "/test/test"
+	//response.Schema.Ref = matches[3]
 	//if response.Code == 200 {
 	//	if matches[2] == "{array}" {
 	//		operation.SetItemsType(typeName)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/easonlin404/gin-swagger/gen"
 	"github.com/urfave/cli"
 	"os"
@@ -28,7 +27,7 @@ func main() {
 			Usage:   "create doc.go",
 			Action: func(c *cli.Context) error {
 				gen.New().Build()
-
+				return nil
 			},
 		},
 		{

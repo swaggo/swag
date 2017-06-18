@@ -20,3 +20,8 @@ type Pet struct {
 type Pet2 struct {
 	ID int `json:"id"`
 }
+
+type APIError struct {
+	ErrorCode    int
+	ErrorMessage string
+}
