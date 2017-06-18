@@ -162,9 +162,14 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	}
 
 	if schemaType == "array" {
-		//TODO: support array
-		response.Schema.Items.Schema.Ref = spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + matches[3])}
-		panic("not supported array yet.")
+		response.Schema.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + matches[3])},
+				},
+			},
+		}
+
 	}
 
 	//response.Schema.Ref = matches[3]
