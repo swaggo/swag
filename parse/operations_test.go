@@ -50,8 +50,8 @@ func TestOperation_ParseRouterComment(t *testing.T) {
 	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}", operation.Path)
 	assert.Equal(t, "GET", operation.HttpMethod)
 
-	//b, err := json.MarshalIndent(operation, "", "    ")
-	//fmt.Printf("%+v",string(b))
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	fmt.Printf("%+v",string(b))
 }
 
 func TestOperation_ParseResponseComment(t *testing.T) {
@@ -81,8 +81,8 @@ func TestOperation_ParseResponseComment(t *testing.T) {
 
 func TestOperation_ParseComment(t *testing.T) {
 	//operation := NewOperation()
-
-	//TODO:
+	//
+	////TODO:
 	//err := operation.ParseComment()
 	//assert.NoError(t, err)
 }

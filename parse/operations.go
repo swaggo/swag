@@ -46,7 +46,7 @@ func (operation *Operation) ParseComment(comment string) error {
 	attribute := strings.Fields(commentLine)[0]
 	switch strings.ToLower(attribute) {
 	case "@router":
-		if err := operation.ParseAcceptComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
 		}
 	//case "@resource":
@@ -126,7 +126,6 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
 		return fmt.Errorf("Can not parse router comment \"%s\", skipped.", commentLine)
 	}
-	fmt.Println(matches)
 	operation.Path = matches[1]
 	operation.HttpMethod = strings.ToUpper(matches[2])
 	return nil

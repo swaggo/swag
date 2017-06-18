@@ -27,11 +27,12 @@ var expected = `{
         "license": {
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        }
+        },
+        "version": "1.0"
     },
-    "host": "http://easonlin404.github.com",
+    "host": "petstore.swagger.io",
     "basePath": "petstore",
-    "paths": null
+    "paths": {}
 }`
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -76,4 +77,9 @@ func TestParser_ParseApi(t *testing.T) {
 	searchDir := "../example"
 	p := New()
 	p.ParseApi(searchDir)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	//assert.Equal(t, expected, string(b))
+
+	fmt.Printf("%+v", string(b))
 }
