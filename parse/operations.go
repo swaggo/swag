@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"github.com/go-openapi/jsonreference"
 )
 
 type Operation struct {
@@ -134,6 +135,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
+		fmt.Println(len(matches))
 		return fmt.Errorf("Can not parse response comment \"%s\", skipped.", commentLine)
 	}
 
@@ -150,8 +152,20 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	//if err != nil {
 	//	return err
 	//}
-	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{strings.Trim(matches[2], "{}")}}}
-	//response.Schema.Type = strings.Trim(matches[2], "{}")
+	schemaType:= strings.Trim(matches[2], "{}")
+	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{schemaType}}}
+
+	if schemaType == "object"  {
+		response.Schema.Ref = spec.Ref{
+			Ref:jsonreference.MustCreateRef("#/definitions/"+ matches[3]),
+		}
+	}
+
+	if schemaType == "array"  {
+		//TODO: support array
+		response.Schema.Items.Schema.Ref =spec.Ref{Ref:jsonreference.MustCreateRef("#/definitions/"+ matches[3])}
+		panic("not supported array yet.")
+	}
 
 	//response.Schema.Ref = matches[3]
 	//if response.Code == 200 {

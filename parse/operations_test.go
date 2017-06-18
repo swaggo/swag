@@ -78,6 +78,11 @@ func TestOperation_ParseResponseComment(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
+
+	operation2 := NewOperation()
+	operation2.ParseResponseComment(`200 {string} string "it's ok'"`)
+	b2, _ := json.MarshalIndent(operation2, "", "    ")
+	fmt.Printf("%+v", string(b2))
 }
 
 func TestOperation_ParseComment(t *testing.T) {
