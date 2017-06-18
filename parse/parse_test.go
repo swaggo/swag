@@ -31,7 +31,7 @@ var expected = `{
         "version": "1.0"
     },
     "host": "petstore.swagger.io",
-    "basePath": "petstore",
+    "basePath": "/v2",
     "paths": {}
 }`
 

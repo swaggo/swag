@@ -22,8 +22,7 @@ func (s *Engine) Routes() gin.RoutesInfo {
 }
 
 func (s *Engine) Build() *Engine {
-	//TODO: 1.parsing annotate to swagger doc
-	// TODO : generate  router for swagger
+	x
 	s.parseApiSpec()
 	return s
 }

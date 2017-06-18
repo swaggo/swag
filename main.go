@@ -27,12 +27,8 @@ func main() {
 			Aliases: []string{"i"},
 			Usage:   "create doc.go",
 			Action: func(c *cli.Context) error {
-				if framework == "gin" {
-					gen.New().Build()
-				} else {
-					fmt.Printf("%v not support.\n", framework)
-				}
-				return nil
+				gen.New().Build()
+
 			},
 		},
 		{

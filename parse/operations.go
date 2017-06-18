@@ -15,21 +15,19 @@ type Operation struct {
 	spec.Operation
 }
 
-
 //map[int]Response
-func NewOperation() *Operation{
+func NewOperation() *Operation {
 	return &Operation{
-		HttpMethod:"get",
-		Operation:spec.Operation{
+		HttpMethod: "get",
+		Operation: spec.Operation{
 			OperationProps: spec.OperationProps{
-				Responses:&spec.Responses{
-					ResponsesProps:spec.ResponsesProps{
+				Responses: &spec.Responses{
+					ResponsesProps: spec.ResponsesProps{
 						StatusCodeResponses: make(map[int]spec.Response),
 					},
 				},
 			},
 		},
-
 
 		//Operation:spec.Operation:&spec.Operation{}
 
@@ -57,10 +55,10 @@ func (operation *Operation) ParseComment(comment string) error {
 	//	operation.ForceResource = resource
 	case "@description":
 		operation.Description = strings.TrimSpace(commentLine[len(attribute):])
-	//case "@success", "@failure":
-	//	if err := operation.ParseResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
-	//		return err
-	//	}
+	case "@success", "@failure":
+		if err := operation.ParseResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+			return err
+		}
 	//case "@param":
 	//	if err := operation.ParseParamComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 	//		return err
@@ -118,7 +116,6 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 	return nil
 }
 
-
 func (operation *Operation) ParseRouterComment(commentLine string) error {
 	re := regexp.MustCompile(`([\w\.\/\-{}]+)[^\[]+\[([^\]]+)`)
 	var matches []string
@@ -147,7 +144,6 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 		return errors.New("Success http code must be int")
 	}
 
-
 	response.Description = strings.Trim(matches[4], "\"")
 
 	//typeName, err := operation.registerType(matches[3])
@@ -172,13 +168,12 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 }
 
 func (operation *Operation) registerType(typeName string) error {
-	if IsBasicType(typeName){
+	if IsBasicType(typeName) {
 		return nil
 	}
 	//TODO: extract type
-	return fmt.Errorf("Not supported %+v type, only supported basic type now",typeName)
+	return fmt.Errorf("Not supported %+v type, only supported basic type now", typeName)
 }
-
 
 // refer to builtin.go
 var basicTypes = map[string]bool{
@@ -205,7 +200,6 @@ var basicTypes = map[string]bool{
 	"Time":       true,
 	"file":       true,
 }
-
 
 func IsBasicType(typeName string) bool {
 	_, ok := basicTypes[typeName]

@@ -9,7 +9,7 @@ import (
 )
 
 func TestOperation_ParseAcceptComment(t *testing.T) {
-	expected:=`{
+	expected := `{
     "consumes": [
         "application/json",
         "text/xml",
@@ -26,7 +26,7 @@ func TestOperation_ParseAcceptComment(t *testing.T) {
 }
 
 func TestOperation_ParseProduceComment(t *testing.T) {
-	expected:=`{
+	expected := `{
     "produces": [
         "application/json",
         "text/xml",
@@ -36,9 +36,10 @@ func TestOperation_ParseProduceComment(t *testing.T) {
     ]
 }`
 
-	operation := NewOperation()
+	operation := new(Operation)
 	operation.ParseProduceComment("json,xml,plain,html,mpfd")
 	b, _ := json.MarshalIndent(operation, "", "    ")
+	fmt.Printf("%+v", string(b))
 	assert.Equal(t, expected, string(b))
 }
 
@@ -51,7 +52,7 @@ func TestOperation_ParseRouterComment(t *testing.T) {
 	assert.Equal(t, "GET", operation.HttpMethod)
 
 	b, _ := json.MarshalIndent(operation, "", "    ")
-	fmt.Printf("%+v",string(b))
+	fmt.Printf("%+v", string(b))
 }
 
 func TestOperation_ParseResponseComment(t *testing.T) {
@@ -86,4 +87,3 @@ func TestOperation_ParseComment(t *testing.T) {
 	//err := operation.ParseComment()
 	//assert.NoError(t, err)
 }
-

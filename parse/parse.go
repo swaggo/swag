@@ -1,17 +1,17 @@
 package parse
 
 import (
+	"fmt"
 	"github.com/go-openapi/spec"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-	"net/http"
-	"fmt"
 )
 
 type Parser struct {
@@ -31,7 +31,7 @@ func New() *Parser {
 					},
 				},
 				Paths: &spec.Paths{
-					Paths:make( map[string]spec.PathItem),
+					Paths: make(map[string]spec.PathItem),
 				},
 			},
 		},
@@ -105,13 +105,12 @@ func (parser *Parser) parseRouterApiInfo(astFile *ast.File) {
 		switch astDeclaration := astDescription.(type) {
 		case *ast.FuncDecl:
 			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-				operation := new(Operation) //for per 'function' comment, create a new 'Operation' object
+				operation := NewOperation() //for per 'function' comment, create a new 'Operation' object
 				for _, comment := range astDeclaration.Doc.List {
-						operation.ParseComment(comment.Text)
+					operation.ParseComment(comment.Text)
 				}
 				fmt.Println(operation.HttpMethod)
-				pathItem :=spec.PathItem{
-				}
+				pathItem := spec.PathItem{}
 				switch strings.ToUpper(operation.HttpMethod) {
 				case http.MethodGet:
 					pathItem.Get = &operation.Operation

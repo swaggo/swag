@@ -17,7 +17,7 @@ import (
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
 // @host petstore.swagger.io
-// @BasePath petstore
+// @BasePath /v2
 func main() {
 	fmt.Printf("hello")
 	//hello.Hello()
