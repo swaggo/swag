@@ -32,6 +32,7 @@ func New() *Parser {
 				Paths: &spec.Paths{
 					Paths: make(map[string]spec.PathItem),
 				},
+				Definitions: make(map[string]spec.Schema),
 			},
 		},
 		files:           make(map[string]*ast.File),
@@ -150,6 +151,17 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 			}
 		}
 	}
+
+	parser.ParseDefinitions()
+}
+
+func (parser *Parser) ParseDefinitions() {
+	for _,typeMap:= range parser.TypeDefinitions{
+		for _,typeSpec:=range typeMap{
+			//TODO: added reftype in swagger.definitions
+			parser.swagger.Definitions[typeSpec.Name.String()] = spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+		}
+	}
 }
 
 func (parser *Parser) GetAllGoFileInfo(searchDir string) {
@@ -165,5 +177,4 @@ func (parser *Parser) GetAllGoFileInfo(searchDir string) {
 		}
 		return nil
 	})
-
 }

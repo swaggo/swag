@@ -40,7 +40,6 @@ func (operation *Operation) ParseComment(comment string) error {
 		return nil
 	}
 
-	//fmt.Println(comment)
 	attribute := strings.Fields(commentLine)[0]
 	switch strings.ToLower(attribute) {
 	case "@router":
@@ -59,6 +58,8 @@ func (operation *Operation) ParseComment(comment string) error {
 		if err := operation.ParseResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
 		}
+
+		//TODO: feat:ParseParamComment
 	//case "@param":
 	//	if err := operation.ParseParamComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 	//		return err
