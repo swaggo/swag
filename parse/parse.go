@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"fmt"
 	"github.com/go-openapi/spec"
 	"go/ast"
 	goparser "go/parser"
@@ -106,10 +105,13 @@ func (parser *Parser) parseRouterApiInfo(astFile *ast.File) {
 		case *ast.FuncDecl:
 			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 				operation := NewOperation() //for per 'function' comment, create a new 'Operation' object
+				operation.parser = parser
 				for _, comment := range astDeclaration.Doc.List {
-					operation.ParseComment(comment.Text)
+					if err:=operation.ParseComment(comment.Text); err!=nil{
+						log.Panicf("ParseComment panic:%+v", err)
+					}
 				}
-				fmt.Println(operation.HttpMethod)
+
 				pathItem := spec.PathItem{}
 				switch strings.ToUpper(operation.HttpMethod) {
 				case http.MethodGet:

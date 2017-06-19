@@ -14,6 +14,8 @@ type Operation struct {
 	HttpMethod string
 	Path       string
 	spec.Operation
+
+	parser *Parser
 }
 
 //map[int]Response
@@ -29,9 +31,6 @@ func NewOperation() *Operation {
 				},
 			},
 		},
-
-		//Operation:spec.Operation:&spec.Operation{}
-
 	}
 }
 
@@ -155,9 +154,19 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 
-	//TODO: checking refType has existing in 'TypeDefinitions'
+	if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
+		refSplit := strings.Split(refType, ".")
+		if len(refSplit) == 2 {
+			pkgName := refSplit[0]
+			typeName := refSplit[1]
+			if _, ok := operation.parser.TypeDefinitions[pkgName][typeName]; !ok {
+				return fmt.Errorf("Can not find ref type:\"%s\".", refType)
+			}
+		}
 
-	//TODO: if 'object' might ommited schema.type
+	}
+	// so we have to know all type in app
+	//TODO: we might ommited schema.type if schemaType equals 'object'
 	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{schemaType}}}
 
 	if schemaType == "object" {

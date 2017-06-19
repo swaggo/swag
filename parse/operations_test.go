@@ -55,7 +55,7 @@ func TestOperation_ParseRouterComment(t *testing.T) {
 	fmt.Printf("%+v", string(b))
 }
 
-func TestOperation_ParseResponseComment(t *testing.T) {
+func TestOperation_ParseResponseCommentWithObjectType(t *testing.T) {
 	//@Success 200 {object} model.OrderRow "Error message, if code != 200
 	operation := NewOperation()
 	err := operation.ParseResponseComment(`200 {object} model.OrderRow "Error message, if code != 200"`)
@@ -72,23 +72,37 @@ func TestOperation_ParseResponseComment(t *testing.T) {
         "200": {
             "description": "Error message, if code != 200",
             "schema": {
-                "type": "object"
+                "type": "object",
+                "$ref": "#/definitions/model.OrderRow"
             }
         }
     }
 }`
 	assert.Equal(t, expected, string(b))
+}
 
-	operation2 := NewOperation()
-	operation2.ParseResponseComment(`200 {string} string "it's ok'"`)
-	b2, _ := json.MarshalIndent(operation2, "", "    ")
-	fmt.Printf("%+v", string(b2))
+func TestParseResponseCommentWithBasicType(t *testing.T) {
+	operation := NewOperation()
+	operation.ParseResponseComment(`200 {string} string "it's ok'"`)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	fmt.Printf("%+v", string(b))
+
+	expected:=`{
+    "responses": {
+        "200": {
+            "description": "it's ok'",
+            "schema": {
+                "type": "string"
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
 }
 
 func TestOperation_ParseComment(t *testing.T) {
 	//operation := NewOperation()
 	//
-	////TODO:
 	//err := operation.ParseComment()
 	//assert.NoError(t, err)
 }

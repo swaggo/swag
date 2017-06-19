@@ -1,7 +1,8 @@
 package main
 
 import (
-	"fmt"
+	"github.com/gin-gonic/gin"
+	"github.com/easonlin404/gin-swagger/example/api"
 )
 
 // @title Swagger Example API
@@ -19,6 +20,8 @@ import (
 // @host petstore.swagger.io
 // @BasePath /v2
 func main() {
-	fmt.Printf("hello")
+	r:=gin.New()
+	r.GET("/testapi/get-string-by-int/:some_id",api.GetStringByInt)
 	//hello.Hello()
+	r.Run()
 }
