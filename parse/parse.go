@@ -170,9 +170,9 @@ func (parser *Parser) ParseDefinitions() {
 
 			for _, field := range fields {
 				name := field.Names[0].Name
-				p := getPropertyAsString(field)
+				propName := getPropertyName(field)
 				properties[name] = spec.Schema{
-					SchemaProps: spec.SchemaProps{Type: []string{p}},
+					SchemaProps: spec.SchemaProps{Type: []string{propName}},
 				}
 			}
 
