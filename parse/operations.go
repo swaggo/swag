@@ -160,9 +160,12 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 		if len(refSplit) == 2 {
 			pkgName := refSplit[0]
 			typeName := refSplit[1]
-			if _, ok := operation.parser.TypeDefinitions[pkgName][typeName]; !ok {
+			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
+				operation.parser.registerTypes[refType] = typeSpec
+			}else{
 				return fmt.Errorf("Can not find ref type:\"%s\".", refType)
 			}
+
 		}
 
 	}

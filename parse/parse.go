@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"fmt"
 	"github.com/go-openapi/spec"
 	"go/ast"
 	goparser "go/parser"
@@ -16,7 +17,8 @@ import (
 type Parser struct {
 	swagger         *spec.Swagger
 	files           map[string]*ast.File                // map[real_go_file_path][astFile]
-	TypeDefinitions map[string]map[string]*ast.TypeSpec // map [package name][type name][ast.TypeSpec]
+	TypeDefinitions map[string]map[string]*ast.TypeSpec // map [package name][type name][*ast.TypeSpec]
+	registerTypes   map[string]*ast.TypeSpec            //map [refTypeName][*ast.TypeSpec]
 }
 
 func New() *Parser {
@@ -37,6 +39,7 @@ func New() *Parser {
 		},
 		files:           make(map[string]*ast.File),
 		TypeDefinitions: make(map[string]map[string]*ast.TypeSpec),
+		registerTypes:   make(map[string]*ast.TypeSpec),
 	}
 	return parser
 }
@@ -53,6 +56,8 @@ func (parser *Parser) ParseApi(searchDir string) {
 	for _, astFile := range parser.files {
 		parser.parseRouterApiInfo(astFile)
 	}
+
+	parser.ParseDefinitions()
 }
 
 // ParseGeneralApiInfo parses general api info for gived mainApiFile path
@@ -108,7 +113,7 @@ func (parser *Parser) parseRouterApiInfo(astFile *ast.File) {
 				operation := NewOperation() //for per 'function' comment, create a new 'Operation' object
 				operation.parser = parser
 				for _, comment := range astDeclaration.Doc.List {
-					if err:=operation.ParseComment(comment.Text); err!=nil{
+					if err := operation.ParseComment(comment.Text); err != nil {
 						log.Panicf("ParseComment panic:%+v", err)
 					}
 				}
@@ -151,16 +156,43 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 			}
 		}
 	}
-
-	parser.ParseDefinitions()
 }
 
 func (parser *Parser) ParseDefinitions() {
-	for _,typeMap:= range parser.TypeDefinitions{
-		for _,typeSpec:=range typeMap{
-			//TODO: added reftype in swagger.definitions
-			parser.swagger.Definitions[typeSpec.Name.String()] = spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+	for refTypeName, typeSpec := range parser.registerTypes {
+		//TODO: added reftype in swagger.definitions
+		var properties map[string]spec.Schema
+		properties = make(map[string]spec.Schema)
+
+		switch typeSpec.Type.(type) {
+		case *ast.StructType:
+			fmt.Println("StructType")
+			structDecl := typeSpec.Type.(*ast.StructType)
+			fields := structDecl.Fields.List
+
+			for _, field := range fields {
+				name := field.Names[0].Name
+				p := getPropertyAsString(field)
+				properties[name] = spec.Schema{
+					SchemaProps: spec.SchemaProps{Type: []string{p}},
+				}
+			}
+
+		case *ast.ArrayType:
+			log.Panic("ParseDefinitions not supported 'array' yet.")
+		case *ast.InterfaceType:
+			log.Panic("ParseDefinitions not supported 'array' yet.")
+		case *ast.MapType:
+			log.Panic("ParseDefinitions not supported 'array' yet.")
 		}
+
+		parser.swagger.Definitions[refTypeName] = spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties:properties,
+			},
+		}
+
 	}
 }
 
