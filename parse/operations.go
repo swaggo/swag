@@ -52,6 +52,8 @@ func (operation *Operation) ParseComment(comment string) error {
 	//		resource = resource[1:]
 	//	}
 	//	operation.ForceResource = resource
+	case "@summary":
+		operation.Summary = strings.TrimSpace(commentLine[len(attribute):])
 	case "@description":
 		operation.Description = strings.TrimSpace(commentLine[len(attribute):])
 	case "@success", "@failure":

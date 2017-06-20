@@ -8,6 +8,7 @@ import (
 
 //
 // @Title GetStringByInt
+// @Summary Add a new pet to the store
 // @Description get string by ID
 // @Accept  json
 // @Produce  json
@@ -28,7 +29,7 @@ func GetStringByInt(c *gin.Context) {
 // @Param   some_id     path    string     true        "Some ID"
 // @Param   offset     query    int     true        "Offset"
 // @Param   limit      query    int     true        "Offset"
-// @Success 200 {array} SimpleStructureWithAnnotations
+// @Success 200 {string} string	"ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /testapi/get-struct-array-by-string/{some_id} [get]
