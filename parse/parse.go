@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"fmt"
 	"github.com/go-openapi/spec"
 	"go/ast"
 	goparser "go/parser"
@@ -166,7 +165,6 @@ func (parser *Parser) ParseDefinitions() {
 
 		switch typeSpec.Type.(type) {
 		case *ast.StructType:
-			fmt.Println("StructType")
 			structDecl := typeSpec.Type.(*ast.StructType)
 			fields := structDecl.Fields.List
 
