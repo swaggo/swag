@@ -75,8 +75,10 @@ func TestParser_ParseType(t *testing.T) {
 
 func TestParser_ParseApi(t *testing.T) {
 	searchDir := "../example"
+	mainApiFile := "./main.go"
+
 	p := New()
-	p.ParseApi(searchDir)
+	p.ParseApi(searchDir,mainApiFile)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	//assert.Equal(t, expected, string(b))

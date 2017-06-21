@@ -26,7 +26,9 @@ func main() {
 			Aliases: []string{"i"},
 			Usage:   "create doc.go",
 			Action: func(c *cli.Context) error {
-				gen.New().Build()
+				searchDir := "./"
+				mainApiFile := "./main.go"
+				gen.New().Build(searchDir, mainApiFile)
 				return nil
 			},
 		},

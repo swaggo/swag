@@ -1,7 +1,10 @@
 package gen
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestGen_Build(t *testing.T) {
-	New().Build()
+	searchDir := "../example"
+	New().Build(searchDir,"./main.go")
 }

@@ -43,8 +43,7 @@ func New() *Parser {
 	return parser
 }
 
-func (parser *Parser) ParseApi(searchDir string) {
-	mainApiFile := "./main.go"
+func (parser *Parser) ParseApi(searchDir string, mainApiFile string) {
 	parser.GetAllGoFileInfo(searchDir)
 	parser.ParseGeneralApiInfo(path.Join(searchDir, mainApiFile))
 
@@ -206,4 +205,9 @@ func (parser *Parser) GetAllGoFileInfo(searchDir string) {
 		}
 		return nil
 	})
+}
+
+
+func (parser *Parser) GetSwagger() *spec.Swagger {
+	return parser.swagger
 }

@@ -1,31 +1,32 @@
 package swagger
 
-import "github.com/gin-gonic/gin"
+import (
+	"sync"
+	"fmt"
+)
+const Name = "swagger"
+var (
+	swaggerMu sync.RWMutex
+	swaggers =make(map[string]Swagger)
+)
 
-type Engine struct {
-	routes gin.RoutesInfo
-
-	basePath string
+type Swagger interface {
+	ReadDoc() string
 }
 
-func New(routes gin.RoutesInfo) *Engine {
-	engine := &Engine{
-		basePath: "/swagger-ui",
-		routes:   routes,
+
+func Register(name string, swagger Swagger) {
+	swaggerMu.Lock()
+	defer swaggerMu.Unlock()
+	if swagger == nil {
+		panic("swagger is nil")
 	}
-	return engine
-}
 
-func (s *Engine) Routes() gin.RoutesInfo {
-	return s.routes
-}
 
-func (s *Engine) Build() *Engine {
-	s.parseApiSpec()
-	return s
-}
+	if _, dup := swaggers[name]; dup {
+		panic("sql: Register called twice for driver " + name)
+	}
+	swaggers[name] = swagger
 
-func (s *Engine) parseApiSpec() *Engine {
-
-	return s
+	fmt.Println(swaggers[Name].ReadDoc())
 }
