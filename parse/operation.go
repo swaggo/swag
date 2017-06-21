@@ -29,7 +29,6 @@ func NewOperation() *Operation {
 						StatusCodeResponses: make(map[int]spec.Response),
 					},
 				},
-				//Parameters: nil,TODO;
 			},
 		},
 	}
@@ -82,8 +81,35 @@ func (operation *Operation) ParseComment(comment string) error {
 	return nil
 }
 
+// Parse params return []string of param properties
+// @Param	queryText		form	      string	  true		        "The email for login"
+// 			[param name]    [param type] [data type]  [is mandatory?]   [Comment]
+// @Param   some_id     path    int     true        "Some ID"
 func (operation *Operation) ParseParamComment(commentLine string) error {
-	//TODO:
+	paramString := commentLine
+
+	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
+
+	if matches := re.FindStringSubmatch(paramString); len(matches) != 6 {
+		return fmt.Errorf("Can not parse param comment \"%s\", skipped.", paramString)
+	} else {
+		//typeName, err := operation.registerType(matches[3])
+		//if err != nil {
+		//	return err
+		//}
+		name:= matches[1]
+		kindIn := matches[2]
+		//TODO: if type is object ,we have to add 'ref'
+		paramTye:=matches[3]
+		requiredText := strings.ToLower(matches[4])
+		required := (requiredText == "true" || requiredText == "required")
+		description := matches[5]
+
+		param:=createParameter(kindIn,description,name,paramTye,required)
+
+		operation.Operation.Parameters = append(operation.Operation.Parameters, param)
+	}
+
 	return nil
 }
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
@@ -134,7 +160,7 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	path := matches[1]
 	httpMethod := matches[2]
 
-	operation.ParseRouterParams(path)
+	//operation.ParseRouterParams(path)
 	operation.Path = path
 	operation.HttpMethod = strings.ToUpper(httpMethod)
 
@@ -152,15 +178,16 @@ func (operation *Operation) ParseRouterParams(path string) {
 	}
 }
 
-func createPathParameter(paramName string) spec.Parameter {
+
+func createParameter(kindIn, description,paramName ,paramTye string, required bool) spec.Parameter {
 	paramProps := spec.ParamProps{
 		Name:     paramName,
-		Description:paramName,
-		Required: true,
-		In:       "path",
+		Description:description,
+		Required: required,
+		In:       kindIn,
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"string"},
+				Type: []string{paramTye},
 			},
 		},
 	}
@@ -169,6 +196,9 @@ func createPathParameter(paramName string) spec.Parameter {
 	}
 
 	return parameter
+}
+func createPathParameter(paramName string) spec.Parameter {
+	return createParameter("path",paramName,paramName ,"string",true)
 }
 
 // @Success 200 {object} model.OrderRow "Error message, if code != 200"

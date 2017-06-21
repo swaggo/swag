@@ -159,7 +159,6 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 
 func (parser *Parser) ParseDefinitions() {
 	for refTypeName, typeSpec := range parser.registerTypes {
-		//TODO: added reftype in swagger.definitions
 		var properties map[string]spec.Schema
 		properties = make(map[string]spec.Schema)
 
