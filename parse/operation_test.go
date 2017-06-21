@@ -87,7 +87,7 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 	b, _ := json.MarshalIndent(operation, "", "    ")
 	fmt.Printf("%+v", string(b))
 
-	expected:=`{
+	expected := `{
     "responses": {
         "200": {
             "description": "it's ok'",
@@ -107,9 +107,9 @@ func TestOperation_ParseComment(t *testing.T) {
 	//assert.NoError(t, err)
 }
 
-func TestOperation_ParseParamComment(t *testing.T) {
-	operation := NewOperation()
-
-	path:="/testapi/{user}/{pwd}"
-	operation.ParseRouterParams(path)
-}
+//func TestOperation_ParseParamComment(t *testing.T) {
+//	operation := NewOperation()
+//
+//	path:="/testapi/{user}/{pwd}"
+//	operation.ParseRouterParams(path)
+//}

@@ -1,9 +1,9 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/easonlin404/gin-swagger/example/web"
 	"fmt"
+	"github.com/easonlin404/gin-swagger/example/web"
+	"github.com/gin-gonic/gin"
 )
 
 //
@@ -18,7 +18,7 @@ import (
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /testapi/get-string-by-int/{some_id} [get]
 func GetStringByInt(c *gin.Context) {
- 	err:=web.APIError{}
+	err := web.APIError{}
 	fmt.Println(err)
 }
 

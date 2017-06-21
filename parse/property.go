@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-func getPropertyName(field *ast.Field) string{
+func getPropertyName(field *ast.Field) string {
 	var name string
 	if _, ok := field.Type.(*ast.SelectorExpr); ok {
 		panic("not supported 'astSelectorExpr' yet.")

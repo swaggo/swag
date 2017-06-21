@@ -97,15 +97,37 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 		//if err != nil {
 		//	return err
 		//}
-		name:= matches[1]
+		name := matches[1]
 		kindIn := matches[2]
-		//TODO: if type is object ,we have to add 'ref'
-		paramTye:=matches[3]
+
+		paramTye := matches[3]
+
 		requiredText := strings.ToLower(matches[4])
 		required := (requiredText == "true" || requiredText == "required")
 		description := matches[5]
 
-		param:=createParameter(kindIn,description,name,paramTye,required)
+		var param spec.Parameter
+
+		if kindIn == "query" || kindIn == "path" {
+			param = createParameter(kindIn, description, name, paramTye, required)
+		}
+		if kindIn == "body" {
+			param = createParameter(kindIn, description, name, paramTye, required)
+			refSplit := strings.Split(paramTye, ".")
+			if len(refSplit) == 2 {
+				pkgName := refSplit[0]
+				typeName := refSplit[1]
+				if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
+					operation.parser.registerTypes[paramTye] = typeSpec
+				} else {
+					return fmt.Errorf("Can not find ref type:\"%s\".", paramTye)
+				}
+
+				param.Schema.Ref = spec.Ref{
+					Ref: jsonreference.MustCreateRef("#/definitions/" + paramTye),
+				}
+			}
+		}
 
 		operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	}
@@ -166,25 +188,25 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 	return nil
 }
-func (operation *Operation) ParseRouterParams(path string) {
-	re := regexp.MustCompile(`\{(\w+)\}`)
-	matchs := re.FindAllStringSubmatch(path, -1)
 
-	if len(matchs) > 0 {
-		for _, match := range matchs {
-			group := match[1]
-			operation.Operation.Parameters = append(operation.Operation.Parameters, createPathParameter(group))
-		}
-	}
-}
+//func (operation *Operation) ParseRouterParams(path string) {
+//	re := regexp.MustCompile(`\{(\w+)\}`)
+//	matchs := re.FindAllStringSubmatch(path, -1)
+//
+//	if len(matchs) > 0 {
+//		for _, match := range matchs {
+//			group := match[1]
+//			operation.Operation.Parameters = append(operation.Operation.Parameters, createPathParameter(group))
+//		}
+//	}
+//}
 
-
-func createParameter(kindIn, description,paramName ,paramTye string, required bool) spec.Parameter {
+func createParameter(kindIn, description, paramName, paramTye string, required bool) spec.Parameter {
 	paramProps := spec.ParamProps{
-		Name:     paramName,
-		Description:description,
-		Required: required,
-		In:       kindIn,
+		Name:        paramName,
+		Description: description,
+		Required:    required,
+		In:          kindIn,
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{paramTye},
@@ -198,7 +220,7 @@ func createParameter(kindIn, description,paramName ,paramTye string, required bo
 	return parameter
 }
 func createPathParameter(paramName string) spec.Parameter {
-	return createParameter("path",paramName,paramName ,"string",true)
+	return createParameter("path", paramName, paramName, "string", true)
 }
 
 // @Success 200 {object} model.OrderRow "Error message, if code != 200"
@@ -220,10 +242,6 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 
 	response.Description = strings.Trim(matches[4], "\"")
 
-	//typeName, err := operation.registerType(matches[3])
-	//if err != nil {
-	//	return err
-	//}
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 

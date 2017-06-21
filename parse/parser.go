@@ -185,8 +185,8 @@ func (parser *Parser) ParseDefinitions() {
 
 		parser.swagger.Definitions[refTypeName] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties:properties,
+				Type:       []string{"object"},
+				Properties: properties,
 			},
 		}
 
