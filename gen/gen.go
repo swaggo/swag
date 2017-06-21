@@ -18,7 +18,7 @@ func New() *Gen {
 
 func (g *Gen) Build(searchDir, mainApiFile string) {
 	log.Println("build")
-	p := parse.New()
+	p := parser.New()
 	p.ParseApi(searchDir, mainApiFile)
 	swagger := p.GetSwagger()
 

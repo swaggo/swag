@@ -1,4 +1,4 @@
-package parse
+package parser
 
 import (
 	"github.com/go-openapi/spec"
