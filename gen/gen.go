@@ -2,7 +2,7 @@ package gen
 
 import (
 	"encoding/json"
-	"github.com/easonlin404/gin-swagger/parse"
+	"github.com/easonlin404/gin-swagger/parser"
 	"log"
 	"os"
 	"text/template"

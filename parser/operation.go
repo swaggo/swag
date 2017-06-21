@@ -60,8 +60,6 @@ func (operation *Operation) ParseComment(comment string) error {
 		if err := operation.ParseResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
 		}
-
-		//TODO: feat:ParseParamComment
 	case "@param":
 		if err := operation.ParseParamComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
@@ -283,43 +281,4 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	operation.Responses.StatusCodeResponses[code] = response
 
 	return nil
-}
-
-func (operation *Operation) registerType(typeName string) error {
-	if IsBasicType(typeName) {
-		return nil
-	}
-	//TODO: extract type
-	return fmt.Errorf("Not supported %+v type, only supported basic type now", typeName)
-}
-
-// refer to builtin.go
-var basicTypes = map[string]bool{
-	"bool":       true,
-	"uint":       true,
-	"uint8":      true,
-	"uint16":     true,
-	"uint32":     true,
-	"uint64":     true,
-	"int":        true,
-	"int8":       true,
-	"int16":      true,
-	"int32":      true,
-	"int64":      true,
-	"float32":    true,
-	"float64":    true,
-	"string":     true,
-	"complex64":  true,
-	"complex128": true,
-	"byte":       true,
-	"rune":       true,
-	"uintptr":    true,
-	"error":      true,
-	"Time":       true,
-	"file":       true,
-}
-
-func IsBasicType(typeName string) bool {
-	_, ok := basicTypes[typeName]
-	return ok || strings.Contains(typeName, "interface")
 }
