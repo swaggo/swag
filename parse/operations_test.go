@@ -106,3 +106,10 @@ func TestOperation_ParseComment(t *testing.T) {
 	//err := operation.ParseComment()
 	//assert.NoError(t, err)
 }
+
+func TestOperation_ParseParamComment(t *testing.T) {
+	operation := NewOperation()
+
+	path:="/testapi/{user}/{pwd}"
+	operation.ParseRouterParams(path)
+}

@@ -29,6 +29,7 @@ func NewOperation() *Operation {
 						StatusCodeResponses: make(map[int]spec.Response),
 					},
 				},
+				//Parameters: nil,TODO;
 			},
 		},
 	}
@@ -62,10 +63,10 @@ func (operation *Operation) ParseComment(comment string) error {
 		}
 
 		//TODO: feat:ParseParamComment
-	//case "@param":
-	//	if err := operation.ParseParamComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
-	//		return err
-	//	}
+	case "@param":
+		if err := operation.ParseParamComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+			return err
+		}
 	case "@accept", "@consume":
 		if err := operation.ParseAcceptComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
@@ -81,6 +82,10 @@ func (operation *Operation) ParseComment(comment string) error {
 	return nil
 }
 
+func (operation *Operation) ParseParamComment(commentLine string) error {
+	//TODO:
+	return nil
+}
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
 	accepts := strings.Split(commentLine, ",")
 	for _, a := range accepts {
@@ -126,9 +131,44 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
 		return fmt.Errorf("Can not parse router comment \"%s\", skipped.", commentLine)
 	}
-	operation.Path = matches[1]
-	operation.HttpMethod = strings.ToUpper(matches[2])
+	path := matches[1]
+	httpMethod := matches[2]
+
+	operation.ParseRouterParams(path)
+	operation.Path = path
+	operation.HttpMethod = strings.ToUpper(httpMethod)
+
 	return nil
+}
+func (operation *Operation) ParseRouterParams(path string) {
+	re := regexp.MustCompile(`\{(\w+)\}`)
+	matchs := re.FindAllStringSubmatch(path, -1)
+
+	if len(matchs) > 0 {
+		for _, match := range matchs {
+			group := match[1]
+			operation.Operation.Parameters = append(operation.Operation.Parameters, createPathParameter(group))
+		}
+	}
+}
+
+func createPathParameter(paramName string) spec.Parameter {
+	paramProps := spec.ParamProps{
+		Name:     paramName,
+		Description:paramName,
+		Required: true,
+		In:       "path",
+		Schema: &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"string"},
+			},
+		},
+	}
+	parameter := spec.Parameter{
+		ParamProps: paramProps,
+	}
+
+	return parameter
 }
 
 // @Success 200 {object} model.OrderRow "Error message, if code != 200"
@@ -164,7 +204,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 			typeName := refSplit[1]
 			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 				operation.parser.registerTypes[refType] = typeSpec
-			}else{
+			} else {
 				return fmt.Errorf("Can not find ref type:\"%s\".", refType)
 			}
 
