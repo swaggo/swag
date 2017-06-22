@@ -71,3 +71,5 @@ TODO:
 
 ## TODO
 - [ ] support other Mime Types, eg: xml
+- [ ] supplement better documentation
+- [ ] add more example
