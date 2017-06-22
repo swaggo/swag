@@ -1,5 +1,6 @@
 # swag
 Automatically generate RESTful API documentation with Swagger 2.0 for Go (This project was stll in development). This project was inspired by [swagger](https://raw.githubusercontent.com/yvasiyarov/swagger)but simplified the usage of complexity and support a variety of [web framework]((#supported-web-framework)). Let you focus on writing [Declarative Comments Format](#declarative-comments-format).
+
 [![Travis branch](https://img.shields.io/travis/swag-gonic/swag/master.svg)](https://travis-ci.org/swag-gonic/swag)
 [![Codecov branch](https://img.shields.io/codecov/c/github/swag-gonic/swag/master.svg)](https://codecov.io/gh/swag-gonic/swag)
 [![Go Report Card](https://goreportcard.com/badge/github.com/swag-gonic/swag)](https://goreportcard.com/report/github.com/swag-gonic/swag)
