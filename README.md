@@ -33,10 +33,10 @@ $ swag init
 TODO:
 
 ## Declarative Comments Format
+##### General API info
 
-General API info
-Annotation Name  | Type | Description
----|:---:|---
+Annotation Name| Description
+---|---
 <a name="infoTitle"></a>title | **Required.** The title of the application.
 <a name="infoVersion"></a>version | **Required** Provides the version of the application API.
 <a name="infoDescription"></a>description | A short description of the application.
@@ -48,7 +48,6 @@ Annotation Name  | Type | Description
 <a name="infoContact"></a>license.url | A URL to the license used for the API. MUST be in the format of a URL.
 <a name="infoContact"></a>host | The host (name or ip) serving the API. 
 <a name="infoContact"></a>BasePath | The base path on which the API is served.
-
 
 ## Supported Web Framework
 - [gin-swagger](http://github.com/swag-gonic/gin-swagger)
