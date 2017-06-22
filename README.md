@@ -22,18 +22,37 @@ This project was inspired by [swagger](https://raw.githubusercontent.com/yvasiya
 ```sh
 $ go get -u github.com/swag-gonic/swag
 ```
-3. Run the Swag in your Go root project folder which contains `main.go` file, Swag will parse your comments and generate required files(`docs` folder and `docs/doc.go`)
+3. Run the Swag in your Go project root folder which contains `main.go` file, Swag will parse your comments and generate required files(`docs` folder and `docs/doc.go`)
 ```sh
 $ swag init
 ```
-4. Open your `main.go` file, add import for Gin user
+4. Open your `main.go` file, import it in your code:
+                            
  `import github.com/swag-gonic/gin-swagger` 
 
 TODO:
 
 ## Declarative Comments Format
-TODO:
+
+General API info
+Annotation Name  | Type | Description
+---|:---:|---
+<a name="infoTitle"></a>title | **Required.** The title of the application.
+<a name="infoVersion"></a>version | **Required** Provides the version of the application API.
+<a name="infoDescription"></a>description | A short description of the application.
+<a name="infoTermsOfService"></a>termsOfService | The Terms of Service for the API.
+<a name="infoContact"></a>contact.name | The contact information for the exposed API.
+<a name="infoContact"></a>contact.url | The URL pointing to the contact information. MUST be in the format of a URL.
+<a name="infoContact"></a>contact.email | The email address of the contact person/organization. MUST be in the format of an email address.
+<a name="infoContact"></a>license.name | **Required** The license name used for the API.
+<a name="infoContact"></a>license.url | A URL to the license used for the API. MUST be in the format of a URL.
+<a name="infoContact"></a>host | The host (name or ip) serving the API. 
+<a name="infoContact"></a>BasePath | The base path on which the API is served.
+
 
 ## Supported Web Framework
 - [gin-swagger](http://github.com/swag-gonic/gin-swagger)
 - [echo-swagger](http://github.com/swag-gonic/gin-swagger)
+
+##TODO
+- [ ] support 
