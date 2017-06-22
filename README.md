@@ -11,7 +11,6 @@ This project was inspired by [swagger](https://raw.githubusercontent.com/yvasiya
 ## Contents
 - [Quick Start Guide](#quick-start-guide)
 - [Declarative Comments Format](#declarative-comments-format)
-- [Basic Usage](#basic-usage)
   - [General API info](#general-api-info)
   - [API Operation](#api-operation)
 - [Supported Web Framework](#supported-web-framework)
@@ -32,7 +31,7 @@ $ swag init
 4. Open your `main.go` file, import it in your code:
                             
  `import github.com/swag-gonic/gin-swagger` 
-
+TODO:
 
 ## Declarative Comments Format
 
@@ -40,13 +39,13 @@ $ swag init
 | annotation         | Description                                                                                               | 
 |--------------------|-----------------------------------------------------------------------------------------------------------|
 | title              | **Required.** The title of the application.                                                               |
-| version            | **Required** Provides the version of the application API.                                                 |
+| version            | **Required.** Provides the version of the application API.                                                |
 | description        | A short description of the application.                                                                   |
 | termsOfService     | The Terms of Service for the API.                                                                         |
 | contact.name       | The contact information for the exposed API.                                                              |
 | contact.url        | The URL pointing to the contact information. MUST be in the format of a URL.                              |
 | contact.email      | The email address of the contact person/organization. MUST be in the format of an email address.          |
-| license.name       | **Required** The license name used for the API.                                                           |
+| license.name       | **Required.** The license name used for the API.                                                          |
 | license.url        | A URL to the license used for the API. MUST be in the format of a URL.                                    |
 | host               | The host (name or ip) serving the API.                                                                    |
 | BasePath           | The base path on which the API is served.                                                                 |
@@ -62,7 +61,7 @@ $ swag init
 | param              | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment`      | 
 | success            | Success response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
 | failure            | Failure response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
-| router             |  Failure response that separated by spaces. `path`,`[httpMethod]`                                         | 
+| router             | Failure response that separated by spaces. `path`,`[httpMethod]`                                          | 
 
 
 
@@ -72,4 +71,3 @@ $ swag init
 
 ## TODO
 - [ ] support other Mime Types, eg: xml
-- [ ] parse struct validation tag, eg: required
