@@ -207,7 +207,6 @@ func (parser *Parser) GetAllGoFileInfo(searchDir string) {
 	})
 }
 
-
 func (parser *Parser) GetSwagger() *spec.Swagger {
 	return parser.swagger
 }

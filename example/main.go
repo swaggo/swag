@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/swag-gonic/swag/example/api"
 	"github.com/gin-gonic/gin"
+	"github.com/swag-gonic/swag/example/api"
 )
 
 // @title Swagger Example API

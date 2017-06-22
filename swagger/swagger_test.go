@@ -5,7 +5,7 @@ import (
 )
 
 func TestRegister(t *testing.T) {
-	Register(Name,&s{})
+	Register(Name, &s{})
 }
 
 var doc = `{

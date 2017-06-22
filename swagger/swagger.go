@@ -1,19 +1,20 @@
 package swagger
 
 import (
-	"sync"
 	"fmt"
+	"sync"
 )
+
 const Name = "swagger"
+
 var (
 	swaggerMu sync.RWMutex
-	swaggers =make(map[string]Swagger)
+	swaggers  = make(map[string]Swagger)
 )
 
 type Swagger interface {
 	ReadDoc() string
 }
-
 
 func Register(name string, swagger Swagger) {
 	swaggerMu.Lock()
@@ -21,7 +22,6 @@ func Register(name string, swagger Swagger) {
 	if swagger == nil {
 		panic("swagger is nil")
 	}
-
 
 	if _, dup := swaggers[name]; dup {
 		panic("sql: Register called twice for driver " + name)
