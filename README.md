@@ -4,7 +4,6 @@ Automatically generate RESTful API documentation with Swagger 2.0 for Go (This p
 [![Travis branch](https://img.shields.io/travis/swag-gonic/swag/master.svg)](https://travis-ci.org/swag-gonic/swag)
 [![Codecov branch](https://img.shields.io/codecov/c/github/swag-gonic/swag/master.svg)](https://codecov.io/gh/swag-gonic/swag)
 [![Go Report Card](https://goreportcard.com/badge/github.com/swag-gonic/swag)](https://goreportcard.com/report/github.com/swag-gonic/swag)
-[![GoDoc](https://godoc.org/github.com/swag-gonic/swag?status.svg)](https://godoc.org/github.com/swag-gonic/swag)
 
 ## Contents
 - [Quick Start Guide](#quick-start-guide)
@@ -35,7 +34,7 @@ TODO:
 ## Declarative Comments Format
 
 ### General API info
-| annotation         | Description                                                                                               | 
+| annotation         | description                                                                                               | 
 |--------------------|-----------------------------------------------------------------------------------------------------------|
 | title              | **Required.** The title of the application.                                                               |
 | version            | **Required.** Provides the version of the application API.                                                |
@@ -51,7 +50,7 @@ TODO:
 
 
 ### API Operation
-| annotation         | Description                                                                                               | 
+| annotation         | description                                                                                               | 
 |--------------------|-----------------------------------------------------------------------------------------------------------|
 | description        | A verbose explanation of the operation behavior.                                                          |
 | summary            | A short summary of what the operation does.                                                               |
@@ -66,9 +65,9 @@ TODO:
 
 ## Supported Web Framework
 - [gin-swagger](http://github.com/swag-gonic/gin-swagger)
-- [echo-swagger](http://github.com/swag-gonic/gin-swagger)
 
 ## TODO
 - [ ] support other Mime Types, eg: xml
 - [ ] supplement better documentation
 - [ ] add more example
+- [ ] support other web Framework

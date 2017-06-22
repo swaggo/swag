@@ -24,7 +24,7 @@ func Register(name string, swagger Swagger) {
 	}
 
 	if _, dup := swaggers[name]; dup {
-		panic("sql: Register called twice for driver " + name)
+		panic("Register called twice for swag doc: " + name)
 	}
 	swaggers[name] = swagger
 
