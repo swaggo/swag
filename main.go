@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/easonlin404/gin-swagger/gen"
+	"github.com/swag-gonic/swag/gen"
 	"github.com/urfave/cli"
 	"os"
 )

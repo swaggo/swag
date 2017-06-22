@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"github.com/easonlin404/gin-swagger/example/web"
+	"github.com/swag-gonic/swag/example/web"
 	"github.com/gin-gonic/gin"
 )
 

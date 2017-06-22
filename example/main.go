@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/easonlin404/gin-swagger/example/api"
+	"github.com/swag-gonic/swag/example/api"
 	"github.com/gin-gonic/gin"
 )
 
