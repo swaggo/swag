@@ -38,9 +38,8 @@ func (g *Gen) Build(searchDir, mainApiFile string) {
 		Doc:       "`" + string(b) + "`",
 	})
 
-	//TODO: print file path
-	log.Printf("create docs.go at  %+v", docs)
 
+	log.Printf("create docs.go at  %+v", docs.Name())
 }
 
 func die(err error) {
