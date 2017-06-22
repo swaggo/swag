@@ -7,7 +7,6 @@ import (
 )
 
 //
-// @Title GetStringByInt
 // @Summary Add a new pet to the store
 // @Description get string by ID
 // @Accept  json
@@ -22,7 +21,6 @@ func GetStringByInt(c *gin.Context) {
 	fmt.Println(err)
 }
 
-// @Title GetStructArrayByString
 // @Description get struct array by ID
 // @Accept  json
 // @Produce  json

@@ -11,6 +11,9 @@ This project was inspired by [swagger](https://raw.githubusercontent.com/yvasiya
 ## Contents
 - [Quick Start Guide](#quick-start-guide)
 - [Declarative Comments Format](#declarative-comments-format)
+- [Basic Usage](#basic-usage)
+  - [General API info](#general-api-info)
+  - [API Operation](#api-operation)
 - [Supported Web Framework](#supported-web-framework)
 - [Features](#features)
 
@@ -33,8 +36,8 @@ $ swag init
 
 ## Declarative Comments Format
 
-##### General API info
-| annotation name    | Description                                                                                               | 
+### General API info
+| annotation         | Description                                                                                               | 
 |--------------------|-----------------------------------------------------------------------------------------------------------|
 | title              | **Required.** The title of the application.                                                               |
 | version            | **Required** Provides the version of the application API.                                                 |
@@ -48,9 +51,25 @@ $ swag init
 | host               | The host (name or ip) serving the API.                                                                    |
 | BasePath           | The base path on which the API is served.                                                                 |
 
+
+### API Operation
+| annotation         | Description                                                                                               | 
+|--------------------|-----------------------------------------------------------------------------------------------------------|
+| description        | A verbose explanation of the operation behavior.                                                          |
+| summary            | A short summary of what the operation does.                                                               |
+| accept             | A list of MIME types the APIs can consume. Now only `json` application type.                              | 
+| produce            | A list of MIME types the APIs can produce. Now only `json` application type.                              | 
+| param              | Parameters that separated by spaces. param name, param type, data type, is mandatory?, comment            | 
+| success            | Success response that separated by spaces. return code, {param type} data type, comment                   | 
+| failure            | Failure response that separated by spaces. return code, {param type} data type, comment                   | 
+| router            |  Failure response that separated by spaces. path, [httpMethod]                                             | 
+
+
+
 ## Supported Web Framework
 - [gin-swagger](http://github.com/swag-gonic/gin-swagger)
 - [echo-swagger](http://github.com/swag-gonic/gin-swagger)
 
 ##TODO
-- [ ] support 
+- [ ] support other Mime Types, eg: xml
+- [ ] parse struct tag
