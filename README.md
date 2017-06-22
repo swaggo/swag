@@ -59,10 +59,10 @@ $ swag init
 | summary            | A short summary of what the operation does.                                                               |
 | accept             | A list of MIME types the APIs can consume. Now only `json` application type.                              | 
 | produce            | A list of MIME types the APIs can produce. Now only `json` application type.                              | 
-| param              | Parameters that separated by spaces. param name, param type, data type, is mandatory?, comment            | 
-| success            | Success response that separated by spaces. return code, {param type} data type, comment                   | 
-| failure            | Failure response that separated by spaces. return code, {param type} data type, comment                   | 
-| router            |  Failure response that separated by spaces. path, [httpMethod]                                             | 
+| param              | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment`      | 
+| success            | Success response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
+| failure            | Failure response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
+| router             |  Failure response that separated by spaces. `path`,`[httpMethod]`                                         | 
 
 
 
@@ -70,6 +70,6 @@ $ swag init
 - [gin-swagger](http://github.com/swag-gonic/gin-swagger)
 - [echo-swagger](http://github.com/swag-gonic/gin-swagger)
 
-##TODO
+## TODO
 - [ ] support other Mime Types, eg: xml
-- [ ] parse struct tag
+- [ ] parse struct validation tag, eg: required
