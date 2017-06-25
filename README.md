@@ -15,7 +15,7 @@ Automatically generate RESTful API documentation with Swagger 2.0 for Go (This p
 
 ## Quick Start Guide
 
-1. Add comments to your API source code, [see Declarative Comments Format](#declarative-comments-format)
+1. Add comments to your API source code, [See Declarative Comments Format](#declarative-comments-format)
 
 2. Download Swag for Go by using:
 ```sh
@@ -66,7 +66,7 @@ func main() {
 
 ```
 5. Browser to http://localhost:8080/swagger/index.html
-//TODO: add images
+
 
 
 ## Declarative Comments Format
