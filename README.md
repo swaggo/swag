@@ -26,9 +26,10 @@ $ go get -u github.com/swag-gonic/swag
 $ swag init
 ```
 4. Open your `main.go` file, just import this in your code:
-                            
- `import "github.com/swag-gonic/gin-swagger"` 
- `import "github.com/swag-gonic/gin-swagger/swaggerFiles"` 
+```go                            
+ import "github.com/swag-gonic/gin-swagger"
+ import "github.com/swag-gonic/gin-swagger/swaggerFiles"
+```
 
 ```go
 package main
