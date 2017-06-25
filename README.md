@@ -64,7 +64,8 @@ func main() {
 }
 
 ```
-5. Browser to http://localhost:8080/swagger/index.html ,
+5. Browser to http://localhost:8080/swagger/index.html
+//TODO: add images
 
 
 ## Declarative Comments Format
