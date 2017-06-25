@@ -1,7 +1,6 @@
 package swagger
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -28,5 +27,12 @@ func Register(name string, swagger Swagger) {
 	}
 	swaggers[name] = swagger
 
-	fmt.Println(swaggers[Name].ReadDoc())
+	//fmt.Println(swaggers[Name].ReadDoc())
+}
+
+func ReadDoc() string {
+	if val, ok := swaggers[Name]; ok {
+		return val.ReadDoc()
+	}
+	return ""
 }

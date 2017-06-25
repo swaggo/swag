@@ -2,10 +2,12 @@ package swagger
 
 import (
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRegister(t *testing.T) {
 	Register(Name, &s{})
+	assert.Equal(t,doc,ReadDoc())
 }
 
 var doc = `{
