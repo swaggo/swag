@@ -25,11 +25,47 @@ $ go get -u github.com/swag-gonic/swag
 ```sh
 $ swag init
 ```
-4. Open your `main.go` file, import it in your code:
+4. Open your `main.go` file, just import this in your code:
                             
- `import github.com/swag-gonic/gin-swagger` 
- 
-TODO:
+ `import "github.com/swag-gonic/gin-swagger"` 
+ `import "github.com/swag-gonic/gin-swagger/swaggerFiles"` 
+
+```go
+package main
+
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/swag-gonic/gin-swagger"
+	"github.com/swag-gonic/gin-swagger/swaggerFiles"
+
+	_ "github.com/swag-gonic/gin-swagger/example/docs" //import above generated docs/doc.go
+)
+
+// @title Swagger Example API
+// @version 1.0
+// @description This is a sample server Petstore server.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host petstore.swagger.io
+// @BasePath /v2
+func main() {
+	r := gin.New()
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler)) // You can use any prefix path you want
+
+	r.Run()
+}
+
+```
+5. Browser to http://localhost:8080/swagger/index.html ,
+
 
 ## Declarative Comments Format
 
