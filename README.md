@@ -20,17 +20,17 @@ swag converts Go annotations to Swagger Documentation 2.0. And provides a variet
 ## Generate Swagger 2.0 docs
 1. Add comments to your API source code, [See Declarative Comments Format](#declarative-comments-format)
 
-2. Download Swag for Go by using:
+2. Download swag by using:
 ```sh
 $ go get -u github.com/swag-gonic/swag
 ```
-3. Run the Swag in your Go project root folder which contains `main.go` file, Swag will parse your comments and generate required files(`docs` folder and `docs/doc.go`)
+3. Run the [swag](generate-swagger-20-docs) in project root folder which contains `main.go` file, The [swag](generate-swagger-20-docs) will parse your comments and generate required files(`docs` folder and `docs/doc.go`).
 ```sh
 $ swag init
 ```
 
 ## How to use it with `gin`? 
-1. After using `swag` to  generate Swagger 2.0 docs, Import following packages:
+1. After using [swag](generate-swagger-20-docs) to  generate Swagger 2.0 docs, Import following packages:
 ```go
 import "github.com/swag-gonic/gin-swagger" // gin-swagger middleware
 import "github.com/swag-gonic/gin-swagger/swaggerFiles" // swagger embed files
