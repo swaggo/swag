@@ -12,17 +12,15 @@ swag converts Go annotations to Swagger Documentation 2.0. And provides a variet
 This project was stll in development.
 
 ## Contents
-- [Quick Start Guide](#quick-start-guide)
+- [Generate Swagger 2.0 docs](#generate-swagger-20-docs)
 - [How to use it with gin?](#how-to-use-it-with-gin)
 - [Declarative Comments Format](#declarative-comments-format)
   - [General API info](#general-api-info)
   - [API Operation](#api-operation)
 - [Supported Web Framework](#supported-web-framework)
-- [About the Project](#about-the-project)
 
 
-## Quick Start Guide
-### Generate Swagger 2.0 docs
+## Generate Swagger 2.0 docs
 1. Add comments to your API source code, [See Declarative Comments Format](#declarative-comments-format)
 
 2. Download Swag for Go by using:
@@ -34,16 +32,15 @@ $ go get -u github.com/swag-gonic/swag
 $ swag init
 ```
 
-### How to use it with `gin`? 
-1. After using 'swag' to  Generate Swagger 2.0 docs,  Import following in your code:
+## How to use it with `gin`? 
+1. After using `swag` to  generate Swagger 2.0 docs, Import following packages:
 ```go
 import "github.com/swag-gonic/gin-swagger" // gin-swagger middleware
 import "github.com/swag-gonic/gin-swagger/swaggerFiles" // swagger embed files
 
 ```
 
-#### Canonical example:
-
+2. Added [API Operation](#g#general-api-info) annotations in `main.go` code:
 ```go
 package main
 
@@ -78,7 +75,7 @@ func main() {
 }
 ```
 
-2. Added [API Operation](#api-operation) comments in your `handler/controller` code
+3. Added [General API Info](#api-operation) annotations in `handler/controller` code
 ``` go 
 // @Summary Add a new pet to the store
 // @Description get string by ID
@@ -113,12 +110,12 @@ type Pet3 struct {
 
 ```
 
-3. Run it, and broswer to http://localhost:8080/swagger, you can see Swagger 2.0 Api documents.
+4. Run it, and broswer to http://localhost:8080/swagger, you can see Swagger 2.0 Api documents.
 
 
 ## Declarative Comments Format
 
-### General API info
+### General API Info
 | annotation         | description                                                                                               | 
 |--------------------|-----------------------------------------------------------------------------------------------------------|
 | title              | **Required.** The title of the application.                                                               |
