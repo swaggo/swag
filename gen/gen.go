@@ -17,7 +17,7 @@ func New() *Gen {
 }
 
 func (g *Gen) Build(searchDir, mainApiFile string) {
-	log.Println("build")
+	log.Println("Generate swagger docs....")
 	p := parser.New()
 	p.ParseApi(searchDir, mainApiFile)
 	swagger := p.GetSwagger()

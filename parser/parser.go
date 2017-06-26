@@ -44,6 +44,7 @@ func New() *Parser {
 }
 
 func (parser *Parser) ParseApi(searchDir string, mainApiFile string) {
+	log.Println("Generate general API Info")
 	parser.GetAllGoFileInfo(searchDir)
 	parser.ParseGeneralApiInfo(path.Join(searchDir, mainApiFile))
 

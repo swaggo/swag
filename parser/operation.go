@@ -110,7 +110,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 			param = createParameter(kindIn, description, name, paramTye, required)
 		}
 		if kindIn == "body" {
-			param = createParameter(kindIn, description, name, paramTye, required)
+			param = createParameter(kindIn, description, name, "object", required) // Suppose object
 			refSplit := strings.Split(paramTye, ".")
 			if len(refSplit) == 2 {
 				pkgName := refSplit[0]

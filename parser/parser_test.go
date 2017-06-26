@@ -53,7 +53,8 @@ func TestGetAllGoFileInfo(t *testing.T) {
 
 	assert.NotEmpty(t, p.files["../example/main.go"])
 	assert.NotEmpty(t, p.files["../example/web/handler.go"])
-	assert.Equal(t, 3, len(p.files))
+	fmt.Println(p.files)
+	assert.Equal(t, 4, len(p.files))
 }
 
 func TestParser_ParseType(t *testing.T) {

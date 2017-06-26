@@ -100,16 +100,3 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
-func TestOperation_ParseComment(t *testing.T) {
-	//operation := NewOperation()
-	//
-	//err := operation.ParseComment()
-	//assert.NoError(t, err)
-}
-
-//func TestOperation_ParseParamComment(t *testing.T) {
-//	operation := NewOperation()
-//
-//	path:="/testapi/{user}/{pwd}"
-//	operation.ParseRouterParams(path)
-//}
