@@ -64,7 +64,7 @@ func main() {
 }
 
 ```
-5. Browser to http://localhost:8080/swagger/index.html ,
+5. Browser to http://localhost:8080/swagger/index.html
 
 
 ## Declarative Comments Format

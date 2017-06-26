@@ -22,8 +22,7 @@ import (
 func main() {
 	r := gin.New()
 	r.GET("/testapi/get-string-by-int/:some_id", api.GetStringByInt)
-	//hello.Hello()
-	r.GET("/")
+	r.GET("//testapi/get-struct-array-by-string/:some_id",api.GetStructArrayByString)
 	r.Run()
 
 }

@@ -1,12 +1,9 @@
 package api
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/swag-gonic/swag/example/web"
 )
 
-//
 // @Summary Add a new pet to the store
 // @Description get string by ID
 // @Accept  json
@@ -17,8 +14,7 @@ import (
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /testapi/get-string-by-int/{some_id} [get]
 func GetStringByInt(c *gin.Context) {
-	err := web.APIError{}
-	fmt.Println(err)
+	//write your code
 }
 
 // @Description get struct array by ID
@@ -32,7 +28,7 @@ func GetStringByInt(c *gin.Context) {
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /testapi/get-struct-array-by-string/{some_id} [get]
 func GetStructArrayByString(c *gin.Context) {
-
+	//write your code
 }
 
 type Pet3 struct {
