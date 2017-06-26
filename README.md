@@ -6,7 +6,7 @@ Automatically generate RESTful API documentation with Swagger 2.0 for Go.
 [![Go Report Card](https://goreportcard.com/badge/github.com/swag-gonic/swag)](https://goreportcard.com/report/github.com/swag-gonic/swag)
 
 ## What is swag?
-swag converts Go annotations to Swagger Documentation 2.0. And provides a variety of builtin [web framework]((#supported-web-framework)) lib, Let you can quickly integrated in existing golang project(using Swagger UI) .
+swag converts Go annotations to Swagger Documentation 2.0. And provides a variety of builtin [web framework]((#supported-web-framework)) lib. Let you can quickly integrated in existing golang project(using Swagger UI) .
 
 ## Contents
 - [Generate Swagger 2.0 docs](#generate-swagger-20-docs)
