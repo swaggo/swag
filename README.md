@@ -1,12 +1,15 @@
 # swag
-Automatically generate RESTful API documentation with Swagger 2.0 for Go (This project was stll in development). This project was inspired by [swagger](https://raw.githubusercontent.com/yvasiyarov/swagger) but simplified the usage of complexity and support a variety of [web framework]((#supported-web-framework)). Let you focus on writing [Declarative Comments Format](#declarative-comments-format).
+Automatically generate RESTful API documentation with Swagger 2.0 for Go.
 
 [![Travis branch](https://img.shields.io/travis/swag-gonic/swag/master.svg)](https://travis-ci.org/swag-gonic/swag)
 [![Codecov branch](https://img.shields.io/codecov/c/github/swag-gonic/swag/master.svg)](https://codecov.io/gh/swag-gonic/swag)
 [![Go Report Card](https://goreportcard.com/badge/github.com/swag-gonic/swag)](https://goreportcard.com/report/github.com/swag-gonic/swag)
 
 ## What is swag?
-swag is converts Go annotations to Swagger Documentation 2.0, and built-in a variety of [web framework]((#supported-web-framework))lib  that quickly integrated in your existing golang project.
+swag converts Go annotations to Swagger Documentation 2.0. And provides a variety of builtin [web framework]((#supported-web-framework))lib, Let you can quickly integrated in existing golang project(using Swagger UI) .
+
+## Project Status
+This project was stll in development.
 
 ## Contents
 - [Quick Start Guide](#quick-start-guide)
@@ -15,6 +18,7 @@ swag is converts Go annotations to Swagger Documentation 2.0, and built-in a var
   - [General API info](#general-api-info)
   - [API Operation](#api-operation)
 - [Supported Web Framework](#supported-web-framework)
+- [About the Project](#about-the-project)
 
 
 ## Quick Start Guide
@@ -152,3 +156,8 @@ type Pet3 struct {
 - [ ] supplement better documentation
 - [ ] add more example
 - [ ] support other web Framework
+
+
+## About the Project
+This project was inspired by [swagger](https://raw.githubusercontent.com/yvasiyarov/swagger) but simplified the usage of complexity and support a variety of [web framework]((#supported-web-framework)).
+
