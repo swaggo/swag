@@ -15,7 +15,7 @@ Automatically generate RESTful API documentation with Swagger 2.0 for Go (This p
 
 ## Quick Start Guide
 
-1. Add comments to your API source code, [see Declarative Comments Format](#declarative-comments-format)
+1. Add comments to your API source code, [See Declarative Comments Format](#declarative-comments-format)
 
 2. Download Swag for Go by using:
 ```sh
@@ -26,9 +26,10 @@ $ go get -u github.com/swag-gonic/swag
 $ swag init
 ```
 4. Open your `main.go` file, just import this in your code:
-                            
- `import "github.com/swag-gonic/gin-swagger"` 
- `import "github.com/swag-gonic/gin-swagger/swaggerFiles"` 
+```go                            
+ import "github.com/swag-gonic/gin-swagger"
+ import "github.com/swag-gonic/gin-swagger/swaggerFiles"
+```
 
 ```go
 package main
