@@ -30,14 +30,14 @@ $ swag init
 ```
 
 ## How to use it with `gin`? 
-1. After using [swag](#generate-swagger-20-docs) to generate Swagger 2.0 docs, Import following packages:
+1. After using [swag](#generate-swagger-20-docs) to generate Swagger 2.0 docs. Import following packages:
 ```go
 import "github.com/swag-gonic/gin-swagger" // gin-swagger middleware
 import "github.com/swag-gonic/gin-swagger/swaggerFiles" // swagger embed files
 
 ```
 
-2. Added [API Operation](#g#general-api-info) annotations in `main.go` code:
+2. Added [API Operation](#api-operation) annotations in `main.go` code:
 ```go
 package main
 
