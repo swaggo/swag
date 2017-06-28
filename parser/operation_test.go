@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestOperation_ParseAcceptComment(t *testing.T) {
+func TestParseAcceptComment(t *testing.T) {
 	expected := `{
     "consumes": [
         "application/json",
@@ -50,22 +50,19 @@ func TestOperation_ParseRouterComment(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}", operation.Path)
 	assert.Equal(t, "GET", operation.HttpMethod)
-
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	fmt.Printf("%+v", string(b))
 }
 
-func TestOperation_ParseResponseCommentWithObjectType(t *testing.T) {
-	//@Success 200 {object} model.OrderRow "Error message, if code != 200
+func TestParseResponseCommentWithObjectType(t *testing.T) {
+	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200`
 	operation := NewOperation()
-	err := operation.ParseResponseComment(`200 {object} model.OrderRow "Error message, if code != 200"`)
+	err := operation.ParseComment(comment)
 	assert.NoError(t, err)
 	response := operation.Responses.StatusCodeResponses[200]
 	fmt.Printf("%+v\n", operation)
 	assert.Equal(t, `Error message, if code != 200`, response.Description)
 	assert.Equal(t, spec.StringOrArray{"object"}, response.Schema.Type)
 
-	b, err := json.MarshalIndent(operation, "", "    ")
+	b, _ := json.MarshalIndent(operation, "", "    ")
 
 	expected := `{
     "responses": {
@@ -82,8 +79,9 @@ func TestOperation_ParseResponseCommentWithObjectType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithBasicType(t *testing.T) {
+	comment := `@Success 200 {string} string "it's ok'"`
 	operation := NewOperation()
-	operation.ParseResponseComment(`200 {string} string "it's ok'"`)
+	operation.ParseComment(comment)
 	b, _ := json.MarshalIndent(operation, "", "    ")
 	fmt.Printf("%+v", string(b))
 
@@ -96,6 +94,73 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
             }
         }
     }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+// Test ParseParamComment
+func TestParseParamCommentByPathType(t *testing.T) {
+	comment := `@Param some_id path int true "Some ID"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "int",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "path",
+            "required": true
+        }
+    ],
+    "responses": {}
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByQueryType(t *testing.T) {
+	comment := `@Param some_id query int true "Some ID"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "int",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "query",
+            "required": true
+        }
+    ],
+    "responses": {}
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByBodyType(t *testing.T) {
+	comment := `@Param some_id body view.ss true "Some ID"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "int",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "query",
+            "required": true
+        }
+    ],
+    "responses": {}
 }`
 	assert.Equal(t, expected, string(b))
 }

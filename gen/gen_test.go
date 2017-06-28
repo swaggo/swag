@@ -5,6 +5,6 @@ import (
 )
 
 func TestGen_Build(t *testing.T) {
-	searchDir := "../example"
+	searchDir := "/Users/easonlin/gocode/src/api"
 	New().Build(searchDir, "./main.go")
 }
