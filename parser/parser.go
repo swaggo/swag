@@ -13,13 +13,22 @@ import (
 	"strings"
 )
 
+// Parser implements a parser for Go source files.
 type Parser struct {
-	swagger         *spec.Swagger
-	files           map[string]*ast.File                // map[real_go_file_path][astFile]
-	TypeDefinitions map[string]map[string]*ast.TypeSpec // map [package name][type name][*ast.TypeSpec]
-	registerTypes   map[string]*ast.TypeSpec            //map [refTypeName][*ast.TypeSpec]
+	// swagger represents the root document object for the API specification
+	swagger *spec.Swagger
+
+	//files is a map that stores map[real_go_file_path][astFile]
+	files map[string]*ast.File
+
+	// TypeDefinitions is map that stores [package name][type name][*ast.TypeSpec]
+	TypeDefinitions map[string]map[string]*ast.TypeSpec
+
+	//registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
+	registerTypes map[string]*ast.TypeSpec
 }
 
+// New creates a new Parser with default properties.
 func New() *Parser {
 	parser := &Parser{
 		swagger: &spec.Swagger{
@@ -42,6 +51,7 @@ func New() *Parser {
 	return parser
 }
 
+// New returns the Parser with defacult configurations.
 func (parser *Parser) ParseApi(searchDir string, mainApiFile string) {
 	log.Println("Generate general API Info")
 	parser.GetAllGoFileInfo(searchDir)
@@ -108,6 +118,7 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 	}
 }
 
+// parseRouterApiInfo parses router api info for gived astFile
 func (parser *Parser) parseRouterApiInfo(astFile *ast.File) {
 	for _, astDescription := range astFile.Decls {
 		switch astDeclaration := astDescription.(type) {
@@ -145,6 +156,7 @@ func (parser *Parser) parseRouterApiInfo(astFile *ast.File) {
 	}
 }
 
+// ParseType parses type info for gived astFile
 func (parser *Parser) ParseType(astFile *ast.File) {
 	if _, ok := parser.TypeDefinitions[astFile.Name.String()]; !ok {
 		parser.TypeDefinitions[astFile.Name.String()] = make(map[string]*ast.TypeSpec)
@@ -161,6 +173,7 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 	}
 }
 
+// ParseDefinitions parses Swagger Api definitions
 func (parser *Parser) ParseDefinitions() {
 	for refTypeName, typeSpec := range parser.registerTypes {
 		var properties map[string]spec.Schema
@@ -197,6 +210,7 @@ func (parser *Parser) ParseDefinitions() {
 	}
 }
 
+// GetAllGoFileInfo gets all Go source files infomation for gived searchDir.
 func (parser *Parser) GetAllGoFileInfo(searchDir string) {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
@@ -212,6 +226,7 @@ func (parser *Parser) GetAllGoFileInfo(searchDir string) {
 	})
 }
 
+// GetSwagger returns *spec.Swagger which is the root document object for the API specification.
 func (parser *Parser) GetSwagger() *spec.Swagger {
 	return parser.swagger
 }

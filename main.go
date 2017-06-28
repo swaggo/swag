@@ -21,14 +21,6 @@ func main() {
 				return nil
 			},
 		},
-		//{
-		//	Name:    "update",
-		//	Aliases: []string{"a"},
-		//	Usage:   "update docs.go",
-		//	Action: func(c *cli.Context) error {
-		//		return nil
-		//	},
-		//},
 	}
 
 	app.Run(os.Args)

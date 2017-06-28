@@ -5,6 +5,7 @@ import (
 	"log"
 )
 
+// getPropertyName returns the string value for the given field if it exists, otherwise it panics.
 func getPropertyName(field *ast.Field) string {
 	var name string
 	if _, ok := field.Type.(*ast.SelectorExpr); ok {

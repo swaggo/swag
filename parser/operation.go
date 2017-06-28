@@ -258,7 +258,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 
 	}
 	// so we have to know all type in app
-	//TODO: we might ommited schema.type if schemaType equals 'object'
+	//TODO: we might omitted schema.type if schemaType equals 'object'
 	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{schemaType}}}
 
 	if schemaType == "object" {

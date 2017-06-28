@@ -99,4 +99,3 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 }
-

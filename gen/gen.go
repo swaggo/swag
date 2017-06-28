@@ -38,7 +38,6 @@ func (g *Gen) Build(searchDir, mainApiFile string) {
 		Doc:       "`" + string(b) + "`",
 	})
 
-
 	log.Printf("create docs.go at  %+v", docs.Name())
 }
 
