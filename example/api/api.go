@@ -9,7 +9,7 @@ import (
 // @Accept  json
 // @Produce  json
 // @Param   some_id      path   int     true  "Some ID"
-// @Param   some_id      object web.Pet true  "Some ID"
+// @Param   some_id      body web.Pet true  "Some ID"
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"

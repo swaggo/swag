@@ -46,12 +46,6 @@ func (operation *Operation) ParseComment(comment string) error {
 		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
 		}
-	//case "@resource":
-	//	resource := strings.TrimSpace(commentLine[len(attribute):])
-	//	if resource[0:1] == "/" {
-	//		resource = resource[1:]
-	//	}
-	//	operation.ForceResource = resource
 	case "@summary":
 		operation.Summary = strings.TrimSpace(commentLine[len(attribute):])
 	case "@description":
@@ -74,14 +68,12 @@ func (operation *Operation) ParseComment(comment string) error {
 		}
 	}
 
-	//operation.Models = operation.getUniqueModels()
-
 	return nil
 }
 
 // Parse params return []string of param properties
 // @Param	queryText		form	      string	  true		        "The email for login"
-// 			[param name]    [param type] [data type]  [is mandatory?]   [Comment]
+// 			[param name]    [kindIn] [data type]  [is mandatory?]   [Comment]
 // @Param   some_id     path    int     true        "Some ID"
 func (operation *Operation) ParseParamComment(commentLine string) error {
 	paramString := commentLine
@@ -91,14 +83,10 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 	if matches := re.FindStringSubmatch(paramString); len(matches) != 6 {
 		return fmt.Errorf("Can not parse param comment \"%s\", skipped.", paramString)
 	} else {
-		//typeName, err := operation.registerType(matches[3])
-		//if err != nil {
-		//	return err
-		//}
 		name := matches[1]
 		kindIn := matches[2]
 
-		paramTye := matches[3]
+		schemaType := matches[3]
 
 		requiredText := strings.ToLower(matches[4])
 		required := (requiredText == "true" || requiredText == "required")
@@ -106,23 +94,23 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 
 		var param spec.Parameter
 
-		if kindIn == "query" || kindIn == "path" {
-			param = createParameter(kindIn, description, name, paramTye, required)
-		}
-		if kindIn == "body" {
-			param = createParameter(kindIn, description, name, "object", required) // Suppose object
-			refSplit := strings.Split(paramTye, ".")
+		switch kindIn {
+		case "query", "path":
+			param = createParameter(kindIn, description, name, schemaType, required)
+		case "body":
+			param = createParameter(kindIn, description, name, "object", required) // TODO: if Parameter types can be objects, but also primitives and arrays
+			refSplit := strings.Split(schemaType, ".")
 			if len(refSplit) == 2 {
 				pkgName := refSplit[0]
 				typeName := refSplit[1]
 				if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
-					operation.parser.registerTypes[paramTye] = typeSpec
+					operation.parser.registerTypes[schemaType] = typeSpec
 				} else {
-					return fmt.Errorf("Can not find ref type:\"%s\".", paramTye)
+					return fmt.Errorf("Can not find ref type:\"%s\".", schemaType)
 				}
 
 				param.Schema.Ref = spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + paramTye),
+					Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
 				}
 			}
 		}
@@ -199,15 +187,15 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 //	}
 //}
 
-func createParameter(kindIn, description, paramName, paramTye string, required bool) spec.Parameter {
+func createParameter(paramType, description, paramName, schemaType string, required bool) spec.Parameter {
 	paramProps := spec.ParamProps{
 		Name:        paramName,
 		Description: description,
 		Required:    required,
-		In:          kindIn,
+		In:          paramType,
 		Schema: &spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{paramTye},
+				Type: []string{schemaType},
 			},
 		},
 	}

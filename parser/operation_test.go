@@ -99,3 +99,28 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 }
+
+func TestParseParamComment(t *testing.T) {
+	expected := `{
+    "parameters": [
+        {
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+                "type": "int"
+            }
+        }
+    ],
+    "responses": {}
+}`
+	comment:=`@Param some_id path int true "Some ID"`
+	operation := NewOperation()
+	err:=operation.ParseComment(comment)
+
+	assert.NoError(t,err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	assert.Equal(t, expected, string(b))
+
+}
