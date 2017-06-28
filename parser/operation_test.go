@@ -144,7 +144,8 @@ func TestParseParamCommentByQueryType(t *testing.T) {
 }
 
 func TestParseParamCommentByBodyType(t *testing.T) {
-	comment := `@Param some_id body view.ss true "Some ID"`
+	//TODO: add tests coverage swagger definitions
+	comment := `@Param some_id body mock true "Some ID"`
 	operation := NewOperation()
 	err := operation.ParseComment(comment)
 
@@ -153,11 +154,13 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 	expected := `{
     "parameters": [
         {
-            "type": "int",
             "description": "Some ID",
             "name": "some_id",
-            "in": "query",
-            "required": true
+            "in": "body",
+            "required": true,
+            "schema": {
+                "type": "object"
+            }
         }
     ],
     "responses": {}

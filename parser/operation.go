@@ -101,6 +101,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 		case "body":
 			param = createParameter(paramType, description, name, "object", required) // TODO: if Parameter types can be objects, but also primitives and arrays
 
+			// TODO: this snippets have to extract out
 			refSplit := strings.Split(schemaType, ".")
 			if len(refSplit) == 2 {
 				pkgName := refSplit[0]
