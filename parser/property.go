@@ -18,6 +18,11 @@ func getPropertyName(field *ast.Field) string {
 		//TODO: support map
 		//log.Fatalf("Smap wrong: %#v", astTypeMap)
 		return "object"
+	} else if _, ok := field.Type.(*ast.StructType); ok { // if array
+		return "array"
+	} else if _, ok := field.Type.(*ast.StructType); ok { // if struct
+		//TODO: support neted struct
+		return "object"
 	} else {
 		log.Fatalf("Something goes wrong: %#v", field.Type)
 	}

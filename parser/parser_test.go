@@ -2,7 +2,6 @@ package parser
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"path"
@@ -13,7 +12,8 @@ func TestNew(t *testing.T) {
 	New()
 }
 
-var expected = `{
+func TestParser_ParseGeneralApiInfo(t *testing.T) {
+	var expected = `{
     "swagger": "2.0",
     "info": {
         "description": "This is a sample server Petstore server.",
@@ -34,8 +34,6 @@ var expected = `{
     "basePath": "/v2",
     "paths": {}
 }`
-
-func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
@@ -53,7 +51,6 @@ func TestGetAllGoFileInfo(t *testing.T) {
 
 	assert.NotEmpty(t, p.files["../example/main.go"])
 	assert.NotEmpty(t, p.files["../example/web/handler.go"])
-	fmt.Println(p.files)
 	assert.Equal(t, 4, len(p.files))
 }
 
@@ -71,18 +68,4 @@ func TestParser_ParseType(t *testing.T) {
 	assert.NotNil(t, p.TypeDefinitions["web"]["Pet"])
 	assert.NotNil(t, p.TypeDefinitions["web"]["Pet2"])
 	assert.NotNil(t, p.TypeDefinitions["main"])
-	fmt.Printf("%+v", p.TypeDefinitions)
-}
-
-func TestParser_ParseApi(t *testing.T) {
-	searchDir := "../example"
-	mainApiFile := "./main.go"
-
-	p := New()
-	p.ParseApi(searchDir, mainApiFile)
-
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	//assert.Equal(t, expected, string(b))
-
-	fmt.Printf("%+v", string(b))
 }
