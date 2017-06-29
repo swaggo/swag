@@ -16,9 +16,8 @@ func getPropertyName(field *ast.Field) string {
 		panic("not supported astStarExpr yet.")
 	} else if _, ok := field.Type.(*ast.MapType); ok { // if map
 		//TODO: support map
-		//log.Fatalf("Smap wrong: %#v", astTypeMap)
 		return "object"
-	} else if _, ok := field.Type.(*ast.StructType); ok { // if array
+	} else if _, ok := field.Type.(*ast.ArrayType); ok { // if array
 		return "array"
 	} else if _, ok := field.Type.(*ast.StructType); ok { // if struct
 		//TODO: support neted struct
