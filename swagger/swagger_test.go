@@ -169,8 +169,8 @@ func TestNilRegister(t *testing.T) {
 }
 
 func TestCalledTwicelRegister(t *testing.T) {
-	Register(Name, &s{})
 	assert.Panics(t, func() {
+		Register(Name, &s{})
 		Register(Name, &s{})
 	})
 }
