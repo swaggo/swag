@@ -23,13 +23,7 @@ func NewOperation() *Operation {
 	return &Operation{
 		HttpMethod: "get",
 		Operation: spec.Operation{
-			OperationProps: spec.OperationProps{
-				Responses: &spec.Responses{
-					ResponsesProps: spec.ResponsesProps{
-						StatusCodeResponses: make(map[int]spec.Response),
-					},
-				},
-			},
+			OperationProps: spec.OperationProps{},
 		},
 	}
 }
@@ -116,10 +110,11 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 					Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
 				}
 			}
-		case "Header":
-			panic("not supported Header paramType yet.")
-		case "Form":
-			panic("not supported Form paramType yet.")
+
+			//case "Header": // TODO: support Header and Form
+			//	panic("not supported Header paramType yet.")
+			//case "Form":
+			//	panic("not supported Form paramType yet.")
 		}
 
 		operation.Operation.Parameters = append(operation.Operation.Parameters, param)
@@ -141,6 +136,8 @@ func (operation *Operation) ParseAcceptComment(commentLine string) error {
 			operation.Consumes = append(operation.Consumes, "text/html")
 		case "mpfd", "multipart/form-data":
 			operation.Consumes = append(operation.Consumes, "multipart/form-data")
+		default:
+			return fmt.Errorf("%v accept type can't accepted.", a)
 		}
 	}
 	return nil
@@ -160,6 +157,8 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 			operation.Produces = append(operation.Produces, "text/html")
 		case "mpfd", "multipart/form-data":
 			operation.Produces = append(operation.Produces, "multipart/form-data")
+		default:
+			return fmt.Errorf("%v produce type can't accepted.", a)
 		}
 	}
 	return nil
@@ -181,18 +180,7 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	return nil
 }
 
-//func (operation *Operation) ParseRouterParams(path string) {
-//	re := regexp.MustCompile(`\{(\w+)\}`)
-//	matchs := re.FindAllStringSubmatch(path, -1)
-//
-//	if len(matchs) > 0 {
-//		for _, match := range matchs {
-//			group := match[1]
-//			operation.Operation.Parameters = append(operation.Operation.Parameters, createPathParameter(group))
-//		}
-//	}
-//}
-
+// createParamter returns swagger spec.Parameter for gived  paramType, description, paramName, schemaType, required
 func createParameter(paramType, description, paramName, schemaType string, required bool) spec.Parameter {
 	// //five possible parameter types. 	query, path, body, header, form
 	paramProps := spec.ParamProps{
@@ -224,11 +212,6 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 	}
 }
 
-func createPathParameter(paramName string) spec.Parameter {
-	return createParameter("path", paramName, paramName, "string", true)
-}
-
-// @Success 200 {object} model.OrderRow "Error message, if code != 200"
 func (operation *Operation) ParseResponseComment(commentLine string) error {
 	re := regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)
 	var matches []string
@@ -283,6 +266,14 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 			},
 		}
 
+	}
+
+	if operation.Responses == nil {
+		operation.Responses = &spec.Responses{
+			ResponsesProps: spec.ResponsesProps{
+				StatusCodeResponses: make(map[int]spec.Response),
+			},
+		}
 	}
 
 	operation.Responses.StatusCodeResponses[code] = response

@@ -20,7 +20,7 @@ func getPropertyName(field *ast.Field) string {
 	} else if _, ok := field.Type.(*ast.ArrayType); ok { // if array
 		return "array"
 	} else if _, ok := field.Type.(*ast.StructType); ok { // if struct
-		//TODO: support neted struct
+		//TODO: support nested struct
 		return "object"
 	} else {
 		log.Fatalf("Something goes wrong: %#v", field.Type)

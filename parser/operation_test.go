@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
+	"go/ast"
 	"testing"
 )
 
@@ -18,14 +19,23 @@ func TestParseAcceptComment(t *testing.T) {
         "multipart/form-data"
     ]
 }`
-	operation := new(Operation)
-	operation.ParseAcceptComment("json,xml,plain,html,mpfd")
-
+	comment := `/@Accept json,xml,plain,html,mpfd`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(operation, "", "    ")
 	assert.Equal(t, expected, string(b))
+
 }
 
-func TestOperation_ParseProduceComment(t *testing.T) {
+func TestParseAcceptCommentErr(t *testing.T) {
+	comment := `/@Accept unknown`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+	assert.Error(t, err)
+}
+
+func TestParseProduceComment(t *testing.T) {
 	expected := `{
     "produces": [
         "application/json",
@@ -35,21 +45,34 @@ func TestOperation_ParseProduceComment(t *testing.T) {
         "multipart/form-data"
     ]
 }`
-
+	comment := `/@Produce json,xml,plain,html,mpfd`
 	operation := new(Operation)
-	operation.ParseProduceComment("json,xml,plain,html,mpfd")
+	operation.ParseComment(comment)
 	b, _ := json.MarshalIndent(operation, "", "    ")
-	fmt.Printf("%+v", string(b))
 	assert.Equal(t, expected, string(b))
 }
 
-func TestOperation_ParseRouterComment(t *testing.T) {
-	//@Router /customer/get-wishlist/{wishlist_id} [get]
+func TestParseProduceCommentErr(t *testing.T) {
+	comment := `/@Produce foo`
+	operation := new(Operation)
+	err := operation.ParseComment(comment)
+	assert.Error(t, err)
+}
+
+func TestParseRouterComment(t *testing.T) {
+	comment := `/@Router /customer/get-wishlist/{wishlist_id} [get]`
 	operation := NewOperation()
-	err := operation.ParseRouterComment("/customer/get-wishlist/{wishlist_id} [get]")
+	err := operation.ParseComment(comment)
 	assert.NoError(t, err)
 	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}", operation.Path)
 	assert.Equal(t, "GET", operation.HttpMethod)
+}
+
+func TestParseRouterCommentOccursErr(t *testing.T) {
+	comment := `/@Router /customer/get-wishlist/{wishlist_id}`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+	assert.Error(t, err)
 }
 
 func TestParseResponseCommentWithObjectType(t *testing.T) {
@@ -78,6 +101,35 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseResponseCommentWithArrayType(t *testing.T) {
+	comment := `@Success 200 {array} model.OrderRow "Error message, if code != 200`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+	assert.NoError(t, err)
+	response := operation.Responses.StatusCodeResponses[200]
+	fmt.Printf("%+v\n", operation)
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+	assert.Equal(t, spec.StringOrArray{"array"}, response.Schema.Type)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/model.OrderRow"
+                }
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+}
+
 func TestParseResponseCommentWithBasicType(t *testing.T) {
 	comment := `@Success 200 {string} string "it's ok'"`
 	operation := NewOperation()
@@ -98,6 +150,23 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseResponseCommentParamMissing(t *testing.T) {
+	operation := NewOperation()
+
+	paramLenErrComment := `@Success notIntCode {string}`
+	paramLenErr := operation.ParseComment(paramLenErrComment)
+	assert.Error(t, paramLenErr)
+}
+
+func TestParseResponseCommentErrCode(t *testing.T) {
+	operation := NewOperation()
+
+	httpCodeErrComment := `@Success fooCdoe {string} string "it's ok'"`
+
+	httpCodeNotInt := operation.ParseComment(httpCodeErrComment)
+	assert.Error(t, httpCodeNotInt)
+}
+
 // Test ParseParamComment
 func TestParseParamCommentByPathType(t *testing.T) {
 	comment := `@Param some_id path int true "Some ID"`
@@ -115,8 +184,7 @@ func TestParseParamCommentByPathType(t *testing.T) {
             "in": "path",
             "required": true
         }
-    ],
-    "responses": {}
+    ]
 }`
 	assert.Equal(t, expected, string(b))
 }
@@ -137,16 +205,18 @@ func TestParseParamCommentByQueryType(t *testing.T) {
             "in": "query",
             "required": true
         }
-    ],
-    "responses": {}
+    ]
 }`
 	assert.Equal(t, expected, string(b))
 }
 
 func TestParseParamCommentByBodyType(t *testing.T) {
-	//TODO: add tests coverage swagger definitions
-	comment := `@Param some_id body mock true "Some ID"`
+	comment := `@Param some_id body model.OrderRow true "Some ID"`
 	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
 	err := operation.ParseComment(comment)
 
 	assert.NoError(t, err)
@@ -159,11 +229,33 @@ func TestParseParamCommentByBodyType(t *testing.T) {
             "in": "body",
             "required": true,
             "schema": {
-                "type": "object"
+                "type": "object",
+                "$ref": "#/definitions/model.OrderRow"
             }
         }
-    ],
-    "responses": {}
+    ]
 }`
 	assert.Equal(t, expected, string(b))
+
+}
+
+func TestParseParamCommentByBodyTypeErr(t *testing.T) {
+	comment := `@Param some_id body model.OrderRow true "Some ID"`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["notexist"] = &ast.TypeSpec{}
+	err := operation.ParseComment(comment)
+
+	assert.Error(t, err)
+
+}
+
+func TestParseParamCommentNotMatch(t *testing.T) {
+	comment := `@Param some_id body mock true`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+
+	assert.Error(t, err)
 }

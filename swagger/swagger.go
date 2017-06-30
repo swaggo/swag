@@ -1,6 +1,7 @@
 package swagger
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -26,13 +27,13 @@ func Register(name string, swagger Swagger) {
 		panic("Register called twice for swag doc: " + name)
 	}
 	swaggers[name] = swagger
-
-	//fmt.Println(swaggers[Name].ReadDoc())
 }
 
-func ReadDoc() string {
+func ReadDoc() (string, error) {
 	if val, ok := swaggers[Name]; ok {
-		return val.ReadDoc()
+		return val.ReadDoc(), nil
 	}
-	return ""
+
+	return "", errors.New("Can't found swag doc")
+
 }

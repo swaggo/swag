@@ -5,11 +5,6 @@ import (
 	"testing"
 )
 
-func TestRegister(t *testing.T) {
-	Register(Name, &s{})
-	assert.Equal(t, doc, ReadDoc())
-}
-
 var doc = `{
     "swagger": "2.0",
     "info": {
@@ -157,4 +152,25 @@ type s struct{}
 
 func (s *s) ReadDoc() string {
 	return doc
+}
+
+func TestRegister(t *testing.T) {
+	Register(Name, &s{})
+	d, _ := ReadDoc()
+	assert.Equal(t, doc, d)
+}
+
+func TestNilRegister(t *testing.T) {
+	var swagger Swagger
+
+	assert.Panics(t, func() {
+		Register(Name, swagger)
+	})
+}
+
+func TestCalledTwicelRegister(t *testing.T) {
+	Register(Name, &s{})
+	assert.Panics(t, func() {
+		Register(Name, &s{})
+	})
 }
