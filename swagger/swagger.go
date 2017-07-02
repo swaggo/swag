@@ -9,7 +9,7 @@ const Name = "swagger"
 
 var (
 	swaggerMu sync.RWMutex
-	swaggers  = make(map[string]Swagger)
+	swag      Swagger
 )
 
 type Swagger interface {
@@ -23,17 +23,15 @@ func Register(name string, swagger Swagger) {
 		panic("swagger is nil")
 	}
 
-	if _, dup := swaggers[name]; dup {
-		panic("Register called twice for swag doc: " + name)
+	if swag != nil {
+		panic("Register called twice for swag: " + name)
 	}
-	swaggers[name] = swagger
+	swag = swagger
 }
 
 func ReadDoc() (string, error) {
-	if val, ok := swaggers[Name]; ok {
-		return val.ReadDoc(), nil
+	if swag != nil {
+		return swag.ReadDoc(), nil
 	}
-
-	return "", errors.New("Can't found swag doc")
-
+	return "", errors.New("Not yet registered swag.")
 }

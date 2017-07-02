@@ -155,22 +155,34 @@ func (s *s) ReadDoc() string {
 }
 
 func TestRegister(t *testing.T) {
+	setup()
 	Register(Name, &s{})
 	d, _ := ReadDoc()
 	assert.Equal(t, doc, d)
 }
 
-func TestNilRegister(t *testing.T) {
-	var swagger Swagger
+func TestReadDocBeforeRegistered(t *testing.T) {
+	setup()
+	_, err := ReadDoc()
+	assert.Error(t, err)
+}
 
+func TestNilRegister(t *testing.T) {
+	setup()
+	var swagger Swagger
 	assert.Panics(t, func() {
 		Register(Name, swagger)
 	})
 }
 
 func TestCalledTwicelRegister(t *testing.T) {
+	setup()
 	assert.Panics(t, func() {
 		Register(Name, &s{})
 		Register(Name, &s{})
 	})
+}
+
+func setup() {
+	swag = nil
 }
