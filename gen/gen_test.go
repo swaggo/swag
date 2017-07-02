@@ -1,10 +1,19 @@
 package gen
 
 import (
+	"github.com/stretchr/testify/assert"
+	"os"
+	"path"
 	"testing"
 )
 
 func TestGen_Build(t *testing.T) {
 	searchDir := "../example"
-	New().Build(searchDir, "./main.go")
+	assert.NotPanics(t, func() {
+		New().Build(searchDir, "./main.go")
+	})
+
+	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
+		t.Fail()
+	}
 }

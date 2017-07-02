@@ -5,6 +5,7 @@ import (
 	"github.com/swag-gonic/swag/parser"
 	"log"
 	"os"
+	"path"
 	"text/template"
 	"time"
 )
@@ -17,6 +18,7 @@ func New() *Gen {
 }
 
 func (g *Gen) Build(searchDir, mainApiFile string) {
+	//TODO: not use log.Println
 	log.Println("Generate swagger docs....")
 	p := parser.New()
 	p.ParseApi(searchDir, mainApiFile)
@@ -24,9 +26,9 @@ func (g *Gen) Build(searchDir, mainApiFile string) {
 
 	b, _ := json.MarshalIndent(swagger, "", "    ")
 
-	err := os.MkdirAll("docs", os.ModePerm)
+	err := os.MkdirAll(path.Join(searchDir, "docs"), os.ModePerm)
 	die(err)
-	docs, err := os.Create("docs/docs.go")
+	docs, err := os.Create(path.Join(searchDir, "docs", "docs.go"))
 	die(err)
 	defer docs.Close()
 
