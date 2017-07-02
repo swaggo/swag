@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"github.com/go-openapi/spec"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -11,6 +10,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-openapi/spec"
 )
 
 // Parser implements a parser for Go source files.
@@ -51,7 +52,7 @@ func New() *Parser {
 	return parser
 }
 
-// New returns the Parser with defacult configurations.
+// ParseApi parses general api info for gived searchDir and mainApiFile
 func (parser *Parser) ParseApi(searchDir string, mainApiFile string) {
 	log.Println("Generate general API Info")
 	parser.GetAllGoFileInfo(searchDir)
