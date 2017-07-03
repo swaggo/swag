@@ -211,7 +211,7 @@ func (parser *Parser) ParseDefinitions() {
 	}
 }
 
-// GetAllGoFileInfo gets all Go source files infomation for gived searchDir.
+// GetAllGoFileInfo gets all Go source files information for gived searchDir.
 func (parser *Parser) GetAllGoFileInfo(searchDir string) {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
