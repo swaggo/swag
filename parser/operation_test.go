@@ -9,6 +9,12 @@ import (
 	"testing"
 )
 
+func TestParseEmptyComment(t *testing.T) {
+	operation := NewOperation()
+	err := operation.ParseComment("//")
+
+	assert.NoError(t, err)
+}
 func TestParseAcceptComment(t *testing.T) {
 	expected := `{
     "consumes": [
@@ -81,7 +87,6 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 	err := operation.ParseComment(comment)
 	assert.NoError(t, err)
 	response := operation.Responses.StatusCodeResponses[200]
-	fmt.Printf("%+v\n", operation)
 	assert.Equal(t, `Error message, if code != 200`, response.Description)
 	assert.Equal(t, spec.StringOrArray{"object"}, response.Schema.Type)
 
@@ -155,16 +160,7 @@ func TestParseResponseCommentParamMissing(t *testing.T) {
 
 	paramLenErrComment := `@Success notIntCode {string}`
 	paramLenErr := operation.ParseComment(paramLenErrComment)
-	assert.Error(t, paramLenErr)
-}
-
-func TestParseResponseCommentErrCode(t *testing.T) {
-	operation := NewOperation()
-
-	httpCodeErrComment := `@Success fooCdoe {string} string "it's ok'"`
-
-	httpCodeNotInt := operation.ParseComment(httpCodeErrComment)
-	assert.Error(t, httpCodeNotInt)
+	assert.EqualError(t, paramLenErr, `Can not parse response comment "notIntCode {string}", skipped.`)
 }
 
 // Test ParseParamComment

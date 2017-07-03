@@ -1,13 +1,13 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
-	"github.com/go-openapi/jsonreference"
-	"github.com/go-openapi/spec"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/go-openapi/jsonreference"
+	"github.com/go-openapi/spec"
 )
 
 type Operation struct {
@@ -15,7 +15,7 @@ type Operation struct {
 	Path       string
 	spec.Operation
 
-	parser *Parser
+	parser *Parser // TODO: we don't need it
 }
 
 //map[int]Response
@@ -98,6 +98,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 			// TODO: this snippets have to extract out
 			refSplit := strings.Split(schemaType, ".")
 			if len(refSplit) == 2 {
+				//TODO:---------- extract out
 				pkgName := refSplit[0]
 				typeName := refSplit[1]
 				if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
@@ -105,7 +106,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 				} else {
 					return fmt.Errorf("Can not find ref type:\"%s\".", schemaType)
 				}
-
+				//TODO:----------
 				param.Schema.Ref = spec.Ref{
 					Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
 				}
@@ -217,16 +218,12 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
-		fmt.Println(len(matches))
 		return fmt.Errorf("Can not parse response comment \"%s\", skipped.", commentLine)
 	}
 
 	response := spec.Response{}
 
-	code, err := strconv.Atoi(matches[1])
-	if err != nil {
-		return errors.New("Success http code must be int")
-	}
+	code, _ := strconv.Atoi(matches[1])
 
 	response.Description = strings.Trim(matches[4], "\"")
 
