@@ -3,10 +3,11 @@ package parser
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-openapi/spec"
-	"github.com/stretchr/testify/assert"
 	"go/ast"
 	"testing"
+
+	"github.com/go-openapi/spec"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestParseEmptyComment(t *testing.T) {

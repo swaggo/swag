@@ -1,10 +1,11 @@
 package gen
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGen_Build(t *testing.T) {

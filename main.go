@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/swag-gonic/swag/gen"
+	"github.com/swaggo/swag/gen"
 	"github.com/urfave/cli"
 	"os"
 )
