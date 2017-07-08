@@ -38,7 +38,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	p.ParseGeneralApiInfo(path.Join(gopath, "src", "github.com/swag/example/main.go"))
+	p.ParseGeneralApiInfo(path.Join(gopath, "src", "github.com/swaggo/swag/example/main.go"))
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
