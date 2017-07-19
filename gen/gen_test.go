@@ -9,7 +9,7 @@ import (
 )
 
 func TestGen_Build(t *testing.T) {
-	searchDir := "../example"
+	searchDir := "../example/simple"
 	assert.NotPanics(t, func() {
 		New().Build(searchDir, "./main.go")
 	})

@@ -22,7 +22,7 @@ type Parser struct {
 	//files is a map that stores map[real_go_file_path][astFile]
 	files map[string]*ast.File
 
-	// TypeDefinitions is map that stores [package name][type name][*ast.TypeSpec]
+	// TypeDefinitions is a map that stores [package name][type name][*ast.TypeSpec]
 	TypeDefinitions map[string]map[string]*ast.TypeSpec
 
 	//registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
@@ -55,7 +55,7 @@ func New() *Parser {
 // ParseApi parses general api info for gived searchDir and mainApiFile
 func (parser *Parser) ParseApi(searchDir string, mainApiFile string) {
 	log.Println("Generate general API Info")
-	parser.GetAllGoFileInfo(searchDir)
+	parser.getAllGoFileInfo(searchDir)
 	parser.ParseGeneralApiInfo(path.Join(searchDir, mainApiFile))
 
 	for _, astFile := range parser.files {
@@ -113,10 +113,19 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
 				case "@basepath":
 					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
+
+				case "@schemes":
+					parser.swagger.Schemes = GetSchemes(commentLine)
 				}
 			}
 		}
 	}
+}
+
+
+func GetSchemes(commentLine string)[]string {
+	attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+	return strings.Split(strings.TrimSpace(commentLine[len(attribute):])," ")
 }
 
 // parseRouterApiInfo parses router api info for gived astFile
@@ -212,7 +221,7 @@ func (parser *Parser) ParseDefinitions() {
 }
 
 // GetAllGoFileInfo gets all Go source files information for gived searchDir.
-func (parser *Parser) GetAllGoFileInfo(searchDir string) {
+func (parser *Parser) getAllGoFileInfo(searchDir string) {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
 		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(path, "/vendor") {

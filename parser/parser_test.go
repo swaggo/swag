@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"fmt"
 )
 
 func TestNew(t *testing.T) {
@@ -38,28 +39,28 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	p.ParseGeneralApiInfo(path.Join(gopath, "src", "github.com/swaggo/swag/example/main.go"))
+	p.ParseGeneralApiInfo(path.Join(gopath, "src", "github.com/swaggo/swag/example/simple/main.go"))
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
-	searchDir := "../example"
+	searchDir := "../example/simple"
 
 	p := New()
-	p.GetAllGoFileInfo(searchDir)
+	p.getAllGoFileInfo(searchDir)
 
-	assert.NotEmpty(t, p.files["../example/main.go"])
-	assert.NotEmpty(t, p.files["../example/web/handler.go"])
+	assert.NotEmpty(t, p.files["../example/simple/main.go"])
+	assert.NotEmpty(t, p.files["../example/simple/web/handler.go"])
 	assert.Equal(t, 4, len(p.files))
 }
 
 func TestParser_ParseType(t *testing.T) {
-	searchDir := "../example"
+	searchDir := "../example/simple/"
 
 	p := New()
-	p.GetAllGoFileInfo(searchDir)
+	p.getAllGoFileInfo(searchDir)
 
 	for _, file := range p.files {
 		p.ParseType(file)
@@ -68,10 +69,13 @@ func TestParser_ParseType(t *testing.T) {
 	assert.NotNil(t, p.TypeDefinitions["api"]["Pet3"])
 	assert.NotNil(t, p.TypeDefinitions["web"]["Pet"])
 	assert.NotNil(t, p.TypeDefinitions["web"]["Pet2"])
-	assert.NotNil(t, p.TypeDefinitions["main"])
 }
 
-func TestParseApi(t *testing.T) {
+func TestGetSchemes(t *testing.T) {
+	fmt.Println(GetSchemes("@schemes http https"))
+
+}
+func TestParseSimpleApi(t *testing.T) {
 	var expected = `{
     "swagger": "2.0",
     "info": {
@@ -239,11 +243,23 @@ func TestParseApi(t *testing.T) {
         }
     }
 }`
-	searchDir := "../example"
+	searchDir := "../example/simple"
 	mainApiFile := "main.go"
 	p := New()
 	p.ParseApi(searchDir, mainApiFile)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParsePetApi(t *testing.T) {
+	//var expected = ``
+	searchDir := "../example/pet"
+	mainApiFile := "main.go"
+	p := New()
+	p.ParseApi(searchDir, mainApiFile)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	//assert.Equal(t, expected, string(b))
+	fmt.Println(string(b))
 }
