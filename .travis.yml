@@ -7,7 +7,7 @@ before_install:
   - go get -t -v ./...
 
 script:
-  - ./test.sh
+  - sh ./test.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
