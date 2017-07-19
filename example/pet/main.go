@@ -1,9 +1,5 @@
 package main
 
-import (
-	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/example/simple/api"
-)
 
 // @title Swagger Petstore
 // @version 1.0
