@@ -3,7 +3,6 @@ package parser
 import (
 	"encoding/json"
 	"os"
-	"path"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,10 +38,19 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	p.ParseGeneralApiInfo(path.Join(gopath, "src", "github.com/swaggo/swag/example/simple/main.go"))
+	p.ParseGeneralApiInfo("testdata/main.go")
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
+	gopath := os.Getenv("GOPATH")
+	assert.NotNil(t, gopath)
+	p := New()
+	assert.Panics(t, func() {
+		p.ParseGeneralApiInfo("testdata/noexist.go")
+	})
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
@@ -253,7 +261,6 @@ func TestParseSimpleApi(t *testing.T) {
 }
 
 func TestParsePetApi(t *testing.T) {
-	//var expected = ``
 	searchDir := "../example/pet"
 	mainApiFile := "main.go"
 	p := New()

@@ -37,6 +37,7 @@ func New() *Parser {
 				Info: &spec.Info{
 					InfoProps: spec.InfoProps{
 						Contact: &spec.ContactInfo{},
+						License: &spec.License{},
 					},
 				},
 				Paths: &spec.Paths{
@@ -100,14 +101,8 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 				case "@contact.url":
 					parser.swagger.Info.Contact.URL = strings.TrimSpace(commentLine[len(attribute):])
 				case "@license.name":
-					if parser.swagger.Info.License == nil {
-						parser.swagger.Info.License = &spec.License{}
-					}
 					parser.swagger.Info.License.Name = strings.TrimSpace(commentLine[len(attribute):])
 				case "@license.url":
-					if parser.swagger.Info.License == nil {
-						parser.swagger.Info.License = &spec.License{}
-					}
 					parser.swagger.Info.License.URL = strings.TrimSpace(commentLine[len(attribute):])
 				case "@host":
 					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
