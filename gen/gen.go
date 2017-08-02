@@ -8,7 +8,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/swaggo/swag/parser"
+	"github.com/swaggo/swag"
 )
 
 type Gen struct {
@@ -20,7 +20,7 @@ func New() *Gen {
 
 func (g *Gen) Build(searchDir, mainApiFile string) error {
 	log.Println("Generate swagger docs....")
-	p := parser.New()
+	p := swag.New()
 	p.ParseApi(searchDir, mainApiFile)
 	swagger := p.GetSwagger()
 
