@@ -1,4 +1,4 @@
-package parser
+package swag
 
 import (
 	"encoding/json"
@@ -54,18 +54,18 @@ func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
-	searchDir := "../example/simple"
+	searchDir := "example/simple"
 
 	p := New()
 	p.getAllGoFileInfo(searchDir)
 
-	assert.NotEmpty(t, p.files["../example/simple/main.go"])
-	assert.NotEmpty(t, p.files["../example/simple/web/handler.go"])
+	assert.NotEmpty(t, p.files["example/simple/main.go"])
+	assert.NotEmpty(t, p.files["example/simple/web/handler.go"])
 	assert.Equal(t, 4, len(p.files))
 }
 
 func TestParser_ParseType(t *testing.T) {
-	searchDir := "../example/simple/"
+	searchDir := "example/simple/"
 
 	p := New()
 	p.getAllGoFileInfo(searchDir)
@@ -251,7 +251,7 @@ func TestParseSimpleApi(t *testing.T) {
         }
     }
 }`
-	searchDir := "../example/simple"
+	searchDir := "example/simple"
 	mainApiFile := "main.go"
 	p := New()
 	p.ParseApi(searchDir, mainApiFile)
@@ -261,7 +261,7 @@ func TestParseSimpleApi(t *testing.T) {
 }
 
 func TestParsePetApi(t *testing.T) {
-	searchDir := "../example/pet"
+	searchDir := "example/pet"
 	mainApiFile := "main.go"
 	p := New()
 	p.ParseApi(searchDir, mainApiFile)

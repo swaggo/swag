@@ -1,4 +1,4 @@
-package parser
+package swag
 
 import (
 	"encoding/json"
