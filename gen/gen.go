@@ -60,6 +60,6 @@ func (s *s) ReadDoc() string {
 	return doc
 }
 func init() {
-	swag.Register(swagger.Name, &s{})
+	swag.Register(swag.Name, &s{})
 }
 `))
