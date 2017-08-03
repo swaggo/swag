@@ -1,4 +1,4 @@
-package swagger
+package swag
 
 import (
 	"errors"

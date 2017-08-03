@@ -117,10 +117,9 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 	}
 }
 
-
-func GetSchemes(commentLine string)[]string {
+func GetSchemes(commentLine string) []string {
 	attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
-	return strings.Split(strings.TrimSpace(commentLine[len(attribute):])," ")
+	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
 // parseRouterApiInfo parses router api info for gived astFile

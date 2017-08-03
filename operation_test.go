@@ -2,7 +2,6 @@ package swag
 
 import (
 	"encoding/json"
-	"fmt"
 	"go/ast"
 	"testing"
 
@@ -113,7 +112,6 @@ func TestParseResponseCommentWithArrayType(t *testing.T) {
 	err := operation.ParseComment(comment)
 	assert.NoError(t, err)
 	response := operation.Responses.StatusCodeResponses[200]
-	fmt.Printf("%+v\n", operation)
 	assert.Equal(t, `Error message, if code != 200`, response.Description)
 	assert.Equal(t, spec.StringOrArray{"array"}, response.Schema.Type)
 
@@ -141,7 +139,6 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 	operation := NewOperation()
 	operation.ParseComment(comment)
 	b, _ := json.MarshalIndent(operation, "", "    ")
-	fmt.Printf("%+v", string(b))
 
 	expected := `{
     "responses": {

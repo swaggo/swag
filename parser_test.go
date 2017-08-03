@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"fmt"
 )
 
 func TestNew(t *testing.T) {
@@ -80,7 +79,8 @@ func TestParser_ParseType(t *testing.T) {
 }
 
 func TestGetSchemes(t *testing.T) {
-	fmt.Println(GetSchemes("@schemes http https"))
+	//TODO:
+	//fmt.Println(GetSchemes("@schemes http https"))
 
 }
 func TestParseSimpleApi(t *testing.T) {
@@ -261,12 +261,35 @@ func TestParseSimpleApi(t *testing.T) {
 }
 
 func TestParsePetApi(t *testing.T) {
+	expected:=`{
+    "schemes": [
+        "http",
+        "https"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.  You can find out more about     Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).      For this sample, you can use the api key 'special-key' to test the authorization     filters.",
+        "title": "Swagger Petstore",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "email": "apiteam@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "petstore.swagger.io",
+    "basePath": "/v2",
+    "paths": {}
+}`
 	searchDir := "example/pet"
 	mainApiFile := "main.go"
 	p := New()
 	p.ParseApi(searchDir, mainApiFile)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	//assert.Equal(t, expected, string(b))
-	fmt.Println(string(b))
+	assert.Equal(t, expected, string(b))
+	//fmt.Println(string(b))
 }
