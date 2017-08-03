@@ -15,6 +15,7 @@ func TestParseEmptyComment(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
 func TestParseAcceptComment(t *testing.T) {
 	expected := `{
     "consumes": [
@@ -84,8 +85,14 @@ func TestParseRouterCommentOccursErr(t *testing.T) {
 func TestParseResponseCommentWithObjectType(t *testing.T) {
 	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200`
 	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
+
 	err := operation.ParseComment(comment)
 	assert.NoError(t, err)
+
 	response := operation.Responses.StatusCodeResponses[200]
 	assert.Equal(t, `Error message, if code != 200`, response.Description)
 	assert.Equal(t, spec.StringOrArray{"object"}, response.Schema.Type)
@@ -104,6 +111,18 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithObjectTypeErr(t *testing.T) {
+	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["notexist"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment)
+	assert.Error(t, err)
 }
 
 func TestParseResponseCommentWithArrayType(t *testing.T) {
@@ -158,7 +177,7 @@ func TestParseResponseCommentParamMissing(t *testing.T) {
 
 	paramLenErrComment := `@Success notIntCode {string}`
 	paramLenErr := operation.ParseComment(paramLenErrComment)
-	assert.EqualError(t, paramLenErr, `Can not parse response comment "notIntCode {string}", skipped.`)
+	assert.EqualError(t, paramLenErr, `Can not parse response comment "notIntCode {string}".`)
 }
 
 // Test ParseParamComment
@@ -230,7 +249,6 @@ func TestParseParamCommentByBodyType(t *testing.T) {
     ]
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParseParamCommentByBodyTypeErr(t *testing.T) {
@@ -243,7 +261,6 @@ func TestParseParamCommentByBodyTypeErr(t *testing.T) {
 	err := operation.ParseComment(comment)
 
 	assert.Error(t, err)
-
 }
 
 func TestParseParamCommentNotMatch(t *testing.T) {
