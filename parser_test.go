@@ -2,6 +2,8 @@ package swag
 
 import (
 	"encoding/json"
+	goparser "go/parser"
+	"go/token"
 	"os"
 	"testing"
 
@@ -261,7 +263,7 @@ func TestParseSimpleApi(t *testing.T) {
 }
 
 func TestParsePetApi(t *testing.T) {
-	expected:=`{
+	expected := `{
     "schemes": [
         "http",
         "https"
@@ -291,5 +293,25 @@ func TestParsePetApi(t *testing.T) {
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
-	//fmt.Println(string(b))
+}
+
+func TestParser_ParseRouterApiInfoErr(t *testing.T) {
+	src := `
+package test
+
+// @Accept unknown
+func Test(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	// Print the AST.
+	//ast.Print(fset, f)
+
+	p := New()
+	assert.Panics(t, func() {
+		p.ParseRouterApiInfo(f)
+	})
 }

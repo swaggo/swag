@@ -64,7 +64,7 @@ func (parser *Parser) ParseApi(searchDir string, mainApiFile string) {
 	}
 
 	for _, astFile := range parser.files {
-		parser.parseRouterApiInfo(astFile)
+		parser.ParseRouterApiInfo(astFile)
 	}
 
 	parser.ParseDefinitions()
@@ -122,8 +122,8 @@ func GetSchemes(commentLine string) []string {
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
-// parseRouterApiInfo parses router api info for gived astFile
-func (parser *Parser) parseRouterApiInfo(astFile *ast.File) {
+// ParseRouterApiInfo parses router api info for gived astFile
+func (parser *Parser) ParseRouterApiInfo(astFile *ast.File) {
 	for _, astDescription := range astFile.Decls {
 		switch astDeclaration := astDescription.(type) {
 		case *ast.FuncDecl:
