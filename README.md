@@ -23,7 +23,7 @@ swag converts Go annotations to Swagger Documentation 2.0. And provides a variet
 
 2. Download swag by using:
 ```sh
-$ go get -u github.com/swaggo/swag
+$ go get -u github.com/swaggo/swag/cmd/swag
 ```
 3. Run the [swag](#generate-swagger-20-docs) in project root folder which contains `main.go` file, The [swag](#generate-swagger-20-docs) will parse your comments and generate required files(`docs` folder and `docs/doc.go`).
 ```sh
