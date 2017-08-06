@@ -315,3 +315,164 @@ func Test(){
 		p.ParseRouterApiInfo(f)
 	})
 }
+
+func TestParser_ParseRouterApiGet(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	p := New()
+	p.ParseRouterApiInfo(f)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Get)
+}
+
+func TestParser_ParseRouterApiPOST(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [post]
+func Test(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	p := New()
+	p.ParseRouterApiInfo(f)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Post)
+}
+
+func TestParser_ParseRouterApiDELETE(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [delete]
+func Test(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	p := New()
+	p.ParseRouterApiInfo(f)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Delete)
+}
+
+func TestParser_ParseRouterApiPUT(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [put]
+func Test(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	p := New()
+	p.ParseRouterApiInfo(f)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Put)
+}
+
+func TestParser_ParseRouterApiPATCH(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [patch]
+func Test(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	p := New()
+	p.ParseRouterApiInfo(f)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Patch)
+}
+
+func TestParser_ParseRouterApiHead(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [head]
+func Test(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	p := New()
+	p.ParseRouterApiInfo(f)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Head)
+}
+
+func TestParser_ParseRouterApiOptions(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [options]
+func Test(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	p := New()
+	p.ParseRouterApiInfo(f)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Options)
+}
