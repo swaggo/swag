@@ -21,7 +21,8 @@ type Operation struct {
 	parser *Parser // TODO: we don't need it
 }
 
-//map[int]Response
+// NewOperation creates a new Operation with default properties.
+// map[int]Response
 func NewOperation() *Operation {
 	return &Operation{
 		HttpMethod: "get",
@@ -31,6 +32,7 @@ func NewOperation() *Operation {
 	}
 }
 
+// ParseComment parses comment for gived comment string and returns error if error occurs.
 func (operation *Operation) ParseComment(comment string) error {
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "//"))
 	if len(commentLine) == 0 {

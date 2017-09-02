@@ -257,7 +257,6 @@ func TestParseSimpleApi(t *testing.T) {
 	mainApiFile := "main.go"
 	p := New()
 	p.ParseApi(searchDir, mainApiFile)
-
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }

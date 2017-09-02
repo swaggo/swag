@@ -11,13 +11,16 @@ import (
 	"github.com/swaggo/swag"
 )
 
+// Gen presents a generate tool for swag.
 type Gen struct {
 }
 
+// New creates a new Gen.
 func New() *Gen {
 	return &Gen{}
 }
 
+// Build builds swagger json file  for gived searchDir and mainApiFile.
 func (g *Gen) Build(searchDir, mainApiFile string) error {
 	log.Println("Generate swagger docs....")
 	p := swag.New()

@@ -108,7 +108,6 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
 				case "@basepath":
 					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
-
 				case "@schemes":
 					parser.swagger.Schemes = GetSchemes(commentLine)
 				}
@@ -117,6 +116,7 @@ func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
 	}
 }
 
+// GetSchemes parses swagger schemes for gived commentLine
 func GetSchemes(commentLine string) []string {
 	attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
