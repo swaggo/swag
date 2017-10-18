@@ -197,11 +197,11 @@ func (parser *Parser) ParseDefinitions() {
 			}
 
 		case *ast.ArrayType:
-			log.Panic("ParseDefinitions not supported 'array' yet.")
+			log.Panic("ParseDefinitions not supported 'Array' yet.")
 		case *ast.InterfaceType:
-			log.Panic("ParseDefinitions not supported 'array' yet.")
+			log.Panic("ParseDefinitions not supported 'Interface' yet.")
 		case *ast.MapType:
-			log.Panic("ParseDefinitions not supported 'array' yet.")
+			log.Panic("ParseDefinitions not supported 'Map' yet.")
 		}
 
 		parser.swagger.Definitions[refTypeName] = spec.Schema{
