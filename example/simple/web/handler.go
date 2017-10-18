@@ -1,5 +1,7 @@
 package web
 
+import "time"
+
 type Pet struct {
 	ID       int `json:"id"`
 	Category struct {
@@ -22,4 +24,5 @@ type Pet2 struct {
 type APIError struct {
 	ErrorCode    int
 	ErrorMessage string
+	CreatedAt time.Time
 }

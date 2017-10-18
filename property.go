@@ -6,10 +6,17 @@ import (
 )
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
+// allowedValues: array, boolean, integer, null, number, object, string
 func getPropertyName(field *ast.Field) string {
 	var name string
-	if _, ok := field.Type.(*ast.SelectorExpr); ok {
+	if astTypeSelectorExpr, ok := field.Type.(*ast.SelectorExpr); ok {
+		// Support for time.Time as a structure field
+		if "Time" == astTypeSelectorExpr.Sel.Name {
+			return "string"
+		}
+
 		panic("not supported 'astSelectorExpr' yet.")
+
 	} else if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
 		name = astTypeIdent.Name
 	} else if _, ok := field.Type.(*ast.StarExpr); ok {
