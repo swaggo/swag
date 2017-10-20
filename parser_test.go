@@ -220,6 +220,9 @@ func TestParseSimpleApi(t *testing.T) {
         "web.APIError": {
             "type": "object",
             "properties": {
+                "CreatedAt": {
+                    "type": "string"
+                },
                 "ErrorCode": {
                     "type": "int"
                 },
@@ -258,6 +261,7 @@ func TestParseSimpleApi(t *testing.T) {
 	p := New()
 	p.ParseApi(searchDir, mainApiFile)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+
 	assert.Equal(t, expected, string(b))
 }
 
