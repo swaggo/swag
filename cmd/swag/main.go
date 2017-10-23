@@ -10,6 +10,8 @@ import (
 func main() {
 	app := cli.NewApp()
 
+	app.Usage = "Automatically generate RESTful API documentation with Swagger 2.0 for Go."
+
 	app.Commands = []cli.Command{
 		{
 			Name:    "init",
