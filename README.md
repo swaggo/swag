@@ -107,8 +107,11 @@ type Pet3 struct {
 }
 
 ```
+y
+4. Run it, and browser to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as bellow:
 
-4. Run it, and broswer to http://localhost:8080/swagger, you can see Swagger 2.0 Api documents.
+![swagger_index.html](https://user-images.githubusercontent.com/8943871/31943004-dd08a10e-b88c-11e7-9e77-19d2c759a586.png)
+
 
 
 ## Declarative Comments Format
