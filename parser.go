@@ -135,8 +135,12 @@ func (parser *Parser) ParseRouterApiInfo(astFile *ast.File) {
 						log.Panicf("ParseComment panic:%+v", err)
 					}
 				}
+				var pathItem spec.PathItem
+				var ok bool
 
-				pathItem := spec.PathItem{}
+				if pathItem, ok = parser.swagger.Paths.Paths[operation.Path]; !ok {
+					pathItem = spec.PathItem{}
+				}
 				switch strings.ToUpper(operation.HttpMethod) {
 				case http.MethodGet:
 					pathItem.Get = &operation.Operation
