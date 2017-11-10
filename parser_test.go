@@ -116,6 +116,7 @@ func TestParseSimpleApi(t *testing.T) {
                     "application/json"
                 ],
                 "summary": "Add a new pet to the store",
+                "operationId": "get-string-by-int",
                 "parameters": [
                     {
                         "type": "int",
@@ -168,6 +169,7 @@ func TestParseSimpleApi(t *testing.T) {
                 "produces": [
                     "application/json"
                 ],
+                "operationId": "get-struct-array-by-string",
                 "parameters": [
                     {
                         "type": "string",

@@ -45,6 +45,8 @@ func (operation *Operation) ParseComment(comment string) error {
 		operation.Description = strings.TrimSpace(commentLine[len(attribute):])
 	case "@summary":
 		operation.Summary = strings.TrimSpace(commentLine[len(attribute):])
+	case "@id":
+		operation.ID = strings.TrimSpace(commentLine[len(attribute):])
 	case "@accept":
 		if err := operation.ParseAcceptComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err

@@ -6,6 +6,7 @@ import (
 
 // @Summary Add a new pet to the store
 // @Description get string by ID
+// @ID get-string-by-int
 // @Accept  json
 // @Produce  json
 // @Param   some_id      path   int     true  "Some ID"
@@ -19,6 +20,7 @@ func GetStringByInt(c *gin.Context) {
 }
 
 // @Description get struct array by ID
+// @ID get-struct-array-by-string
 // @Accept  json
 // @Produce  json
 // @Param   some_id     path    string     true        "Some ID"

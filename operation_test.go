@@ -270,3 +270,12 @@ func TestParseParamCommentNotMatch(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+func TestParseIdComment(t *testing.T) {
+	comment := `@Id myOperationId`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "myOperationId", operation.ID)
+}
