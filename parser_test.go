@@ -479,3 +479,36 @@ func Test(){
 	assert.True(t, ok)
 	assert.NotNil(t, val.Options)
 }
+
+func TestParser_ParseRouterApiMultiple(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [get]
+func Test1(){
+}
+
+// @Router /api/{id} [patch]
+func Test2(){
+}
+
+// @Router /api/{id} [delete]
+func Test3(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	if err != nil {
+		panic(err)
+	}
+	p := New()
+	p.ParseRouterApiInfo(f)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Get)
+	assert.NotNil(t, val.Patch)
+	assert.NotNil(t, val.Delete)
+}
