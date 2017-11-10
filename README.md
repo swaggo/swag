@@ -77,6 +77,7 @@ func main() {
 ``` go 
 // @Summary Add a new pet to the store
 // @Description get string by ID
+// @ID get-string-by-int
 // @Accept  json
 // @Produce  json
 // @Param   some_id     path    int     true        "Some ID"
@@ -89,6 +90,7 @@ func GetStringByInt(c *gin.Context) {
 }
 
 // @Description get struct array by ID
+// @ID get-struct-array-by-string
 // @Accept  json
 // @Produce  json
 // @Param   some_id     path    string     true        "Some ID"
@@ -136,6 +138,7 @@ y
 | annotation         | description                                                                                               | 
 |--------------------|-----------------------------------------------------------------------------------------------------------|
 | description        | A verbose explanation of the operation behavior.                                                          |
+| id                 | A unique string used to identify the operation. Must be unique among all API operations.                      |
 | summary            | A short summary of what the operation does.                                                               |
 | accept             | A list of MIME types the APIs can consume. Now only `json` application type.                              | 
 | produce            | A list of MIME types the APIs can produce. Now only `json` application type.                              | 
