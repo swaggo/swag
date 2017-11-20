@@ -61,8 +61,17 @@ func (operation *Operation) ParseComment(comment string) error {
 		}
 	case "@success", "@failure":
 		if err := operation.ParseResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
-			return err
+
+			if errWhenEmpty := operation.ParseEmptyResponseComment(strings.TrimSpace(commentLine[len(attribute):])); errWhenEmpty != nil {
+				var errs []string
+				errs = append(errs, err.Error())
+				errs = append(errs, errWhenEmpty.Error())
+
+				return fmt.Errorf(strings.Join(errs, "\n"))
+
+			}
 		}
+
 	case "@router":
 		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
@@ -239,6 +248,33 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 		}
 
 	}
+
+	if operation.Responses == nil {
+		operation.Responses = &spec.Responses{
+			ResponsesProps: spec.ResponsesProps{
+				StatusCodeResponses: make(map[int]spec.Response),
+			},
+		}
+	}
+
+	operation.Responses.StatusCodeResponses[code] = response
+
+	return nil
+}
+
+func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
+	re := regexp.MustCompile(`([\d]+)[\s]+"(.*)"`)
+	var matches []string
+
+	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
+		return fmt.Errorf("can not parse empty response comment \"%s\"", commentLine)
+	}
+
+	response := spec.Response{}
+
+	code, _ := strconv.Atoi(matches[1])
+
+	response.Description = strings.Trim(matches[2], "")
 
 	if operation.Responses == nil {
 		operation.Responses = &spec.Responses{
