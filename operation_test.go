@@ -114,7 +114,7 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithObjectTypeErr(t *testing.T) {
-	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200`
+	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200"`
 	operation := NewOperation()
 	operation.parser = New()
 
@@ -172,12 +172,29 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseEmptyResponseComment(t *testing.T) {
+	comment := `@Success 200 "it's ok"`
+	operation := NewOperation()
+	operation.ParseComment(comment)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "it's ok"
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseResponseCommentParamMissing(t *testing.T) {
 	operation := NewOperation()
 
 	paramLenErrComment := `@Success notIntCode {string}`
 	paramLenErr := operation.ParseComment(paramLenErrComment)
-	assert.EqualError(t, paramLenErr, `Can not parse response comment "notIntCode {string}".`)
+	assert.EqualError(t, paramLenErr, `Can not parse response comment "notIntCode {string}".
+can not parse empty response comment "notIntCode {string}"`)
 }
 
 // Test ParseParamComment
