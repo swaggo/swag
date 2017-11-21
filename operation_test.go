@@ -172,6 +172,22 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseEmptyResponseComment(t *testing.T) {
+	comment := `@Success 200 "it's ok"`
+	operation := NewOperation()
+	operation.ParseComment(comment)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "it's ok"
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseResponseCommentParamMissing(t *testing.T) {
 	operation := NewOperation()
 
