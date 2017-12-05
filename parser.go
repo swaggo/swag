@@ -222,7 +222,7 @@ func (parser *Parser) ParseDefinitions() {
 func (parser *Parser) getAllGoFileInfo(searchDir string) {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
-		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(path, "/vendor") {
+		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(string(os.PathSeparator) + path, string(os.PathSeparator) + "vendor" + string(os.PathSeparator)) {
 			astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
 			if err != nil {
 				log.Panicf("ParseFile panic:%+v", err)
