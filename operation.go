@@ -132,8 +132,10 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 			//	panic("not supported Header paramType yet.")
 			//case "Form":
 			//	panic("not supported Form paramType yet.")
+			// enable multipart/form-data upload file 
+		case "formData" :
+		        param = createParameter(paramType, description, name, "file", required) 
 		}
-
 		operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	}
 
