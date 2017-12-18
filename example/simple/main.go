@@ -23,6 +23,7 @@ func main() {
 	r := gin.New()
 	r.GET("/testapi/get-string-by-int/:some_id", api.GetStringByInt)
 	r.GET("//testapi/get-struct-array-by-string/:some_id", api.GetStructArrayByString)
+	r.POST("/testapi/upload", api.Upload)
 	r.Run()
 
 }
