@@ -270,7 +270,7 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "string"
                 },
                 "ErrorCode": {
-                    "type": "int"
+                    "type": "integer"
                 },
                 "ErrorMessage": {
                     "type": "string"
@@ -284,7 +284,7 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "object"
                 },
                 "ID": {
-                    "type": "int"
+                    "type": "integer"
                 },
                 "Name": {
                     "type": "string"
