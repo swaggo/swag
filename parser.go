@@ -194,9 +194,16 @@ func (parser *Parser) ParseDefinitions() {
 
 			for _, field := range fields {
 				name := field.Names[0].Name
-				propName := getPropertyName(field)
-				properties[name] = spec.Schema{
-					SchemaProps: spec.SchemaProps{Type: []string{propName}},
+				propName, propFormat := getPropertyNameAndType(field)
+				if propFormat == "" {
+					properties[name] = spec.Schema{
+						SchemaProps: spec.SchemaProps{Type: []string{propName}},
+					}
+				} else {
+					properties[name] = spec.Schema{
+						SchemaProps: spec.SchemaProps{Type: []string{propName},
+							Format: propFormat},
+					}
 				}
 			}
 
@@ -222,7 +229,7 @@ func (parser *Parser) ParseDefinitions() {
 func (parser *Parser) getAllGoFileInfo(searchDir string) {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
-		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(string(os.PathSeparator) + path, string(os.PathSeparator) + "vendor" + string(os.PathSeparator)) {
+		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+"vendor"+string(os.PathSeparator)) {
 			astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
 			if err != nil {
 				log.Panicf("ParseFile panic:%+v", err)
