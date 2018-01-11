@@ -1,10 +1,10 @@
 # swag
 Automatically generate RESTful API documentation with Swagger 2.0 for Go.
 
-[![Travis branch](https://img.shields.io/travis/swaggo/swag/master.svg)](https://travis-ci.org/swaggo/swag)
-[![Codecov branch](https://img.shields.io/codecov/c/github/swaggo/swag/master.svg)](https://codecov.io/gh/swaggo/swag)
-[![Go Report Card](https://goreportcard.com/badge/github.com/swaggo/swag)](https://goreportcard.com/report/github.com/swaggo/swag)
-[![GoDoc](https://godoc.org/github.com/swaggo/swagg?status.svg)](https://godoc.org/github.com/swaggo/swag)
+[![Travis branch](https://img.shields.io/travis/xykong/swag/master.svg)](https://travis-ci.org/xykong/swag)
+[![Codecov branch](https://img.shields.io/codecov/c/github/xykong/swag/master.svg)](https://codecov.io/gh/xykong/swag)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xykong/swag)](https://goreportcard.com/report/github.com/xykong/swag)
+[![GoDoc](https://godoc.org/github.com/xykong/swagg?status.svg)](https://godoc.org/github.com/xykong/swag)
  
 ## What is swag?
 swag converts Go annotations to Swagger Documentation 2.0. And provides a variety of builtin [web framework](#supported-web-framework) lib. Let you can quickly integrated in existing golang project(using Swagger UI) .
@@ -23,7 +23,7 @@ swag converts Go annotations to Swagger Documentation 2.0. And provides a variet
 
 2. Download swag by using:
 ```sh
-$ go get -u github.com/swaggo/swag/cmd/swag
+$ go get -u github.com/xykong/swag/cmd/swag
 ```
 3. Run the [swag](#generate-swagger-20-docs) in project root folder which contains `main.go` file, The [swag](#generate-swagger-20-docs) will parse your comments and generate required files(`docs` folder and `docs/doc.go`).
 ```sh
