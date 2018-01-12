@@ -267,7 +267,8 @@ func TestParseSimpleApi(t *testing.T) {
             "type": "object",
             "properties": {
                 "CreatedAt": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "date-time"
                 },
                 "ErrorCode": {
                     "type": "integer"
