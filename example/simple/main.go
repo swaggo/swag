@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/xykong/swag/example/simple/api"
+	"github.com/swaggo/swag/example/simple/api"
 )
 
 // @title Swagger Example API
