@@ -12,7 +12,7 @@ import (
 
 // Operation describes a single API operation on a path.
 //
-//  For more information: https://github.com/xykong/swag#api-operation
+//  For more information: https://github.com/swaggo/swag#api-operation
 type Operation struct {
 	HttpMethod string
 	Path       string
