@@ -12,7 +12,7 @@ import (
 
 // Operation describes a single API operation on a path.
 //
-//  For more information: https://github.com/swaggo/swag#api-operation
+//  For more information: https://github.com/xykong/swag#api-operation
 type Operation struct {
 	HttpMethod string
 	Path       string
@@ -76,6 +76,9 @@ func (operation *Operation) ParseComment(comment string) error {
 		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
 		}
+
+	case "@tags":
+		operation.Tags = strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 	}
 
 	return nil
@@ -133,8 +136,8 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 			//case "Form":
 			//	panic("not supported Form paramType yet.")
 			// enable multipart/form-data upload file 
-		case "formData" :
-		        param = createParameter(paramType, description, name, "file", required) 
+		case "formData":
+			param = createParameter(paramType, description, name, "file", required)
 		}
 		operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	}
