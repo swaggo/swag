@@ -106,7 +106,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 
 		//five possible parameter types.
 		switch paramType {
-		case "query", "path":
+		case "query", "path", "header":
 			param = createParameter(paramType, description, name, schemaType, required)
 		case "body":
 			param = createParameter(paramType, description, name, "object", required) // TODO: if Parameter types can be objects, but also primitives and arrays
@@ -132,9 +132,9 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 			//	panic("not supported Header paramType yet.")
 			//case "Form":
 			//	panic("not supported Form paramType yet.")
-			// enable multipart/form-data upload file 
-		case "formData" :
-		        param = createParameter(paramType, description, name, "file", required) 
+			// enable multipart/form-data upload file
+		case "formData":
+			param = createParameter(paramType, description, name, "file", required)
 		}
 		operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	}
