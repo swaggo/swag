@@ -138,7 +138,8 @@ type Pet3 struct {
 | annotation         | description                                                                                               | 
 |--------------------|-----------------------------------------------------------------------------------------------------------|
 | description        | A verbose explanation of the operation behavior.                                                          |
-| id                 | A unique string used to identify the operation. Must be unique among all API operations.                      |
+| id                 | A unique string used to identify the operation. Must be unique among all API operations.                  |
+| tags               | a list of tags to each API operation that separated by commas.                                            |
 | summary            | A short summary of what the operation does.                                                               |
 | accept             | A list of MIME types the APIs can consume. Now only `json` application type.                              | 
 | produce            | A list of MIME types the APIs can produce. Now only `json` application type.                              | 

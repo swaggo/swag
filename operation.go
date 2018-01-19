@@ -47,6 +47,8 @@ func (operation *Operation) ParseComment(comment string) error {
 		operation.Summary = strings.TrimSpace(commentLine[len(attribute):])
 	case "@id":
 		operation.ID = strings.TrimSpace(commentLine[len(attribute):])
+	case "@tags":
+		operation.ParseTagsComment(strings.TrimSpace(commentLine[len(attribute):]))
 	case "@accept":
 		if err := operation.ParseAcceptComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
@@ -141,6 +143,14 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 
 	return nil
 }
+
+func (operation *Operation) ParseTagsComment(commentLine string) {
+	tags := strings.Split(commentLine, ",")
+	for _, tag := range tags {
+		operation.Tags = append(operation.Tags, strings.TrimSpace(tag))
+	}
+}
+
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
 	accepts := strings.Split(commentLine, ",")
 	for _, a := range accepts {

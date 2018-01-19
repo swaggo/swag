@@ -16,6 +16,22 @@ func TestParseEmptyComment(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestParseTagsComment(t *testing.T) {
+	expected := `{
+    "tags": [
+        "pet",
+        "store",
+        "user"
+    ]
+}`
+	comment := `/@Tags pet, store,user`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseAcceptComment(t *testing.T) {
 	expected := `{
     "consumes": [
