@@ -24,5 +24,5 @@ type Pet2 struct {
 type APIError struct {
 	ErrorCode    int
 	ErrorMessage string
-	CreatedAt time.Time
+	CreatedAt    time.Time
 }
