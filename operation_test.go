@@ -319,7 +319,6 @@ func TestParseParamCommentByFormDataType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
-
 func TestParseParamCommentNotMatch(t *testing.T) {
 	comment := `@Param some_id body mock true`
 	operation := NewOperation()

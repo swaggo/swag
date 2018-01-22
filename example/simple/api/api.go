@@ -34,7 +34,6 @@ func GetStructArrayByString(c *gin.Context) {
 	//write your code
 }
 
-
 // @Summary Upload file
 // @Description Upload file
 // @ID file.upload
@@ -45,7 +44,7 @@ func GetStructArrayByString(c *gin.Context) {
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /file/upload [post]
-func Upload (ctx *gin.Context) {
+func Upload(ctx *gin.Context) {
 	//write your code
 }
 
