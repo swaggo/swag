@@ -39,15 +39,16 @@ func TestParseAcceptComment(t *testing.T) {
         "text/xml",
         "text/plain",
         "text/html",
-        "multipart/form-data"
+        "multipart/form-data",
+        "application/vnd.api+json"
     ]
 }`
-	comment := `/@Accept json,xml,plain,html,mpfd`
+	comment := `/@Accept json,xml,plain,html,mpfd,json-api`
 	operation := NewOperation()
 	err := operation.ParseComment(comment)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(operation, "", "    ")
-	assert.Equal(t, expected, string(b))
+	assert.JSONEq(t, expected, string(b))
 
 }
 
@@ -65,14 +66,15 @@ func TestParseProduceComment(t *testing.T) {
         "text/xml",
         "text/plain",
         "text/html",
-        "multipart/form-data"
+        "multipart/form-data",
+        "application/vnd.api+json"
     ]
 }`
-	comment := `/@Produce json,xml,plain,html,mpfd`
+	comment := `/@Produce json,xml,plain,html,mpfd,json-api`
 	operation := new(Operation)
 	operation.ParseComment(comment)
 	b, _ := json.MarshalIndent(operation, "", "    ")
-	assert.Equal(t, expected, string(b))
+	assert.JSONEq(t, expected, string(b))
 }
 
 func TestParseProduceCommentErr(t *testing.T) {
@@ -318,7 +320,6 @@ func TestParseParamCommentByFormDataType(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 }
-
 
 func TestParseParamCommentNotMatch(t *testing.T) {
 	comment := `@Param some_id body mock true`
