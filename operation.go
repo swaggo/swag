@@ -165,6 +165,8 @@ func (operation *Operation) ParseAcceptComment(commentLine string) error {
 			operation.Consumes = append(operation.Consumes, "text/html")
 		case "mpfd", "multipart/form-data":
 			operation.Consumes = append(operation.Consumes, "multipart/form-data")
+		case "json-api", "application/vnd.api+json":
+			operation.Consumes = append(operation.Consumes, "application/vnd.api+json")
 		default:
 			return fmt.Errorf("%v accept type can't accepted.", a)
 		}
@@ -186,6 +188,8 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 			operation.Produces = append(operation.Produces, "text/html")
 		case "mpfd", "multipart/form-data":
 			operation.Produces = append(operation.Produces, "multipart/form-data")
+		case "json-api", "application/vnd.api+json":
+			operation.Produces = append(operation.Produces, "application/vnd.api+json")
 		default:
 			return fmt.Errorf("%v produce type can't accepted.", a)
 		}
