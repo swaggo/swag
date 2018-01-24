@@ -30,6 +30,10 @@ func getPropertyName(field *ast.Field) string {
 		if "int" == name {
 			return "integer"
 		}
+		// Transfer float32 and float64 to number type
+		if strings.HasPrefix(name, "float") {
+			return "number"
+		}
 
 	} else if _, ok := field.Type.(*ast.StarExpr); ok {
 		panic("not supported astStarExpr yet.")
