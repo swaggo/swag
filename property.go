@@ -3,6 +3,7 @@ package swag
 import (
 	"go/ast"
 	"log"
+	"strings"
 )
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
