@@ -148,8 +148,7 @@ type Pet3 struct {
 | failure            | Failure response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
 | router             | Failure response that separated by spaces. `path`,`[httpMethod]`                                          | 
 
-####
-Mime Types
+#### Mime Types
 ```
   json
   application/json
