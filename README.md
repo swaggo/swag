@@ -168,7 +168,6 @@ type Pet3 struct {
 - [gin-swagger](http://github.com/swaggo/gin-swagger)
 
 ## TODO
-- [ ] support other Mime Types, eg: xml
 - [ ] supplement better documentation
 - [ ] add more example
 - [ ] support other web Framework
