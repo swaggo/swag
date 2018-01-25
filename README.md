@@ -141,20 +141,33 @@ type Pet3 struct {
 | id                 | A unique string used to identify the operation. Must be unique among all API operations.                  |
 | tags               | A list of tags to each API operation that separated by commas.                                            |
 | summary            | A short summary of what the operation does.                                                               |
-| accept             | A list of MIME types the APIs can consume. Now only `json` application type.                              | 
-| produce            | A list of MIME types the APIs can produce. Now only `json` application type.                              | 
+| accept             | A list of MIME types the APIs can consume. Value MUST be as described under [Mime Types](#mime-types).                             |
+| produce            | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                         |
 | param              | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment`      | 
 | success            | Success response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
 | failure            | Failure response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
 | router             | Failure response that separated by spaces. `path`,`[httpMethod]`                                          | 
 
-
+#### Mime Types
+```
+  json
+  application/json
+  xml
+  text/xml
+  plain
+  text/plain
+  html
+  text/html
+  mpfd
+  multipart/form-data
+  json-api
+  application/vnd.api+json
+```
 
 ## Supported Web Framework
 - [gin-swagger](http://github.com/swaggo/gin-swagger)
 
 ## TODO
-- [ ] support other Mime Types, eg: xml
 - [ ] supplement better documentation
 - [ ] add more example
 - [ ] support other web Framework
