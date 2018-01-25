@@ -3,6 +3,7 @@ package swag
 import (
 	"go/ast"
 	"log"
+	"strings"
 )
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
@@ -29,6 +30,10 @@ func getPropertyName(field *ast.Field) string {
 		// When its the int type will transfer to integer which is goswagger supported type
 		if "int" == name {
 			return "integer"
+		}
+		// Transfer float32 and float64 to number type
+		if strings.HasPrefix(name, "float") {
+			return "number"
 		}
 
 	} else if _, ok := field.Type.(*ast.StarExpr); ok {
