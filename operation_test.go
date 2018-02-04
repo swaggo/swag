@@ -131,6 +131,10 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseResponseCommentWithObjectTypeAnonymousField(t *testing.T) {
+	//TODO: test Anonymous
+}
+
 func TestParseResponseCommentWithObjectTypeErr(t *testing.T) {
 	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200"`
 	operation := NewOperation()

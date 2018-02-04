@@ -299,6 +299,20 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "array"
                 }
             }
+        },
+        "web.RevValue": {
+            "type": "object",
+            "properties": {
+                "Data": {
+                    "type": "integer"
+                },
+                "Err": {
+                    "type": "int32"
+                },
+                "Status": {
+                    "type": "bool"
+                }
+            }
         }
     }
 }`
