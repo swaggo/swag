@@ -259,11 +259,6 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) {
 				log.Panicf("ParseFile panic:%+v", err)
 			}
 
-			//println("path: " + path)
-			//println("---------------------------1")
-			//// Print the AST.
-			//ast.Print(fset, astFile)
-			//println("---------------------------2")
 			parser.files[path] = astFile
 
 		}
