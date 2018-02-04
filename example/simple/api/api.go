@@ -48,6 +48,12 @@ func Upload(ctx *gin.Context) {
 	//write your code
 }
 
+// @Summary use Anonymous field
+// @Success 200 {object} web.RevValue "ok"
+func AnonymousField() {
+
+}
+
 type Pet3 struct {
 	ID int `json:"id"`
 }

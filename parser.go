@@ -187,26 +187,10 @@ func (parser *Parser) ParseDefinitions() {
 		var properties map[string]spec.Schema
 		properties = make(map[string]spec.Schema)
 
-		switch typeSpec.Type.(type) {
-		case *ast.StructType:
-			structDecl := typeSpec.Type.(*ast.StructType)
-			fields := structDecl.Fields.List
+		ss := strings.Split(refTypeName, ".")
+		pkgName := ss[0]
 
-			for _, field := range fields {
-				name := field.Names[0].Name
-				propName := getPropertyName(field)
-				properties[name] = spec.Schema{
-					SchemaProps: spec.SchemaProps{Type: []string{propName}},
-				}
-			}
-
-		case *ast.ArrayType:
-			log.Panic("ParseDefinitions not supported 'Array' yet.")
-		case *ast.InterfaceType:
-			log.Panic("ParseDefinitions not supported 'Interface' yet.")
-		case *ast.MapType:
-			log.Panic("ParseDefinitions not supported 'Map' yet.")
-		}
+		parser.parseTypeSpec(pkgName, typeSpec, properties)
 
 		parser.swagger.Definitions[refTypeName] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -218,15 +202,63 @@ func (parser *Parser) ParseDefinitions() {
 	}
 }
 
+func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, properties map[string]spec.Schema) {
+	switch typeSpec.Type.(type) {
+	case *ast.StructType:
+		structDecl := typeSpec.Type.(*ast.StructType)
+		fields := structDecl.Fields.List
+
+		for _, field := range fields {
+			if field.Names == nil { //anonymous field
+				parser.parseAnonymousField(pkgName, field, properties)
+			} else {
+				name, propName := parser.parseField(field)
+				properties[name] = spec.Schema{
+					SchemaProps: spec.SchemaProps{Type: []string{propName}},
+				}
+			}
+		}
+
+	case *ast.ArrayType:
+		log.Panic("ParseDefinitions not supported 'Array' yet.")
+	case *ast.InterfaceType:
+		log.Panic("ParseDefinitions not supported 'Interface' yet.")
+	case *ast.MapType:
+		log.Panic("ParseDefinitions not supported 'Map' yet.")
+	}
+}
+
+func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, properties map[string]spec.Schema) {
+	if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
+		findPgkName := pkgName
+		findBaseTypeName := astTypeIdent.Name
+		ss := strings.Split(astTypeIdent.Name, ".")
+		if len(ss) > 1 {
+			findPgkName = ss[0]
+			findBaseTypeName = ss[1]
+		}
+
+		baseTypeSpec := parser.TypeDefinitions[findPgkName][findBaseTypeName]
+		parser.parseTypeSpec(findPgkName, baseTypeSpec, properties)
+	}
+}
+
+func (parser *Parser) parseField(field *ast.Field) (propName, schemaType string) {
+	return field.Names[0].Name, getPropertyName(field)
+}
+
 // GetAllGoFileInfo gets all Go source files information for gived searchDir.
 func (parser *Parser) getAllGoFileInfo(searchDir string) {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
 		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+"vendor"+string(os.PathSeparator)) {
-			astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
+			fset := token.NewFileSet() // positions are relative to fset
+			astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
+
 			if err != nil {
 				log.Panicf("ParseFile panic:%+v", err)
 			}
+
 			parser.files[path] = astFile
 
 		}
