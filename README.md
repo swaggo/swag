@@ -166,6 +166,7 @@ type Pet3 struct {
 
 ## Supported Web Framework
 - [gin-swagger](http://github.com/swaggo/gin-swagger)
+- [echo-swagger](http://github.com/swaggo/echo-swagger)
 
 ## TODO
 - [ ] supplement better documentation
