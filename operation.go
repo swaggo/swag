@@ -11,8 +11,7 @@ import (
 )
 
 // Operation describes a single API operation on a path.
-//
-//  For more information: https://github.com/swaggo/swag#api-operation
+// For more information: https://github.com/swaggo/swag#api-operation
 type Operation struct {
 	HttpMethod string
 	Path       string
@@ -93,7 +92,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
 
 	if matches := re.FindStringSubmatch(paramString); len(matches) != 6 {
-		return fmt.Errorf("Can not parse param comment \"%s\", skipped.", paramString)
+		return fmt.Errorf("can not parse param comment \"%s\"", paramString)
 	} else {
 		name := matches[1]
 		paramType := matches[2]
@@ -101,7 +100,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 		schemaType := matches[3]
 
 		requiredText := strings.ToLower(matches[4])
-		required := (requiredText == "true" || requiredText == "required")
+		required := requiredText == "true" || requiredText == "required"
 		description := matches[5]
 
 		var param spec.Parameter
@@ -116,25 +115,17 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 			// TODO: this snippets have to extract out
 			refSplit := strings.Split(schemaType, ".")
 			if len(refSplit) == 2 {
-				//TODO:---------- extract out
 				pkgName := refSplit[0]
 				typeName := refSplit[1]
 				if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 					operation.parser.registerTypes[schemaType] = typeSpec
 				} else {
-					return fmt.Errorf("Can not find ref type:\"%s\".", schemaType)
+					return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
 				}
-				//TODO:----------
 				param.Schema.Ref = spec.Ref{
 					Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
 				}
 			}
-
-			//case "Header": // TODO: support Header and Form
-			//	panic("not supported Header paramType yet.")
-			//case "Form":
-			//	panic("not supported Form paramType yet.")
-			// enable multipart/form-data upload file
 		case "formData":
 			param = createParameter(paramType, description, name, "file", required)
 		}
@@ -144,6 +135,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 	return nil
 }
 
+// ParseTagsComment parses comment for gived `tag` comment string.
 func (operation *Operation) ParseTagsComment(commentLine string) {
 	tags := strings.Split(commentLine, ",")
 	for _, tag := range tags {
@@ -151,6 +143,7 @@ func (operation *Operation) ParseTagsComment(commentLine string) {
 	}
 }
 
+// ParseAcceptComment parses comment for gived `accept` comment string.
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
 	accepts := strings.Split(commentLine, ",")
 	for _, a := range accepts {
@@ -168,12 +161,13 @@ func (operation *Operation) ParseAcceptComment(commentLine string) error {
 		case "json-api", "application/vnd.api+json":
 			operation.Consumes = append(operation.Consumes, "application/vnd.api+json")
 		default:
-			return fmt.Errorf("%v accept type can't accepted.", a)
+			return fmt.Errorf("%v accept type can't accepted", a)
 		}
 	}
 	return nil
 }
 
+// ParseProduceComment parses comment for gived `produce` comment string.
 func (operation *Operation) ParseProduceComment(commentLine string) error {
 	produces := strings.Split(commentLine, ",")
 	for _, a := range produces {
@@ -191,18 +185,19 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 		case "json-api", "application/vnd.api+json":
 			operation.Produces = append(operation.Produces, "application/vnd.api+json")
 		default:
-			return fmt.Errorf("%v produce type can't accepted.", a)
+			return fmt.Errorf("%v produce type can't accepted", a)
 		}
 	}
 	return nil
 }
 
+// ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
 	re := regexp.MustCompile(`([\w\.\/\-{}]+)[^\[]+\[([^\]]+)`)
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
-		return fmt.Errorf("Can not parse router comment \"%s\", skipped.", commentLine)
+		return fmt.Errorf("can not parse router comment \"%s\"", commentLine)
 	}
 	path := matches[1]
 	httpMethod := matches[2]
@@ -213,12 +208,13 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	return nil
 }
 
+// ParseResponseComment parses comment for gived `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string) error {
 	re := regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
-		return fmt.Errorf("Can not parse response comment \"%s\".", commentLine)
+		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
 	response := spec.Response{}
@@ -238,7 +234,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 				operation.parser.registerTypes[refType] = typeSpec
 			} else {
-				return fmt.Errorf("Can not find ref type:\"%s\".", refType)
+				return fmt.Errorf("can not find ref type:\"%s\"", refType)
 			}
 
 		}
@@ -305,7 +301,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 	return nil
 }
 
-// createParamter returns swagger spec.Parameter for gived  paramType, description, paramName, schemaType, required
+// createParameter returns swagger spec.Parameter for gived  paramType, description, paramName, schemaType, required
 func createParameter(paramType, description, paramName, schemaType string, required bool) spec.Parameter {
 	// //five possible parameter types. 	query, path, body, header, form
 	paramProps := spec.ParamProps{
