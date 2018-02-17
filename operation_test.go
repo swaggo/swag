@@ -215,7 +215,7 @@ func TestParseResponseCommentParamMissing(t *testing.T) {
 
 	paramLenErrComment := `@Success notIntCode {string}`
 	paramLenErr := operation.ParseComment(paramLenErrComment)
-	assert.EqualError(t, paramLenErr, `Can not parse response comment "notIntCode {string}".
+	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode {string}"
 can not parse empty response comment "notIntCode {string}"`)
 }
 
