@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
 )
 
@@ -184,21 +185,42 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 // ParseDefinitions parses Swagger Api definitions
 func (parser *Parser) ParseDefinitions() {
 	for refTypeName, typeSpec := range parser.registerTypes {
-		var properties map[string]spec.Schema
-		properties = make(map[string]spec.Schema)
-
 		ss := strings.Split(refTypeName, ".")
 		pkgName := ss[0]
+		parser.ParseDefinition(pkgName, typeSpec, typeSpec.Name.Name)
+	}
+}
 
-		parser.parseTypeSpec(pkgName, typeSpec, properties)
+// Build
+func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, typeName string) {
+	var refTypeName string
+	if len(pkgName) > 0 {
+		refTypeName = pkgName + "." + typeName
+	} else {
+		refTypeName = typeName
+	}
+	if _, already := parser.swagger.Definitions[refTypeName]; already {
+		log.Println("Skipping '" + refTypeName + "', already present.")
+		return
+	}
+	properties := make(map[string]spec.Schema)
+	parser.parseTypeSpec(pkgName, typeSpec, properties)
 
-		parser.swagger.Definitions[refTypeName] = spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:       []string{"object"},
-				Properties: properties,
-			},
+	for _, prop := range properties {
+		// todo find the pkgName of the property type
+		tname := prop.SchemaProps.Type[0]
+		if _, ok := parser.TypeDefinitions[pkgName][tname]; ok {
+			tspec := parser.TypeDefinitions[pkgName][tname]
+			parser.ParseDefinition(pkgName, tspec, tname)
 		}
+	}
 
+	log.Println("Generating " + refTypeName)
+	parser.swagger.Definitions[refTypeName] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type:       []string{"object"},
+			Properties: properties,
+		},
 	}
 }
 
@@ -213,8 +235,21 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 				parser.parseAnonymousField(pkgName, field, properties)
 			} else {
 				name, propName := parser.parseField(field)
-				properties[name] = spec.Schema{
-					SchemaProps: spec.SchemaProps{Type: []string{propName}},
+				// if defined -- ref it
+				if _, ok := parser.TypeDefinitions[pkgName][propName]; ok {
+					properties[name] = spec.Schema{
+						SchemaProps:
+						spec.SchemaProps{Type: []string{propName},
+							Ref: spec.Ref{
+								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + propName),
+							},
+						},
+					}
+				} else {
+					properties[name] = spec.Schema{
+						SchemaProps:
+						spec.SchemaProps{Type: []string{propName}},
+					}
 				}
 			}
 		}
