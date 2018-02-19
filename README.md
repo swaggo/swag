@@ -168,6 +168,10 @@ type Pet3 struct {
 - [gin-swagger](http://github.com/swaggo/gin-swagger)
 - [echo-swagger](http://github.com/swaggo/echo-swagger)
 
+## Limitation
+- Not supported for array of structs
+- Not supported for cross-package models. Only search in project root folder. (https://github.com/swaggo/swag/issues/39)
+
 ## TODO
 - [ ] supplement better documentation
 - [ ] add more example
