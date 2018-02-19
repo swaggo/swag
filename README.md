@@ -170,7 +170,7 @@ type Pet3 struct {
 
 ## Limitation
 - Not supported for array of structs
-- Not supported for cross-package models. Only search in project root folder. (https://github.com/swaggo/swag/issues/39)
+- Not supported for cross-package models. Only search in project root folder. [See #39] (https://github.com/swaggo/swag/issues/39)
 
 ## TODO
 - [ ] supplement better documentation
