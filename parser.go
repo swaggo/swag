@@ -234,21 +234,32 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 			if field.Names == nil { //anonymous field
 				parser.parseAnonymousField(pkgName, field, properties)
 			} else {
-				name, propName := parser.parseField(field)
+				name, schemaType, arrayType := parser.parseField(field)
 				// if defined -- ref it
-				if _, ok := parser.TypeDefinitions[pkgName][propName]; ok {
+				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok {
 					properties[name] = spec.Schema{
 						SchemaProps:
-						spec.SchemaProps{Type: []string{propName},
+						spec.SchemaProps{Type: []string{schemaType},
 							Ref: spec.Ref{
-								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + propName),
+								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + schemaType),
 							},
 						},
+					}
+				} else if schemaType == "array" {
+					// if defined -- ref it
+					if _, ok := parser.TypeDefinitions[pkgName][arrayType]; ok {
+						parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][arrayType] , arrayType)
+						properties[name] = spec.Schema{
+							SchemaProps: spec.SchemaProps{
+								Type: []string{schemaType},
+								Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.Ref{ Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + arrayType)}}}},
+							},
+						}
 					}
 				} else {
 					properties[name] = spec.Schema{
 						SchemaProps:
-						spec.SchemaProps{Type: []string{propName}},
+						spec.SchemaProps{Type: []string{schemaType}},
 					}
 				}
 			}
@@ -278,8 +289,9 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 	}
 }
 
-func (parser *Parser) parseField(field *ast.Field) (propName, schemaType string) {
-	return field.Names[0].Name, getPropertyName(field)
+func (parser *Parser) parseField(field *ast.Field) (propName, schemaType string, arrayType string) {
+	schType, arrType := getPropertyName(field)
+	return field.Names[0].Name, schType, arrType
 }
 
 // GetAllGoFileInfo gets all Go source files information for gived searchDir.
