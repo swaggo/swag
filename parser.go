@@ -238,8 +238,7 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 				// if defined -- ref it
 				if _, ok := parser.TypeDefinitions[pkgName][propName]; ok {
 					properties[name] = spec.Schema{
-						SchemaProps:
-						spec.SchemaProps{Type: []string{propName},
+						SchemaProps: spec.SchemaProps{Type: []string{propName},
 							Ref: spec.Ref{
 								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + propName),
 							},
@@ -247,8 +246,7 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 					}
 				} else {
 					properties[name] = spec.Schema{
-						SchemaProps:
-						spec.SchemaProps{Type: []string{propName}},
+						SchemaProps: spec.SchemaProps{Type: []string{propName}},
 					}
 				}
 			}
@@ -279,7 +277,7 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 }
 
 func (parser *Parser) parseField(field *ast.Field) (propName, schemaType string) {
-	dataType:=getPropertyName(field)
+	dataType := getPropertyName(field)
 	CheckSchemaType(dataType)
 	return field.Names[0].Name, dataType
 }
