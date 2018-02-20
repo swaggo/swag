@@ -108,7 +108,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 		//five possible parameter types.
 		switch paramType {
 		case "query", "path", "header":
-			param = createParameter(paramType, description, name, schemaType, required)
+			param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
 		case "body":
 			param = createParameter(paramType, description, name, "object", required) // TODO: if Parameter types can be objects, but also primitives and arrays
 

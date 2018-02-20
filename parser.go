@@ -279,7 +279,9 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 }
 
 func (parser *Parser) parseField(field *ast.Field) (propName, schemaType string) {
-	return field.Names[0].Name, getPropertyName(field)
+	dataType:=getPropertyName(field)
+	CheckSchemaType(dataType)
+	return field.Names[0].Name, dataType
 }
 
 // GetAllGoFileInfo gets all Go source files information for gived searchDir.

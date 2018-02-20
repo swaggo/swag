@@ -230,7 +230,7 @@ func TestParseParamCommentByPathType(t *testing.T) {
 	expected := `{
     "parameters": [
         {
-            "type": "int",
+            "type": "integer",
             "description": "Some ID",
             "name": "some_id",
             "in": "path",
@@ -251,7 +251,7 @@ func TestParseParamCommentByQueryType(t *testing.T) {
 	expected := `{
     "parameters": [
         {
-            "type": "int",
+            "type": "integer",
             "description": "Some ID",
             "name": "some_id",
             "in": "query",

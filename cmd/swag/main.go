@@ -9,7 +9,7 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Version = "v1.0.0"
+	app.Version = "v1.1.1"
 	app.Usage = "Automatically generate RESTful API documentation with Swagger 2.0 for Go."
 
 	app.Commands = []cli.Command{

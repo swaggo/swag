@@ -12,11 +12,13 @@ type Pet struct {
 	} `json:"category"`
 	Name      string   `json:"name"`
 	PhotoUrls []string `json:"photoUrls"`
-	Tags      []struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
-	} `json:"tags"`
-	Status string `json:"status"`
+	Tags      []Tag    `json:"tags"`
+	Status    string   `json:"status"`
+}
+
+type Tag struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 type Pet2 struct {
