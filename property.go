@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go/ast"
 	"log"
-	"strings"
 )
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
@@ -28,13 +27,9 @@ func getPropertyName(field *ast.Field) (name string, fieldType string)  {
 		name = astTypeIdent.Name
 
 		// When its the int type will transfer to integer which is goswagger supported type
-		if "int" == name {
-			return "integer", "integer"
-		}
-		// Transfer float32 and float64 to number type
-		if strings.HasPrefix(name, "float") {
-			return "number", "integer"
-		}
+		schemeType:=TransToValidSchemeType(name)
+		return schemeType,schemeType
+
 
 	} else if _, ok := field.Type.(*ast.StarExpr); ok {
 		panic("not supported astStarExpr yet.")

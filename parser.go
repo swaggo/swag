@@ -291,6 +291,7 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 
 func (parser *Parser) parseField(field *ast.Field) (propName, schemaType string, arrayType string) {
 	schType, arrType := getPropertyName(field)
+	CheckSchemaType(schType)
 	return field.Names[0].Name, schType, arrType
 }
 

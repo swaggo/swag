@@ -163,7 +163,7 @@ func TestParseSimpleApi(t *testing.T) {
                 "operationId": "get-string-by-int",
                 "parameters": [
                     {
-                        "type": "int",
+                        "type": "integer",
                         "description": "Some ID",
                         "name": "some_id",
                         "in": "path",
@@ -223,14 +223,14 @@ func TestParseSimpleApi(t *testing.T) {
                         "required": true
                     },
                     {
-                        "type": "int",
+                        "type": "integer",
                         "description": "Offset",
                         "name": "offset",
                         "in": "query",
                         "required": true
                     },
                     {
-                        "type": "int",
+                        "type": "integer",
                         "description": "Offset",
                         "name": "limit",
                         "in": "query",
@@ -291,6 +291,12 @@ func TestParseSimpleApi(t *testing.T) {
                 },
                 "Status": {
                     "type": "string"
+                },
+                "Tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Tag"
+                    }
                 }
             }
         },
@@ -301,10 +307,21 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "integer"
                 },
                 "Err": {
-                    "type": "int32"
+                    "type": "integer"
                 },
                 "Status": {
-                    "type": "bool"
+                    "type": "boolean"
+                }
+            }
+        },
+        "web.Tag": {
+            "type": "object",
+            "properties": {
+                "ID": {
+                    "type": "integer"
+                },
+                "Name": {
+                    "type": "string"
                 }
             }
         }
