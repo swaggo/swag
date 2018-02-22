@@ -289,14 +289,14 @@ func TestParseSimpleApi(t *testing.T) {
                 "Name": {
                     "type": "string"
                 },
-                "PhotoUrls": {
-                    "type": "array"
-                },
                 "Status": {
                     "type": "string"
                 },
                 "Tags": {
-                    "type": "array"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Tag"
+                    }
                 }
             }
         },
@@ -311,6 +311,17 @@ func TestParseSimpleApi(t *testing.T) {
                 },
                 "Status": {
                     "type": "boolean"
+                }
+            }
+        },
+        "web.Tag": {
+            "type": "object",
+            "properties": {
+                "ID": {
+                    "type": "integer"
+                },
+                "Name": {
+                    "type": "string"
                 }
             }
         }
