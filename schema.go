@@ -28,6 +28,7 @@ func TransToValidSchemeType(typeName string) string {
 	case "string":
 		return "string"
 	default:
-		panic(fmt.Errorf("%s is not valid go basic types", typeName))
+		// panic(fmt.Errorf("%s is not valid go basic types", typeName))
+		return typeName // to support user defined types
 	}
 }
