@@ -238,6 +238,8 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 				// TODO: find package of schemaType and/or arrayType
 
 				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
+					// write definition if not yet present
+					parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][schemaType], schemaType)
 					properties[name] = spec.Schema{
 						SchemaProps:
 						spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
