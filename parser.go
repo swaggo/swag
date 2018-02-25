@@ -240,7 +240,7 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
 					properties[name] = spec.Schema{
 						SchemaProps:
-						spec.SchemaProps{Type: []string{schemaType},
+						spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
 							Ref: spec.Ref{
 								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + schemaType),
 							},
