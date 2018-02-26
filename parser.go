@@ -241,8 +241,7 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 					// write definition if not yet present
 					parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][schemaType], schemaType)
 					properties[name] = spec.Schema{
-						SchemaProps:
-						spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
+						SchemaProps: spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
 							Ref: spec.Ref{
 								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + schemaType),
 							},
@@ -260,16 +259,14 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 						}
 					} else { // standard type in array
 						properties[name] = spec.Schema{
-							SchemaProps:
-							spec.SchemaProps{Type: []string{schemaType},
+							SchemaProps: spec.SchemaProps{Type: []string{schemaType},
 								Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{arrayType}}}}},
 						}
 					}
 				} else {
 					// standard field type
 					properties[name] = spec.Schema{
-						SchemaProps:
-						spec.SchemaProps{Type: []string{schemaType}},
+						SchemaProps: spec.SchemaProps{Type: []string{schemaType}},
 					}
 				}
 			}
