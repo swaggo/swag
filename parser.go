@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/go-openapi/jsonreference"
@@ -235,6 +236,14 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 				parser.parseAnonymousField(pkgName, field, properties)
 			} else {
 				name, schemaType, arrayType := parser.parseField(field)
+				if field.Tag != nil {
+					// `json:"tag"` -> json:"tag"
+					structTag := strings.Replace(field.Tag.Value, "`", "", -1)
+					jsonTag := reflect.StructTag(structTag).Get("json")
+					if jsonTag != "" {
+						name = jsonTag
+					}
+				}
 				// TODO: find package of schemaType and/or arrayType
 
 				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field

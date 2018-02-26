@@ -280,25 +280,25 @@ func TestParseSimpleApi(t *testing.T) {
         "web.Pet": {
             "type": "object",
             "properties": {
-                "Category": {
+                "category": {
                     "type": "object"
                 },
-                "ID": {
+                "id": {
                     "type": "integer"
                 },
-                "Name": {
+                "name": {
                     "type": "string"
                 },
-                "PhotoUrls": {
+                "photo_urls": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
                 },
-                "Status": {
+                "status": {
                     "type": "string"
                 },
-                "Tags": {
+                "tags": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/web.Tag"
@@ -323,10 +323,10 @@ func TestParseSimpleApi(t *testing.T) {
         "web.Tag": {
             "type": "object",
             "properties": {
-                "ID": {
+                "id": {
                     "type": "integer"
                 },
-                "Name": {
+                "name": {
                     "type": "string"
                 }
             }
