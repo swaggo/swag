@@ -235,28 +235,38 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 				parser.parseAnonymousField(pkgName, field, properties)
 			} else {
 				name, schemaType, arrayType := parser.parseField(field)
-				// if defined -- ref it
-				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok {
+				// TODO: find package of schemaType and/or arrayType
+
+				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
+					// write definition if not yet present
+					parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][schemaType], schemaType)
 					properties[name] = spec.Schema{
 						SchemaProps:
-						spec.SchemaProps{Type: []string{schemaType},
+						spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
 							Ref: spec.Ref{
 								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + schemaType),
 							},
 						},
 					}
-				} else if schemaType == "array" {
+				} else if schemaType == "array" { // array field type
 					// if defined -- ref it
-					if _, ok := parser.TypeDefinitions[pkgName][arrayType]; ok {
-						parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][arrayType] , arrayType)
+					if _, ok := parser.TypeDefinitions[pkgName][arrayType]; ok { // user type in array
+						parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][arrayType], arrayType)
 						properties[name] = spec.Schema{
 							SchemaProps: spec.SchemaProps{
-								Type: []string{schemaType},
-								Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.Ref{ Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + arrayType)}}}},
+								Type:  []string{schemaType},
+								Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + arrayType)}}}},
 							},
+						}
+					} else { // standard type in array
+						properties[name] = spec.Schema{
+							SchemaProps:
+							spec.SchemaProps{Type: []string{schemaType},
+								Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{arrayType}}}}},
 						}
 					}
 				} else {
+					// standard field type
 					properties[name] = spec.Schema{
 						SchemaProps:
 						spec.SchemaProps{Type: []string{schemaType}},
@@ -291,7 +301,11 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 
 func (parser *Parser) parseField(field *ast.Field) (propName, schemaType string, arrayType string) {
 	schType, arrType := getPropertyName(field)
-	CheckSchemaType(schType)
+	if len(arrType) == 0 {
+		CheckSchemaType(schType)
+	} else {
+		CheckSchemaType("array")
+	}
 	return field.Names[0].Name, schType, arrType
 }
 

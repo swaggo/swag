@@ -38,7 +38,8 @@ func TestTransToValidSchemeType(t *testing.T) {
 	assert.Equal(t, TransToValidSchemeType("bool"), "boolean")
 	assert.Equal(t, TransToValidSchemeType("string"), "string")
 
-	assert.Panics(t, func() {
+	// should accept any type, due to user defined types
+	assert.NotPanics(t, func() {
 		TransToValidSchemeType("oops")
 	})
 }

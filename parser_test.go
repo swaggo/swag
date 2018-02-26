@@ -289,6 +289,12 @@ func TestParseSimpleApi(t *testing.T) {
                 "Name": {
                     "type": "string"
                 },
+                "PhotoUrls": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "Status": {
                     "type": "string"
                 },
