@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/go-openapi/jsonreference"
@@ -235,14 +236,21 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 				parser.parseAnonymousField(pkgName, field, properties)
 			} else {
 				name, schemaType, arrayType := parser.parseField(field)
+				if field.Tag != nil {
+					// `json:"tag"` -> json:"tag"
+					structTag := strings.Replace(field.Tag.Value, "`", "", -1)
+					jsonTag := reflect.StructTag(structTag).Get("json")
+					if jsonTag != "" {
+						name = jsonTag
+					}
+				}
 				// TODO: find package of schemaType and/or arrayType
 
 				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
 					// write definition if not yet present
 					parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][schemaType], schemaType)
 					properties[name] = spec.Schema{
-						SchemaProps:
-						spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
+						SchemaProps: spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
 							Ref: spec.Ref{
 								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + schemaType),
 							},
@@ -260,16 +268,14 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 						}
 					} else { // standard type in array
 						properties[name] = spec.Schema{
-							SchemaProps:
-							spec.SchemaProps{Type: []string{schemaType},
+							SchemaProps: spec.SchemaProps{Type: []string{schemaType},
 								Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{arrayType}}}}},
 						}
 					}
 				} else {
 					// standard field type
 					properties[name] = spec.Schema{
-						SchemaProps:
-						spec.SchemaProps{Type: []string{schemaType}},
+						SchemaProps: spec.SchemaProps{Type: []string{schemaType}},
 					}
 				}
 			}
