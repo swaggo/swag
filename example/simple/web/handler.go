@@ -5,15 +5,17 @@ import (
 )
 
 type Pet struct {
-	ID       int `json:"id"`
+	ID       int `json:"id" example:"1"`
 	Category struct {
-		ID   int    `json:"id"`
-		Name string `json:"name"`
+		ID   int    `json:"id" example:"1"`
+		Name string `json:"name" example:"category_name"`
 	} `json:"category"`
-	Name      string   `json:"name"`
-	PhotoUrls []string `json:"photoUrls"`
+	Name      string   `json:"name" example:"poti"`
+	PhotoUrls []string `json:"photo_urls"`
 	Tags      []Tag    `json:"tags"`
 	Status    string   `json:"status"`
+	Price     float32  `json:"price" example:"3.25"`
+	IsAlive   bool     `json:"is_alive" example:"true"`
 }
 
 type Tag struct {
