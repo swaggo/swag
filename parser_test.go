@@ -284,16 +284,26 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "object"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
+                },
+                "is_alive": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "poti"
                 },
                 "photo_urls": {
                     "type": "array",
                     "items": {
                         "type": "string"
                     }
+                },
+                "price": {
+                    "type": "number",
+                    "example": 3.25
                 },
                 "status": {
                     "type": "string"

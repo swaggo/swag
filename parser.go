@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"fmt"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -10,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/go-openapi/jsonreference"
@@ -235,15 +237,7 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 			if field.Names == nil { //anonymous field
 				parser.parseAnonymousField(pkgName, field, properties)
 			} else {
-				name, schemaType, arrayType := parser.parseField(field)
-				if field.Tag != nil {
-					// `json:"tag"` -> json:"tag"
-					structTag := strings.Replace(field.Tag.Value, "`", "", -1)
-					jsonTag := reflect.StructTag(structTag).Get("json")
-					if jsonTag != "" {
-						name = jsonTag
-					}
-				}
+				name, schemaType, arrayType, exampleValue := parser.parseField(field)
 				// TODO: find package of schemaType and/or arrayType
 
 				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
@@ -275,7 +269,8 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 				} else {
 					// standard field type
 					properties[name] = spec.Schema{
-						SchemaProps: spec.SchemaProps{Type: []string{schemaType}},
+						SchemaProps:        spec.SchemaProps{Type: []string{schemaType}},
+						SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
 					}
 				}
 			}
@@ -305,14 +300,56 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 	}
 }
 
-func (parser *Parser) parseField(field *ast.Field) (propName, schemaType string, arrayType string) {
-	schType, arrType := getPropertyName(field)
-	if len(arrType) == 0 {
-		CheckSchemaType(schType)
+func (parser *Parser) parseField(field *ast.Field) (propName, schemaType, arrayType string, exampleValue interface{}) {
+	schemaType, arrayType = getPropertyName(field)
+	if len(arrayType) == 0 {
+		CheckSchemaType(schemaType)
 	} else {
 		CheckSchemaType("array")
 	}
-	return field.Names[0].Name, schType, arrType
+	propName = field.Names[0].Name
+	if field.Tag != nil {
+		// `json:"tag"` -> json:"tag"
+		structTag := strings.Replace(field.Tag.Value, "`", "", -1)
+		jsonTag := reflect.StructTag(structTag).Get("json")
+		if jsonTag != "" {
+			propName = jsonTag
+		}
+		exampleTag := reflect.StructTag(structTag).Get("example")
+		if exampleTag != "" {
+			exampleValue = defineTypeOfExample(schemaType, exampleTag)
+		}
+	}
+	return
+}
+
+// defineTypeOfExample example value define the type (object and array unsupported)
+func defineTypeOfExample(schemaType string, exampleValue string) interface{} {
+	switch schemaType {
+	case "string":
+		return exampleValue
+	case "number":
+		v, err := strconv.ParseFloat(exampleValue, 64)
+		if err != nil {
+			panic(fmt.Errorf("example value %s can't convert to %s err: %s", exampleValue, schemaType, err))
+		}
+		return v
+	case "integer":
+		v, err := strconv.Atoi(exampleValue)
+		if err != nil {
+			panic(fmt.Errorf("example value %s can't convert to %s err: %s", exampleValue, schemaType, err))
+		}
+		return v
+	case "boolean":
+		v, err := strconv.ParseBool(exampleValue)
+		if err != nil {
+			panic(fmt.Errorf("example value %s can't convert to %s err: %s", exampleValue, schemaType, err))
+		}
+		return v
+	default:
+		// object, array unsupported
+		panic(fmt.Errorf("%s is unsupported type in example value", schemaType))
+	}
 }
 
 // GetAllGoFileInfo gets all Go source files information for gived searchDir.
