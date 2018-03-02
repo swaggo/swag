@@ -165,8 +165,10 @@ type Pet3 struct {
 ```
 
 ## Supported Web Framework
-- [gin-swagger](http://github.com/swaggo/gin-swagger)
-- [echo-swagger](http://github.com/swaggo/echo-swagger)
+- [gin](http://github.com/swaggo/gin-swagger)
+- [echo](http://github.com/swaggo/echo-swagger)
+- [net/http](https://github.com/swaggo/http-swagger)
+- revel
 
 ## Limitation
 - Not supported for array of structs
