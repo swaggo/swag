@@ -6,9 +6,12 @@ go:
   - 1.10.x
 
 before_install:
-  - go get -t -v ./...
+  - make deps
 
 script:
+  - make lint
+  - make build
+  - make test
   - go test -race -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
