@@ -19,8 +19,8 @@ func main() {
 			Usage:   "create docs.go",
 			Action: func(c *cli.Context) error {
 				searchDir := "./"
-				mainApiFile := "./main.go"
-				gen.New().Build(searchDir, mainApiFile)
+				mainAPIFile := "./main.go"
+				gen.New().Build(searchDir, mainAPIFile)
 				return nil
 			},
 		},

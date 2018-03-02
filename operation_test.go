@@ -90,7 +90,7 @@ func TestParseRouterComment(t *testing.T) {
 	err := operation.ParseComment(comment)
 	assert.NoError(t, err)
 	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}", operation.Path)
-	assert.Equal(t, "GET", operation.HttpMethod)
+	assert.Equal(t, "GET", operation.HTTPMethod)
 }
 
 func TestParseRouterCommentOccursErr(t *testing.T) {
