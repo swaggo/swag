@@ -237,41 +237,9 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 			if field.Names == nil { //anonymous field
 				parser.parseAnonymousField(pkgName, field, properties)
 			} else {
-				name, schemaType, arrayType, exampleValue := parser.parseField(field)
-				// TODO: find package of schemaType and/or arrayType
-
-				if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
-					// write definition if not yet present
-					parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][schemaType], schemaType)
-					properties[name] = spec.Schema{
-						SchemaProps: spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
-							Ref: spec.Ref{
-								Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + schemaType),
-							},
-						},
-					}
-				} else if schemaType == "array" { // array field type
-					// if defined -- ref it
-					if _, ok := parser.TypeDefinitions[pkgName][arrayType]; ok { // user type in array
-						parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][arrayType], arrayType)
-						properties[name] = spec.Schema{
-							SchemaProps: spec.SchemaProps{
-								Type:  []string{schemaType},
-								Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + arrayType)}}}},
-							},
-						}
-					} else { // standard type in array
-						properties[name] = spec.Schema{
-							SchemaProps: spec.SchemaProps{Type: []string{schemaType},
-								Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{arrayType}}}}},
-						}
-					}
-				} else {
-					// standard field type
-					properties[name] = spec.Schema{
-						SchemaProps:        spec.SchemaProps{Type: []string{schemaType}},
-						SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
-					}
+				props := parser.parseStruct(pkgName, field)
+				for k, v := range props {
+					properties[k] = v
 				}
 			}
 		}
@@ -283,6 +251,60 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 	case *ast.MapType:
 		log.Panic("ParseDefinitions not supported 'Map' yet.")
 	}
+}
+
+func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
+	properties = map[string]spec.Schema{}
+	name, schemaType, arrayType, exampleValue := parser.parseField(field)
+	// TODO: find package of schemaType and/or arrayType
+	if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
+		// write definition if not yet present
+		parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][schemaType], schemaType)
+		properties[name] = spec.Schema{
+			SchemaProps: spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
+				Ref: spec.Ref{
+					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + schemaType),
+				},
+			},
+		}
+	} else if schemaType == "array" { // array field type
+		// if defined -- ref it
+		if _, ok := parser.TypeDefinitions[pkgName][arrayType]; ok { // user type in array
+			parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][arrayType], arrayType)
+			properties[name] = spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type:  []string{schemaType},
+					Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + arrayType)}}}},
+				},
+			}
+		} else { // standard type in array
+			properties[name] = spec.Schema{
+				SchemaProps: spec.SchemaProps{Type: []string{schemaType},
+					Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{arrayType}}}}},
+				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
+			}
+		}
+	} else {
+		properties[name] = spec.Schema{
+			SchemaProps:        spec.SchemaProps{Type: []string{schemaType}},
+			SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
+		}
+		nestStruct, ok := field.Type.(*ast.StructType)
+		if ok {
+			props := map[string]spec.Schema{}
+			for _, v := range nestStruct.Fields.List {
+				p := parser.parseStruct(pkgName, v)
+				for k, v := range p {
+					props[k] = v
+				}
+			}
+			properties[name] = spec.Schema{
+				SchemaProps:        spec.SchemaProps{Type: []string{schemaType}, Properties: props},
+				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
+			}
+		}
+	}
+	return
 }
 
 func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, properties map[string]spec.Schema) {
@@ -346,8 +368,9 @@ func defineTypeOfExample(schemaType string, exampleValue string) interface{} {
 			panic(fmt.Errorf("example value %s can't convert to %s err: %s", exampleValue, schemaType, err))
 		}
 		return v
+	case "array":
+		return strings.Split(exampleValue, ",")
 	default:
-		// object, array unsupported
 		panic(fmt.Errorf("%s is unsupported type in example value", schemaType))
 	}
 }

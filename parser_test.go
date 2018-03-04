@@ -281,7 +281,50 @@ func TestParseSimpleApi(t *testing.T) {
             "type": "object",
             "properties": {
                 "category": {
-                    "type": "object"
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "integer",
+                            "example": 1
+                        },
+                        "name": {
+                            "type": "string",
+                            "example": "category_name"
+                        },
+                        "photo_urls": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "example": [
+                                "http://test/image/1.jpg",
+                                "http://test/image/2.jpg"
+                            ]
+                        },
+                        "small_category": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "detail_category_name"
+                                },
+                                "photo_urls": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "example": [
+                                        "http://test/image/1.jpg",
+                                        "http://test/image/2.jpg"
+                                    ]
+                                }
+                            }
+                        }
+                    }
                 },
                 "id": {
                     "type": "integer",
@@ -299,7 +342,11 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "http://test/image/1.jpg",
+                        "http://test/image/2.jpg"
+                    ]
                 },
                 "price": {
                     "type": "number",
