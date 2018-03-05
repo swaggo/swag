@@ -8,6 +8,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/swaggo/swag"
 )
 
@@ -20,11 +21,11 @@ func New() *Gen {
 	return &Gen{}
 }
 
-// Build builds swagger json file  for gived searchDir and mainApiFile. Returns json
-func (g *Gen) Build(searchDir, mainApiFile string) (string, error) {
+// Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
+func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir string) (string, error) {
 	log.Println("Generate swagger docs....")
 	p := swag.New()
-	p.ParseApi(searchDir, mainApiFile)
+	p.ParseAPI(searchDir, mainAPIFile)
 	swagger := p.GetSwagger()
 
 	b, _ := json.MarshalIndent(swagger, "", "    ")
@@ -32,6 +33,19 @@ func (g *Gen) Build(searchDir, mainApiFile string) (string, error) {
 	os.MkdirAll(path.Join(searchDir, "docs"), os.ModePerm)
 	docs, _ := os.Create(path.Join(searchDir, "docs", "docs.go"))
 	defer docs.Close()
+
+	os.Mkdir(swaggerConfDir, os.ModePerm)
+	swaggerJSON, _ := os.Create(path.Join(swaggerConfDir, "swagger.json"))
+	defer swaggerJSON.Close()
+	swaggerJSON.Write(b)
+
+	swaggerYAML, _ := os.Create(path.Join(swaggerConfDir, "swagger.yaml"))
+	defer swaggerYAML.Close()
+	y, err := yaml.JSONToYAML(b)
+	if err != nil {
+		log.Fatalf("can't swagger json covert to yaml err: %s", err)
+	}
+	swaggerYAML.Write(y)
 
 	packageTemplate.Execute(docs, struct {
 		Timestamp time.Time

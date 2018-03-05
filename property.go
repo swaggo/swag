@@ -8,7 +8,7 @@ import (
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
 // allowedValues: array, boolean, integer, null, number, object, string
-func getPropertyName(field *ast.Field) (name string, fieldType string)  {
+func getPropertyName(field *ast.Field) (name string, fieldType string) {
 	if astTypeSelectorExpr, ok := field.Type.(*ast.SelectorExpr); ok {
 
 		// Support for time.Time as a structure field
@@ -27,9 +27,8 @@ func getPropertyName(field *ast.Field) (name string, fieldType string)  {
 		name = astTypeIdent.Name
 
 		// When its the int type will transfer to integer which is goswagger supported type
-		schemeType:=TransToValidSchemeType(name)
-		return schemeType,schemeType
-
+		schemeType := TransToValidSchemeType(name)
+		return schemeType, schemeType
 
 	} else if _, ok := field.Type.(*ast.StarExpr); ok {
 		panic("not supported astStarExpr yet.")

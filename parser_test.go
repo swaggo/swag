@@ -39,7 +39,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	p.ParseGeneralApiInfo("testdata/main.go")
+	p.ParseGeneralAPIInfo("testdata/main.go")
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -50,7 +50,7 @@ func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	assert.NotNil(t, gopath)
 	p := New()
 	assert.Panics(t, func() {
-		p.ParseGeneralApiInfo("testdata/noexist.go")
+		p.ParseGeneralAPIInfo("testdata/noexist.go")
 	})
 }
 
@@ -281,7 +281,50 @@ func TestParseSimpleApi(t *testing.T) {
             "type": "object",
             "properties": {
                 "category": {
-                    "type": "object"
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "integer",
+                            "example": 1
+                        },
+                        "name": {
+                            "type": "string",
+                            "example": "category_name"
+                        },
+                        "photo_urls": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "example": [
+                                "http://test/image/1.jpg",
+                                "http://test/image/2.jpg"
+                            ]
+                        },
+                        "small_category": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "detail_category_name"
+                                },
+                                "photo_urls": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "example": [
+                                        "http://test/image/1.jpg",
+                                        "http://test/image/2.jpg"
+                                    ]
+                                }
+                            }
+                        }
+                    }
                 },
                 "id": {
                     "type": "integer",
@@ -299,7 +342,11 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "http://test/image/1.jpg",
+                        "http://test/image/2.jpg"
+                    ]
                 },
                 "price": {
                     "type": "number",
@@ -344,9 +391,9 @@ func TestParseSimpleApi(t *testing.T) {
     }
 }`
 	searchDir := "example/simple"
-	mainApiFile := "main.go"
+	mainAPIFile := "main.go"
 	p := New()
-	p.ParseApi(searchDir, mainApiFile)
+	p.ParseAPI(searchDir, mainAPIFile)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 
 	assert.Equal(t, expected, string(b))
@@ -377,9 +424,9 @@ func TestParsePetApi(t *testing.T) {
     "paths": {}
 }`
 	searchDir := "example/pet"
-	mainApiFile := "main.go"
+	mainAPIFile := "main.go"
 	p := New()
-	p.ParseApi(searchDir, mainApiFile)
+	p.ParseAPI(searchDir, mainAPIFile)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -402,7 +449,7 @@ func Test(){
 
 	p := New()
 	assert.Panics(t, func() {
-		p.ParseRouterApiInfo(f)
+		p.ParseRouterAPIInfo(f)
 	})
 }
 
@@ -419,7 +466,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterApiInfo(f)
+	p.ParseRouterAPIInfo(f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -442,7 +489,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterApiInfo(f)
+	p.ParseRouterAPIInfo(f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -465,7 +512,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterApiInfo(f)
+	p.ParseRouterAPIInfo(f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -488,7 +535,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterApiInfo(f)
+	p.ParseRouterAPIInfo(f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -511,7 +558,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterApiInfo(f)
+	p.ParseRouterAPIInfo(f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -534,7 +581,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterApiInfo(f)
+	p.ParseRouterAPIInfo(f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -557,7 +604,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterApiInfo(f)
+	p.ParseRouterAPIInfo(f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -588,7 +635,7 @@ func Test3(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterApiInfo(f)
+	p.ParseRouterAPIInfo(f)
 
 	ps := p.swagger.Paths.Paths
 
