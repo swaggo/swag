@@ -13,7 +13,7 @@ import (
 // Operation describes a single API operation on a path.
 // For more information: https://github.com/swaggo/swag#api-operation
 type Operation struct {
-	HttpMethod string
+	HTTPMethod string
 	Path       string
 	spec.Operation
 
@@ -24,7 +24,7 @@ type Operation struct {
 // map[int]Response
 func NewOperation() *Operation {
 	return &Operation{
-		HttpMethod: "get",
+		HTTPMethod: "get",
 		Operation: spec.Operation{
 			OperationProps: spec.OperationProps{},
 		},
@@ -82,7 +82,7 @@ func (operation *Operation) ParseComment(comment string) error {
 	return nil
 }
 
-// Parse params return []string of param properties
+// ParseParamComment Parse params return []string of param properties
 // @Param	queryText		form	      string	  true		        "The email for login"
 // 			[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // @Param   some_id     path    int     true        "Some ID"
@@ -91,47 +91,45 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 
 	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
 
-	if matches := re.FindStringSubmatch(paramString); len(matches) != 6 {
+	matches := re.FindStringSubmatch(paramString)
+	if len(matches) != 6 {
 		return fmt.Errorf("can not parse param comment \"%s\"", paramString)
-	} else {
-		name := matches[1]
-		paramType := matches[2]
-
-		schemaType := matches[3]
-
-		requiredText := strings.ToLower(matches[4])
-		required := requiredText == "true" || requiredText == "required"
-		description := matches[5]
-
-		var param spec.Parameter
-
-		//five possible parameter types.
-		switch paramType {
-		case "query", "path", "header":
-			param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
-		case "body":
-			param = createParameter(paramType, description, name, "object", required) // TODO: if Parameter types can be objects, but also primitives and arrays
-
-			// TODO: this snippets have to extract out
-			refSplit := strings.Split(schemaType, ".")
-			if len(refSplit) == 2 {
-				pkgName := refSplit[0]
-				typeName := refSplit[1]
-				if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
-					operation.parser.registerTypes[schemaType] = typeSpec
-				} else {
-					return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
-				}
-				param.Schema.Ref = spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
-				}
-			}
-		case "formData":
-			param = createParameter(paramType, description, name, "file", required)
-		}
-		operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	}
+	name := matches[1]
+	paramType := matches[2]
 
+	schemaType := matches[3]
+
+	requiredText := strings.ToLower(matches[4])
+	required := requiredText == "true" || requiredText == "required"
+	description := matches[5]
+
+	var param spec.Parameter
+
+	//five possible parameter types.
+	switch paramType {
+	case "query", "path", "header":
+		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
+	case "body":
+		param = createParameter(paramType, description, name, "object", required) // TODO: if Parameter types can be objects, but also primitives and arrays
+		// TODO: this snippets have to extract out
+		refSplit := strings.Split(schemaType, ".")
+		if len(refSplit) == 2 {
+			pkgName := refSplit[0]
+			typeName := refSplit[1]
+			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
+				operation.parser.registerTypes[schemaType] = typeSpec
+			} else {
+				return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
+			}
+			param.Schema.Ref = spec.Ref{
+				Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
+			}
+		}
+	case "formData":
+		param = createParameter(paramType, description, name, "file", required)
+	}
+	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	return nil
 }
 
@@ -203,7 +201,7 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	httpMethod := matches[2]
 
 	operation.Path = path
-	operation.HttpMethod = strings.ToUpper(httpMethod)
+	operation.HTTPMethod = strings.ToUpper(httpMethod)
 
 	return nil
 }
@@ -274,6 +272,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	return nil
 }
 
+// ParseEmptyResponseComment TODO: NEEDS COMMENT INFO
 func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
 	re := regexp.MustCompile(`([\d]+)[\s]+"(.*)"`)
 	var matches []string
@@ -319,16 +318,13 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 		parameter := spec.Parameter{
 			ParamProps: paramProps,
 		}
-
 		return parameter
-	} else {
-		parameter := spec.Parameter{
-			ParamProps: paramProps,
-			SimpleSchema: spec.SimpleSchema{
-				Type: schemaType,
-			},
-		}
-		return parameter
-
 	}
+	parameter := spec.Parameter{
+		ParamProps: paramProps,
+		SimpleSchema: spec.SimpleSchema{
+			Type: schemaType,
+		},
+	}
+	return parameter
 }

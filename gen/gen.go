@@ -20,11 +20,11 @@ func New() *Gen {
 	return &Gen{}
 }
 
-// Build builds swagger json file  for gived searchDir and mainApiFile. Returns json
-func (g *Gen) Build(searchDir, mainApiFile string) (string, error) {
+// Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
+func (g *Gen) Build(searchDir, mainAPIFile string) (string, error) {
 	log.Println("Generate swagger docs....")
 	p := swag.New()
-	p.ParseApi(searchDir, mainApiFile)
+	p.ParseAPI(searchDir, mainAPIFile)
 	swagger := p.GetSwagger()
 
 	b, _ := json.MarshalIndent(swagger, "", "    ")

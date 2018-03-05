@@ -1,8 +1,9 @@
 package swag
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidDataType(t *testing.T) {

@@ -57,27 +57,27 @@ func New() *Parser {
 	return parser
 }
 
-// ParseApi parses general api info for gived searchDir and mainApiFile
-func (parser *Parser) ParseApi(searchDir string, mainApiFile string) {
+// ParseAPI parses general api info for gived searchDir and mainAPIFile
+func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) {
 	log.Println("Generate general API Info")
 	parser.getAllGoFileInfo(searchDir)
-	parser.ParseGeneralApiInfo(path.Join(searchDir, mainApiFile))
+	parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile))
 
 	for _, astFile := range parser.files {
 		parser.ParseType(astFile)
 	}
 
 	for _, astFile := range parser.files {
-		parser.ParseRouterApiInfo(astFile)
+		parser.ParseRouterAPIInfo(astFile)
 	}
 
 	parser.ParseDefinitions()
 }
 
-// ParseGeneralApiInfo parses general api info for gived mainApiFile path
-func (parser *Parser) ParseGeneralApiInfo(mainApiFile string) {
+// ParseGeneralAPIInfo parses general api info for gived mainAPIFile path
+func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 	fileSet := token.NewFileSet()
-	fileTree, err := goparser.ParseFile(fileSet, mainApiFile, nil, goparser.ParseComments)
+	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
 
 	if err != nil {
 		log.Panicf("ParseGeneralApiInfo occur error:%+v", err)
@@ -126,8 +126,8 @@ func GetSchemes(commentLine string) []string {
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
-// ParseRouterApiInfo parses router api info for gived astFile
-func (parser *Parser) ParseRouterApiInfo(astFile *ast.File) {
+// ParseRouterAPIInfo parses router api info for gived astFile
+func (parser *Parser) ParseRouterAPIInfo(astFile *ast.File) {
 	for _, astDescription := range astFile.Decls {
 		switch astDeclaration := astDescription.(type) {
 		case *ast.FuncDecl:
@@ -145,7 +145,7 @@ func (parser *Parser) ParseRouterApiInfo(astFile *ast.File) {
 				if pathItem, ok = parser.swagger.Paths.Paths[operation.Path]; !ok {
 					pathItem = spec.PathItem{}
 				}
-				switch strings.ToUpper(operation.HttpMethod) {
+				switch strings.ToUpper(operation.HTTPMethod) {
 				case http.MethodGet:
 					pathItem.Get = &operation.Operation
 				case http.MethodPost:
@@ -194,7 +194,7 @@ func (parser *Parser) ParseDefinitions() {
 	}
 }
 
-// Build
+// ParseDefinition TODO: NEEDS COMMENT INFO
 func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, typeName string) {
 	var refTypeName string
 	if len(pkgName) > 0 {

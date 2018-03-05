@@ -5,17 +5,21 @@ import (
 	"sync"
 )
 
+// Name TODO: NEEDS COMMENT INFO
 const Name = "swagger"
 
+//  TODO: NEEDS COMMENT INFO
 var (
 	swaggerMu sync.RWMutex
 	swag      Swagger
 )
 
+// Swagger TODO: NEEDS COMMENT INFO
 type Swagger interface {
 	ReadDoc() string
 }
 
+// Register TODO: NEEDS COMMENT INFO
 func Register(name string, swagger Swagger) {
 	swaggerMu.Lock()
 	defer swaggerMu.Unlock()
@@ -29,9 +33,10 @@ func Register(name string, swagger Swagger) {
 	swag = swagger
 }
 
+// ReadDoc TODO: NEEDS COMMENT INFO
 func ReadDoc() (string, error) {
 	if swag != nil {
 		return swag.ReadDoc(), nil
 	}
-	return "", errors.New("Not yet registered swag.")
+	return "", errors.New("not yet registered swag")
 }
