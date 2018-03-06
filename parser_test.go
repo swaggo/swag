@@ -55,14 +55,14 @@ func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
-	searchDir := "example/simple"
+	searchDir := "example/pet"
 
 	p := New()
 	p.getAllGoFileInfo(searchDir)
 
-	assert.NotEmpty(t, p.files["example/simple/main.go"])
-	assert.NotEmpty(t, p.files["example/simple/web/handler.go"])
-	assert.Equal(t, 4, len(p.files))
+	assert.NotEmpty(t, p.files["example/pet/main.go"])
+	assert.NotEmpty(t, p.files["example/pet/web/handler.go"])
+	assert.Equal(t, 2, len(p.files))
 }
 
 func TestParser_ParseType(t *testing.T) {
