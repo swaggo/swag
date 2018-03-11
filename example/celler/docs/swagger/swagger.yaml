@@ -1,0 +1,363 @@
+basePath: /api/v1
+definitions:
+  controller.HTTPError:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: status bad request
+        type: string
+    type: object
+  controller.Message:
+    properties:
+      message:
+        example: message
+        type: string
+    type: object
+  model.Account:
+    properties:
+      id:
+        example: 1
+        type: integer
+      name:
+        example: account name
+        type: string
+    type: object
+  model.AddAccount:
+    properties:
+      name:
+        example: account name
+        type: string
+    type: object
+  model.Admin:
+    properties:
+      id:
+        example: 1
+        type: integer
+      name:
+        example: admin name
+        type: string
+    type: object
+  model.Bottle:
+    properties:
+      account:
+        $ref: '#/definitions/model.Account'
+        type: object
+      id:
+        example: 1
+        type: integer
+      name:
+        example: bottle_name
+        type: string
+    type: object
+  model.UpdateAccount:
+    properties:
+      name:
+        example: account name
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server celler server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /accounts:
+    get:
+      consumes:
+      - application/json
+      description: get accounts
+      parameters:
+      - description: name search by q
+        in: query
+        name: q
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          schema:
+            items:
+              $ref: '#/definitions/model.Account'
+            type: array
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: List accounts
+    post:
+      consumes:
+      - application/json
+      description: add by json account
+      parameters:
+      - description: Add account
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/model.AddAccount'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          schema:
+            $ref: '#/definitions/model.Account'
+            type: object
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: Add a account
+  /accounts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete by account ID
+      operationId: get-string-by-int
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          schema:
+            $ref: '#/definitions/model.Account'
+            type: object
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: Update a account
+    get:
+      consumes:
+      - application/json
+      description: get string by ID
+      operationId: get-string-by-int
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          schema:
+            $ref: '#/definitions/model.Account'
+            type: object
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: Show a account
+    patch:
+      consumes:
+      - application/json
+      description: Update by json account
+      operationId: get-string-by-int
+      parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update account
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateAccount'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          schema:
+            $ref: '#/definitions/model.Account'
+            type: object
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: Update a account
+  /accounts/1/images:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload file
+      operationId: account id
+      parameters:
+      - description: account image
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          schema:
+            $ref: '#/definitions/controller.Message'
+            type: object
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: Upload account image
+  /admin/auth:
+    post:
+      consumes:
+      - application/json
+      description: get admin info
+      parameters:
+      - description: Authentication header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          schema:
+            $ref: '#/definitions/model.Admin'
+            type: object
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "401":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: Auth admin
+  /bottles:
+    get:
+      consumes:
+      - application/json
+      description: get bottles
+      produces:
+      - application/json
+      responses:
+        "200":
+          schema:
+            items:
+              $ref: '#/definitions/model.Bottle'
+            type: array
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: List bottles
+  /bottles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: get string by ID
+      operationId: get-string-by-int
+      parameters:
+      - description: Bottle ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          schema:
+            $ref: '#/definitions/model.Bottle'
+            type: object
+        "400":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "404":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+        "500":
+          schema:
+            $ref: '#/definitions/controller.HTTPError'
+            type: object
+      summary: Show a bottle
+swagger: "2.0"
