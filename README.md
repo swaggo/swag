@@ -178,5 +178,5 @@ type Pet3 struct {
 
 
 ## About the Project
-This project was inspired by [swagger](https://raw.githubusercontent.com/yvasiyarov/swagger) but simplified the usage of complexity and support a variety of [web framework]((#supported-web-framework)).
+This project was inspired by [swagger](https://github.com/yvasiyarov/swagger) but simplified the usage of complexity and support a variety of [web framework]((#supported-web-framework)).
 
