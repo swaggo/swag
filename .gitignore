@@ -1,5 +1,5 @@
 swag
-example/simple/docs
+testdata/simple/docs
 
 # Test binary, build with `go test -c`
 *.test

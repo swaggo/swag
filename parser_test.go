@@ -55,18 +55,18 @@ func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
-	searchDir := "example/pet"
+	searchDir := "testdata/pet"
 
 	p := New()
 	p.getAllGoFileInfo(searchDir)
 
-	assert.NotEmpty(t, p.files["example/pet/main.go"])
-	assert.NotEmpty(t, p.files["example/pet/web/handler.go"])
+	assert.NotEmpty(t, p.files["testdata/pet/main.go"])
+	assert.NotEmpty(t, p.files["testdata/pet/web/handler.go"])
 	assert.Equal(t, 2, len(p.files))
 }
 
 func TestParser_ParseType(t *testing.T) {
-	searchDir := "example/simple/"
+	searchDir := "testdata/simple/"
 
 	p := New()
 	p.getAllGoFileInfo(searchDir)
@@ -390,7 +390,7 @@ func TestParseSimpleApi(t *testing.T) {
         }
     }
 }`
-	searchDir := "example/simple"
+	searchDir := "testdata/simple"
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseAPI(searchDir, mainAPIFile)
@@ -423,7 +423,7 @@ func TestParsePetApi(t *testing.T) {
     "basePath": "/v2",
     "paths": {}
 }`
-	searchDir := "example/pet"
+	searchDir := "testdata/pet"
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseAPI(searchDir, mainAPIFile)
