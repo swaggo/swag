@@ -47,6 +47,12 @@ func main() {
 		{
 			admin.POST("/auth", c.Auth)
 		}
+		examples := v1.Group("/examples")
+		{
+			examples.GET("ping", c.PingExample)
+			examples.GET("calc", c.CalcExample)
+			examples.GET("groups/:group_id/accounts/:account_id", c.PathParamsExample)
+		}
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Run(":8080")
