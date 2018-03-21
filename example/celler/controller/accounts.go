@@ -160,15 +160,15 @@ func (c *Controller) DeleteAccount(ctx *gin.Context) {
 // @ID account id
 // @Accept  multipart/form-data
 // @Produce  json
+// @Param  id path int true "Account ID"
 // @Param file formData file true "account image"
 // @Success 200 {object} controller.Message
 // @Failure 400 {object} controller.HTTPError
 // @Failure 404 {object} controller.HTTPError
 // @Failure 500 {object} controller.HTTPError
-// @Router /accounts/1/images [post]
+// @Router /accounts/{id}/images [post]
 func (c *Controller) UploadAccountImage(ctx *gin.Context) {
-	id := ctx.Param("id")
-	_, err := strconv.Atoi(id)
+	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		NewError(ctx, http.StatusBadRequest, err)
 		return
@@ -178,5 +178,5 @@ func (c *Controller) UploadAccountImage(ctx *gin.Context) {
 		NewError(ctx, http.StatusBadRequest, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, Message{Message: fmt.Sprintf("upload compleate finename=%s", file.Filename)})
+	ctx.JSON(http.StatusOK, Message{Message: fmt.Sprintf("upload compleate userID=%d finename=%s", id, file.Filename)})
 }

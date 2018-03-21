@@ -1,25 +1,45 @@
 # swag
-Automatically generate RESTful API documentation with Swagger 2.0 for Go.
 
-[![Travis branch](https://img.shields.io/travis/swaggo/swag/master.svg)](https://travis-ci.org/swaggo/swag)
-[![Codecov branch](https://img.shields.io/codecov/c/github/swaggo/swag/master.svg)](https://codecov.io/gh/swaggo/swag)
-[![Go Report Card](https://goreportcard.com/badge/github.com/swaggo/swag)](https://goreportcard.com/report/github.com/swaggo/swag)
-[![GoDoc](https://godoc.org/github.com/swaggo/swagg?status.svg)](https://godoc.org/github.com/swaggo/swag)
+<p align="center">
+  <a href="https://swaggo.github.io/swaggo.io/">
+    <img alt="swaggo" src="https://raw.githubusercontent.com/swaggo/swaggo.io/master/images/swaggo.png" width="200">
+  </a>
+</p>
+
+
+<p align="center">
+  Automatically generate RESTful API documentation with Swagger 2.0 for Go.
+</p>
+
+<p align="center">
+  <a href="https://travis-ci.org/swaggo/swag"><img alt="Travis Status" src="https://img.shields.io/travis/swaggo/swag/master.svg"></a>
+  <a href="https://codecov.io/gh/swaggo/swag"><img alt="Coverage Status" src="https://img.shields.io/codecov/c/github/swaggo/swag/master.svg"></a>
+  <a href="https://goreportcard.com/badge/github.com/swaggo/swag"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/swaggo/swag"></a>
+  <a href="https://godoc.org/github.com/swaggo/swag"><img alt="Go Doc" src="https://godoc.org/github.com/swaggo/swagg?status.svg"></a>
+</p>
  
 ## What is swag?
 swag converts Go annotations to Swagger Documentation 2.0. And provides a variety of builtin [web framework](#supported-web-framework) lib. Let you can quickly integrated in existing golang project(using Swagger UI) .
 
 ## Contents
+
 - [Generate Swagger 2.0 docs](#generate-swagger-20-docs)
 - [How to use it with gin?](#how-to-use-it-with-gin)
-- [Declarative Comments Format](#declarative-comments-format)
-  - [General API info](#general-api-info)
-  - [API Operation](#api-operation)
 - [Supported Web Framework](#supported-web-framework)
 
+## Document
+
+- [web](https://swaggo.github.io/swaggo.io/)
+- [pdf](https://github.com/swaggo/swaggo.io/raw/gh-pages/swaggo.pdf)
+- [epub](https://github.com/swaggo/swaggo.io/raw/gh-pages/swaggo.epub)
+- [mobi](https://github.com/swaggo/swaggo.io/raw/gh-pages/swaggo.mobi)
+
+## Example
+
+[swaggo + gin](https://github.com/swaggo/swag/tree/master/example/celler)
 
 ## Generate Swagger 2.0 docs
-1. Add comments to your API source code, [See Declarative Comments Format](#declarative-comments-format)
+1. Add comments to your API source code, [See Declarative Comments Format](https://swaggo.github.io/swaggo.io/declarative_comments_format/)
 
 2. Download swag by using:
 ```sh
@@ -30,15 +50,18 @@ $ go get -u github.com/swaggo/swag/cmd/swag
 $ swag init
 ```
 
-## How to use it with `gin`? 
-1. After using [swag](#generate-swagger-20-docs) to generate Swagger 2.0 docs. Import following packages:
+## How to use it with `gin`?
+
+1.After using [swag](#generate-swagger-20-docs) to generate Swagger 2.0 docs. Import following packages:
+
 ```go
 import "github.com/swaggo/gin-swagger" // gin-swagger middleware
 import "github.com/swaggo/gin-swagger/swaggerFiles" // swagger embed files
 
 ```
 
-2. Added [API Operation](#api-operation) annotations in `main.go` code:
+2.Added [General API Info](https://swaggo.github.io/swaggo.io/declarative_comments_format/api_operation.html) annotations in `main.go` code:
+
 ```go
 package main
 
@@ -73,8 +96,9 @@ func main() {
 }
 ```
 
-3. Added [General API Info](#api-operation) annotations in `handler/controller` code
-``` go 
+3.Added [API Operation](https://swaggo.github.io/swaggo.io/declarative_comments_format/general_api_info.html) annotations in `handler/controller` code
+
+``` go
 // @Summary Add a new pet to the store
 // @Description get string by ID
 // @ID get-string-by-int
@@ -110,72 +134,15 @@ type Pet3 struct {
 
 ```
 
-4. Run it, and browser to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as bellow:
+4.Run it, and browser to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as bellow:
 
 ![swagger_index.html](https://user-images.githubusercontent.com/8943871/31943004-dd08a10e-b88c-11e7-9e77-19d2c759a586.png)
-
-
-
-## Declarative Comments Format
-
-### General API Info
-| annotation         | description                                                                                               | 
-|--------------------|-----------------------------------------------------------------------------------------------------------|
-| title              | **Required.** The title of the application.                                                               |
-| version            | **Required.** Provides the version of the application API.                                                |
-| description        | A short description of the application.                                                                   |
-| termsOfService     | The Terms of Service for the API.                                                                         |
-| contact.name       | The contact information for the exposed API.                                                              |
-| contact.url        | The URL pointing to the contact information. MUST be in the format of a URL.                              |
-| contact.email      | The email address of the contact person/organization. MUST be in the format of an email address.          |
-| license.name       | **Required.** The license name used for the API.                                                          |
-| license.url        | A URL to the license used for the API. MUST be in the format of a URL.                                    |
-| host               | The host (name or ip) serving the API.                                                                    |
-| BasePath           | The base path on which the API is served.                                                                 |
-
-
-### API Operation
-| annotation         | description                                                                                               | 
-|--------------------|-----------------------------------------------------------------------------------------------------------|
-| description        | A verbose explanation of the operation behavior.                                                          |
-| id                 | A unique string used to identify the operation. Must be unique among all API operations.                  |
-| tags               | A list of tags to each API operation that separated by commas.                                            |
-| summary            | A short summary of what the operation does.                                                               |
-| accept             | A list of MIME types the APIs can consume. Value MUST be as described under [Mime Types](#mime-types).                             |
-| produce            | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                         |
-| param              | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment`      | 
-| success            | Success response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
-| failure            | Failure response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`             | 
-| router             | Failure response that separated by spaces. `path`,`[httpMethod]`                                          | 
-
-#### Mime Types
-```
-  json
-  application/json
-  xml
-  text/xml
-  plain
-  text/plain
-  html
-  text/html
-  mpfd
-  multipart/form-data
-  json-api
-  application/vnd.api+json
-```
 
 ## Supported Web Framework
 - [gin](http://github.com/swaggo/gin-swagger)
 - [echo](http://github.com/swaggo/echo-swagger)
 - [net/http](https://github.com/swaggo/http-swagger)
 - revel
-
-## Limitation
-- Not supported for cross-package models. Only search in project root folder. [See #39](https://github.com/swaggo/swag/issues/39)
-
-## TODO
-- [ ] supplement better documentation
-
 
 ## About the Project
 This project was inspired by [swagger](https://github.com/yvasiyarov/swagger) but simplified the usage of complexity and support a variety of [web framework]((#supported-web-framework)).

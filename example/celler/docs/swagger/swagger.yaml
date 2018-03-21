@@ -235,13 +235,18 @@ paths:
             $ref: '#/definitions/controller.HTTPError'
             type: object
       summary: Update a account
-  /accounts/1/images:
+  /accounts/{id}/images:
     post:
       consumes:
       - multipart/form-data
       description: Upload file
       operationId: account id
       parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: account image
         in: formData
         name: file
@@ -360,4 +365,101 @@ paths:
             $ref: '#/definitions/controller.HTTPError'
             type: object
       summary: Show a bottle
+  /examples/calc:
+    get:
+      consumes:
+      - application/json
+      description: plus
+      parameters:
+      - description: used for calc
+        in: query
+        name: val1
+        required: true
+        type: integer
+      - description: used for calc
+        in: query
+        name: val2
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: integer
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: calc example
+  /examples/groups/{group_id}/accounts/{account_id}:
+    get:
+      consumes:
+      - application/json
+      description: path params
+      parameters:
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: Account ID
+        in: path
+        name: account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: path params example
+  /examples/ping:
+    get:
+      consumes:
+      - application/json
+      description: do ping
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: pong
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: ping example
 swagger: "2.0"
