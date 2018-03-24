@@ -40,6 +40,8 @@ func getPropertyName(field *ast.Field) (name string, fieldType string) {
 		return "array", str
 	} else if _, ok := field.Type.(*ast.StructType); ok { // if struct
 		return "object", "object"
+	} else if _, ok := field.Type.(*ast.InterfaceType); ok { // if interface{}
+		return "object", "object"
 	} else {
 		log.Fatalf("Something goes wrong: %#v", field.Type)
 	}
