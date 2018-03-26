@@ -326,6 +326,9 @@ func TestParseSimpleApi(t *testing.T) {
                         }
                     }
                 },
+                "data": {
+                    "type": "object"
+                },
                 "id": {
                     "type": "integer",
                     "example": 1
