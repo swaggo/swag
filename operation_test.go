@@ -341,3 +341,24 @@ func TestParseIdComment(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "myOperationId", operation.ID)
 }
+
+func TestParseSecurityComment(t *testing.T) {
+	comment := `@Security OAuth2Implicit[read, write]`
+	operation := NewOperation()
+	operation.parser = New()
+	err := operation.ParseComment(comment)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "security": [
+        {
+            "OAuth2Implicit": [
+                "read",
+                "write"
+            ]
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}

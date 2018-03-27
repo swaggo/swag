@@ -15,7 +15,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
-	var expected = `{
+	expected := `{
     "swagger": "2.0",
     "info": {
         "description": "This is a sample server Petstore server.",
@@ -34,7 +34,53 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
     },
     "host": "petstore.swagger.io",
     "basePath": "/v2",
-    "paths": {}
+    "paths": {},
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "BasicAuth": {
+            "type": "basic"
+        },
+        "OAuth2AccessCode": {
+            "type": "oauth2",
+            "flow": "accessCode",
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information"
+            }
+        },
+        "OAuth2Application": {
+            "type": "oauth2",
+            "flow": "application",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.write": " Grants write access"
+            }
+        },
+        "OAuth2Implicit": {
+            "type": "oauth2",
+            "flow": "implicit",
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.write": " Grants write access"
+            }
+        },
+        "OAuth2Password": {
+            "type": "oauth2",
+            "flow": "password",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.read": " Grants read access",
+                "@scope.write": " Grants write access"
+            }
+        }
+    }
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
@@ -86,7 +132,7 @@ func TestGetSchemes(t *testing.T) {
 
 }
 func TestParseSimpleApi(t *testing.T) {
-	var expected = `{
+	expected := `{
     "swagger": "2.0",
     "info": {
         "description": "This is a sample server Petstore server.",
@@ -206,6 +252,39 @@ func TestParseSimpleApi(t *testing.T) {
         },
         "/testapi/get-struct-array-by-string/{some_id}": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": [
+                            ""
+                        ]
+                    },
+                    {
+                        "BasicAuth": [
+                            ""
+                        ]
+                    },
+                    {
+                        "OAuth2Application": [
+                            "write"
+                        ]
+                    },
+                    {
+                        "OAuth2Implicit": [
+                            "read",
+                            "admin"
+                        ]
+                    },
+                    {
+                        "OAuth2AccessCode": [
+                            "read"
+                        ]
+                    },
+                    {
+                        "OAuth2Password": [
+                            "admin"
+                        ]
+                    }
+                ],
                 "description": "get struct array by ID",
                 "consumes": [
                     "application/json"
@@ -391,6 +470,52 @@ func TestParseSimpleApi(t *testing.T) {
                 }
             }
         }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "BasicAuth": {
+            "type": "basic"
+        },
+        "OAuth2AccessCode": {
+            "type": "oauth2",
+            "flow": "accessCode",
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information"
+            }
+        },
+        "OAuth2Application": {
+            "type": "oauth2",
+            "flow": "application",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.write": " Grants write access"
+            }
+        },
+        "OAuth2Implicit": {
+            "type": "oauth2",
+            "flow": "implicit",
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.write": " Grants write access"
+            }
+        },
+        "OAuth2Password": {
+            "type": "oauth2",
+            "flow": "password",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.read": " Grants read access",
+                "@scope.write": " Grants write access"
+            }
+        }
     }
 }`
 	searchDir := "testdata/simple"
@@ -398,7 +523,6 @@ func TestParseSimpleApi(t *testing.T) {
 	p := New()
 	p.ParseAPI(searchDir, mainAPIFile)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-
 	assert.Equal(t, expected, string(b))
 }
 

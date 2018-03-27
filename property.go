@@ -3,7 +3,6 @@ package swag
 import (
 	"fmt"
 	"go/ast"
-	"log"
 )
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
@@ -42,8 +41,6 @@ func getPropertyName(field *ast.Field) (name string, fieldType string) {
 		return "object", "object"
 	} else if _, ok := field.Type.(*ast.InterfaceType); ok { // if interface{}
 		return "object", "object"
-	} else {
-		log.Fatalf("Something goes wrong: %#v", field.Type)
 	}
 
 	return name, fieldType
