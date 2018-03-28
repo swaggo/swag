@@ -13,7 +13,6 @@ import (
 // ShowAccount godoc
 // @Summary Show a account
 // @Description get string by ID
-// @ID get-string-by-int
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Account ID"
@@ -94,7 +93,6 @@ func (c *Controller) AddAccount(ctx *gin.Context) {
 // UpdateAccount godoc
 // @Summary Update a account
 // @Description Update by json account
-// @ID get-string-by-int
 // @Accept  json
 // @Produce  json
 // @Param  id path int true "Account ID"
@@ -131,7 +129,6 @@ func (c *Controller) UpdateAccount(ctx *gin.Context) {
 // DeleteAccount godoc
 // @Summary Update a account
 // @Description Delete by account ID
-// @ID get-string-by-int
 // @Accept  json
 // @Produce  json
 // @Param  id path int true "Account ID"
@@ -158,7 +155,6 @@ func (c *Controller) DeleteAccount(ctx *gin.Context) {
 // UploadAccountImage godoc
 // @Summary Upload account image
 // @Description Upload file
-// @ID account id
 // @Accept  multipart/form-data
 // @Produce  json
 // @Param  id path int true "Account ID"

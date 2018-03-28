@@ -85,19 +85,23 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             items:
               $ref: '#/definitions/model.Account'
             type: array
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
@@ -118,18 +122,22 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Account'
             type: object
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
@@ -139,7 +147,6 @@ paths:
       consumes:
       - application/json
       description: Delete by account ID
-      operationId: get-string-by-int
       parameters:
       - description: Account ID
         in: path
@@ -150,18 +157,22 @@ paths:
       - application/json
       responses:
         "204":
+          description: No Content
           schema:
             $ref: '#/definitions/model.Account'
             type: object
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
@@ -170,7 +181,6 @@ paths:
       consumes:
       - application/json
       description: get string by ID
-      operationId: get-string-by-int
       parameters:
       - description: Account ID
         in: path
@@ -181,18 +191,22 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Account'
             type: object
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
@@ -201,7 +215,6 @@ paths:
       consumes:
       - application/json
       description: Update by json account
-      operationId: get-string-by-int
       parameters:
       - description: Account ID
         in: path
@@ -219,18 +232,22 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Account'
             type: object
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
@@ -240,7 +257,6 @@ paths:
       consumes:
       - multipart/form-data
       description: Upload file
-      operationId: account id
       parameters:
       - description: Account ID
         in: path
@@ -256,18 +272,22 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/controller.Message'
             type: object
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
@@ -281,28 +301,32 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Admin'
             type: object
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       security:
-      - ApiKeyAuth:
-        - ""
+      - ApiKeyAuth: []
       summary: Auth admin
   /bottles:
     get:
@@ -313,19 +337,23 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             items:
               $ref: '#/definitions/model.Bottle'
             type: array
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
@@ -346,18 +374,22 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Bottle'
             type: object
         "400":
+          description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
@@ -464,12 +496,6 @@ paths:
           description: ok
           schema:
             type: string
-      security:
-      - ApiKeyAuth:
-        - ""
-      - OAuth2Implicit:
-        - read
-        - admin
       summary: custome header example
   /examples/ping:
     get:
@@ -496,6 +522,42 @@ paths:
           schema:
             type: string
       summary: ping example
+  /examples/securities:
+    get:
+      consumes:
+      - application/json
+      description: custome header
+      parameters:
+      - description: Authentication header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      - OAuth2Implicit:
+        - admin
+        - write
+      summary: custome header example
 securityDefinitions:
   ApiKeyAuth:
     in: header
@@ -503,26 +565,33 @@ securityDefinitions:
     type: apiKey
   BasicAuth:
     type: basic
+  OAuth2AccessCode:
+    authorizationUrl: https://example.com/oauth/authorize
+    flow: accessCode
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
   OAuth2Application:
     flow: application
     scopes:
-      '@scope.admin': ' Grants read and write access to administrative information'
-      '@scope.write': ' Grants write access'
+      admin: ' Grants read and write access to administrative information'
+      write: ' Grants write access'
     tokenUrl: https://example.com/oauth/token
     type: oauth2
   OAuth2Implicit:
     authorizationUrl: https://example.com/oauth/authorize
     flow: implicit
     scopes:
-      '@scope.admin': ' Grants read and write access to administrative information'
-      '@scope.write': ' Grants write access'
+      admin: ' Grants read and write access to administrative information'
+      write: ' Grants write access'
     type: oauth2
   OAuth2Password:
     flow: password
     scopes:
-      '@scope.admin': ' Grants read and write access to administrative information'
-      '@scope.read': ' Grants read access'
-      '@scope.write': ' Grants write access'
+      admin: ' Grants read and write access to administrative information'
+      read: ' Grants read access'
+      write: ' Grants write access'
     tokenUrl: https://example.com/oauth/token
     type: oauth2
 swagger: "2.0"

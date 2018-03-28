@@ -38,6 +38,7 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -46,18 +47,21 @@
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -88,24 +92,28 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/model.Account"
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -124,7 +132,6 @@
                     "application/json"
                 ],
                 "summary": "Show a account",
-                "operationId": "get-string-by-int",
                 "parameters": [
                     {
                         "type": "integer",
@@ -136,24 +143,28 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/model.Account"
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -170,7 +181,6 @@
                     "application/json"
                 ],
                 "summary": "Update a account",
-                "operationId": "get-string-by-int",
                 "parameters": [
                     {
                         "type": "integer",
@@ -182,24 +192,28 @@
                 ],
                 "responses": {
                     "204": {
+                        "description": "No Content",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/model.Account"
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -216,7 +230,6 @@
                     "application/json"
                 ],
                 "summary": "Update a account",
-                "operationId": "get-string-by-int",
                 "parameters": [
                     {
                         "type": "integer",
@@ -238,24 +251,28 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/model.Account"
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -274,7 +291,6 @@
                     "application/json"
                 ],
                 "summary": "Upload account image",
-                "operationId": "account id",
                 "parameters": [
                     {
                         "type": "integer",
@@ -293,24 +309,28 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/controller.Message"
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -323,9 +343,7 @@
             "post": {
                 "security": [
                     {
-                        "ApiKeyAuth": [
-                            ""
-                        ]
+                        "ApiKeyAuth": []
                     }
                 ],
                 "description": "get admin info",
@@ -338,30 +356,35 @@
                 "summary": "Auth admin",
                 "responses": {
                     "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/model.Admin"
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -382,6 +405,7 @@
                 "summary": "List bottles",
                 "responses": {
                     "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "array",
                             "items": {
@@ -390,18 +414,21 @@
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -432,24 +459,28 @@
                 ],
                 "responses": {
                     "200": {
+                        "description": "OK",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/model.Bottle"
                         }
                     },
                     "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
+                        "description": "Not Found",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "type": "object",
                             "$ref": "#/definitions/httputil.HTTPError"
@@ -568,19 +599,6 @@
         },
         "/examples/header": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": [
-                            ""
-                        ]
-                    },
-                    {
-                        "OAuth2Implicit": [
-                            "read",
-                            "admin"
-                        ]
-                    }
-                ],
                 "description": "custome header",
                 "consumes": [
                     "application/json"
@@ -639,6 +657,64 @@
                 "responses": {
                     "200": {
                         "description": "pong",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/examples/securities": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "OAuth2Implicit": [
+                            "admin",
+                            "write"
+                        ]
+                    }
+                ],
+                "description": "custome header",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "custome header example",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authentication header",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "answer",
                         "schema": {
                             "type": "string"
                         }
@@ -759,13 +835,22 @@
         "BasicAuth": {
             "type": "basic"
         },
+        "OAuth2AccessCode": {
+            "type": "oauth2",
+            "flow": "accessCode",
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "admin": " Grants read and write access to administrative information"
+            }
+        },
         "OAuth2Application": {
             "type": "oauth2",
             "flow": "application",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "write": " Grants write access"
             }
         },
         "OAuth2Implicit": {
@@ -773,8 +858,8 @@
             "flow": "implicit",
             "authorizationUrl": "https://example.com/oauth/authorize",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "write": " Grants write access"
             }
         },
         "OAuth2Password": {
@@ -782,9 +867,9 @@
             "flow": "password",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.read": " Grants read access",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "read": " Grants read access",
+                "write": " Grants write access"
             }
         }
     }

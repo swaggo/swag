@@ -48,8 +48,9 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "type": "oauth2",
             "flow": "accessCode",
             "authorizationUrl": "https://example.com/oauth/authorize",
+            "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information"
+                "admin": " Grants read and write access to administrative information"
             }
         },
         "OAuth2Application": {
@@ -57,8 +58,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "flow": "application",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "write": " Grants write access"
             }
         },
         "OAuth2Implicit": {
@@ -66,8 +67,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "flow": "implicit",
             "authorizationUrl": "https://example.com/oauth/authorize",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "write": " Grants write access"
             }
         },
         "OAuth2Password": {
@@ -75,9 +76,9 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "flow": "password",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.read": " Grants read access",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "read": " Grants read access",
+                "write": " Grants write access"
             }
         }
     }
@@ -254,14 +255,10 @@ func TestParseSimpleApi(t *testing.T) {
             "get": {
                 "security": [
                     {
-                        "ApiKeyAuth": [
-                            ""
-                        ]
+                        "ApiKeyAuth": []
                     },
                     {
-                        "BasicAuth": [
-                            ""
-                        ]
+                        "BasicAuth": []
                     },
                     {
                         "OAuth2Application": [
@@ -484,8 +481,9 @@ func TestParseSimpleApi(t *testing.T) {
             "type": "oauth2",
             "flow": "accessCode",
             "authorizationUrl": "https://example.com/oauth/authorize",
+            "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information"
+                "admin": " Grants read and write access to administrative information"
             }
         },
         "OAuth2Application": {
@@ -493,8 +491,8 @@ func TestParseSimpleApi(t *testing.T) {
             "flow": "application",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "write": " Grants write access"
             }
         },
         "OAuth2Implicit": {
@@ -502,8 +500,8 @@ func TestParseSimpleApi(t *testing.T) {
             "flow": "implicit",
             "authorizationUrl": "https://example.com/oauth/authorize",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "write": " Grants write access"
             }
         },
         "OAuth2Password": {
@@ -511,9 +509,9 @@ func TestParseSimpleApi(t *testing.T) {
             "flow": "password",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "@scope.admin": " Grants read and write access to administrative information",
-                "@scope.read": " Grants read access",
-                "@scope.write": " Grants write access"
+                "admin": " Grants read and write access to administrative information",
+                "read": " Grants read access",
+                "write": " Grants write access"
             }
         }
     }
