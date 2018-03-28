@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/swag/example/celler/httputil"
 )
 
 // PingExample godoc
@@ -37,12 +38,12 @@ func (c *Controller) PingExample(ctx *gin.Context) {
 func (c *Controller) CalcExample(ctx *gin.Context) {
 	val1, err := strconv.Atoi(ctx.Query("val1"))
 	if err != nil {
-		NewError(ctx, http.StatusBadRequest, err)
+		httputil.NewError(ctx, http.StatusBadRequest, err)
 		return
 	}
 	val2, err := strconv.Atoi(ctx.Query("val2"))
 	if err != nil {
-		NewError(ctx, http.StatusBadRequest, err)
+		httputil.NewError(ctx, http.StatusBadRequest, err)
 		return
 	}
 	ans := val1 + val2
@@ -64,13 +65,44 @@ func (c *Controller) CalcExample(ctx *gin.Context) {
 func (c *Controller) PathParamsExample(ctx *gin.Context) {
 	groupID, err := strconv.Atoi(ctx.Param("group_id"))
 	if err != nil {
-		NewError(ctx, http.StatusBadRequest, err)
+		httputil.NewError(ctx, http.StatusBadRequest, err)
 		return
 	}
 	accountID, err := strconv.Atoi(ctx.Param("account_id"))
 	if err != nil {
-		NewError(ctx, http.StatusBadRequest, err)
+		httputil.NewError(ctx, http.StatusBadRequest, err)
 		return
 	}
 	ctx.String(http.StatusOK, "group_id=%d account_id=%d", groupID, accountID)
+}
+
+// HeaderExample godoc
+// @Summary custome header example
+// @Description custome header
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authentication header"
+// @Success 200 {string} string "answer"
+// @Failure 400 {string} string "ok"
+// @Failure 404 {string} string "ok"
+// @Failure 500 {string} string "ok"
+// @Router /examples/header [get]
+func (c *Controller) HeaderExample(ctx *gin.Context) {
+	ctx.String(http.StatusOK, ctx.GetHeader("Authorization"))
+}
+
+// SecuritiesExample godoc
+// @Summary custome header example
+// @Description custome header
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Authentication header"
+// @Success 200 {string} string "answer"
+// @Failure 400 {string} string "ok"
+// @Failure 404 {string} string "ok"
+// @Failure 500 {string} string "ok"
+// @Security ApiKeyAuth
+// @Security OAuth2Implicit[read, admin]
+// @Router /examples/header [get]
+func (c *Controller) SecuritiesExample(ctx *gin.Context) {
 }

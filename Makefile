@@ -36,3 +36,4 @@ deps:
 	$(GOGET) -v ./...
 	$(GOGET) github.com/stretchr/testify/assert
 	$(GOGET) github.com/golang/lint/golint
+	$(GOGET) golang.org/x/tools/cmd/goimports

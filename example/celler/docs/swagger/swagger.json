@@ -48,19 +48,19 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -96,19 +96,19 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -144,19 +144,19 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -190,19 +190,19 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -246,19 +246,19 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -301,19 +301,19 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -321,6 +321,13 @@
         },
         "/admin/auth": {
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": [
+                            ""
+                        ]
+                    }
+                ],
                 "description": "get admin info",
                 "consumes": [
                     "application/json"
@@ -329,15 +336,6 @@
                     "application/json"
                 ],
                 "summary": "Auth admin",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Authentication header",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
                 "responses": {
                     "200": {
                         "schema": {
@@ -348,25 +346,25 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "401": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -394,19 +392,19 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -442,19 +440,19 @@
                     "400": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "404": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     },
                     "500": {
                         "schema": {
                             "type": "object",
-                            "$ref": "#/definitions/controller.HTTPError"
+                            "$ref": "#/definitions/httputil.HTTPError"
                         }
                     }
                 }
@@ -568,6 +566,66 @@
                 }
             }
         },
+        "/examples/header": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": [
+                            ""
+                        ]
+                    },
+                    {
+                        "OAuth2Implicit": [
+                            "read",
+                            "admin"
+                        ]
+                    }
+                ],
+                "description": "custome header",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "custome header example",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authentication header",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "answer",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/examples/ping": {
             "get": {
                 "description": "do ping",
@@ -608,7 +666,16 @@
         }
     },
     "definitions": {
-        "controller.HTTPError": {
+        "controller.Message": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "message"
+                }
+            }
+        },
+        "httputil.HTTPError": {
             "type": "object",
             "properties": {
                 "code": {
@@ -618,15 +685,6 @@
                 "message": {
                     "type": "string",
                     "example": "status bad request"
-                }
-            }
-        },
-        "controller.Message": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "message"
                 }
             }
         },
@@ -689,6 +747,44 @@
                     "type": "string",
                     "example": "account name"
                 }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "BasicAuth": {
+            "type": "basic"
+        },
+        "OAuth2Application": {
+            "type": "oauth2",
+            "flow": "application",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.write": " Grants write access"
+            }
+        },
+        "OAuth2Implicit": {
+            "type": "oauth2",
+            "flow": "implicit",
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.write": " Grants write access"
+            }
+        },
+        "OAuth2Password": {
+            "type": "oauth2",
+            "flow": "password",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "@scope.admin": " Grants read and write access to administrative information",
+                "@scope.read": " Grants read access",
+                "@scope.write": " Grants write access"
             }
         }
     }

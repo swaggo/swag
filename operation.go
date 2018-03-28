@@ -77,8 +77,11 @@ func (operation *Operation) ParseComment(comment string) error {
 		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
 		}
+	case "@security":
+		if err := operation.ParseSecurityComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -203,6 +206,32 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	operation.Path = path
 	operation.HTTPMethod = strings.ToUpper(httpMethod)
 
+	return nil
+}
+
+// ParseSecurityComment parses comment for gived `security` comment string.
+func (operation *Operation) ParseSecurityComment(commentLine string) error {
+	securitySource := commentLine[strings.Index(commentLine, "@Security")+1:]
+	l := strings.Index(securitySource, "[")
+	r := strings.Index(securitySource, "]")
+	// exists scope
+	if !(l == -1 && r == -1) {
+		scopes := securitySource[l+1 : r]
+		s := []string{}
+		for _, scope := range strings.Split(scopes, ",") {
+			scope = strings.TrimSpace(scope)
+			s = append(s, scope)
+		}
+		securityKey := securitySource[0:l]
+		securityMap := map[string][]string{}
+		securityMap[securityKey] = append(securityMap[securityKey], s...)
+		operation.Security = append(operation.Security, securityMap)
+	} else {
+		securityKey := strings.TrimSpace(securitySource)
+		securityMap := map[string][]string{}
+		securityMap[securityKey] = append(securityMap[securityKey], "")
+		operation.Security = append(operation.Security, securityMap)
+	}
 	return nil
 }
 

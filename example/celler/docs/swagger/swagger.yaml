@@ -1,18 +1,18 @@
 basePath: /api/v1
 definitions:
-  controller.HTTPError:
+  controller.Message:
+    properties:
+      message:
+        example: message
+        type: string
+    type: object
+  httputil.HTTPError:
     properties:
       code:
         example: 400
         type: integer
       message:
         example: status bad request
-        type: string
-    type: object
-  controller.Message:
-    properties:
-      message:
-        example: message
         type: string
     type: object
   model.Account:
@@ -91,15 +91,15 @@ paths:
             type: array
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: List accounts
     post:
@@ -123,15 +123,15 @@ paths:
             type: object
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Add a account
   /accounts/{id}:
@@ -155,15 +155,15 @@ paths:
             type: object
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Update a account
     get:
@@ -186,15 +186,15 @@ paths:
             type: object
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Show a account
     patch:
@@ -224,15 +224,15 @@ paths:
             type: object
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Update a account
   /accounts/{id}/images:
@@ -261,15 +261,15 @@ paths:
             type: object
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Upload account image
   /admin/auth:
@@ -277,12 +277,6 @@ paths:
       consumes:
       - application/json
       description: get admin info
-      parameters:
-      - description: Authentication header
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
@@ -292,20 +286,23 @@ paths:
             type: object
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "401":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
+      security:
+      - ApiKeyAuth:
+        - ""
       summary: Auth admin
   /bottles:
     get:
@@ -322,15 +319,15 @@ paths:
             type: array
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: List bottles
   /bottles/{id}:
@@ -354,15 +351,15 @@ paths:
             type: object
         "400":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Show a bottle
   /examples/calc:
@@ -437,6 +434,43 @@ paths:
           schema:
             type: string
       summary: path params example
+  /examples/header:
+    get:
+      consumes:
+      - application/json
+      description: custome header
+      parameters:
+      - description: Authentication header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth:
+        - ""
+      - OAuth2Implicit:
+        - read
+        - admin
+      summary: custome header example
   /examples/ping:
     get:
       consumes:
@@ -462,4 +496,33 @@ paths:
           schema:
             type: string
       summary: ping example
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  BasicAuth:
+    type: basic
+  OAuth2Application:
+    flow: application
+    scopes:
+      '@scope.admin': ' Grants read and write access to administrative information'
+      '@scope.write': ' Grants write access'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
+  OAuth2Implicit:
+    authorizationUrl: https://example.com/oauth/authorize
+    flow: implicit
+    scopes:
+      '@scope.admin': ' Grants read and write access to administrative information'
+      '@scope.write': ' Grants write access'
+    type: oauth2
+  OAuth2Password:
+    flow: password
+    scopes:
+      '@scope.admin': ' Grants read and write access to administrative information'
+      '@scope.read': ' Grants read access'
+      '@scope.write': ' Grants write access'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
 swagger: "2.0"
