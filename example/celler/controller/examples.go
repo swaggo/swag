@@ -102,7 +102,7 @@ func (c *Controller) HeaderExample(ctx *gin.Context) {
 // @Failure 404 {string} string "ok"
 // @Failure 500 {string} string "ok"
 // @Security ApiKeyAuth
-// @Security OAuth2Implicit[read, admin]
-// @Router /examples/header [get]
+// @Security OAuth2Implicit[admin, write]
+// @Router /examples/securities [get]
 func (c *Controller) SecuritiesExample(ctx *gin.Context) {
 }

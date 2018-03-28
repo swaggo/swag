@@ -227,7 +227,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 					if len(attrMap) != 2 {
 						log.Panic("@securitydefinitions.oauth2.accessCode is @tokenUrl and @authorizationUrl required")
 					}
-					securityScheme := spec.OAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenUrl"])
+					securityScheme := spec.OAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"])
 					for scope, description := range scopes {
 						securityScheme.AddScope(scope, description)
 					}
@@ -246,7 +246,7 @@ func getScopeScheme(scope string) string {
 	if scopeValue == "" {
 		panic("@scope is empty")
 	}
-	return scope[strings.Index(scope, "@scope."):]
+	return scope[len("@scope."):]
 }
 
 func isExistsScope(scope string) bool {

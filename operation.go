@@ -2,6 +2,7 @@ package swag
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -229,7 +230,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 	} else {
 		securityKey := strings.TrimSpace(securitySource)
 		securityMap := map[string][]string{}
-		securityMap[securityKey] = append(securityMap[securityKey], "")
+		securityMap[securityKey] = []string{}
 		operation.Security = append(operation.Security, securityMap)
 	}
 	return nil
@@ -248,7 +249,11 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 
 	code, _ := strconv.Atoi(matches[1])
 
-	response.Description = strings.Trim(matches[4], "\"")
+	responseDescription := strings.Trim(matches[4], "\"")
+	if responseDescription == "" {
+		responseDescription = http.StatusText(code)
+	}
+	response.Description = responseDescription
 
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
