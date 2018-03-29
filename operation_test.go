@@ -333,6 +333,103 @@ func TestParseParamCommentNotMatch(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestParseParamCommentByEnums(t *testing.T) {
+	comment := `@Param some_id query string.Enums(A, B, C) true "Some ID"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "enum": [
+                "A",
+                "B",
+                "C"
+            ],
+            "type": "string",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+
+	comment = `@Param some_id query int.Enums(1, 2, 3) true "Some ID"`
+	operation = NewOperation()
+	err = operation.ParseComment(comment)
+
+	assert.NoError(t, err)
+	b, _ = json.MarshalIndent(operation, "", "    ")
+	expected = `{
+    "parameters": [
+        {
+            "enum": [
+                1,
+                2,
+                3
+            ],
+            "type": "integer",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+
+	comment = `@Param some_id query number.Enums(1.1, 2.2, 3.3) true "Some ID"`
+	operation = NewOperation()
+	err = operation.ParseComment(comment)
+
+	assert.NoError(t, err)
+	b, _ = json.MarshalIndent(operation, "", "    ")
+	expected = `{
+    "parameters": [
+        {
+            "enum": [
+                1.1,
+                2.2,
+                3.3
+            ],
+            "type": "number",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+
+	comment = `@Param some_id query bool.Enums(true, false) true "Some ID"`
+	operation = NewOperation()
+	err = operation.ParseComment(comment)
+
+	assert.NoError(t, err)
+	b, _ = json.MarshalIndent(operation, "", "    ")
+	expected = `{
+    "parameters": [
+        {
+            "enum": [
+                true,
+                false
+            ],
+            "type": "boolean",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseIdComment(t *testing.T) {
 	comment := `@Id myOperationId`
 	operation := NewOperation()

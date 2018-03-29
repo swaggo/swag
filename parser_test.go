@@ -299,6 +299,18 @@ func TestParseSimpleApi(t *testing.T) {
                         "required": true
                     },
                     {
+                        "enum": [
+                            1,
+                            2,
+                            3
+                        ],
+                        "type": "integer",
+                        "description": "Offset",
+                        "name": "category",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
                         "type": "integer",
                         "description": "Offset",
                         "name": "offset",

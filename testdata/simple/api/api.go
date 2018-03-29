@@ -24,6 +24,7 @@ func GetStringByInt(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param   some_id     path    string     true        "Some ID"
+// @Param   category   query    int.Enums(1, 2, 3)  true        "Offset"
 // @Param   offset     query    int     true        "Offset"
 // @Param   limit      query    int     true        "Offset"
 // @Success 200 {string} string	"ok"
