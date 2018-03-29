@@ -334,7 +334,7 @@ func TestParseParamCommentNotMatch(t *testing.T) {
 }
 
 func TestParseParamCommentByEnums(t *testing.T) {
-	comment := `@Param some_id query string.Enums(A, B, C) true "Some ID"`
+	comment := `@Param some_id query string true "Some ID" Enums(A, B, C)`
 	operation := NewOperation()
 	err := operation.ParseComment(comment)
 
@@ -358,7 +358,7 @@ func TestParseParamCommentByEnums(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 
-	comment = `@Param some_id query int.Enums(1, 2, 3) true "Some ID"`
+	comment = `@Param some_id query int true "Some ID" Enums(1, 2, 3)`
 	operation = NewOperation()
 	err = operation.ParseComment(comment)
 
@@ -382,7 +382,7 @@ func TestParseParamCommentByEnums(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 
-	comment = `@Param some_id query number.Enums(1.1, 2.2, 3.3) true "Some ID"`
+	comment = `@Param some_id query number true "Some ID" Enums(1.1, 2.2, 3.3)`
 	operation = NewOperation()
 	err = operation.ParseComment(comment)
 
@@ -406,7 +406,7 @@ func TestParseParamCommentByEnums(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 
-	comment = `@Param some_id query bool.Enums(true, false) true "Some ID"`
+	comment = `@Param some_id query bool true "Some ID" Enums(true, false)`
 	operation = NewOperation()
 	err = operation.ParseComment(comment)
 

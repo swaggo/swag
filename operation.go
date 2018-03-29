@@ -86,8 +86,8 @@ func (operation *Operation) ParseComment(comment string) error {
 	return nil
 }
 
-// for hoge.Enums("A","B")
-var regexEnums = regexp.MustCompile(`(?i).Enums\(.*\)`)
+// for Enums("A","B")
+var regexEnums = regexp.MustCompile(`(?i)Enums\(.*\)`)
 
 // ParseParamComment Parse params return []string of param properties
 // @Param	queryText		form	      string	  true		        "The email for login"

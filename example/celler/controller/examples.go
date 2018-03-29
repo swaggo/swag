@@ -113,9 +113,9 @@ func (c *Controller) SecuritiesExample(ctx *gin.Context) {
 // @Description enums
 // @Accept json
 // @Produce json
-// @Param string query string.Enums(A, B, C) false "string enums"
-// @Param int query int.Enums(1, 2, 3) false "int enums"
-// @Param number query number.Enums(1.1, 1.2, 1.3) false "int enums"
+// @Param string query string false "string enums" Enums(A, B, C)
+// @Param int query int false "int enums" Enums(1, 2, 3)
+// @Param number query number false "int enums" Enums(1.1, 1.2, 1.3)
 // @Success 200 {string} string "answer"
 // @Failure 400 {string} string "ok"
 // @Failure 404 {string} string "ok"
