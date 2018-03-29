@@ -86,15 +86,16 @@ func (operation *Operation) ParseComment(comment string) error {
 	return nil
 }
 
+// for hoge.Enums("A","B")
+var regexEnums = regexp.MustCompile(`(?i).Enums\(.*\)`)
+
 // ParseParamComment Parse params return []string of param properties
 // @Param	queryText		form	      string	  true		        "The email for login"
 // 			[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // @Param   some_id     path    int     true        "Some ID"
 func (operation *Operation) ParseParamComment(commentLine string) error {
-	paramString := commentLine
-
+	paramString := regexEnums.ReplaceAllString(commentLine, "")
 	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
-
 	matches := re.FindStringSubmatch(paramString)
 	if len(matches) != 6 {
 		return fmt.Errorf("can not parse param comment \"%s\"", paramString)
@@ -133,8 +134,47 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 	case "formData":
 		param = createParameter(paramType, description, name, "file", required)
 	}
+	enumAttr := regexEnums.FindString(commentLine)
+	l := strings.Index(enumAttr, "(")
+	r := strings.Index(enumAttr, ")")
+	if !(l == -1 && r == -1) {
+		enums := strings.Split(enumAttr[l+1:r], ",")
+		for _, e := range enums {
+			e = strings.TrimSpace(e)
+			param.Enum = append(param.Enum, defineTypeOfEnum(schemaType, e))
+		}
+	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	return nil
+}
+
+// defineTypeOfExample enum value define the type (object and array unsupported)
+func defineTypeOfEnum(schemaType string, value string) interface{} {
+	schemaType = TransToValidSchemeType(schemaType)
+	switch schemaType {
+	case "string":
+		return value
+	case "number":
+		v, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+		}
+		return v
+	case "integer":
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+		}
+		return v
+	case "boolean":
+		v, err := strconv.ParseBool(value)
+		if err != nil {
+			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+		}
+		return v
+	default:
+		panic(fmt.Errorf("%s is unsupported type in enum value", schemaType))
+	}
 }
 
 // ParseTagsComment parses comment for gived `tag` comment string.

@@ -37,7 +37,7 @@ swag converts Go annotations to Swagger Documentation 2.0. And provides a variet
   - [x] API Keys
 - [x] Adding Examples
 - [x] File Upload
-- [ ] Enums
+- [x] Enums
 - [x] Grouping Operations With Tags
 - [ ] Swagger Extensions
 

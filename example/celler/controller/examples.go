@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -105,4 +106,21 @@ func (c *Controller) HeaderExample(ctx *gin.Context) {
 // @Security OAuth2Implicit[admin, write]
 // @Router /examples/securities [get]
 func (c *Controller) SecuritiesExample(ctx *gin.Context) {
+}
+
+// EnumsExample godoc
+// @Summary enums example
+// @Description enums
+// @Accept json
+// @Produce json
+// @Param string query string.Enums(A, B, C) false "string enums"
+// @Param int query int.Enums(1, 2, 3) false "int enums"
+// @Param number query number.Enums(1.1, 1.2, 1.3) false "int enums"
+// @Success 200 {string} string "answer"
+// @Failure 400 {string} string "ok"
+// @Failure 404 {string} string "ok"
+// @Failure 500 {string} string "ok"
+// @Router /examples/enums [get]
+func (c *Controller) EnumsExample(ctx *gin.Context) {
+	ctx.String(http.StatusOK, fmt.Sprintf("string=%s int=%s number=%s", ctx.Query("string"), ctx.Query("int"), ctx.Query("number")))
 }
