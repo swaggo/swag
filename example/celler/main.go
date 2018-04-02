@@ -1,11 +1,15 @@
 package main
 
 import (
+	"errors"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"github.com/swaggo/swag/example/celler/controller"
 	_ "github.com/swaggo/swag/example/celler/docs"
+	"github.com/swaggo/swag/example/celler/httputil"
 )
 
 // @title Swagger Example API
@@ -22,6 +26,34 @@ import (
 
 // @host localhost:8080
 // @BasePath /api/v1
+
+// @securityDefinitions.basic BasicAuth
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
+// @securitydefinitions.oauth2.application OAuth2Application
+// @tokenUrl https://example.com/oauth/token
+// @scope.write Grants write access
+// @scope.admin Grants read and write access to administrative information
+
+// @securitydefinitions.oauth2.implicit OAuth2Implicit
+// @authorizationUrl https://example.com/oauth/authorize
+// @scope.write Grants write access
+// @scope.admin Grants read and write access to administrative information
+
+// @securitydefinitions.oauth2.password OAuth2Password
+// @tokenUrl https://example.com/oauth/token
+// @scope.read Grants read access
+// @scope.write Grants write access
+// @scope.admin Grants read and write access to administrative information
+
+// @securitydefinitions.oauth2.accessCode OAuth2AccessCode
+// @tokenUrl https://example.com/oauth/token
+// @authorizationUrl https://example.com/oauth/authorize
+// @scope.admin Grants read and write access to administrative information
+
 func main() {
 	r := gin.Default()
 
@@ -45,9 +77,29 @@ func main() {
 		}
 		admin := v1.Group("/admin")
 		{
+			admin.Use(auth())
 			admin.POST("/auth", c.Auth)
+		}
+		examples := v1.Group("/examples")
+		{
+			examples.GET("ping", c.PingExample)
+			examples.GET("calc", c.CalcExample)
+			examples.GET("groups/:group_id/accounts/:account_id", c.PathParamsExample)
+			examples.GET("header", c.HeaderExample)
+			examples.GET("securities", c.SecuritiesExample)
+			examples.GET("enums", c.EnumsExample)
 		}
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Run(":8080")
+}
+
+func auth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if len(c.GetHeader("Authorization")) == 0 {
+			httputil.NewError(c, http.StatusUnauthorized, errors.New("Authorization is required Header"))
+			c.Abort()
+		}
+		c.Next()
+	}
 }

@@ -1,18 +1,18 @@
 basePath: /api/v1
 definitions:
-  controller.HTTPError:
+  controller.Message:
+    properties:
+      message:
+        example: message
+        type: string
+    type: object
+  httputil.HTTPError:
     properties:
       code:
         example: 400
         type: integer
       message:
         example: status bad request
-        type: string
-    type: object
-  controller.Message:
-    properties:
-      message:
-        example: message
         type: string
     type: object
   model.Account:
@@ -85,21 +85,25 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             items:
               $ref: '#/definitions/model.Account'
             type: array
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: List accounts
     post:
@@ -118,20 +122,24 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Account'
             type: object
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Add a account
   /accounts/{id}:
@@ -139,7 +147,6 @@ paths:
       consumes:
       - application/json
       description: Delete by account ID
-      operationId: get-string-by-int
       parameters:
       - description: Account ID
         in: path
@@ -150,27 +157,30 @@ paths:
       - application/json
       responses:
         "204":
+          description: No Content
           schema:
             $ref: '#/definitions/model.Account'
             type: object
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Update a account
     get:
       consumes:
       - application/json
       description: get string by ID
-      operationId: get-string-by-int
       parameters:
       - description: Account ID
         in: path
@@ -181,27 +191,30 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Account'
             type: object
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Show a account
     patch:
       consumes:
       - application/json
       description: Update by json account
-      operationId: get-string-by-int
       parameters:
       - description: Account ID
         in: path
@@ -219,29 +232,37 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Account'
             type: object
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Update a account
-  /accounts/1/images:
+  /accounts/{id}/images:
     post:
       consumes:
       - multipart/form-data
       description: Upload file
-      operationId: account id
       parameters:
+      - description: Account ID
+        in: path
+        name: id
+        required: true
+        type: integer
       - description: account image
         in: formData
         name: file
@@ -251,20 +272,24 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/controller.Message'
             type: object
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Upload account image
   /admin/auth:
@@ -272,35 +297,36 @@ paths:
       consumes:
       - application/json
       description: get admin info
-      parameters:
-      - description: Authentication header
-        in: header
-        name: Authorization
-        required: true
-        type: string
       produces:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Admin'
             type: object
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "401":
+          description: Unauthorized
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
+      security:
+      - ApiKeyAuth: []
       summary: Auth admin
   /bottles:
     get:
@@ -311,21 +337,25 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             items:
               $ref: '#/definitions/model.Bottle'
             type: array
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: List bottles
   /bottles/{id}:
@@ -344,20 +374,274 @@ paths:
       - application/json
       responses:
         "200":
+          description: OK
           schema:
             $ref: '#/definitions/model.Bottle'
             type: object
         "400":
+          description: Bad Request
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "404":
+          description: Not Found
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
         "500":
+          description: Internal Server Error
           schema:
-            $ref: '#/definitions/controller.HTTPError'
+            $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Show a bottle
+  /examples/calc:
+    get:
+      consumes:
+      - application/json
+      description: plus
+      parameters:
+      - description: used for calc
+        in: query
+        name: val1
+        required: true
+        type: integer
+      - description: used for calc
+        in: query
+        name: val2
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: integer
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: calc example
+  /examples/enums:
+    get:
+      consumes:
+      - application/json
+      description: enums
+      parameters:
+      - description: string enums
+        enum:
+        - A
+        - B
+        - C
+        in: query
+        name: string
+        type: string
+      - description: int enums
+        enum:
+        - 1
+        - 2
+        - 3
+        in: query
+        name: int
+        type: integer
+      - description: int enums
+        enum:
+        - 1.1
+        - 1.2
+        - 1.3
+        in: query
+        name: number
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: enums example
+  /examples/groups/{group_id}/accounts/{account_id}:
+    get:
+      consumes:
+      - application/json
+      description: path params
+      parameters:
+      - description: Group ID
+        in: path
+        name: group_id
+        required: true
+        type: integer
+      - description: Account ID
+        in: path
+        name: account_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: path params example
+  /examples/header:
+    get:
+      consumes:
+      - application/json
+      description: custome header
+      parameters:
+      - description: Authentication header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: custome header example
+  /examples/ping:
+    get:
+      consumes:
+      - application/json
+      description: do ping
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: pong
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: ping example
+  /examples/securities:
+    get:
+      consumes:
+      - application/json
+      description: custome header
+      parameters:
+      - description: Authentication header
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      - OAuth2Implicit:
+        - admin
+        - write
+      summary: custome header example
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  BasicAuth:
+    type: basic
+  OAuth2AccessCode:
+    authorizationUrl: https://example.com/oauth/authorize
+    flow: accessCode
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
+  OAuth2Application:
+    flow: application
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+      write: ' Grants write access'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
+  OAuth2Implicit:
+    authorizationUrl: https://example.com/oauth/authorize
+    flow: implicit
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+      write: ' Grants write access'
+    type: oauth2
+  OAuth2Password:
+    flow: password
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+      read: ' Grants read access'
+      write: ' Grants write access'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
 swagger: "2.0"

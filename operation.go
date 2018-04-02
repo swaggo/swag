@@ -2,6 +2,7 @@ package swag
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -77,20 +78,24 @@ func (operation *Operation) ParseComment(comment string) error {
 		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
 		}
+	case "@security":
+		if err := operation.ParseSecurityComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
+
+// for Enums("A","B")
+var regexEnums = regexp.MustCompile(`(?i)Enums\(.*\)`)
 
 // ParseParamComment Parse params return []string of param properties
 // @Param	queryText		form	      string	  true		        "The email for login"
 // 			[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // @Param   some_id     path    int     true        "Some ID"
 func (operation *Operation) ParseParamComment(commentLine string) error {
-	paramString := commentLine
-
+	paramString := regexEnums.ReplaceAllString(commentLine, "")
 	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
-
 	matches := re.FindStringSubmatch(paramString)
 	if len(matches) != 6 {
 		return fmt.Errorf("can not parse param comment \"%s\"", paramString)
@@ -129,8 +134,47 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 	case "formData":
 		param = createParameter(paramType, description, name, "file", required)
 	}
+	enumAttr := regexEnums.FindString(commentLine)
+	l := strings.Index(enumAttr, "(")
+	r := strings.Index(enumAttr, ")")
+	if !(l == -1 && r == -1) {
+		enums := strings.Split(enumAttr[l+1:r], ",")
+		for _, e := range enums {
+			e = strings.TrimSpace(e)
+			param.Enum = append(param.Enum, defineTypeOfEnum(schemaType, e))
+		}
+	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	return nil
+}
+
+// defineTypeOfExample enum value define the type (object and array unsupported)
+func defineTypeOfEnum(schemaType string, value string) interface{} {
+	schemaType = TransToValidSchemeType(schemaType)
+	switch schemaType {
+	case "string":
+		return value
+	case "number":
+		v, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+		}
+		return v
+	case "integer":
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+		}
+		return v
+	case "boolean":
+		v, err := strconv.ParseBool(value)
+		if err != nil {
+			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+		}
+		return v
+	default:
+		panic(fmt.Errorf("%s is unsupported type in enum value", schemaType))
+	}
 }
 
 // ParseTagsComment parses comment for gived `tag` comment string.
@@ -206,6 +250,32 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	return nil
 }
 
+// ParseSecurityComment parses comment for gived `security` comment string.
+func (operation *Operation) ParseSecurityComment(commentLine string) error {
+	securitySource := commentLine[strings.Index(commentLine, "@Security")+1:]
+	l := strings.Index(securitySource, "[")
+	r := strings.Index(securitySource, "]")
+	// exists scope
+	if !(l == -1 && r == -1) {
+		scopes := securitySource[l+1 : r]
+		s := []string{}
+		for _, scope := range strings.Split(scopes, ",") {
+			scope = strings.TrimSpace(scope)
+			s = append(s, scope)
+		}
+		securityKey := securitySource[0:l]
+		securityMap := map[string][]string{}
+		securityMap[securityKey] = append(securityMap[securityKey], s...)
+		operation.Security = append(operation.Security, securityMap)
+	} else {
+		securityKey := strings.TrimSpace(securitySource)
+		securityMap := map[string][]string{}
+		securityMap[securityKey] = []string{}
+		operation.Security = append(operation.Security, securityMap)
+	}
+	return nil
+}
+
 // ParseResponseComment parses comment for gived `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string) error {
 	re := regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)
@@ -219,7 +289,11 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 
 	code, _ := strconv.Atoi(matches[1])
 
-	response.Description = strings.Trim(matches[4], "\"")
+	responseDescription := strings.Trim(matches[4], "\"")
+	if responseDescription == "" {
+		responseDescription = http.StatusText(code)
+	}
+	response.Description = responseDescription
 
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]

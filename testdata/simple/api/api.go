@@ -24,11 +24,18 @@ func GetStringByInt(c *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param   some_id     path    string     true        "Some ID"
+// @Param   category   query    int     true        "Offset" Enums(1, 2, 3)
 // @Param   offset     query    int     true        "Offset"
 // @Param   limit      query    int     true        "Offset"
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
+// @Security ApiKeyAuth
+// @Security BasicAuth
+// @Security OAuth2Application[write]
+// @Security OAuth2Implicit[read, admin]
+// @Security OAuth2AccessCode[read]
+// @Security OAuth2Password[admin]
 // @Router /testapi/get-struct-array-by-string/{some_id} [get]
 func GetStructArrayByString(c *gin.Context) {
 	//write your code

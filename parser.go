@@ -84,6 +84,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 	}
 
 	parser.swagger.Swagger = "2.0"
+	securityMap := map[string]*spec.SecurityScheme{}
 
 	if fileTree.Comments != nil {
 		for _, comment := range fileTree.Comments {
@@ -116,8 +117,148 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 					parser.swagger.Schemes = GetSchemes(commentLine)
 				}
 			}
+
+			comments := strings.Split(comment.Text(), "\n")
+			for i := 0; i < len(comments); i++ {
+				attribute := strings.ToLower(strings.Split(comments[i], " ")[0])
+				switch attribute {
+				case "@securitydefinitions.basic":
+					securityMap[strings.TrimSpace(comments[i][len(attribute):])] = spec.BasicAuth()
+				case "@securitydefinitions.apikey":
+					attrMap := map[string]string{}
+					for _, v := range comments[i+1:] {
+						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
+						if securityAttr == "@in" || securityAttr == "@name" {
+							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+						}
+						// next securityDefinitions
+						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+							break
+						}
+					}
+					if len(attrMap) != 2 {
+						log.Panic("@securitydefinitions.apikey is @name and @in required")
+					}
+					securityMap[strings.TrimSpace(comments[i][len(attribute):])] = spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
+				case "@securitydefinitions.oauth2.application":
+					attrMap := map[string]string{}
+					scopes := map[string]string{}
+					for _, v := range comments[i+1:] {
+						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
+						if securityAttr == "@tokenurl" {
+							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+						} else if isExistsScope(securityAttr) {
+							scopes[getScopeScheme(securityAttr)] = v[len(securityAttr):]
+						}
+						// next securityDefinitions
+						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+							break
+						}
+					}
+					if len(attrMap) != 1 {
+						log.Panic("@securitydefinitions.oauth2.application is @tokenUrl required")
+					}
+					securityScheme := spec.OAuth2Application(attrMap["@tokenurl"])
+					for scope, description := range scopes {
+						securityScheme.AddScope(scope, description)
+					}
+					securityMap[strings.TrimSpace(comments[i][len(attribute):])] = securityScheme
+				case "@securitydefinitions.oauth2.implicit":
+					attrMap := map[string]string{}
+					scopes := map[string]string{}
+					for _, v := range comments[i+1:] {
+						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
+						if securityAttr == "@authorizationurl" {
+							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+						} else if isExistsScope(securityAttr) {
+							scopes[getScopeScheme(securityAttr)] = v[len(securityAttr):]
+						}
+						// next securityDefinitions
+						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+							break
+						}
+					}
+					if len(attrMap) != 1 {
+						log.Panic("@securitydefinitions.oauth2.implicit is @authorizationUrl required")
+					}
+					securityScheme := spec.OAuth2Implicit(attrMap["@authorizationurl"])
+					for scope, description := range scopes {
+						securityScheme.AddScope(scope, description)
+					}
+					securityMap[strings.TrimSpace(comments[i][len(attribute):])] = securityScheme
+				case "@securitydefinitions.oauth2.password":
+					attrMap := map[string]string{}
+					scopes := map[string]string{}
+					for _, v := range comments[i+1:] {
+						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
+						if securityAttr == "@tokenurl" {
+							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+						} else if isExistsScope(securityAttr) {
+							scopes[getScopeScheme(securityAttr)] = v[len(securityAttr):]
+						}
+						// next securityDefinitions
+						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+							break
+						}
+					}
+					if len(attrMap) != 1 {
+						log.Panic("@securitydefinitions.oauth2.password is @tokenUrl required")
+					}
+					securityScheme := spec.OAuth2Password(attrMap["@tokenurl"])
+					for scope, description := range scopes {
+						securityScheme.AddScope(scope, description)
+					}
+					securityMap[strings.TrimSpace(comments[i][len(attribute):])] = securityScheme
+				case "@securitydefinitions.oauth2.accesscode":
+					attrMap := map[string]string{}
+					scopes := map[string]string{}
+					for _, v := range comments[i+1:] {
+						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
+						if securityAttr == "@tokenurl" || securityAttr == "@authorizationurl" {
+							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+						} else if isExistsScope(securityAttr) {
+							scopes[getScopeScheme(securityAttr)] = v[len(securityAttr):]
+						}
+						// next securityDefinitions
+						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+							break
+						}
+					}
+					if len(attrMap) != 2 {
+						log.Panic("@securitydefinitions.oauth2.accessCode is @tokenUrl and @authorizationUrl required")
+					}
+					securityScheme := spec.OAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"])
+					for scope, description := range scopes {
+						securityScheme.AddScope(scope, description)
+					}
+					securityMap[strings.TrimSpace(comments[i][len(attribute):])] = securityScheme
+				}
+			}
 		}
 	}
+	if len(securityMap) > 0 {
+		parser.swagger.SecurityDefinitions = securityMap
+	}
+}
+
+func getScopeScheme(scope string) string {
+	scopeValue := scope[strings.Index(scope, "@scope."):]
+	if scopeValue == "" {
+		panic("@scope is empty")
+	}
+	return scope[len("@scope."):]
+}
+
+func isExistsScope(scope string) bool {
+	s := strings.Fields(scope)
+	for _, v := range s {
+		if strings.Index(v, "@scope.") != -1 {
+			if strings.Index(v, ",") != -1 {
+				panic("@scope can't use comma(,) get=" + v)
+			}
+		}
+	}
+	return strings.Index(scope, "@scope.") != -1
 }
 
 // GetSchemes parses swagger schemes for gived commentLine
