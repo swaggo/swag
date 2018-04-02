@@ -489,6 +489,102 @@
                 }
             }
         },
+        "/examples/attribute": {
+            "get": {
+                "description": "attribute",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "attribute example",
+                "parameters": [
+                    {
+                        "enum": [
+                            "A",
+                            "B",
+                            "C"
+                        ],
+                        "type": "string",
+                        "description": "string enums",
+                        "name": "enumstring",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            1,
+                            2,
+                            3
+                        ],
+                        "type": "integer",
+                        "description": "int enums",
+                        "name": "enumint",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            1.1,
+                            1.2,
+                            1.3
+                        ],
+                        "type": "number",
+                        "description": "int enums",
+                        "name": "enumnumber",
+                        "in": "query"
+                    },
+                    {
+                        "maxLength": 10,
+                        "minLength": 5,
+                        "type": "string",
+                        "description": "string valid",
+                        "name": "string",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 10,
+                        "minimum": 1,
+                        "type": "integer",
+                        "description": "int valid",
+                        "name": "int",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "A",
+                        "description": "string default",
+                        "name": "default",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "answer",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/examples/calc": {
             "get": {
                 "description": "plus",
@@ -520,79 +616,6 @@
                         "description": "answer",
                         "schema": {
                             "type": "integer"
-                        }
-                    },
-                    "400": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "404": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/examples/enums": {
-            "get": {
-                "description": "enums",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "enums example",
-                "parameters": [
-                    {
-                        "enum": [
-                            "A",
-                            "B",
-                            "C"
-                        ],
-                        "type": "string",
-                        "description": "string enums",
-                        "name": "string",
-                        "in": "query"
-                    },
-                    {
-                        "enum": [
-                            1,
-                            2,
-                            3
-                        ],
-                        "type": "integer",
-                        "description": "int enums",
-                        "name": "int",
-                        "in": "query"
-                    },
-                    {
-                        "enum": [
-                            1.1,
-                            1.2,
-                            1.3
-                        ],
-                        "type": "number",
-                        "description": "int enums",
-                        "name": "number",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "answer",
-                        "schema": {
-                            "type": "string"
                         }
                     },
                     "400": {
