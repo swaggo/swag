@@ -108,19 +108,29 @@ func (c *Controller) HeaderExample(ctx *gin.Context) {
 func (c *Controller) SecuritiesExample(ctx *gin.Context) {
 }
 
-// EnumsExample godoc
-// @Summary enums example
-// @Description enums
+// AttributeExample godoc
+// @Summary attribute example
+// @Description attribute
 // @Accept json
 // @Produce json
-// @Param string query string false "string enums" Enums(A, B, C)
-// @Param int query int false "int enums" Enums(1, 2, 3)
-// @Param number query number false "int enums" Enums(1.1, 1.2, 1.3)
+// @Param enumstring query string false "string enums" Enums(A, B, C)
+// @Param enumint query int false "int enums" Enums(1, 2, 3)
+// @Param enumnumber query number false "int enums" Enums(1.1, 1.2, 1.3)
+// @Param string query string false "string valid" minlength(5) maxlength(10)
+// @Param int query int false "int valid" mininum(1) maxinum(10)
+// @Param default query string false "string default" default(A)
 // @Success 200 {string} string "answer"
 // @Failure 400 {string} string "ok"
 // @Failure 404 {string} string "ok"
 // @Failure 500 {string} string "ok"
-// @Router /examples/enums [get]
-func (c *Controller) EnumsExample(ctx *gin.Context) {
-	ctx.String(http.StatusOK, fmt.Sprintf("string=%s int=%s number=%s", ctx.Query("string"), ctx.Query("int"), ctx.Query("number")))
+// @Router /examples/attribute [get]
+func (c *Controller) AttributeExample(ctx *gin.Context) {
+	ctx.String(http.StatusOK, fmt.Sprintf("enumstring=%s enumint=%s enumnumber=%s string=%s int=%s default=%s",
+		ctx.Query("enumstring"),
+		ctx.Query("enumint"),
+		ctx.Query("enumnumber"),
+		ctx.Query("string"),
+		ctx.Query("int"),
+		ctx.Query("default"),
+	))
 }

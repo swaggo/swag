@@ -2,6 +2,7 @@ package swag
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -86,19 +87,15 @@ func (operation *Operation) ParseComment(comment string) error {
 	return nil
 }
 
-// for Enums("A","B")
-var regexEnums = regexp.MustCompile(`(?i)Enums\(.*\)`)
-
 // ParseParamComment Parse params return []string of param properties
 // @Param	queryText		form	      string	  true		        "The email for login"
 // 			[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // @Param   some_id     path    int     true        "Some ID"
 func (operation *Operation) ParseParamComment(commentLine string) error {
-	paramString := regexEnums.ReplaceAllString(commentLine, "")
 	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
-	matches := re.FindStringSubmatch(paramString)
+	matches := re.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
-		return fmt.Errorf("can not parse param comment \"%s\"", paramString)
+		return fmt.Errorf("can not parse param comment \"%s\"", commentLine)
 	}
 	name := matches[1]
 	paramType := matches[2]
@@ -134,22 +131,116 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 	case "formData":
 		param = createParameter(paramType, description, name, "file", required)
 	}
-	enumAttr := regexEnums.FindString(commentLine)
-	l := strings.Index(enumAttr, "(")
-	r := strings.Index(enumAttr, ")")
-	if !(l == -1 && r == -1) {
-		enums := strings.Split(enumAttr[l+1:r], ",")
-		for _, e := range enums {
-			e = strings.TrimSpace(e)
-			param.Enum = append(param.Enum, defineTypeOfEnum(schemaType, e))
-		}
-	}
+	param = operation.parseAndExtractionParamAttribute(commentLine, schemaType, param)
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	return nil
 }
 
-// defineTypeOfExample enum value define the type (object and array unsupported)
-func defineTypeOfEnum(schemaType string, value string) interface{} {
+var regexAttributes = map[string]*regexp.Regexp{
+	// for Enums("A","B")
+	"enums": regexp.MustCompile(`(?i)enums\(.*\)`),
+	// for Minimum(0)
+	"maxinum": regexp.MustCompile(`(?i)maxinum\(.*\)`),
+	// for Maximum(0)
+	"mininum": regexp.MustCompile(`(?i)mininum\(.*\)`),
+	// for Maximum(0)
+	"default": regexp.MustCompile(`(?i)default\(.*\)`),
+	// for minlength(0)
+	"minlength": regexp.MustCompile(`(?i)minlength\(.*\)`),
+	// for maxlength(0)
+	"maxlength": regexp.MustCompile(`(?i)maxlength\(.*\)`),
+}
+
+func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param spec.Parameter) spec.Parameter {
+	schemaType = TransToValidSchemeType(schemaType)
+	for attrKey, re := range regexAttributes {
+		switch attrKey {
+		case "enums":
+			attr := re.FindString(commentLine)
+			l := strings.Index(attr, "(")
+			r := strings.Index(attr, ")")
+			if !(l == -1 && r == -1) {
+				enums := strings.Split(attr[l+1:r], ",")
+				for _, e := range enums {
+					e = strings.TrimSpace(e)
+					param.Enum = append(param.Enum, defineType(schemaType, e))
+				}
+			}
+		case "maxinum":
+			attr := re.FindString(commentLine)
+			l := strings.Index(attr, "(")
+			r := strings.Index(attr, ")")
+			if !(l == -1 && r == -1) {
+				if schemaType != "integer" && schemaType != "number" {
+					log.Panicf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+				}
+				attr = strings.TrimSpace(attr[l+1 : r])
+				n, err := strconv.ParseFloat(attr, 64)
+				if err != nil {
+					log.Panicf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+				}
+				param.Maximum = &n
+			}
+		case "mininum":
+			attr := re.FindString(commentLine)
+			l := strings.Index(attr, "(")
+			r := strings.Index(attr, ")")
+			if !(l == -1 && r == -1) {
+				if schemaType != "integer" && schemaType != "number" {
+					log.Panicf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+				}
+				attr = strings.TrimSpace(attr[l+1 : r])
+				n, err := strconv.ParseFloat(attr, 64)
+				if err != nil {
+					log.Panicf("mininum is allow only a number got=%s", attr)
+				}
+				param.Minimum = &n
+			}
+		case "default":
+			attr := re.FindString(commentLine)
+			l := strings.Index(attr, "(")
+			r := strings.Index(attr, ")")
+			if !(l == -1 && r == -1) {
+				attr = strings.TrimSpace(attr[l+1 : r])
+				param.Default = defineType(schemaType, attr)
+			}
+		case "maxlength":
+			attr := re.FindString(commentLine)
+			l := strings.Index(attr, "(")
+			r := strings.Index(attr, ")")
+			if !(l == -1 && r == -1) {
+				if schemaType != "string" {
+					log.Panicf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+				}
+				attr = strings.TrimSpace(attr[l+1 : r])
+				n, err := strconv.ParseInt(attr, 10, 64)
+				if err != nil {
+					log.Panicf("maxlength is allow only a number got=%s", attr)
+				}
+				param.MaxLength = &n
+			}
+		case "minlength":
+			attr := re.FindString(commentLine)
+			l := strings.Index(attr, "(")
+			r := strings.Index(attr, ")")
+			if !(l == -1 && r == -1) {
+				if schemaType != "string" {
+					log.Panicf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+				}
+				attr = strings.TrimSpace(attr[l+1 : r])
+				n, err := strconv.ParseInt(attr, 10, 64)
+				if err != nil {
+					log.Panicf("minlength is allow only a number got=%s", attr)
+				}
+				param.MinLength = &n
+			}
+		}
+	}
+	return param
+}
+
+// defineType enum value define the type (object and array unsupported)
+func defineType(schemaType string, value string) interface{} {
 	schemaType = TransToValidSchemeType(schemaType)
 	switch schemaType {
 	case "string":
