@@ -44,7 +44,7 @@ type APIError struct {
 type RevValueBase struct {
 	Status bool `json:"Status"`
 
-	Err int32 `json:"Err"`
+	Err int32 `json:"Err,omitempty"`
 }
 type RevValue struct {
 	RevValueBase
