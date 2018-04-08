@@ -31,7 +31,9 @@ type Tag struct {
 }
 
 type Pet2 struct {
-	ID int `json:"id"`
+	ID         int        `json:"id"`
+	MiddleName *string    `json:"middlename"`
+	DeletedAt  *time.Time `json:"deleted_at"`
 }
 
 type APIError struct {

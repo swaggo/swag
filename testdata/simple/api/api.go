@@ -62,6 +62,12 @@ func AnonymousField() {
 
 }
 
+// @Summary use pet2
+// @Success 200 {object} web.Pet2 "ok"
+func Pet2() {
+
+}
+
 type Pet3 struct {
 	ID int `json:"id"`
 }
