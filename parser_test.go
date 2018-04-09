@@ -504,6 +504,12 @@ func TestParseSimpleApi(t *testing.T) {
                 },
                 "name": {
                     "type": "string"
+                },
+                "pets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Pet"
+                    }
                 }
             }
         }

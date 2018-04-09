@@ -29,6 +29,7 @@ type Pet struct {
 type Tag struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+	Pets []Pet  `json:"pets"`
 }
 
 type Pet2 struct {
