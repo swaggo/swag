@@ -468,6 +468,20 @@ func TestParseSimpleApi(t *testing.T) {
                 }
             }
         },
+        "web.Pet2": {
+            "type": "object",
+            "properties": {
+                "deleted_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "middlename": {
+                    "type": "string"
+                }
+            }
+        },
         "web.RevValue": {
             "type": "object",
             "properties": {
