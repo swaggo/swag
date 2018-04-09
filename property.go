@@ -29,8 +29,26 @@ func getPropertyName(field *ast.Field) (name string, fieldType string) {
 		schemeType := TransToValidSchemeType(name)
 		return schemeType, schemeType
 
-	} else if _, ok := field.Type.(*ast.StarExpr); ok {
-		panic("not supported astStarExpr yet.")
+	} else if ptr, ok := field.Type.(*ast.StarExpr); ok {
+		if astTypeSelectorExpr, ok := ptr.X.(*ast.SelectorExpr); ok {
+
+			// Support for time.Time as a structure field
+			if "Time" == astTypeSelectorExpr.Sel.Name {
+				return "string", "string"
+			}
+
+			// Support bson.ObjectId type
+			if "ObjectId" == astTypeSelectorExpr.Sel.Name {
+				return "string", "string"
+			}
+
+			panic("not supported 'astSelectorExpr' yet.")
+
+		} else if astTypeIdent, ok := ptr.X.(*ast.Ident); ok {
+			name = astTypeIdent.Name
+			schemeType := TransToValidSchemeType(name)
+			return schemeType, schemeType
+		}
 	} else if _, ok := field.Type.(*ast.MapType); ok { // if map
 		//TODO: support map
 		return "object", "object"
