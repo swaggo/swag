@@ -397,6 +397,9 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
 	properties = map[string]spec.Schema{}
 	name, schemaType, arrayType, exampleValue := parser.parseField(field)
+	if name == "" {
+		return
+	}
 	// TODO: find package of schemaType and/or arrayType
 	if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
 		// write definition if not yet present
@@ -475,6 +478,10 @@ func (parser *Parser) parseField(field *ast.Field) (propName, schemaType, arrayT
 		// `json:"tag"` -> json:"tag"
 		structTag := strings.Replace(field.Tag.Value, "`", "", -1)
 		jsonTag := reflect.StructTag(structTag).Get("json")
+		if jsonTag == "-" {
+			propName = ""
+			return
+		}
 		if jsonTag != "" {
 			propName = jsonTag
 		}
