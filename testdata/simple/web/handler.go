@@ -23,6 +23,7 @@ type Pet struct {
 	Price     float32     `json:"price" example:"3.25"`
 	IsAlive   bool        `json:"is_alive" example:"true"`
 	Data      interface{} `json:"data"`
+	Hidden    string      `json:"-"`
 }
 
 type Tag struct {
