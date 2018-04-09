@@ -478,6 +478,15 @@ func (parser *Parser) parseField(field *ast.Field) (propName, schemaType, arrayT
 		// `json:"tag"` -> json:"tag"
 		structTag := strings.Replace(field.Tag.Value, "`", "", -1)
 		jsonTag := reflect.StructTag(structTag).Get("json")
+		// json:"tag,hoge"
+		if strings.Contains(jsonTag, ",") {
+			// json:",hoge"
+			if strings.HasPrefix(jsonTag, ",") {
+				jsonTag = ""
+			} else {
+				jsonTag = strings.SplitN(jsonTag, ",", 2)[0]
+			}
+		}
 		if jsonTag == "-" {
 			propName = ""
 			return
