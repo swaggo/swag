@@ -335,6 +335,22 @@ func (parser *Parser) ParseDefinitions() {
 	}
 }
 
+var structStacks []string
+
+// isNotRecurringNestStruct check if a structure that is not a not repeating
+func isNotRecurringNestStruct(refTypeName string, structStacks []string) bool {
+	if len(structStacks) <= 0 {
+		return true
+	}
+	startStruct := structStacks[0]
+	for _, v := range structStacks[1:] {
+		if startStruct == v {
+			return false
+		}
+	}
+	return true
+}
+
 // ParseDefinition TODO: NEEDS COMMENT INFO
 func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, typeName string) {
 	var refTypeName string
@@ -348,7 +364,12 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 		return
 	}
 	properties := make(map[string]spec.Schema)
-	parser.parseTypeSpec(pkgName, typeSpec, properties)
+	// stop repetitive structural parsing
+	if isNotRecurringNestStruct(refTypeName, structStacks) {
+		structStacks = append(structStacks, refTypeName)
+		parser.parseTypeSpec(pkgName, typeSpec, properties)
+	}
+	structStacks = []string{}
 
 	for _, prop := range properties {
 		// todo find the pkgName of the property type
