@@ -335,6 +335,22 @@ func (parser *Parser) ParseDefinitions() {
 	}
 }
 
+var structStacks []string
+
+// isNotRecurringNestStruct check if a structure that is not a not repeating
+func isNotRecurringNestStruct(refTypeName string, structStacks []string) bool {
+	if len(structStacks) <= 0 {
+		return true
+	}
+	startStruct := structStacks[0]
+	for _, v := range structStacks[1:] {
+		if startStruct == v {
+			return false
+		}
+	}
+	return true
+}
+
 // ParseDefinition TODO: NEEDS COMMENT INFO
 func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, typeName string) {
 	var refTypeName string
@@ -348,7 +364,12 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 		return
 	}
 	properties := make(map[string]spec.Schema)
-	parser.parseTypeSpec(pkgName, typeSpec, properties)
+	// stop repetitive structural parsing
+	if isNotRecurringNestStruct(refTypeName, structStacks) {
+		structStacks = append(structStacks, refTypeName)
+		parser.parseTypeSpec(pkgName, typeSpec, properties)
+	}
+	structStacks = []string{}
 
 	for _, prop := range properties {
 		// todo find the pkgName of the property type
@@ -397,6 +418,9 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
 	properties = map[string]spec.Schema{}
 	name, schemaType, arrayType, exampleValue := parser.parseField(field)
+	if name == "" {
+		return
+	}
 	// TODO: find package of schemaType and/or arrayType
 	if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
 		// write definition if not yet present
@@ -475,6 +499,19 @@ func (parser *Parser) parseField(field *ast.Field) (propName, schemaType, arrayT
 		// `json:"tag"` -> json:"tag"
 		structTag := strings.Replace(field.Tag.Value, "`", "", -1)
 		jsonTag := reflect.StructTag(structTag).Get("json")
+		// json:"tag,hoge"
+		if strings.Contains(jsonTag, ",") {
+			// json:",hoge"
+			if strings.HasPrefix(jsonTag, ",") {
+				jsonTag = ""
+			} else {
+				jsonTag = strings.SplitN(jsonTag, ",", 2)[0]
+			}
+		}
+		if jsonTag == "-" {
+			propName = ""
+			return
+		}
 		if jsonTag != "" {
 			propName = jsonTag
 		}

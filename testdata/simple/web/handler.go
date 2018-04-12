@@ -23,15 +23,19 @@ type Pet struct {
 	Price     float32     `json:"price" example:"3.25"`
 	IsAlive   bool        `json:"is_alive" example:"true"`
 	Data      interface{} `json:"data"`
+	Hidden    string      `json:"-"`
 }
 
 type Tag struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+	Pets []Pet  `json:"pets"`
 }
 
 type Pet2 struct {
-	ID int `json:"id"`
+	ID         int        `json:"id"`
+	MiddleName *string    `json:"middlename"`
+	DeletedAt  *time.Time `json:"deleted_at"`
 }
 
 type APIError struct {
@@ -43,7 +47,7 @@ type APIError struct {
 type RevValueBase struct {
 	Status bool `json:"Status"`
 
-	Err int32 `json:"Err"`
+	Err int32 `json:"Err,omitempty"`
 }
 type RevValue struct {
 	RevValueBase

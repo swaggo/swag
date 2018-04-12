@@ -305,22 +305,36 @@ func TestParseSimpleApi(t *testing.T) {
                             3
                         ],
                         "type": "integer",
-                        "description": "Offset",
+                        "description": "Category",
                         "name": "category",
                         "in": "query",
                         "required": true
                     },
                     {
+                        "minimum": 0,
                         "type": "integer",
+                        "default": 0,
                         "description": "Offset",
                         "name": "offset",
                         "in": "query",
                         "required": true
                     },
                     {
+                        "maximum": 50,
                         "type": "integer",
-                        "description": "Offset",
+                        "default": 10,
+                        "description": "Limit",
                         "name": "limit",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "maxLength": 50,
+                        "minLength": 1,
+                        "type": "string",
+                        "default": "\"\"",
+                        "description": "q",
+                        "name": "q",
                         "in": "query",
                         "required": true
                     }
@@ -454,6 +468,20 @@ func TestParseSimpleApi(t *testing.T) {
                 }
             }
         },
+        "web.Pet2": {
+            "type": "object",
+            "properties": {
+                "deleted_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "middlename": {
+                    "type": "string"
+                }
+            }
+        },
         "web.RevValue": {
             "type": "object",
             "properties": {
@@ -476,6 +504,12 @@ func TestParseSimpleApi(t *testing.T) {
                 },
                 "name": {
                     "type": "string"
+                },
+                "pets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Pet"
+                    }
                 }
             }
         }

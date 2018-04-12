@@ -23,10 +23,11 @@ func GetStringByInt(c *gin.Context) {
 // @ID get-struct-array-by-string
 // @Accept  json
 // @Produce  json
-// @Param   some_id     path    string     true        "Some ID"
-// @Param   category   query    int     true        "Offset" Enums(1, 2, 3)
-// @Param   offset     query    int     true        "Offset"
-// @Param   limit      query    int     true        "Offset"
+// @Param some_id path string true "Some ID"
+// @Param category query int true "Category" Enums(1, 2, 3)
+// @Param offset query int true "Offset" Mininum(0) default(0)
+// @Param limit query int true "Limit" Maxinum(50) default(10)
+// @Param q query string true "q" Minlength(1) Maxlength(50) default("")
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
@@ -58,6 +59,12 @@ func Upload(ctx *gin.Context) {
 // @Summary use Anonymous field
 // @Success 200 {object} web.RevValue "ok"
 func AnonymousField() {
+
+}
+
+// @Summary use pet2
+// @Success 200 {object} web.Pet2 "ok"
+func Pet2() {
 
 }
 

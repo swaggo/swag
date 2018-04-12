@@ -394,6 +394,73 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Show a bottle
+  /examples/attribute:
+    get:
+      consumes:
+      - application/json
+      description: attribute
+      parameters:
+      - description: string enums
+        enum:
+        - A
+        - B
+        - C
+        in: query
+        name: enumstring
+        type: string
+      - description: int enums
+        enum:
+        - 1
+        - 2
+        - 3
+        in: query
+        name: enumint
+        type: integer
+      - description: int enums
+        enum:
+        - 1.1
+        - 1.2
+        - 1.3
+        in: query
+        name: enumnumber
+        type: number
+      - description: string valid
+        in: query
+        maxLength: 10
+        minLength: 5
+        name: string
+        type: string
+      - description: int valid
+        in: query
+        maximum: 10
+        minimum: 1
+        name: int
+        type: integer
+      - default: A
+        description: string default
+        in: query
+        name: default
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: answer
+          schema:
+            type: string
+        "400":
+          description: ok
+          schema:
+            type: string
+        "404":
+          description: ok
+          schema:
+            type: string
+        "500":
+          description: ok
+          schema:
+            type: string
+      summary: attribute example
   /examples/calc:
     get:
       consumes:
@@ -430,56 +497,6 @@ paths:
           schema:
             type: string
       summary: calc example
-  /examples/enums:
-    get:
-      consumes:
-      - application/json
-      description: enums
-      parameters:
-      - description: string enums
-        enum:
-        - A
-        - B
-        - C
-        in: query
-        name: string
-        type: string
-      - description: int enums
-        enum:
-        - 1
-        - 2
-        - 3
-        in: query
-        name: int
-        type: integer
-      - description: int enums
-        enum:
-        - 1.1
-        - 1.2
-        - 1.3
-        in: query
-        name: number
-        type: number
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: answer
-          schema:
-            type: string
-        "400":
-          description: ok
-          schema:
-            type: string
-        "404":
-          description: ok
-          schema:
-            type: string
-        "500":
-          description: ok
-          schema:
-            type: string
-      summary: enums example
   /examples/groups/{group_id}/accounts/{account_id}:
     get:
       consumes:

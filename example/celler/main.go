@@ -87,7 +87,7 @@ func main() {
 			examples.GET("groups/:group_id/accounts/:account_id", c.PathParamsExample)
 			examples.GET("header", c.HeaderExample)
 			examples.GET("securities", c.SecuritiesExample)
-			examples.GET("enums", c.EnumsExample)
+			examples.GET("attribute", c.AttributeExample)
 		}
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
