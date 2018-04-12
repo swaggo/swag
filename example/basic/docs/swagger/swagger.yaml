@@ -1,0 +1,172 @@
+basePath: /v2
+definitions:
+  web.APIError:
+    properties:
+      CreatedAt:
+        type: string
+      ErrorCode:
+        type: integer
+      ErrorMessage:
+        type: string
+    type: object
+  web.Pet:
+    properties:
+      category:
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
+        type: object
+      id:
+        type: integer
+      name:
+        type: string
+      photoUrls:
+        items:
+          type: string
+        type: array
+      status:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/web.Tag'
+        type: array
+    type: object
+  web.RevValue:
+    properties:
+      Data:
+        type: integer
+      Err:
+        type: integer
+      Status:
+        type: boolean
+    type: object
+  web.Tag:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+host: petstore.swagger.io
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server Petstore server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /file/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload file
+      operationId: file.upload
+      parameters:
+      - description: this is a test file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+      summary: Upload file
+  /testapi/get-string-by-int/{some_id}:
+    get:
+      consumes:
+      - application/json
+      description: get string by ID
+      operationId: get-string-by-int
+      parameters:
+      - description: Some ID
+        in: path
+        name: some_id
+        required: true
+        type: integer
+      - description: Some ID
+        in: body
+        name: some_id
+        required: true
+        schema:
+          $ref: '#/definitions/web.Pet'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+      summary: Add a new pet to the store
+  /testapi/get-struct-array-by-string/{some_id}:
+    get:
+      consumes:
+      - application/json
+      description: get struct array by ID
+      operationId: get-struct-array-by-string
+      parameters:
+      - description: Some ID
+        in: path
+        name: some_id
+        required: true
+        type: string
+      - description: Offset
+        in: query
+        name: offset
+        required: true
+        type: integer
+      - description: Offset
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+swagger: "2.0"
