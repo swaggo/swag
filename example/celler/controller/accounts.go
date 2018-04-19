@@ -13,6 +13,7 @@ import (
 // ShowAccount godoc
 // @Summary Show a account
 // @Description get string by ID
+// @Tags accounts
 // @Accept  json
 // @Produce  json
 // @Param id path int true "Account ID"
@@ -39,6 +40,7 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 // ListAccounts godoc
 // @Summary List accounts
 // @Description get accounts
+// @Tags accounts
 // @Accept  json
 // @Produce  json
 // @Param q query string false "name search by q"
@@ -60,6 +62,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 // AddAccount godoc
 // @Summary Add a account
 // @Description add by json account
+// @Tags accounts
 // @Accept  json
 // @Produce  json
 // @Param account body model.AddAccount true "Add account"
@@ -93,6 +96,7 @@ func (c *Controller) AddAccount(ctx *gin.Context) {
 // UpdateAccount godoc
 // @Summary Update a account
 // @Description Update by json account
+// @Tags accounts
 // @Accept  json
 // @Produce  json
 // @Param  id path int true "Account ID"
@@ -129,6 +133,7 @@ func (c *Controller) UpdateAccount(ctx *gin.Context) {
 // DeleteAccount godoc
 // @Summary Update a account
 // @Description Delete by account ID
+// @Tags accounts
 // @Accept  json
 // @Produce  json
 // @Param  id path int true "Account ID"
@@ -155,6 +160,7 @@ func (c *Controller) DeleteAccount(ctx *gin.Context) {
 // UploadAccountImage godoc
 // @Summary Upload account image
 // @Description Upload file
+// @Tags accounts
 // @Accept  multipart/form-data
 // @Produce  json
 // @Param  id path int true "Account ID"

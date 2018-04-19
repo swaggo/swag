@@ -106,6 +106,8 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: List accounts
+      tags:
+      - accounts
     post:
       consumes:
       - application/json
@@ -142,6 +144,8 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Add a account
+      tags:
+      - accounts
   /accounts/{id}:
     delete:
       consumes:
@@ -177,6 +181,8 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Update a account
+      tags:
+      - accounts
     get:
       consumes:
       - application/json
@@ -211,6 +217,8 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Show a account
+      tags:
+      - accounts
     patch:
       consumes:
       - application/json
@@ -252,6 +260,8 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Update a account
+      tags:
+      - accounts
   /accounts/{id}/images:
     post:
       consumes:
@@ -292,6 +302,8 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Upload account image
+      tags:
+      - accounts
   /admin/auth:
     post:
       consumes:
@@ -328,6 +340,9 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Auth admin
+      tags:
+      - accounts
+      - admin
   /bottles:
     get:
       consumes:
@@ -358,6 +373,8 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: List bottles
+      tags:
+      - bottles
   /bottles/{id}:
     get:
       consumes:
@@ -394,6 +411,8 @@ paths:
             $ref: '#/definitions/httputil.HTTPError'
             type: object
       summary: Show a bottle
+      tags:
+      - bottles
   /examples/attribute:
     get:
       consumes:
@@ -461,6 +480,8 @@ paths:
           schema:
             type: string
       summary: attribute example
+      tags:
+      - example
   /examples/calc:
     get:
       consumes:
@@ -497,6 +518,8 @@ paths:
           schema:
             type: string
       summary: calc example
+      tags:
+      - example
   /examples/groups/{group_id}/accounts/{account_id}:
     get:
       consumes:
@@ -533,6 +556,8 @@ paths:
           schema:
             type: string
       summary: path params example
+      tags:
+      - example
   /examples/header:
     get:
       consumes:
@@ -564,6 +589,8 @@ paths:
           schema:
             type: string
       summary: custome header example
+      tags:
+      - example
   /examples/ping:
     get:
       consumes:
@@ -589,6 +616,8 @@ paths:
           schema:
             type: string
       summary: ping example
+      tags:
+      - example
   /examples/securities:
     get:
       consumes:
@@ -625,6 +654,8 @@ paths:
         - admin
         - write
       summary: custome header example
+      tags:
+      - example
 securityDefinitions:
   ApiKeyAuth:
     in: header
