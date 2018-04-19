@@ -131,7 +131,7 @@ func (c *Controller) UpdateAccount(ctx *gin.Context) {
 // @Description Delete by account ID
 // @Accept  json
 // @Produce  json
-// @Param  id path int true "Account ID"
+// @Param  id path int true "Account ID" Format(int64)
 // @Success 204 {object} model.Account
 // @Failure 400 {object} httputil.HTTPError
 // @Failure 404 {object} httputil.HTTPError

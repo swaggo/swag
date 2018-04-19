@@ -19,6 +19,7 @@ definitions:
     properties:
       id:
         example: 1
+        format: int64
         type: integer
       name:
         example: account name
@@ -78,6 +79,7 @@ paths:
       description: get accounts
       parameters:
       - description: name search by q
+        format: email
         in: query
         name: q
         type: string
@@ -149,6 +151,7 @@ paths:
       description: Delete by account ID
       parameters:
       - description: Account ID
+        format: int64
         in: path
         name: id
         required: true
