@@ -34,6 +34,7 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "format": "email",
                         "description": "name search by q",
                         "name": "q",
                         "in": "query"
@@ -196,6 +197,7 @@
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Account ID",
                         "name": "id",
                         "in": "path",
@@ -911,6 +913,7 @@
             "properties": {
                 "id": {
                     "type": "integer",
+                    "format": "int64",
                     "example": 1
                 },
                 "name": {

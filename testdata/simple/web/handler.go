@@ -5,11 +5,11 @@ import (
 )
 
 type Pet struct {
-	ID       int `json:"id" example:"1"`
+	ID       int `json:"id" example:"1" format:"int64"`
 	Category struct {
 		ID            int      `json:"id" example:"1"`
 		Name          string   `json:"name" example:"category_name"`
-		PhotoUrls     []string `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg"`
+		PhotoUrls     []string `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg" format:"url"`
 		SmallCategory struct {
 			ID        int      `json:"id" example:"1"`
 			Name      string   `json:"name" example:"detail_category_name"`
@@ -27,7 +27,7 @@ type Pet struct {
 }
 
 type Tag struct {
-	ID   int    `json:"id"`
+	ID   int    `json:"id" format:"int64"`
 	Name string `json:"name"`
 	Pets []Pet  `json:"pets"`
 }

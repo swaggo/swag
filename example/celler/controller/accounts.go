@@ -43,7 +43,7 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 // @Tags accounts
 // @Accept  json
 // @Produce  json
-// @Param q query string false "name search by q"
+// @Param q query string false "name search by q" Format(email)
 // @Success 200 {array} model.Account
 // @Failure 400 {object} httputil.HTTPError
 // @Failure 404 {object} httputil.HTTPError
@@ -136,7 +136,7 @@ func (c *Controller) UpdateAccount(ctx *gin.Context) {
 // @Tags accounts
 // @Accept  json
 // @Produce  json
-// @Param  id path int true "Account ID"
+// @Param  id path int true "Account ID" Format(int64)
 // @Success 204 {object} model.Account
 // @Failure 400 {object} httputil.HTTPError
 // @Failure 404 {object} httputil.HTTPError

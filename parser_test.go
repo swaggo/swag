@@ -211,6 +211,7 @@ func TestParseSimpleApi(t *testing.T) {
                 "parameters": [
                     {
                         "type": "integer",
+                        "format": "int64",
                         "description": "Some ID",
                         "name": "some_id",
                         "in": "path",
@@ -395,6 +396,7 @@ func TestParseSimpleApi(t *testing.T) {
                         },
                         "photo_urls": {
                             "type": "array",
+                            "format": "url",
                             "items": {
                                 "type": "string"
                             },
@@ -433,6 +435,7 @@ func TestParseSimpleApi(t *testing.T) {
                 },
                 "id": {
                     "type": "integer",
+                    "format": "int64",
                     "example": 1
                 },
                 "is_alive": {
@@ -500,7 +503,8 @@ func TestParseSimpleApi(t *testing.T) {
             "type": "object",
             "properties": {
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 },
                 "name": {
                     "type": "string"

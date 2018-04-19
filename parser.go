@@ -417,7 +417,7 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
 	properties = map[string]spec.Schema{}
-	name, schemaType, arrayType, exampleValue := parser.parseField(field)
+	name, schemaType, arrayType, formatType, exampleValue := parser.parseField(field)
 	if name == "" {
 		return
 	}
@@ -445,13 +445,14 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 		} else { // standard type in array
 			properties[name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{Type: []string{schemaType},
-					Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{arrayType}}}}},
+					Format: formatType,
+					Items:  &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{arrayType}}}}},
 				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
 			}
 		}
 	} else {
 		properties[name] = spec.Schema{
-			SchemaProps:        spec.SchemaProps{Type: []string{schemaType}},
+			SchemaProps:        spec.SchemaProps{Type: []string{schemaType}, Format: formatType},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
 		}
 		nestStruct, ok := field.Type.(*ast.StructType)
@@ -464,7 +465,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 				}
 			}
 			properties[name] = spec.Schema{
-				SchemaProps:        spec.SchemaProps{Type: []string{schemaType}, Properties: props},
+				SchemaProps:        spec.SchemaProps{Type: []string{schemaType}, Format: formatType, Properties: props},
 				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
 			}
 		}
@@ -487,7 +488,7 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 	}
 }
 
-func (parser *Parser) parseField(field *ast.Field) (propName, schemaType, arrayType string, exampleValue interface{}) {
+func (parser *Parser) parseField(field *ast.Field) (propName, schemaType, arrayType, formatType string, exampleValue interface{}) {
 	schemaType, arrayType = getPropertyName(field)
 	if len(arrayType) == 0 {
 		CheckSchemaType(schemaType)
@@ -518,6 +519,10 @@ func (parser *Parser) parseField(field *ast.Field) (propName, schemaType, arrayT
 		exampleTag := reflect.StructTag(structTag).Get("example")
 		if exampleTag != "" {
 			exampleValue = defineTypeOfExample(schemaType, exampleTag)
+		}
+		formatTag := reflect.StructTag(structTag).Get("format")
+		if formatTag != "" {
+			formatType = formatTag
 		}
 	}
 	return
