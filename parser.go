@@ -88,7 +88,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 
 	if fileTree.Comments != nil {
 		for _, comment := range fileTree.Comments {
-			for _, commentLine := range strings.Split(comment.Text(), "\n") {
+			comments := strings.Split(comment.Text(), "\n")
+			for _, commentLine := range comments {
 				attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 				switch attribute {
 				case "@version":
@@ -118,7 +119,6 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 				}
 			}
 
-			comments := strings.Split(comment.Text(), "\n")
 			for i := 0; i < len(comments); i++ {
 				attribute := strings.ToLower(strings.Split(comments[i], " ")[0])
 				switch attribute {

@@ -52,7 +52,7 @@ swag converts Go annotations to Swagger Documentation 2.0. And provides a variet
 
 ## Example
 
-[swaggo + gin](https://github.com/swaggo/swag/tree/master/example/celler)
+[swaggo + gin](https://github.com/swaggo/swag/tree/master/example)
 
 ## Getting started
 
