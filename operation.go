@@ -137,7 +137,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 }
 
 var regexAttributes = map[string]*regexp.Regexp{
-	// for Enums("A","B")
+	// for Enums(A, B)
 	"enums": regexp.MustCompile(`(?i)enums\(.*\)`),
 	// for Minimum(0)
 	"maxinum": regexp.MustCompile(`(?i)maxinum\(.*\)`),
@@ -149,6 +149,8 @@ var regexAttributes = map[string]*regexp.Regexp{
 	"minlength": regexp.MustCompile(`(?i)minlength\(.*\)`),
 	// for maxlength(0)
 	"maxlength": regexp.MustCompile(`(?i)maxlength\(.*\)`),
+	// for format(email)
+	"format": regexp.MustCompile(`(?i)format\(.*\)`),
 }
 
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param spec.Parameter) spec.Parameter {
@@ -233,6 +235,13 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 					log.Panicf("minlength is allow only a number got=%s", attr)
 				}
 				param.MinLength = &n
+			}
+		case "format":
+			attr := re.FindString(commentLine)
+			l := strings.Index(attr, "(")
+			r := strings.Index(attr, ")")
+			if !(l == -1 && r == -1) {
+				param.Format = strings.TrimSpace(attr[l+1 : r])
 			}
 		}
 	}
