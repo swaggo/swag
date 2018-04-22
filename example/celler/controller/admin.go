@@ -13,6 +13,7 @@ import (
 // Auth godoc
 // @Summary Auth admin
 // @Description get admin info
+// @Tags accounts,admin
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} model.Admin

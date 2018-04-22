@@ -27,6 +27,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "accounts"
+                ],
                 "summary": "List accounts",
                 "parameters": [
                     {
@@ -77,6 +80,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "accounts"
                 ],
                 "summary": "Add a account",
                 "parameters": [
@@ -132,6 +138,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "accounts"
+                ],
                 "summary": "Show a account",
                 "parameters": [
                     {
@@ -180,6 +189,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "accounts"
                 ],
                 "summary": "Update a account",
                 "parameters": [
@@ -230,6 +242,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "accounts"
                 ],
                 "summary": "Update a account",
                 "parameters": [
@@ -291,6 +306,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "accounts"
                 ],
                 "summary": "Upload account image",
                 "parameters": [
@@ -355,6 +373,10 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "accounts",
+                    "admin"
+                ],
                 "summary": "Auth admin",
                 "responses": {
                     "200": {
@@ -404,6 +426,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "bottles"
+                ],
                 "summary": "List bottles",
                 "responses": {
                     "200": {
@@ -447,6 +472,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "bottles"
                 ],
                 "summary": "Show a bottle",
                 "operationId": "get-string-by-int",
@@ -499,6 +527,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "example"
                 ],
                 "summary": "attribute example",
                 "parameters": [
@@ -596,6 +627,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "example"
+                ],
                 "summary": "calc example",
                 "parameters": [
                     {
@@ -649,6 +683,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "example"
                 ],
                 "summary": "path params example",
                 "parameters": [
@@ -704,6 +741,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "example"
+                ],
                 "summary": "custome header example",
                 "parameters": [
                     {
@@ -750,6 +790,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "example"
                 ],
                 "summary": "ping example",
                 "responses": {
@@ -799,6 +842,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "example"
                 ],
                 "summary": "custome header example",
                 "parameters": [

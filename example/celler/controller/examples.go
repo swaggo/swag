@@ -12,6 +12,7 @@ import (
 // PingExample godoc
 // @Summary ping example
 // @Description do ping
+// @Tags example
 // @Accept json
 // @Produce json
 // @Success 200 {string} string "pong"
@@ -27,6 +28,7 @@ func (c *Controller) PingExample(ctx *gin.Context) {
 // CalcExample godoc
 // @Summary calc example
 // @Description plus
+// @Tags example
 // @Accept json
 // @Produce json
 // @Param val1 query int true "used for calc"
@@ -54,6 +56,7 @@ func (c *Controller) CalcExample(ctx *gin.Context) {
 // PathParamsExample godoc
 // @Summary path params example
 // @Description path params
+// @Tags example
 // @Accept json
 // @Produce json
 // @Param group_id path int true "Group ID"
@@ -80,6 +83,7 @@ func (c *Controller) PathParamsExample(ctx *gin.Context) {
 // HeaderExample godoc
 // @Summary custome header example
 // @Description custome header
+// @Tags example
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authentication header"
@@ -95,6 +99,7 @@ func (c *Controller) HeaderExample(ctx *gin.Context) {
 // SecuritiesExample godoc
 // @Summary custome header example
 // @Description custome header
+// @Tags example
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "Authentication header"
@@ -111,6 +116,7 @@ func (c *Controller) SecuritiesExample(ctx *gin.Context) {
 // AttributeExample godoc
 // @Summary attribute example
 // @Description attribute
+// @Tags example
 // @Accept json
 // @Produce json
 // @Param enumstring query string false "string enums" Enums(A, B, C)
