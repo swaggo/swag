@@ -415,45 +415,54 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 	}
 }
 
+type structField struct {
+	name         string
+	schemaType   string
+	arrayType    string
+	formatType   string
+	exampleValue interface{}
+}
+
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
 	properties = map[string]spec.Schema{}
-	name, schemaType, arrayType, formatType, exampleValue := parser.parseField(field)
-	if name == "" {
+	// name, schemaType, arrayType, formatType, exampleValue :=
+	structField := parser.parseField(field)
+	if structField.name == "" {
 		return
 	}
 	// TODO: find package of schemaType and/or arrayType
-	if _, ok := parser.TypeDefinitions[pkgName][schemaType]; ok { // user type field
+	if _, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
-		parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][schemaType], schemaType)
-		properties[name] = spec.Schema{
+		parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.schemaType], structField.schemaType)
+		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
 				Ref: spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + schemaType),
+					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
 				},
 			},
 		}
-	} else if schemaType == "array" { // array field type
+	} else if structField.schemaType == "array" { // array field type
 		// if defined -- ref it
-		if _, ok := parser.TypeDefinitions[pkgName][arrayType]; ok { // user type in array
-			parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][arrayType], arrayType)
-			properties[name] = spec.Schema{
+		if _, ok := parser.TypeDefinitions[pkgName][structField.arrayType]; ok { // user type in array
+			parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.arrayType], structField.arrayType)
+			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Type:  []string{schemaType},
-					Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + arrayType)}}}},
+					Type:  []string{structField.schemaType},
+					Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.arrayType)}}}},
 				},
 			}
 		} else { // standard type in array
-			properties[name] = spec.Schema{
-				SchemaProps: spec.SchemaProps{Type: []string{schemaType},
-					Format: formatType,
-					Items:  &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{arrayType}}}}},
-				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
+			properties[structField.name] = spec.Schema{
+				SchemaProps: spec.SchemaProps{Type: []string{structField.schemaType},
+					Format: structField.formatType,
+					Items:  &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{structField.arrayType}}}}},
+				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
 			}
 		}
 	} else {
-		properties[name] = spec.Schema{
-			SchemaProps:        spec.SchemaProps{Type: []string{schemaType}, Format: formatType},
-			SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
+		properties[structField.name] = spec.Schema{
+			SchemaProps:        spec.SchemaProps{Type: []string{structField.schemaType}, Format: structField.formatType},
+			SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
 		}
 		nestStruct, ok := field.Type.(*ast.StructType)
 		if ok {
@@ -464,9 +473,9 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 					props[k] = v
 				}
 			}
-			properties[name] = spec.Schema{
-				SchemaProps:        spec.SchemaProps{Type: []string{schemaType}, Format: formatType, Properties: props},
-				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: exampleValue},
+			properties[structField.name] = spec.Schema{
+				SchemaProps:        spec.SchemaProps{Type: []string{structField.schemaType}, Format: structField.formatType, Properties: props},
+				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
 			}
 		}
 	}
@@ -488,44 +497,47 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 	}
 }
 
-func (parser *Parser) parseField(field *ast.Field) (propName, schemaType, arrayType, formatType string, exampleValue interface{}) {
-	schemaType, arrayType = getPropertyName(field)
-	if len(arrayType) == 0 {
-		CheckSchemaType(schemaType)
+func (parser *Parser) parseField(field *ast.Field) *structField {
+	prop := getPropertyName(field)
+	if len(prop.ArrayType) == 0 {
+		CheckSchemaType(prop.SchemaType)
 	} else {
 		CheckSchemaType("array")
 	}
-	propName = field.Names[0].Name
-	if field.Tag != nil {
-		// `json:"tag"` -> json:"tag"
-		structTag := strings.Replace(field.Tag.Value, "`", "", -1)
-		jsonTag := reflect.StructTag(structTag).Get("json")
-		// json:"tag,hoge"
-		if strings.Contains(jsonTag, ",") {
-			// json:",hoge"
-			if strings.HasPrefix(jsonTag, ",") {
-				jsonTag = ""
-			} else {
-				jsonTag = strings.SplitN(jsonTag, ",", 2)[0]
-			}
-		}
-		if jsonTag == "-" {
-			propName = ""
-			return
-		}
-		if jsonTag != "" {
-			propName = jsonTag
-		}
-		exampleTag := reflect.StructTag(structTag).Get("example")
-		if exampleTag != "" {
-			exampleValue = defineTypeOfExample(schemaType, exampleTag)
-		}
-		formatTag := reflect.StructTag(structTag).Get("format")
-		if formatTag != "" {
-			formatType = formatTag
+	structField := &structField{
+		name:       field.Names[0].Name,
+		schemaType: prop.SchemaType,
+		arrayType:  prop.ArrayType,
+	}
+	if field.Tag == nil {
+		return structField
+	}
+	// `json:"tag"` -> json:"tag"
+	structTag := strings.Replace(field.Tag.Value, "`", "", -1)
+	jsonTag := reflect.StructTag(structTag).Get("json")
+	// json:"tag,hoge"
+	if strings.Contains(jsonTag, ",") {
+		// json:",hoge"
+		if strings.HasPrefix(jsonTag, ",") {
+			jsonTag = ""
+		} else {
+			jsonTag = strings.SplitN(jsonTag, ",", 2)[0]
 		}
 	}
-	return
+	if jsonTag == "-" {
+		structField.name = ""
+	} else if jsonTag != "" {
+		structField.name = jsonTag
+	}
+	exampleTag := reflect.StructTag(structTag).Get("example")
+	if exampleTag != "" {
+		structField.exampleValue = defineTypeOfExample(structField.schemaType, exampleTag)
+	}
+	formatTag := reflect.StructTag(structTag).Get("format")
+	if formatTag != "" {
+		structField.formatType = formatTag
+	}
+	return structField
 }
 
 // defineTypeOfExample example value define the type (object and array unsupported)
