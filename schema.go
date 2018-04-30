@@ -10,10 +10,9 @@ func CheckSchemaType(typeName string) {
 	default:
 		panic(fmt.Errorf("%s is not basic types", typeName))
 	}
-
 }
 
-// TransToValidSchemeType TODO: NEEDS COMMENT INFO
+// TransToValidSchemeType is int type will transfer to integer which is goswagger supported type
 func TransToValidSchemeType(typeName string) string {
 	switch typeName {
 	case "uint", "int", "uint8", "int8", "uint16", "int16", "byte":
