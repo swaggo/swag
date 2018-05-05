@@ -27,7 +27,8 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr) propertyName 
 		return propertyName{SchemaType: "string", ArrayType: "string"}
 	}
 
-	panic("not supported 'astSelectorExpr' yet.")
+	fmt.Printf("%s is not supported. but it will be set with string temporary. Please report any problems.", astTypeSelectorExpr.Sel.Name)
+	return propertyName{SchemaType: "string", ArrayType: "string"}
 }
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
