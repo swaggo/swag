@@ -468,6 +468,9 @@ func TestParseSimpleApi(t *testing.T) {
                     "items": {
                         "$ref": "#/definitions/web.Tag"
                     }
+                },
+                "uuid": {
+                    "type": "string"
                 }
             }
         },

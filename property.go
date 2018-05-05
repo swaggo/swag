@@ -3,6 +3,7 @@ package swag
 import (
 	"fmt"
 	"go/ast"
+	"strings"
 )
 
 type propertyName struct {
@@ -18,6 +19,11 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr) propertyName 
 
 	// Support bson.ObjectId type
 	if "ObjectId" == astTypeSelectorExpr.Sel.Name {
+		return propertyName{SchemaType: "string", ArrayType: "string"}
+	}
+
+	// Supprt UUID FIXME: more best practice
+	if "UUID" == strings.ToUpper(astTypeSelectorExpr.Sel.Name) {
 		return propertyName{SchemaType: "string", ArrayType: "string"}
 	}
 
