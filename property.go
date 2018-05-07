@@ -3,6 +3,7 @@ package swag
 import (
 	"fmt"
 	"go/ast"
+	"strings"
 )
 
 type propertyName struct {
@@ -21,7 +22,13 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr) propertyName 
 		return propertyName{SchemaType: "string", ArrayType: "string"}
 	}
 
-	panic("not supported 'astSelectorExpr' yet.")
+	// Supprt UUID FIXME: more best practice
+	if "UUID" == strings.ToUpper(astTypeSelectorExpr.Sel.Name) {
+		return propertyName{SchemaType: "string", ArrayType: "string"}
+	}
+
+	fmt.Printf("%s is not supported. but it will be set with string temporary. Please report any problems.", astTypeSelectorExpr.Sel.Name)
+	return propertyName{SchemaType: "string", ArrayType: "string"}
 }
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.

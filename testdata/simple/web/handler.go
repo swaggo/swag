@@ -2,6 +2,8 @@ package web
 
 import (
 	"time"
+
+	"github.com/satori/go.uuid"
 )
 
 type Pet struct {
@@ -24,6 +26,7 @@ type Pet struct {
 	IsAlive   bool        `json:"is_alive" example:"true"`
 	Data      interface{} `json:"data"`
 	Hidden    string      `json:"-"`
+	UUID      uuid.UUID   `json:"uuid"`
 }
 
 type Tag struct {
