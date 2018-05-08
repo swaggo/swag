@@ -433,6 +433,9 @@ func TestParseSimpleApi(t *testing.T) {
                 "data": {
                     "type": "object"
                 },
+                "decimal": {
+                    "type": "number"
+                },
                 "id": {
                     "type": "integer",
                     "format": "int64",
@@ -445,6 +448,18 @@ func TestParseSimpleApi(t *testing.T) {
                 "name": {
                     "type": "string",
                     "example": "poti"
+                },
+                "pets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Pet2"
+                    }
+                },
+                "pets2": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Pet2"
+                    }
                 },
                 "photo_urls": {
                     "type": "array",
