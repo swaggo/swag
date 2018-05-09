@@ -11,7 +11,7 @@ import (
 func TestGen_Build(t *testing.T) {
 	searchDir := "../testdata/simple"
 	assert.NotPanics(t, func() {
-		New().Build(searchDir, "./main.go", "../testdata/simple/docs/swagger")
+		New().Build(searchDir, "./main.go", "../testdata/simple/docs/swagger", "")
 	})
 
 	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
