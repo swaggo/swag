@@ -25,7 +25,7 @@ func New() *Gen {
 func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy string) (string, error) {
 	log.Println("Generate swagger docs....")
 	p := swag.New()
-	p.propNamingStrategy = propNamingStrategy
+	p.PropNamingStrategy = propNamingStrategy
 	p.ParseAPI(searchDir, mainAPIFile)
 	swagger := p.GetSwagger()
 
