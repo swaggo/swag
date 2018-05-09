@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
@@ -31,6 +32,8 @@ type Parser struct {
 
 	//registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
 	registerTypes map[string]*ast.TypeSpec
+
+	propNamingStrategy string
 }
 
 // New creates a new Parser with default properties.
@@ -529,6 +532,21 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 	} else if jsonTag != "" {
 		structField.name = jsonTag
 	}
+
+	if parser.propNamingStrategy == "snakecase" {
+		runes := []rune(structField.name)
+		length := len(runes)
+
+		var out []rune
+		for i := 0; i < length; i++ {
+			if i > 0 && unicode.IsUpper(runes[i]) && ((i+1 < length && unicode.IsLower(runes[i+1])) || unicode.IsLower(runes[i-1])) {
+				out = append(out, '_')
+			}
+			out = append(out, unicode.ToLower(runes[i]))
+		}
+		structField.name = string(out)
+	}
+
 	exampleTag := reflect.StructTag(structTag).Get("example")
 	if exampleTag != "" {
 		structField.exampleValue = defineTypeOfExample(structField.schemaType, exampleTag)
