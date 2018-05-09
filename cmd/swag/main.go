@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/swaggo/swag/gen"
+	"github.com/glassonion1/swag/gen"
 	"github.com/urfave/cli"
 )
 
