@@ -300,6 +300,8 @@ func (operation *Operation) ParseAcceptComment(commentLine string) error {
 			operation.Consumes = append(operation.Consumes, "text/html")
 		case "mpfd", "multipart/form-data":
 			operation.Consumes = append(operation.Consumes, "multipart/form-data")
+		case "x-www-form-urlencoded", "application/x-www-form-urlencoded":
+			operation.Consumes = append(operation.Consumes, "application/x-www-form-urlencoded")
 		case "json-api", "application/vnd.api+json":
 			operation.Consumes = append(operation.Consumes, "application/vnd.api+json")
 		case "json-stream", "application/x-json-stream":
@@ -326,6 +328,8 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 			operation.Produces = append(operation.Produces, "text/html")
 		case "mpfd", "multipart/form-data":
 			operation.Produces = append(operation.Produces, "multipart/form-data")
+		case "x-www-form-urlencoded", "application/x-www-form-urlencoded":
+			operation.Produces = append(operation.Produces, "application/x-www-form-urlencoded")
 		case "json-api", "application/vnd.api+json":
 			operation.Produces = append(operation.Produces, "application/vnd.api+json")
 		case "json-stream", "application/x-json-stream":
