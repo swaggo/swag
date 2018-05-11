@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
@@ -31,6 +32,8 @@ type Parser struct {
 
 	//registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
 	registerTypes map[string]*ast.TypeSpec
+
+	PropNamingStrategy string
 }
 
 // New creates a new Parser with default properties.
@@ -509,6 +512,11 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		schemaType: prop.SchemaType,
 		arrayType:  prop.ArrayType,
 	}
+
+	if parser.PropNamingStrategy == "snakecase" {
+		structField.name = toSnakeCase(structField.name)
+	}
+
 	if field.Tag == nil {
 		return structField
 	}
@@ -529,6 +537,7 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 	} else if jsonTag != "" {
 		structField.name = jsonTag
 	}
+
 	exampleTag := reflect.StructTag(structTag).Get("example")
 	if exampleTag != "" {
 		structField.exampleValue = defineTypeOfExample(structField.schemaType, exampleTag)
@@ -538,6 +547,20 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		structField.formatType = formatTag
 	}
 	return structField
+}
+
+func toSnakeCase(in string) string {
+	runes := []rune(in)
+	length := len(runes)
+
+	var out []rune
+	for i := 0; i < length; i++ {
+		if i > 0 && unicode.IsUpper(runes[i]) && ((i+1 < length && unicode.IsLower(runes[i+1])) || unicode.IsLower(runes[i-1])) {
+			out = append(out, '_')
+		}
+		out = append(out, unicode.ToLower(runes[i]))
+	}
+	return string(out)
 }
 
 // defineTypeOfExample example value define the type (object and array unsupported)
