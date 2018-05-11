@@ -20,7 +20,8 @@ func main() {
 				dir := c.String("dir")
 				mainAPIFile := c.String("generalInfo")
 				swaggerConfDir := c.String("swagger")
-				gen.New().Build(dir, mainAPIFile, swaggerConfDir)
+				strategy := c.String("propertyStrategy")
+				gen.New().Build(dir, mainAPIFile, swaggerConfDir, strategy)
 				return nil
 			},
 			Flags: []cli.Flag{
@@ -38,6 +39,11 @@ func main() {
 					Name:  "swagger, s",
 					Value: "./docs/swagger",
 					Usage: "Output the swagger conf for json and yaml",
+				},
+				cli.StringFlag{
+					Name:  "propertyStrategy, p",
+					Value: "",
+					Usage: "Property Naming Strategy like snakecase",
 				},
 			},
 		},
