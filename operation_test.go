@@ -40,11 +40,12 @@ func TestParseAcceptComment(t *testing.T) {
         "text/plain",
         "text/html",
         "multipart/form-data",
+        "application/x-www-form-urlencoded",
         "application/vnd.api+json",
         "application/x-json-stream"	
     ]
 }`
-	comment := `/@Accept json,xml,plain,html,mpfd,json-api,json-stream`
+	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream`
 	operation := NewOperation()
 	err := operation.ParseComment(comment)
 	assert.NoError(t, err)
@@ -68,11 +69,12 @@ func TestParseProduceComment(t *testing.T) {
         "text/plain",
         "text/html",
         "multipart/form-data",
+        "application/x-www-form-urlencoded",
         "application/vnd.api+json",
         "application/x-json-stream"
     ]
 }`
-	comment := `/@Produce json,xml,plain,html,mpfd,json-api,json-stream`
+	comment := `/@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream`
 	operation := new(Operation)
 	operation.ParseComment(comment)
 	b, _ := json.MarshalIndent(operation, "", "    ")
