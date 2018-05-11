@@ -1,0 +1,308 @@
+basePath: /v2
+definitions:
+  web.APIError:
+    properties:
+      created_at:
+        type: string
+      error_code:
+        type: integer
+      error_message:
+        type: string
+    type: object
+  web.Pet:
+    properties:
+      category:
+        properties:
+          id:
+            example: 1
+            type: integer
+          name:
+            example: category_name
+            type: string
+          photo_urls:
+            example:
+            - http://test/image/1.jpg
+            - http://test/image/2.jpg
+            format: url
+            items:
+              type: string
+            type: array
+          small_category:
+            properties:
+              id:
+                example: 1
+                type: integer
+              name:
+                example: detail_category_name
+                type: string
+              photo_urls:
+                example:
+                - http://test/image/1.jpg
+                - http://test/image/2.jpg
+                items:
+                  type: string
+                type: array
+            type: object
+        type: object
+      data:
+        type: object
+      decimal:
+        type: number
+      id:
+        example: 1
+        format: int64
+        type: integer
+      is_alive:
+        example: true
+        type: boolean
+      name:
+        example: poti
+        type: string
+      pets:
+        items:
+          $ref: '#/definitions/web.Pet2'
+        type: array
+      pets2:
+        items:
+          $ref: '#/definitions/web.Pet2'
+        type: array
+      photo_urls:
+        example:
+        - http://test/image/1.jpg
+        - http://test/image/2.jpg
+        items:
+          type: string
+        type: array
+      price:
+        example: 3.25
+        type: number
+      status:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/web.Tag'
+        type: array
+      uuid:
+        type: string
+    type: object
+  web.Pet2:
+    properties:
+      deleted_at:
+        type: string
+      id:
+        type: integer
+      middle_name:
+        type: string
+    type: object
+  web.RevValue:
+    properties:
+      data:
+        type: integer
+      err:
+        type: integer
+      status:
+        type: boolean
+    type: object
+  web.Tag:
+    properties:
+      id:
+        format: int64
+        type: integer
+      name:
+        type: string
+      pets:
+        items:
+          $ref: '#/definitions/web.Pet'
+        type: array
+    type: object
+host: petstore.swagger.io
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is a sample server Petstore server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /file/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload file
+      operationId: file.upload
+      parameters:
+      - description: this is a test file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+      summary: Upload file
+  /testapi/get-string-by-int/{some_id}:
+    get:
+      consumes:
+      - application/json
+      description: get string by ID
+      operationId: get-string-by-int
+      parameters:
+      - description: Some ID
+        format: int64
+        in: path
+        name: some_id
+        required: true
+        type: integer
+      - description: Some ID
+        in: body
+        name: some_id
+        required: true
+        schema:
+          $ref: '#/definitions/web.Pet'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+      summary: Add a new pet to the store
+  /testapi/get-struct-array-by-string/{some_id}:
+    get:
+      consumes:
+      - application/json
+      description: get struct array by ID
+      operationId: get-struct-array-by-string
+      parameters:
+      - description: Some ID
+        in: path
+        name: some_id
+        required: true
+        type: string
+      - description: Category
+        enum:
+        - 1
+        - 2
+        - 3
+        in: query
+        name: category
+        required: true
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        minimum: 0
+        name: offset
+        required: true
+        type: integer
+      - default: 10
+        description: Limit
+        in: query
+        maximum: 50
+        name: limit
+        required: true
+        type: integer
+      - default: '""'
+        description: q
+        in: query
+        maxLength: 50
+        minLength: 1
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/web.APIError'
+            type: object
+      security:
+      - ApiKeyAuth: []
+      - BasicAuth: []
+      - OAuth2Application:
+        - write
+      - OAuth2Implicit:
+        - read
+        - admin
+      - OAuth2AccessCode:
+        - read
+      - OAuth2Password:
+        - admin
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+  BasicAuth:
+    type: basic
+  OAuth2AccessCode:
+    authorizationUrl: https://example.com/oauth/authorize
+    flow: accessCode
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
+  OAuth2Application:
+    flow: application
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+      write: ' Grants write access'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
+  OAuth2Implicit:
+    authorizationUrl: https://example.com/oauth/authorize
+    flow: implicit
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+      write: ' Grants write access'
+    type: oauth2
+  OAuth2Password:
+    flow: password
+    scopes:
+      admin: ' Grants read and write access to administrative information'
+      read: ' Grants read access'
+      write: ' Grants write access'
+    tokenUrl: https://example.com/oauth/token
+    type: oauth2
+swagger: "2.0"
