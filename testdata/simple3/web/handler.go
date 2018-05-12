@@ -11,15 +11,15 @@ type Pet struct {
 	Category struct {
 		ID            int      `example:"1"`
 		Name          string   `example:"category_name"`
-		PhotoUrls     []string `example:"http://test/image/1.jpg,http://test/image/2.jpg" format:"url"`
+		PhotoURLs     []string `example:"http://test/image/1.jpg,http://test/image/2.jpg" format:"url"`
 		SmallCategory struct {
 			ID        int      `example:"1"`
 			Name      string   `example:"detail_category_name"`
-			PhotoUrls []string `example:"http://test/image/1.jpg,http://test/image/2.jpg"`
+			PhotoURLs []string `example:"http://test/image/1.jpg,http://test/image/2.jpg"`
 		}
 	}
 	Name      string   `example:"poti"`
-	PhotoUrls []string `example:"http://test/image/1.jpg,http://test/image/2.jpg"`
+	PhotoURLs []string `example:"http://test/image/1.jpg,http://test/image/2.jpg"`
 	Tags      []Tag
 	Pets      *[]Pet2
 	Pets2     []*Pet2

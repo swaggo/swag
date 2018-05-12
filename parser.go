@@ -514,7 +514,11 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 	}
 
 	if parser.PropNamingStrategy == "snakecase" {
+		// snakecase
 		structField.name = toSnakeCase(structField.name)
+	} else if parser.PropNamingStrategy != "uppercamelcase" {
+		// default
+		structField.name = toLowerCamelCase(structField.name)
 	}
 
 	if field.Tag == nil {
@@ -560,6 +564,24 @@ func toSnakeCase(in string) string {
 		}
 		out = append(out, unicode.ToLower(runes[i]))
 	}
+	return string(out)
+}
+
+func toLowerCamelCase(in string) string {
+	runes := []rune(in)
+
+	var out []rune
+	flag := false
+	for i, curr := range runes {
+		if (i == 0 && unicode.IsUpper(curr)) || (flag && unicode.IsUpper(curr)) {
+			out = append(out, unicode.ToLower(curr))
+			flag = true
+		} else {
+			out = append(out, curr)
+			flag = false
+		}
+	}
+
 	return string(out)
 }
 
