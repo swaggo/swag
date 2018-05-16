@@ -619,7 +619,9 @@ func defineTypeOfExample(schemaType string, exampleValue string) interface{} {
 func (parser *Parser) getAllGoFileInfo(searchDir string) {
 	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		//exclude vendor folder
-		if ext := filepath.Ext(path); ext == ".go" && !strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+"vendor"+string(os.PathSeparator)) {
+		if ext := filepath.Ext(path); ext == ".go" &&
+			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+"vendor"+string(os.PathSeparator)) &&
+			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+".git"+string(os.PathSeparator)) {
 			fset := token.NewFileSet() // positions are relative to fset
 			astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
 
