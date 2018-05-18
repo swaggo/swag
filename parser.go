@@ -374,20 +374,26 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 	}
 	structStacks = []string{}
 
-	for _, prop := range properties {
+	requiredFields := make([]string, 0)
+	for k, prop := range properties {
 		// todo find the pkgName of the property type
 		tname := prop.SchemaProps.Type[0]
 		if _, ok := parser.TypeDefinitions[pkgName][tname]; ok {
 			tspec := parser.TypeDefinitions[pkgName][tname]
 			parser.ParseDefinition(pkgName, tspec, tname)
 		}
+		if tname != "object" {
+			requiredFields = append(requiredFields, prop.SchemaProps.Required...)
+			prop.SchemaProps.Required = make([]string, 0)
+		}
+		properties[k] = prop
 	}
-
 	log.Println("Generating " + refTypeName)
 	parser.swagger.Definitions[refTypeName] = spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type:       []string{"object"},
 			Properties: properties,
+			Required:   requiredFields,
 		},
 	}
 }
@@ -423,6 +429,7 @@ type structField struct {
 	schemaType   string
 	arrayType    string
 	formatType   string
+	isRequired   bool
 	exampleValue interface{}
 }
 
@@ -455,29 +462,43 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 				},
 			}
 		} else { // standard type in array
+			required := make([]string, 0)
+			if structField.isRequired {
+				required = append(required, structField.name)
+			}
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{Type: []string{structField.schemaType},
 					Format: structField.formatType,
-					Items:  &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{structField.arrayType}}}}},
+					Required: required,
+					Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{structField.arrayType}}}}},
 				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
 			}
 		}
 	} else {
+		required := make([]string, 0)
+		if structField.isRequired {
+			required = append(required, structField.name)
+		}
 		properties[structField.name] = spec.Schema{
-			SchemaProps:        spec.SchemaProps{Type: []string{structField.schemaType}, Format: structField.formatType},
+			SchemaProps:        spec.SchemaProps{Type: []string{structField.schemaType}, Format: structField.formatType, Required: required},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
 		}
 		nestStruct, ok := field.Type.(*ast.StructType)
 		if ok {
 			props := map[string]spec.Schema{}
+			nestRequired := make([]string, 0)
 			for _, v := range nestStruct.Fields.List {
 				p := parser.parseStruct(pkgName, v)
 				for k, v := range p {
+					if v.SchemaProps.Type[0] != "object" {
+						nestRequired = append(nestRequired, v.SchemaProps.Required...)
+						v.SchemaProps.Required = make([]string, 0)
+					}
 					props[k] = v
 				}
 			}
 			properties[structField.name] = spec.Schema{
-				SchemaProps:        spec.SchemaProps{Type: []string{structField.schemaType}, Format: structField.formatType, Properties: props},
+				SchemaProps:        spec.SchemaProps{Type: []string{structField.schemaType}, Format: structField.formatType, Properties: props, Required: nestRequired},
 				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
 			}
 		}
@@ -549,6 +570,24 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 	formatTag := reflect.StructTag(structTag).Get("format")
 	if formatTag != "" {
 		structField.formatType = formatTag
+	}
+	bindingTag := reflect.StructTag(structTag).Get("binding")
+	if bindingTag != "" {
+		for _, val := range strings.Split(bindingTag, ",") {
+			if val == "required" {
+				structField.isRequired = true
+				break
+			}
+		}
+	}
+	validateTag := reflect.StructTag(structTag).Get("validate")
+	if validateTag != "" {
+		for _, val := range strings.Split(validateTag, ",") {
+			if val == "required" {
+				structField.isRequired = true
+				break
+			}
+		}
 	}
 	return structField
 }

@@ -14,7 +14,7 @@ type Pet struct {
 		PhotoUrls     []string `example:"http://test/image/1.jpg,http://test/image/2.jpg" format:"url"`
 		SmallCategory struct {
 			ID        int      `example:"1"`
-			Name      string   `example:"detail_category_name"`
+			Name      string   `example:"detail_category_name" validate:"required"`
 			PhotoUrls []string `example:"http://test/image/1.jpg,http://test/image/2.jpg"`
 		}
 	}
@@ -24,10 +24,10 @@ type Pet struct {
 	Pets      *[]Pet2
 	Pets2     []*Pet2
 	Status    string
-	Price     float32 `example:"3.25"`
-	IsAlive   bool    `example:"true"`
+	Price     float32  `example:"3.25" validate:"required,gte=0,lte=130"`
+	IsAlive   bool     `example:"true"`
 	Data      interface{}
-	Hidden    string `json:"-"`
+	Hidden    string   `json:"-"`
 	UUID      uuid.UUID
 	Decimal   decimal.Decimal
 }
