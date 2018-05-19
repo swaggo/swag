@@ -468,9 +468,9 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 			}
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{Type: []string{structField.schemaType},
-					Format: structField.formatType,
+					Format:   structField.formatType,
 					Required: required,
-					Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{structField.arrayType}}}}},
+					Items:    &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{structField.arrayType}}}}},
 				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
 			}
 		}
