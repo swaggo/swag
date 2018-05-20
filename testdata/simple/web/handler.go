@@ -15,12 +15,12 @@ type Pet struct {
 		PhotoUrls     []string `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg" format:"url"`
 		SmallCategory struct {
 			ID        int      `json:"id" example:"1"`
-			Name      string   `json:"name" example:"detail_category_name"`
+			Name      string   `json:"name" example:"detail_category_name" binding:"required"`
 			PhotoUrls []string `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg"`
 		} `json:"small_category"`
 	} `json:"category"`
 	Name      string          `json:"name" example:"poti"`
-	PhotoUrls []string        `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg"`
+	PhotoUrls []string        `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg" binding:"required"`
 	Tags      []Tag           `json:"tags"`
 	Pets      *[]Pet2         `json:"pets"`
 	Pets2     []*Pet2         `json:"pets2"`

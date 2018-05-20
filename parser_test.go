@@ -382,6 +382,9 @@ func TestParseSimpleApi(t *testing.T) {
         },
         "web.Pet": {
             "type": "object",
+            "required": [
+                "photo_urls"
+            ],
             "properties": {
                 "category": {
                     "type": "object",
@@ -407,6 +410,9 @@ func TestParseSimpleApi(t *testing.T) {
                         },
                         "small_category": {
                             "type": "object",
+                            "required": [
+                                "name"
+                            ],
                             "properties": {
                                 "id": {
                                     "type": "integer",
@@ -843,6 +849,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
         },
         "web.Pet": {
             "type": "object",
+            "required": [
+                "price"
+            ],
             "properties": {
                 "category": {
                     "type": "object",
@@ -868,6 +877,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                         },
                         "small_category": {
                             "type": "object",
+                            "required": [
+                                "name"
+                            ],
                             "properties": {
                                 "id": {
                                     "type": "integer",
