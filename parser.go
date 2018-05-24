@@ -660,6 +660,8 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) {
 		//exclude vendor folder
 		if ext := filepath.Ext(path); ext == ".go" &&
 			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+"vendor"+string(os.PathSeparator)) &&
+			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+".history"+string(os.PathSeparator)) &&
+			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+".idea"+string(os.PathSeparator)) &&
 			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+".git"+string(os.PathSeparator)) {
 			fset := token.NewFileSet() // positions are relative to fset
 			astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
