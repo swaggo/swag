@@ -308,6 +308,12 @@ func (operation *Operation) ParseAcceptComment(commentLine string) error {
 			operation.Consumes = append(operation.Consumes, "application/x-json-stream")
 		case "octet-stream", "application/octet-stream":
 			operation.Consumes = append(operation.Consumes, "application/octet-stream")
+		case "png", "image/png":
+			operation.Consumes = append(operation.Consumes, "image/png")
+		case "jpeg", "image/jpeg":
+			operation.Consumes = append(operation.Consumes, "image/jpeg")
+		case "gif", "image/gif":
+			operation.Consumes = append(operation.Consumes, "image/gif")
 		default:
 			return fmt.Errorf("%v accept type can't accepted", a)
 		}
@@ -338,6 +344,12 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 			operation.Produces = append(operation.Produces, "application/x-json-stream")
 		case "octet-stream", "application/octet-stream":
 			operation.Produces = append(operation.Produces, "application/octet-stream")
+		case "png", "image/png":
+			operation.Produces = append(operation.Produces, "image/png")
+		case "jpeg", "image/jpeg":
+			operation.Produces = append(operation.Produces, "image/jpeg")
+		case "gif", "image/gif":
+			operation.Produces = append(operation.Produces, "image/gif")
 		default:
 			return fmt.Errorf("%v produce type can't accepted", a)
 		}
