@@ -440,12 +440,19 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 	if structField.name == "" {
 		return
 	}
+	var desc string
+	if field.Doc != nil {
+		desc = field.Doc.Text()
+	}
+
 	// TODO: find package of schemaType and/or arrayType
 	if _, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
 		parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.schemaType], structField.schemaType)
 		properties[structField.name] = spec.Schema{
-			SchemaProps: spec.SchemaProps{Type: []string{"object"}, // to avoid swagger validation error
+			SchemaProps: spec.SchemaProps{
+				Type:        []string{"object"}, // to avoid swagger validation error
+				Description: desc,
 				Ref: spec.Ref{
 					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
 				},
@@ -457,8 +464,17 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 			parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.arrayType], structField.arrayType)
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Type:  []string{structField.schemaType},
-					Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.arrayType)}}}},
+					Type:        []string{structField.schemaType},
+					Description: desc,
+					Items: &spec.SchemaOrArray{
+						Schema: &spec.Schema{
+							SchemaProps: spec.SchemaProps{
+								Ref: spec.Ref{
+									Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.arrayType),
+								},
+							},
+						},
+					},
 				},
 			}
 		} else { // standard type in array
@@ -466,12 +482,24 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 			if structField.isRequired {
 				required = append(required, structField.name)
 			}
+
 			properties[structField.name] = spec.Schema{
-				SchemaProps: spec.SchemaProps{Type: []string{structField.schemaType},
-					Format:   structField.formatType,
-					Required: required,
-					Items:    &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{structField.arrayType}}}}},
-				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
+				SchemaProps: spec.SchemaProps{
+					Type:        []string{structField.schemaType},
+					Description: desc,
+					Format:      structField.formatType,
+					Required:    required,
+					Items: &spec.SchemaOrArray{
+						Schema: &spec.Schema{
+							SchemaProps: spec.SchemaProps{
+								Type: []string{structField.arrayType},
+							},
+						},
+					},
+				},
+				SwaggerSchemaProps: spec.SwaggerSchemaProps{
+					Example: structField.exampleValue,
+				},
 			}
 		}
 	} else {
@@ -480,8 +508,15 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 			required = append(required, structField.name)
 		}
 		properties[structField.name] = spec.Schema{
-			SchemaProps:        spec.SchemaProps{Type: []string{structField.schemaType}, Format: structField.formatType, Required: required},
-			SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
+			SchemaProps: spec.SchemaProps{
+				Type:        []string{structField.schemaType},
+				Description: desc,
+				Format:      structField.formatType,
+				Required:    required,
+			},
+			SwaggerSchemaProps: spec.SwaggerSchemaProps{
+				Example: structField.exampleValue,
+			},
 		}
 		nestStruct, ok := field.Type.(*ast.StructType)
 		if ok {
@@ -498,8 +533,16 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 				}
 			}
 			properties[structField.name] = spec.Schema{
-				SchemaProps:        spec.SchemaProps{Type: []string{structField.schemaType}, Format: structField.formatType, Properties: props, Required: nestRequired},
-				SwaggerSchemaProps: spec.SwaggerSchemaProps{Example: structField.exampleValue},
+				SchemaProps: spec.SchemaProps{
+					Type:        []string{structField.schemaType},
+					Description: desc,
+					Format:      structField.formatType,
+					Properties:  props,
+					Required:    nestRequired,
+				},
+				SwaggerSchemaProps: spec.SwaggerSchemaProps{
+					Example: structField.exampleValue,
+				},
 			}
 		}
 	}
