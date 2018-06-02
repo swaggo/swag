@@ -6,10 +6,13 @@ import (
 
 type Post struct {
 	ID int `json:"id" example:"1" format:"int64"`
-	// Name post name
+	// Post name
 	Name string `json:"name" example:"poti"`
-	// Data post data
-	Data interface{} `json:"data"`
+	// Post data
+	Data struct {
+		// Post tag
+		Tag []string `json:"name"`
+	} `json:"data"`
 }
 
 type APIError struct {

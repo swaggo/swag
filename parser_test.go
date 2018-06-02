@@ -1599,8 +1599,17 @@ func TestParseStructComment(t *testing.T) {
             "type": "object",
             "properties": {
                 "data": {
-                    "description": "Data post data\n",
-                    "type": "object"
+                    "description": "Post data\n",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag\n",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
                 },
                 "id": {
                     "type": "integer",
@@ -1608,7 +1617,7 @@ func TestParseStructComment(t *testing.T) {
                     "example": 1
                 },
                 "name": {
-                    "description": "Name post name\n",
+                    "description": "Post name\n",
                     "type": "string",
                     "example": "poti"
                 }
