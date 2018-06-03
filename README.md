@@ -46,9 +46,6 @@ swag converts Go annotations to Swagger Documentation 2.0. And provides a variet
 ## Document
 
 - [web](https://swaggo.github.io/swaggo.io/)
-- [pdf](https://github.com/swaggo/swaggo.io/raw/gh-pages/swaggo.pdf)
-- [epub](https://github.com/swaggo/swaggo.io/raw/gh-pages/swaggo.epub)
-- [mobi](https://github.com/swaggo/swaggo.io/raw/gh-pages/swaggo.mobi)
 
 ## Example
 
