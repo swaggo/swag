@@ -368,10 +368,13 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 	}
 	properties := make(map[string]spec.Schema)
 	// stop repetitive structural parsing
+
 	if isNotRecurringNestStruct(refTypeName, structStacks) {
 		structStacks = append(structStacks, refTypeName)
 		parser.parseTypeSpec(pkgName, typeSpec, properties)
 	}
+
+
 	structStacks = []string{}
 
 	requiredFields := make([]string, 0)
@@ -437,6 +440,15 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 	properties = map[string]spec.Schema{}
 	// name, schemaType, arrayType, formatType, exampleValue :=
 	structField := parser.parseField(field)
+
+	if strings.Contains(structField.arrayType, "&{") {
+		structField.arrayType = strings.Replace(structField.arrayType, "&{", "", -1)
+		structField.arrayType = strings.Replace(structField.arrayType, "}", "", -1)
+		temp := strings.Split(structField.arrayType, " ")
+		pkgName = temp[0]
+		structField.arrayType = temp[1]
+	}
+
 	if structField.name == "" {
 		return
 	}
