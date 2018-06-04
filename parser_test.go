@@ -1526,6 +1526,113 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseStructComment(t *testing.T) {
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/posts/{post_id}": {
+            "get": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add a new pet to the store",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Some ID",
+                        "name": "post_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "We need ID!!",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/web.APIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Can not find ID",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/web.APIError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "web.APIError": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "error": {
+                    "description": "Error an Api error\n",
+                    "type": "string"
+                }
+            }
+        },
+        "web.Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Post data\n",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag\n",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name\n",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        }
+    }
+}`
+	searchDir := "testdata/struct_comment"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseAPI(searchDir, mainAPIFile)
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParsePetApi(t *testing.T) {
 	expected := `{
     "schemes": [
