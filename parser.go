@@ -368,13 +368,10 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 	}
 	properties := make(map[string]spec.Schema)
 	// stop repetitive structural parsing
-
 	if isNotRecurringNestStruct(refTypeName, structStacks) {
 		structStacks = append(structStacks, refTypeName)
 		parser.parseTypeSpec(pkgName, typeSpec, properties)
 	}
-
-
 	structStacks = []string{}
 
 	requiredFields := make([]string, 0)
