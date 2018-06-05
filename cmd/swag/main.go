@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/swaggo/swag"
-	"github.com/swaggo/swag/gen"
+	"github.com/paragtokopedia/swag"
+	"github.com/paragtokopedia/swag/gen"
 	"github.com/urfave/cli"
 )
 
