@@ -34,7 +34,14 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr) propertyName 
 	}
 
 	if "TKPUserID" == astTypeSelectorExpr.Sel.Name {
-		return propertyName{SchemaType: "integer", ArrayType: "string"}
+		return propertyName{SchemaType: "integer", ArrayType: "integer"}
+	}
+
+	if "Amount" == astTypeSelectorExpr.Sel.Name {
+		return propertyName{SchemaType: "integer", ArrayType: "integer"}
+	}
+	if "Timestamp" == astTypeSelectorExpr.Sel.Name {
+		return propertyName{SchemaType: "string", ArrayType: "string"}
 	}
 
 	fmt.Printf("%s is not supported. but it will be set with string temporary. Please report any problems.", astTypeSelectorExpr.Sel.Name)
