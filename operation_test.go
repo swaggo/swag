@@ -315,7 +315,7 @@ func TestParseParamCommentByBodyTypeErr(t *testing.T) {
 }
 
 func TestParseParamCommentByFormDataType(t *testing.T) {
-	comment := `@Param   file formData file true  "this is a test file"`
+	comment := `@Param file formData file true "this is a test file"`
 	operation := NewOperation()
 	operation.parser = New()
 
@@ -327,6 +327,29 @@ func TestParseParamCommentByFormDataType(t *testing.T) {
     "parameters": [
         {
             "type": "file",
+            "description": "this is a test file",
+            "name": "file",
+            "in": "formData",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
+	comment := `@Param file formData uint64 true "this is a test file"`
+	operation := NewOperation()
+	operation.parser = New()
+
+	err := operation.ParseComment(comment)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "integer",
             "description": "this is a test file",
             "name": "file",
             "in": "formData",
