@@ -720,12 +720,12 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 }
 
 func skip(f os.FileInfo) error {
-	//exclude vendor folder
+	// exclude vendor folder
 	if f.IsDir() && f.Name() == "vendor" {
 		return filepath.SkipDir
 	}
 
-	//exclude all hide folder
+	// exclude all hidden folder
 	if len(f.Name()) > 0 && f.Name()[0] == '.' {
 		return filepath.SkipDir
 	}
