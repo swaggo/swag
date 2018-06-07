@@ -129,7 +129,7 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 			}
 		}
 	case "formData":
-		param = createParameter(paramType, description, name, "file", required)
+		param = createParameter(paramType, description, name, schemaType, required)
 	}
 	param = operation.parseAndExtractionParamAttribute(commentLine, schemaType, param)
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
