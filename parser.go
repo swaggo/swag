@@ -726,7 +726,7 @@ func skip(f os.FileInfo) error {
 	}
 
 	// exclude all hidden folder
-	if len(f.Name()) > 0 && f.Name()[0] == '.' {
+	if f.IsDir() && len(f.Name()) > 0 && f.Name()[0] == '.' {
 		return filepath.SkipDir
 	}
 	return nil
