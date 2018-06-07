@@ -12,7 +12,7 @@ func CheckSchemaType(typeName string) {
 	}
 }
 
-// TransToValidSchemeType is int type will transfer to integer which is goswagger supported type
+// TransToValidSchemeType indicates type will transfer golang basic type to swagger supported type.
 func TransToValidSchemeType(typeName string) string {
 	switch typeName {
 	case "uint", "int", "uint8", "int8", "uint16", "int16", "byte":
@@ -28,7 +28,6 @@ func TransToValidSchemeType(typeName string) string {
 	case "string":
 		return "string"
 	default:
-		// panic(fmt.Errorf("%s is not valid go basic types", typeName))
 		return typeName // to support user defined types
 	}
 }
