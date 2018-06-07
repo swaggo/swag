@@ -719,6 +719,7 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	return nil
 }
 
+// Skip returns filepath.SkipDir error if match vendor and hidden folder
 func Skip(f os.FileInfo) error {
 	// exclude vendor folder
 	if f.IsDir() && f.Name() == "vendor" {
