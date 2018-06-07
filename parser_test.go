@@ -5,6 +5,7 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1879,4 +1880,20 @@ func Test3(){
 	assert.NotNil(t, val.Get)
 	assert.NotNil(t, val.Patch)
 	assert.NotNil(t, val.Delete)
+}
+
+func TestSkip(t *testing.T) {
+	folder1 := "/tmp/vendor"
+	os.Mkdir(folder1, 777)
+	f1, _ := os.Stat(folder1)
+
+	assert.True(t, Skip(f1) == filepath.SkipDir)
+	assert.NoError(t, os.Remove(folder1))
+
+	folder2 := "/tmp/.git"
+	os.Mkdir(folder2, 777)
+	f2, _ := os.Stat(folder2)
+
+	assert.True(t, Skip(f2) == filepath.SkipDir)
+	assert.NoError(t, os.Remove(folder2))
 }

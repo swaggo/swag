@@ -697,27 +697,40 @@ func defineTypeOfExample(schemaType string, exampleValue string) interface{} {
 	}
 }
 
-// GetAllGoFileInfo gets all Go source files information for gived searchDir.
+// GetAllGoFileInfo gets all Go source files information for given searchDir.
 func (parser *Parser) getAllGoFileInfo(searchDir string) {
-	filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
-		//exclude vendor folder
-		if ext := filepath.Ext(path); ext == ".go" &&
-			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+"vendor"+string(os.PathSeparator)) &&
-			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+".history"+string(os.PathSeparator)) &&
-			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+".idea"+string(os.PathSeparator)) &&
-			!strings.Contains(string(os.PathSeparator)+path, string(os.PathSeparator)+".git"+string(os.PathSeparator)) {
-			fset := token.NewFileSet() // positions are relative to fset
-			astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
+	filepath.Walk(searchDir, parser.visit)
+}
 
-			if err != nil {
-				log.Panicf("ParseFile panic:%+v", err)
-			}
+func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
+	if err := Skip(f); err != nil {
+		return err
+	}
 
-			parser.files[path] = astFile
-
+	if ext := filepath.Ext(path); ext == ".go" {
+		fset := token.NewFileSet() // positions are relative to fset
+		astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
+		if err != nil {
+			log.Panicf("ParseFile panic:%+v", err)
 		}
-		return nil
-	})
+
+		parser.files[path] = astFile
+	}
+	return nil
+}
+
+// Skip returns filepath.SkipDir error if match vendor and hidden folder
+func Skip(f os.FileInfo) error {
+	// exclude vendor folder
+	if f.IsDir() && f.Name() == "vendor" {
+		return filepath.SkipDir
+	}
+
+	// exclude all hidden folder
+	if f.IsDir() && len(f.Name()) > 0 && f.Name()[0] == '.' {
+		return filepath.SkipDir
+	}
+	return nil
 }
 
 // GetSwagger returns *spec.Swagger which is the root document object for the API specification.
