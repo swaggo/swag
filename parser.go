@@ -703,7 +703,7 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) {
 }
 
 func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
-	if err := skip(f); err != nil {
+	if err := Skip(f); err != nil {
 		return err
 	}
 
@@ -719,7 +719,7 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	return nil
 }
 
-func skip(f os.FileInfo) error {
+func Skip(f os.FileInfo) error {
 	// exclude vendor folder
 	if f.IsDir() && f.Name() == "vendor" {
 		return filepath.SkipDir
