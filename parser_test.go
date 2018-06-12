@@ -1896,4 +1896,8 @@ func TestSkip(t *testing.T) {
 
 	assert.True(t, Skip(f2) == filepath.SkipDir)
 	assert.NoError(t, os.Remove(folder2))
+
+	currentPath := "./"
+	currentPathInfo, _ := os.Stat(currentPath)
+	assert.True(t, Skip(currentPathInfo) == nil)
 }
