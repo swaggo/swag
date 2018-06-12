@@ -270,7 +270,7 @@ func GetSchemes(commentLine string) []string {
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
-// ParseRouterAPIInfo parses router api info for giv astFile
+// ParseRouterAPIInfo parses router api info for given astFile
 func (parser *Parser) ParseRouterAPIInfo(astFile *ast.File) {
 	for _, astDescription := range astFile.Decls {
 		switch astDeclaration := astDescription.(type) {
