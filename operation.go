@@ -19,7 +19,7 @@ type Operation struct {
 	Path       string
 	spec.Operation
 
-	parser *Parser // TODO: we don't need it
+	parser *Parser
 }
 
 // NewOperation creates a new Operation with default properties.
@@ -33,7 +33,7 @@ func NewOperation() *Operation {
 	}
 }
 
-// ParseComment parses comment for gived comment string and returns error if error occurs.
+// ParseComment parses comment for given comment string and returns error if error occurs.
 func (operation *Operation) ParseComment(comment string) error {
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "//"))
 	if len(commentLine) == 0 {
@@ -87,7 +87,7 @@ func (operation *Operation) ParseComment(comment string) error {
 	return nil
 }
 
-// ParseParamComment Parse params return []string of param properties
+// ParseParamComment parses params return []string of param properties
 // @Param	queryText		form	      string	  true		        "The email for login"
 // 			[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // @Param   some_id     path    int     true        "Some ID"
@@ -277,7 +277,7 @@ func defineType(schemaType string, value string) interface{} {
 	}
 }
 
-// ParseTagsComment parses comment for gived `tag` comment string.
+// ParseTagsComment parses comment for given `tag` comment string.
 func (operation *Operation) ParseTagsComment(commentLine string) {
 	tags := strings.Split(commentLine, ",")
 	for _, tag := range tags {
@@ -285,7 +285,7 @@ func (operation *Operation) ParseTagsComment(commentLine string) {
 	}
 }
 
-// ParseAcceptComment parses comment for gived `accept` comment string.
+// ParseAcceptComment parses comment for given `accept` comment string.
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
 	accepts := strings.Split(commentLine, ",")
 	for _, a := range accepts {
