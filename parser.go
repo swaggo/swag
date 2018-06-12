@@ -264,13 +264,13 @@ func isExistsScope(scope string) bool {
 	return strings.Index(scope, "@scope.") != -1
 }
 
-// GetSchemes parses swagger schemes for gived commentLine
+// GetSchemes parses swagger schemes for given commentLine
 func GetSchemes(commentLine string) []string {
 	attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
-// ParseRouterAPIInfo parses router api info for gived astFile
+// ParseRouterAPIInfo parses router api info for giv astFile
 func (parser *Parser) ParseRouterAPIInfo(astFile *ast.File) {
 	for _, astDescription := range astFile.Decls {
 		switch astDeclaration := astDescription.(type) {
@@ -312,7 +312,7 @@ func (parser *Parser) ParseRouterAPIInfo(astFile *ast.File) {
 	}
 }
 
-// ParseType parses type info for gived astFile
+// ParseType parses type info for given astFile.
 func (parser *Parser) ParseType(astFile *ast.File) {
 	if _, ok := parser.TypeDefinitions[astFile.Name.String()]; !ok {
 		parser.TypeDefinitions[astFile.Name.String()] = make(map[string]*ast.TypeSpec)
@@ -329,7 +329,7 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 	}
 }
 
-// ParseDefinitions parses Swagger Api definitions
+// ParseDefinitions parses Swagger Api definitions.
 func (parser *Parser) ParseDefinitions() {
 	for refTypeName, typeSpec := range parser.registerTypes {
 		ss := strings.Split(refTypeName, ".")
