@@ -178,13 +178,13 @@
         "web.APIError": {
             "type": "object",
             "properties": {
-                "CreatedAt": {
+                "createdAt": {
                     "type": "string"
                 },
-                "ErrorCode": {
+                "errorCode": {
                     "type": "integer"
                 },
-                "ErrorMessage": {
+                "errorMessage": {
                     "type": "string"
                 }
             }
