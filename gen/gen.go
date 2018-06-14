@@ -8,8 +8,8 @@ import (
 	"text/template"
 	"time"
 
-	"gopkg.in/yaml.v2"
 	"github.com/swaggo/swag"
+	"gopkg.in/yaml.v2"
 )
 
 // Gen presents a generate tool for swag.
