@@ -413,8 +413,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 
 	code, _ := strconv.Atoi(matches[1])
 
-	responseDescription := strings.Trim(matches[4], "\"")
-	responseDescription = strings.Replace(responseDescription, "\\n", "\n", -1)
+	responseDescription := strings.Replace(strings.Trim(matches[4], "\""), "\\n", "\n", -1)
 	if responseDescription == "" {
 		responseDescription = http.StatusText(code)
 	}
