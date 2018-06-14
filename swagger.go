@@ -5,21 +5,20 @@ import (
 	"sync"
 )
 
-// Name TODO: NEEDS COMMENT INFO
+// Name is a unique name be used to register swag instance.
 const Name = "swagger"
 
-//  TODO: NEEDS COMMENT INFO
 var (
 	swaggerMu sync.RWMutex
 	swag      Swagger
 )
 
-// Swagger TODO: NEEDS COMMENT INFO
+// Swagger is a interface to read swagger document.
 type Swagger interface {
 	ReadDoc() string
 }
 
-// Register TODO: NEEDS COMMENT INFO
+// Register registers swagger for given name.
 func Register(name string, swagger Swagger) {
 	swaggerMu.Lock()
 	defer swaggerMu.Unlock()
@@ -33,7 +32,7 @@ func Register(name string, swagger Swagger) {
 	swag = swagger
 }
 
-// ReadDoc TODO: NEEDS COMMENT INFO
+// ReadDoc reads swagger document.
 func ReadDoc() (string, error) {
 	if swag != nil {
 		return swag.ReadDoc(), nil
