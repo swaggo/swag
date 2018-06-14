@@ -100,7 +100,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 				case "@title":
 					parser.swagger.Info.Title = strings.TrimSpace(commentLine[len(attribute):])
 				case "@description":
-					parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Description = strings.Replace(strings.TrimSpace(commentLine[len(attribute):]), "\\n", "\n", -1)
 				case "@termsofservice":
 					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.name":

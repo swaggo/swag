@@ -8,7 +8,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/ghodss/yaml"
+	"gopkg.in/yaml.v2"
 	"github.com/swaggo/swag"
 )
 
@@ -42,7 +42,10 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 
 	swaggerYAML, _ := os.Create(path.Join(swaggerConfDir, "swagger.yaml"))
 	defer swaggerYAML.Close()
-	y, err := yaml.JSONToYAML(b)
+
+	jsonMap := make(map[string]interface{})
+	json.Unmarshal(b, &jsonMap)
+	y, err := yaml.Marshal(jsonMap)
 	if err != nil {
 		log.Fatalf("can't swagger json covert to yaml err: %s", err)
 	}

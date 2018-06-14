@@ -43,7 +43,7 @@ func (operation *Operation) ParseComment(comment string) error {
 	attribute := strings.Fields(commentLine)[0]
 	switch strings.ToLower(attribute) {
 	case "@description":
-		operation.Description = strings.TrimSpace(commentLine[len(attribute):])
+		operation.Description = strings.Replace(strings.TrimSpace(commentLine[len(attribute):]), "\\n", "\n", -1)
 	case "@summary":
 		operation.Summary = strings.TrimSpace(commentLine[len(attribute):])
 	case "@id":
@@ -414,6 +414,7 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	code, _ := strconv.Atoi(matches[1])
 
 	responseDescription := strings.Trim(matches[4], "\"")
+	responseDescription = strings.Replace(responseDescription, "\\n", "\n", -1)
 	if responseDescription == "" {
 		responseDescription = http.StatusText(code)
 	}
