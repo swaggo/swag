@@ -1,8 +1,10 @@
 package main
 
 import (
+	"log"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/swaggo/swag"
 	"github.com/swaggo/swag/gen"
 	"github.com/urfave/cli"
@@ -22,6 +24,12 @@ func main() {
 				mainAPIFile := c.String("generalInfo")
 				swaggerConfDir := c.String("swagger")
 				strategy := c.String("propertyStrategy")
+				switch strategy {
+				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
+				default:
+					return errors.Errorf("not supported %s propertyStrategy", strategy)
+				}
+
 				gen.New().Build(dir, mainAPIFile, swaggerConfDir, strategy)
 				return nil
 			},
@@ -43,11 +51,15 @@ func main() {
 				},
 				cli.StringFlag{
 					Name:  "propertyStrategy, p",
-					Value: "",
-					Usage: "Property Naming Strategy like snakecase",
+					Value: "camelcase",
+					Usage: "Property Naming Strategy like snakecase,camelcase,pascalcase",
 				},
 			},
 		},
 	}
-	app.Run(os.Args)
+
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

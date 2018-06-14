@@ -577,11 +577,14 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		arrayType:  prop.ArrayType,
 	}
 
-	if parser.PropNamingStrategy == "snakecase" {
-		// snakecase
+	switch parser.PropNamingStrategy {
+	case SnakeCase:
 		structField.name = toSnakeCase(structField.name)
-	} else if parser.PropNamingStrategy != "uppercamelcase" {
-		// default
+	case PascalCase:
+		//use struct field name
+	case CamelCase:
+		structField.name = toLowerCamelCase(structField.name)
+	default:
 		structField.name = toLowerCamelCase(structField.name)
 	}
 

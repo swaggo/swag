@@ -594,7 +594,7 @@ func TestParseSimpleApi(t *testing.T) {
 	searchDir := "testdata/simple"
 	mainAPIFile := "main.go"
 	p := New()
-	p.PropNamingStrategy = "uppercamelcase"
+	p.PropNamingStrategy = PascalCase
 	p.ParseAPI(searchDir, mainAPIFile)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -1061,7 +1061,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
 	searchDir := "testdata/simple2"
 	mainAPIFile := "main.go"
 	p := New()
-	p.PropNamingStrategy = "snakecase"
+	p.PropNamingStrategy = SnakeCase
 	p.ParseAPI(searchDir, mainAPIFile)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
