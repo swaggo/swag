@@ -19,6 +19,17 @@ import (
 	"github.com/go-openapi/spec"
 )
 
+const (
+	// CamelCase indicates using CamelCase strategy for struct field.
+	CamelCase = "camelcase"
+
+	// PascalCase indicates using PascalCase strategy for struct field.
+	PascalCase = "pascalcase"
+
+	// SnakeCase indicates using SnakeCase strategy for struct field.
+	SnakeCase = "snakecase"
+)
+
 // Parser implements a parser for Go source files.
 type Parser struct {
 	// swagger represents the root document object for the API specification
@@ -577,11 +588,14 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		arrayType:  prop.ArrayType,
 	}
 
-	if parser.PropNamingStrategy == "snakecase" {
-		// snakecase
+	switch parser.PropNamingStrategy {
+	case SnakeCase:
 		structField.name = toSnakeCase(structField.name)
-	} else if parser.PropNamingStrategy != "uppercamelcase" {
-		// default
+	case PascalCase:
+		//use struct field name
+	case CamelCase:
+		structField.name = toLowerCamelCase(structField.name)
+	default:
 		structField.name = toLowerCamelCase(structField.name)
 	}
 

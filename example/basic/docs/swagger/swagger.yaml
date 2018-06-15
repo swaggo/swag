@@ -2,11 +2,11 @@ basePath: /v2
 definitions:
   web.APIError:
     properties:
-      CreatedAt:
+      createdAt:
         type: string
-      ErrorCode:
+      errorCode:
         type: integer
-      ErrorMessage:
+      errorMessage:
         type: string
     type: object
   web.Pet:
