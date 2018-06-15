@@ -448,6 +448,15 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 	properties = map[string]spec.Schema{}
 	// name, schemaType, arrayType, formatType, exampleValue :=
 	structField := parser.parseField(field)
+
+	if strings.Contains(structField.arrayType, "&{") {
+		structField.arrayType = strings.Replace(structField.arrayType, "&{", "", -1)
+		structField.arrayType = strings.Replace(structField.arrayType, "}", "", -1)
+		temp := strings.Split(structField.arrayType, " ")
+		pkgName = temp[0]
+		structField.arrayType = temp[1]
+	}
+
 	if structField.name == "" {
 		return
 	}
