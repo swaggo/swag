@@ -20,69 +20,52 @@
 
 <p align="center">gopher image source is <a href="https://github.com/tenntenn/gopher-stickers">tenntenn/gopher-stickers.</a> It has licenses <a href="http://creativecommons.org/licenses/by/3.0/deed.en">creative commons licensing.</a></p>
 
-## What is swag?
-swag converts Go annotations to Swagger Documentation 2.0. And provides a variety of builtin [web framework](#supported-web-framework) lib. Let you can quickly integrated in existing golang project(using Swagger UI) .
+## Summary
+Swag converts Go annotations to Swagger Documentation 2.0. We've created a variety of plugins for popular [Go web frameworks](#supported-web-frameworks). This allows you to quickly integrate with an existing Go project (using Swagger UI).
 
-## Status of implementations
+## Documentation
 
-[Swagger 2.0 document](https://swagger.io/docs/specification/2-0/basic-structure/)
-
-- [x] Basic Structure
-- [x] API Host and Base Path
-- [x] Paths and Operations
-- [x] Describing Parameters
-- [x] Describing Request Body
-- [x] Describing Responses
-- [x] MIME Types
-- [x] Authentication
-  - [x] Basic Authentication
-  - [x] API Keys
-- [x] Adding Examples
-- [x] File Upload
-- [x] Enums
-- [x] Grouping Operations With Tags
-- [ ] Swagger Extensions
-
-## Document
-
-- [web](https://swaggo.github.io/swaggo.io/)
-
-## Example
-
-[swaggo + gin](https://github.com/swaggo/swag/tree/master/example)
+For a comprehensive explanation of what swag can do, check out the [swag documentation](https://swaggo.github.io/swaggo.io/).
 
 ## Getting started
 
-1. Add comments to your API source code, [See Declarative Comments Format](https://swaggo.github.io/swaggo.io/declarative_comments_format/)
+1. Add comments to your API source code, [See Declarative Comments Format](https://swaggo.github.io/swaggo.io/declarative_comments_format/).
 
 2. Download swag by using:
 ```sh
 $ go get -u github.com/swaggo/swag/cmd/swag
 ```
-3. Run the [swag](#generate-swagger-20-docs) in project root folder which contains `main.go` file, The [swag](#generate-swagger-20-docs) will parse your comments and generate required files(`docs` folder and `docs/doc.go`).
+
+3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
 ```sh
 $ swag init
 ```
 
+4. In order to serve these files, you can utilize one of our supported plugins. For go's core library, check out [net/http](https://github.com/swaggo/http-swagger).
+
+  * Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed.
+  * If your General API annotation do not live in `main.go`, you can let swag know with `-g`.
+  ```sh
+  swag init -g http/api.go
+  ```
+
+## <a name="supported-web-frameworks"></a> Supported Web Frameworks
+
+- [gin](http://github.com/swaggo/gin-swagger)
+- [echo](http://github.com/swaggo/echo-swagger)
+- [net/http](https://github.com/swaggo/http-swagger)
+
 ## How to use it with `gin`?
 
-This example source [here.](https://github.com/swaggo/swag/tree/master/example/celler)
+Find the example source code [here](https://github.com/swaggo/swag/tree/master/example/celler).
 
-1.After using [swag](#generate-swagger-20-docs) to generate Swagger 2.0 docs. Import following packages:
-
+1. After using `swag init` to generate Swagger 2.0 docs, import the following packages:
 ```go
 import "github.com/swaggo/gin-swagger" // gin-swagger middleware
 import "github.com/swaggo/gin-swagger/swaggerFiles" // swagger embed files
 ```
 
-***Supported Web Framework in generate swagger middleware***
-
-- [gin](http://github.com/swaggo/gin-swagger)
-- [echo](http://github.com/swaggo/echo-swagger)
-- [net/http](https://github.com/swaggo/http-swagger)
-- revel
-
-2.Added [General API Info](https://swaggo.github.io/swaggo.io/declarative_comments_format/api_operation.html) annotations in `main.go` code:
+2. Add [General API](https://swaggo.github.io/swaggo.io/declarative_comments_format/api_operation.html) annotations in `main.go` code:
 
 ```go
 // @title Swagger Example API
@@ -152,7 +135,7 @@ func main() {
 
 ```
 
-3.Added [API Operation](https://swaggo.github.io/swaggo.io/declarative_comments_format/general_api_info.html) annotations in `controller` code
+3. Add [API Operation](https://swaggo.github.io/swaggo.io/declarative_comments_format/general_api_info.html) annotations in `controller` code
 
 ``` go
 package controller
@@ -218,10 +201,33 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 //...
 ```
 
-4.Run it, and browser to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as bellow:
+4.Run it, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
 
 ![swagger_index.html](https://user-images.githubusercontent.com/8943871/31943004-dd08a10e-b88c-11e7-9e77-19d2c759a586.png)
 
-## About the Project
-This project was inspired by [swagger](https://github.com/yvasiyarov/swagger) but simplified the usage of complexity and support a variety of [web framework]((#supported-web-framework)).
+## Examples
 
+[swaggo + gin](https://github.com/swaggo/swag/tree/master/example)
+
+## Implementation Status
+
+[Swagger 2.0 document](https://swagger.io/docs/specification/2-0/basic-structure/)
+
+- [x] Basic Structure
+- [x] API Host and Base Path
+- [x] Paths and Operations
+- [x] Describing Parameters
+- [x] Describing Request Body
+- [x] Describing Responses
+- [x] MIME Types
+- [x] Authentication
+  - [x] Basic Authentication
+  - [x] API Keys
+- [x] Adding Examples
+- [x] File Upload
+- [x] Enums
+- [x] Grouping Operations With Tags
+- [ ] Swagger Extensions
+
+## About the Project
+This project was inspired by [swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks).
