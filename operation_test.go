@@ -222,13 +222,26 @@ func TestParseEmptyResponseComment(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseEmptyResponseOnlyCode(t *testing.T) {
+	comment := `@Success 200`
+	operation := NewOperation()
+	operation.ParseComment(comment)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {}
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseResponseCommentParamMissing(t *testing.T) {
 	operation := NewOperation()
 
 	paramLenErrComment := `@Success notIntCode {string}`
 	paramLenErr := operation.ParseComment(paramLenErrComment)
-	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode {string}"
-can not parse empty response comment "notIntCode {string}"`)
+	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode {string}"`)
 }
 
 // Test ParseParamComment

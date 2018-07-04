@@ -64,14 +64,10 @@ func (operation *Operation) ParseComment(comment string) error {
 		}
 	case "@success", "@failure":
 		if err := operation.ParseResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
-
-			if errWhenEmpty := operation.ParseEmptyResponseComment(strings.TrimSpace(commentLine[len(attribute):])); errWhenEmpty != nil {
-				var errs []string
-				errs = append(errs, err.Error())
-				errs = append(errs, errWhenEmpty.Error())
-
-				return fmt.Errorf(strings.Join(errs, "\n"))
-
+			if err := operation.ParseEmptyResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+				if err := operation.ParseEmptyResponseOnly(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -470,13 +466,13 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	return nil
 }
 
-// ParseEmptyResponseComment TODO: NEEDS COMMENT INFO
+// ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok"
 func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
 	re := regexp.MustCompile(`([\d]+)[\s]+"(.*)"`)
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
-		return fmt.Errorf("can not parse empty response comment \"%s\"", commentLine)
+		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
 	response := spec.Response{}
@@ -485,6 +481,27 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 
 	response.Description = strings.Trim(matches[2], "")
 
+	if operation.Responses == nil {
+		operation.Responses = &spec.Responses{
+			ResponsesProps: spec.ResponsesProps{
+				StatusCodeResponses: make(map[int]spec.Response),
+			},
+		}
+	}
+
+	operation.Responses.StatusCodeResponses[code] = response
+
+	return nil
+}
+
+//ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200
+func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
+	response := spec.Response{}
+
+	code, err := strconv.Atoi(commentLine)
+	if err != nil {
+		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+	}
 	if operation.Responses == nil {
 		operation.Responses = &spec.Responses{
 			ResponsesProps: spec.ResponsesProps{
