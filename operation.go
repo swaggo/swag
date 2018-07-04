@@ -472,7 +472,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
-		return  fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
 	response := spec.Response{}
@@ -499,7 +499,7 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 	response := spec.Response{}
 
 	code, err := strconv.Atoi(commentLine)
-	if err!=nil{
+	if err != nil {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 	if operation.Responses == nil {
