@@ -50,11 +50,13 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 	swaggerYAML.Write(y)
 
 	packageTemplate.Execute(docs, struct {
-		Timestamp time.Time
-		Doc       string
+		Timestamp   time.Time
+		Doc         string
+		SwaggerJSON string
 	}{
-		Timestamp: time.Now(),
-		Doc:       "`" + string(b) + "`",
+		Timestamp:   time.Now(),
+		Doc:         "`" + string(b) + "`",
+		SwaggerJSON: path.Join(swaggerConfDir, "swagger.json"),
 	})
 
 	log.Printf("create docs.go at  %+v", docs.Name())
@@ -69,6 +71,8 @@ package docs
 
 import (
 	"github.com/swaggo/swag"
+	"os"
+	"io/ioutil"
 )
 
 var doc = {{.Doc}}
@@ -76,7 +80,17 @@ var doc = {{.Doc}}
 type s struct{}
 
 func (s *s) ReadDoc() string {
-	return doc
+	file, err := os.Open("{{.SwaggerJSON}}")
+	if err != nil {
+		return doc
+	}
+	defer file.Close()
+
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		return doc
+	}
+	return string(content)
 }
 func init() {
 	swag.Register(swag.Name, &s{})
