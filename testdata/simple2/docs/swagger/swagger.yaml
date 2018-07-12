@@ -42,6 +42,8 @@ definitions:
                 items:
                   type: string
                 type: array
+            required:
+            - name
             type: object
         type: object
       data:
@@ -84,6 +86,8 @@ definitions:
         type: array
       uuid:
         type: string
+    required:
+    - price
     type: object
   web.Pet2:
     properties:

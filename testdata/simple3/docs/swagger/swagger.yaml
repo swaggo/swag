@@ -19,7 +19,7 @@ definitions:
           name:
             example: category_name
             type: string
-          photoUrls:
+          photoURLs:
             example:
             - http://test/image/1.jpg
             - http://test/image/2.jpg
@@ -27,7 +27,7 @@ definitions:
             items:
               type: string
             type: array
-          small_category:
+          smallCategory:
             properties:
               id:
                 example: 1
@@ -35,7 +35,7 @@ definitions:
               name:
                 example: detail_category_name
                 type: string
-              photoUrls:
+              photoURLs:
                 example:
                 - http://test/image/1.jpg
                 - http://test/image/2.jpg
@@ -66,7 +66,7 @@ definitions:
         items:
           $ref: '#/definitions/web.Pet2'
         type: array
-      photoUrls:
+      photoURLs:
         example:
         - http://test/image/1.jpg
         - http://test/image/2.jpg

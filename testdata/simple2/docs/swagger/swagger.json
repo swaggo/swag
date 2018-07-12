@@ -247,6 +247,9 @@
         },
         "web.Pet": {
             "type": "object",
+            "required": [
+                "price"
+            ],
             "properties": {
                 "category": {
                     "type": "object",
@@ -272,6 +275,9 @@
                         },
                         "small_category": {
                             "type": "object",
+                            "required": [
+                                "name"
+                            ],
                             "properties": {
                                 "id": {
                                     "type": "integer",
