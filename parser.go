@@ -441,12 +441,12 @@ type structField struct {
 	arrayType    string
 	formatType   string
 	isRequired   bool
+	crossPkg     string
 	exampleValue interface{}
 }
 
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
 	properties = map[string]spec.Schema{}
-	// name, schemaType, arrayType, formatType, exampleValue :=
 	structField := parser.parseField(field)
 	if structField.name == "" {
 		return
@@ -455,8 +455,11 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 	if field.Doc != nil {
 		desc = field.Doc.Text()
 	}
-
 	// TODO: find package of schemaType and/or arrayType
+
+	if structField.crossPkg != "" {
+		pkgName = structField.crossPkg
+	}
 	if _, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
 		parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.schemaType], structField.schemaType)
@@ -543,6 +546,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 					props[k] = v
 				}
 			}
+
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
@@ -576,7 +580,7 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, prop
 }
 
 func (parser *Parser) parseField(field *ast.Field) *structField {
-	prop := getPropertyName(field)
+	prop := getPropertyName(field, parser)
 	if len(prop.ArrayType) == 0 {
 		CheckSchemaType(prop.SchemaType)
 	} else {
@@ -586,6 +590,7 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		name:       field.Names[0].Name,
 		schemaType: prop.SchemaType,
 		arrayType:  prop.ArrayType,
+		crossPkg:   prop.CrossPkg,
 	}
 
 	switch parser.PropNamingStrategy {

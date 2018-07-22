@@ -367,6 +367,20 @@ func TestParseSimpleApi(t *testing.T) {
         }
     },
     "definitions": {
+        "cross.Cross": {
+            "type": "object",
+            "properties": {
+                "Array": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "String": {
+                    "type": "string"
+                }
+            }
+        },
         "web.APIError": {
             "type": "object",
             "properties": {
@@ -521,6 +535,16 @@ func TestParseSimpleApi(t *testing.T) {
                 },
                 "Status": {
                     "type": "boolean"
+                },
+                "cross": {
+                    "type": "object",
+                    "$ref": "#/definitions/cross.Cross"
+                },
+                "crosses": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/cross.Cross"
+                    }
                 }
             }
         },
