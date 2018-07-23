@@ -5,6 +5,7 @@ import (
 
 	"github.com/satori/go.uuid"
 	"github.com/shopspring/decimal"
+	"github.com/swaggo/swag/testdata/simple/cross"
 )
 
 type Pet struct {
@@ -57,7 +58,9 @@ type RevValueBase struct {
 	Err int32 `json:"Err,omitempty"`
 }
 type RevValue struct {
-	RevValueBase
+	RevValueBase `json:"rev_value_base"`
 
-	Data int `json:"Data"`
+	Data    int           `json:"Data"`
+	Cross   cross.Cross   `json:"cross"`
+	Crosses []cross.Cross `json:"crosses"`
 }
