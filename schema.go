@@ -9,7 +9,7 @@ func CheckSchemaType(typeName string) {
 	}
 }
 
-// IsPrimitiveType
+// IsPrimitiveType determine whether the type name is a primitive type
 func IsPrimitiveType(typeName string) bool {
 	switch typeName {
 	case "string", "number", "integer", "boolean", "array", "object":
