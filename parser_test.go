@@ -188,6 +188,15 @@ func TestParseSimpleApi(t *testing.T) {
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {

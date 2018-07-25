@@ -50,6 +50,7 @@ func GetStructArrayByString(c *gin.Context) {
 // @Param   file formData file true  "this is a test file"
 // @Success 200 {string} string "ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
+// @Failure 401 {array} string
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /file/upload [post]
 func Upload(ctx *gin.Context) {

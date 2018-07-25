@@ -443,14 +443,24 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 	}
 
 	if schemaType == "array" {
-		response.Schema.Items = &spec.SchemaOrArray{
-			Schema: &spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)},
+		refType = TransToValidSchemeType(refType)
+		if IsPrimitiveType(refType) {
+			response.Schema.Items = &spec.SchemaOrArray{
+				Schema: &spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Type: spec.StringOrArray{refType},
+					},
 				},
-			},
+			}
+		} else {
+			response.Schema.Items = &spec.SchemaOrArray{
+				Schema: &spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)},
+					},
+				},
+			}
 		}
-
 	}
 
 	if operation.Responses == nil {

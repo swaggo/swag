@@ -4,11 +4,18 @@ import "fmt"
 
 // CheckSchemaType TODO: NEEDS COMMENT INFO
 func CheckSchemaType(typeName string) {
+	if !IsPrimitiveType(typeName) {
+		panic(fmt.Errorf("%s is not basic types", typeName))
+	}
+}
+
+// IsPrimitiveType determine whether the type name is a primitive type
+func IsPrimitiveType(typeName string) bool {
 	switch typeName {
 	case "string", "number", "integer", "boolean", "array", "object":
-
+		return true
 	default:
-		panic(fmt.Errorf("%s is not basic types", typeName))
+		return false
 	}
 }
 
