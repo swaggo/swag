@@ -1,10 +1,14 @@
 package swag
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"strings"
 )
+
+// ErrFailedConvertPrimitiveType Failed to convert for swag to interpretable type
+var ErrFailedConvertPrimitiveType = errors.New("swag property: failed convert primitive type")
 
 type propertyName struct {
 	SchemaType string
@@ -12,65 +16,44 @@ type propertyName struct {
 	CrossPkg   string
 }
 
-func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parser) propertyName {
-	// TODO: In the future, add functions and make them solve for each user
-	// Support for time.Time as a structure field
-	if "Time" == astTypeSelectorExpr.Sel.Name {
-		return propertyName{SchemaType: "string", ArrayType: "string"}
-	}
+type propertyNewFunc func(schemeType string, crossPkg string) propertyName
 
-	// Support bson.ObjectId type
-	if "ObjectId" == astTypeSelectorExpr.Sel.Name {
-		return propertyName{SchemaType: "string", ArrayType: "string"}
+func newArrayProperty(schemeType string, crossPkg string) propertyName {
+	return propertyName{
+		SchemaType: "array",
+		ArrayType:  schemeType,
+		CrossPkg:   crossPkg,
 	}
-
-	// Supprt UUID
-	if "UUID" == strings.ToUpper(astTypeSelectorExpr.Sel.Name) {
-		return propertyName{SchemaType: "string", ArrayType: "string"}
-	}
-
-	// Supprt shopspring/decimal
-	if "Decimal" == astTypeSelectorExpr.Sel.Name {
-		return propertyName{SchemaType: "number", ArrayType: "string"}
-	}
-
-	if pkgName, ok := astTypeSelectorExpr.X.(*ast.Ident); ok {
-		if typeDefinitions, ok := parser.TypeDefinitions[pkgName.Name][astTypeSelectorExpr.Sel.Name]; ok {
-			parser.ParseDefinition(pkgName.Name, typeDefinitions, astTypeSelectorExpr.Sel.Name)
-			return propertyName{SchemaType: astTypeSelectorExpr.Sel.Name, ArrayType: "object", CrossPkg: pkgName.Name}
-		}
-	}
-
-	fmt.Printf("%s is not supported. but it will be set with string temporary. Please report any problems.", astTypeSelectorExpr.Sel.Name)
-	return propertyName{SchemaType: "string", ArrayType: "string"}
 }
 
-func parseFieldArraySelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parser) propertyName {
-	// TODO: In the future, add functions and make them solve for each user
-	// Support for time.Time as a structure field
-	if "Time" == astTypeSelectorExpr.Sel.Name {
-		return propertyName{SchemaType: "array", ArrayType: "string"}
+func newProperty(schemeType string, crossPkg string) propertyName {
+	return propertyName{
+		SchemaType: schemeType,
+		ArrayType:  "string",
+		CrossPkg:   crossPkg,
 	}
+}
 
-	// Support bson.ObjectId type
-	if "ObjectId" == astTypeSelectorExpr.Sel.Name {
-		return propertyName{SchemaType: "array", ArrayType: "string"}
+func convertFromSpecificToPrimitive(typeName string) (string, error) {
+	typeName = strings.ToUpper(typeName)
+	switch typeName {
+	case "TIME", "OBJECTID", "UUID":
+		return "string", nil
+	case "DECIMAL":
+		return "number", nil
 	}
+	return "", ErrFailedConvertPrimitiveType
+}
 
-	// Supprt UUID
-	if "UUID" == strings.ToUpper(astTypeSelectorExpr.Sel.Name) {
-		return propertyName{SchemaType: "array", ArrayType: "string"}
-	}
-
-	// Supprt shopspring/decimal
-	if "Decimal" == astTypeSelectorExpr.Sel.Name {
-		return propertyName{SchemaType: "array", ArrayType: "number"}
+func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parser, propertyNewFunc propertyNewFunc) propertyName {
+	if primitiveType, err := convertFromSpecificToPrimitive(astTypeSelectorExpr.Sel.Name); err == nil {
+		return propertyNewFunc(primitiveType, "")
 	}
 
 	if pkgName, ok := astTypeSelectorExpr.X.(*ast.Ident); ok {
 		if typeDefinitions, ok := parser.TypeDefinitions[pkgName.Name][astTypeSelectorExpr.Sel.Name]; ok {
 			parser.ParseDefinition(pkgName.Name, typeDefinitions, astTypeSelectorExpr.Sel.Name)
-			return propertyName{SchemaType: "array", ArrayType: astTypeSelectorExpr.Sel.Name, CrossPkg: pkgName.Name}
+			return propertyNewFunc(astTypeSelectorExpr.Sel.Name, pkgName.Name)
 		}
 	}
 
@@ -82,7 +65,7 @@ func parseFieldArraySelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *
 // allowedValues: array, boolean, integer, null, number, object, string
 func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 	if astTypeSelectorExpr, ok := field.Type.(*ast.SelectorExpr); ok {
-		return parseFieldSelectorExpr(astTypeSelectorExpr, parser)
+		return parseFieldSelectorExpr(astTypeSelectorExpr, parser, newProperty)
 	}
 	if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
 		name := astTypeIdent.Name
@@ -91,7 +74,7 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 	}
 	if ptr, ok := field.Type.(*ast.StarExpr); ok {
 		if astTypeSelectorExpr, ok := ptr.X.(*ast.SelectorExpr); ok {
-			return parseFieldSelectorExpr(astTypeSelectorExpr, parser)
+			return parseFieldSelectorExpr(astTypeSelectorExpr, parser, newProperty)
 		}
 		if astTypeIdent, ok := ptr.X.(*ast.Ident); ok {
 			name := astTypeIdent.Name
@@ -100,7 +83,7 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 		}
 		if astTypeArray, ok := ptr.X.(*ast.ArrayType); ok { // if array
 			if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.SelectorExpr); ok {
-				return parseFieldArraySelectorExpr(astTypeArrayExpr, parser)
+				return parseFieldSelectorExpr(astTypeArrayExpr, parser, newArrayProperty)
 			}
 			if astTypeArrayIdent := astTypeArray.Elt.(*ast.Ident); ok {
 				name := astTypeArrayIdent.Name
@@ -110,7 +93,7 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 	}
 	if astTypeArray, ok := field.Type.(*ast.ArrayType); ok { // if array
 		if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.SelectorExpr); ok {
-			return parseFieldArraySelectorExpr(astTypeArrayExpr, parser)
+			return parseFieldSelectorExpr(astTypeArrayExpr, parser, newArrayProperty)
 		}
 		if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.StarExpr); ok {
 			if astTypeArrayIdent := astTypeArrayExpr.X.(*ast.Ident); ok {
