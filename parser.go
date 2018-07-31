@@ -290,7 +290,7 @@ func (parser *Parser) ParseRouterAPIInfo(astFile *ast.File) {
 				operation := NewOperation() //for per 'function' comment, create a new 'Operation' object
 				operation.parser = parser
 				for _, comment := range astDeclaration.Doc.List {
-					if err := operation.ParseComment(comment.Text); err != nil {
+					if err := operation.ParseComment(comment.Text, astFile); err != nil {
 						log.Panicf("ParseComment panic:%+v", err)
 					}
 				}
