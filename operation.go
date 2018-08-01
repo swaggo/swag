@@ -2,14 +2,20 @@ package swag
 
 import (
 	"fmt"
+	"go/ast"
+	goparser "go/parser"
+	"go/token"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
+	"github.com/pkg/errors"
+	"golang.org/x/tools/go/loader"
 )
 
 // Operation describes a single API operation on a path.
@@ -34,38 +40,39 @@ func NewOperation() *Operation {
 }
 
 // ParseComment parses comment for given comment string and returns error if error occurs.
-func (operation *Operation) ParseComment(comment string) error {
+func (operation *Operation) ParseComment(comment string, astFile *ast.File) error {
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "//"))
 	if len(commentLine) == 0 {
 		return nil
 	}
 
 	attribute := strings.Fields(commentLine)[0]
+	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
 	switch strings.ToLower(attribute) {
 	case "@description":
-		operation.Description = strings.TrimSpace(commentLine[len(attribute):])
+		operation.Description = lineRemainder
 	case "@summary":
-		operation.Summary = strings.TrimSpace(commentLine[len(attribute):])
+		operation.Summary = lineRemainder
 	case "@id":
-		operation.ID = strings.TrimSpace(commentLine[len(attribute):])
+		operation.ID = lineRemainder
 	case "@tags":
-		operation.ParseTagsComment(strings.TrimSpace(commentLine[len(attribute):]))
+		operation.ParseTagsComment(lineRemainder)
 	case "@accept":
-		if err := operation.ParseAcceptComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+		if err := operation.ParseAcceptComment(lineRemainder); err != nil {
 			return err
 		}
 	case "@produce":
-		if err := operation.ParseProduceComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+		if err := operation.ParseProduceComment(lineRemainder); err != nil {
 			return err
 		}
 	case "@param":
-		if err := operation.ParseParamComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+		if err := operation.ParseParamComment(lineRemainder, astFile); err != nil {
 			return err
 		}
 	case "@success", "@failure":
-		if err := operation.ParseResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
-			if err := operation.ParseEmptyResponseComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
-				if err := operation.ParseEmptyResponseOnly(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+		if err := operation.ParseResponseComment(lineRemainder, astFile); err != nil {
+			if err := operation.ParseEmptyResponseComment(lineRemainder); err != nil {
+				if err := operation.ParseEmptyResponseOnly(lineRemainder); err != nil {
 					return err
 				}
 			}
@@ -87,7 +94,7 @@ func (operation *Operation) ParseComment(comment string) error {
 // @Param	queryText		form	      string	  true		        "The email for login"
 // 			[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // @Param   some_id     path    int     true        "Some ID"
-func (operation *Operation) ParseParamComment(commentLine string) error {
+func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
 	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
 	matches := re.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
@@ -118,7 +125,31 @@ func (operation *Operation) ParseParamComment(commentLine string) error {
 			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 				operation.parser.registerTypes[schemaType] = typeSpec
 			} else {
-				return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
+				var typeSpec *ast.TypeSpec
+				if astFile != nil {
+					for _, imp := range astFile.Imports {
+						if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
+							break
+						}
+						impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
+						if strings.HasSuffix(impPath, "/"+pkgName) {
+							var err error
+							typeSpec, err = findTypeDef(impPath, typeName)
+							if err != nil {
+								return errors.Wrapf(err, "can not find ref type: %q", schemaType)
+							}
+							break
+						}
+					}
+				}
+
+				if typeSpec == nil {
+					return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
+				}
+
+				operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
+				operation.parser.registerTypes[schemaType] = typeSpec
+
 			}
 			param.Schema.Ref = spec.Ref{
 				Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
@@ -396,8 +427,48 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 	return nil
 }
 
+// findTypeDef attempts to find the *ast.TypeSpec for a specific type given the
+// type's name and the package's import path
+func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	conf := loader.Config{
+		ParserMode: goparser.SpuriousErrors,
+		Cwd:        cwd,
+	}
+	conf.Import(importPath)
+	lprog, err := conf.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	pkgInfo := lprog.Package(importPath)
+	if pkgInfo == nil {
+		return nil, errors.New("package was nil")
+	}
+
+	// TODO: possibly cash pkgInfo since it's an expensive operation
+
+	for i := range pkgInfo.Files {
+		for _, astDeclaration := range pkgInfo.Files[i].Decls {
+			if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
+				for _, astSpec := range generalDeclaration.Specs {
+					if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
+						if typeSpec.Name.String() == typeName {
+							return typeSpec, nil
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil, errors.New("type spec not found")
+}
+
 // ParseResponseComment parses comment for gived `response` comment string.
-func (operation *Operation) ParseResponseComment(commentLine string) error {
+func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
 	re := regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)
 	var matches []string
 
@@ -426,7 +497,34 @@ func (operation *Operation) ParseResponseComment(commentLine string) error {
 			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 				operation.parser.registerTypes[refType] = typeSpec
 			} else {
-				return fmt.Errorf("can not find ref type:\"%s\"", refType)
+				var typeSpec *ast.TypeSpec
+				if astFile != nil {
+					for _, imp := range astFile.Imports {
+						if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
+							break
+						}
+						impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
+						if strings.HasSuffix(impPath, "/"+pkgName) {
+							var err error
+							typeSpec, err = findTypeDef(impPath, typeName)
+							if err != nil {
+								return errors.Wrapf(err, "can not find ref type: %q", refType)
+							}
+							break
+						}
+					}
+				}
+
+				if typeSpec == nil {
+					return fmt.Errorf("can not find ref type: %q", refType)
+				}
+
+				if _, ok := operation.parser.TypeDefinitions[pkgName]; !ok {
+					operation.parser.TypeDefinitions[pkgName] = make(map[string]*ast.TypeSpec)
+
+				}
+				operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
+				operation.parser.registerTypes[refType] = typeSpec
 			}
 
 		}
