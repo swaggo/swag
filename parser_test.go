@@ -1624,7 +1624,7 @@ func TestParseStructComment(t *testing.T) {
                     "type": "string"
                 },
                 "error": {
-                    "description": "Error an Api error\n",
+                    "description": "Error an Api error",
                     "type": "string"
                 }
             }
@@ -1633,11 +1633,11 @@ func TestParseStructComment(t *testing.T) {
             "type": "object",
             "properties": {
                 "data": {
-                    "description": "Post data\n",
+                    "description": "Post data",
                     "type": "object",
                     "properties": {
                         "name": {
-                            "description": "Post tag\n",
+                            "description": "Post tag",
                             "type": "array",
                             "items": {
                                 "type": "string"
@@ -1651,7 +1651,7 @@ func TestParseStructComment(t *testing.T) {
                     "example": 1
                 },
                 "name": {
-                    "description": "Post name\n",
+                    "description": "Post name",
                     "type": "string",
                     "example": "poti"
                 }
