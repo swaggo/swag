@@ -434,22 +434,36 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	conf := loader.Config{
 		ParserMode: goparser.SpuriousErrors,
 		Cwd:        cwd,
 	}
+
 	conf.Import(importPath)
+
 	lprog, err := conf.Load()
 	if err != nil {
 		return nil, err
 	}
 
+	// If the pkg is vendored, the actual pkg path is going to resemble
+	// something like "{importPath}/vendor/{importPath}"
+	for k := range lprog.AllPackages {
+		realPkgPath := k.Path()
+
+		if strings.Contains(realPkgPath, "vendor/"+importPath) {
+			importPath = realPkgPath
+		}
+	}
+
 	pkgInfo := lprog.Package(importPath)
+
 	if pkgInfo == nil {
 		return nil, errors.New("package was nil")
 	}
 
-	// TODO: possibly cash pkgInfo since it's an expensive operation
+	// TODO: possibly cache pkgInfo since it's an expensive operation
 
 	for i := range pkgInfo.Files {
 		for _, astDeclaration := range pkgInfo.Files[i].Decls {
@@ -494,6 +508,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		if len(refSplit) == 2 {
 			pkgName := refSplit[0]
 			typeName := refSplit[1]
+
 			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 				operation.parser.registerTypes[refType] = typeSpec
 			} else {
@@ -504,8 +519,10 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 							break
 						}
 						impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
+
 						if strings.HasSuffix(impPath, "/"+pkgName) {
 							var err error
+
 							typeSpec, err = findTypeDef(impPath, typeName)
 							if err != nil {
 								return errors.Wrapf(err, "can not find ref type: %q", refType)

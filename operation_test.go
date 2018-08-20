@@ -597,6 +597,24 @@ func TestParseIdComment(t *testing.T) {
 	assert.Equal(t, "myOperationId", operation.ID)
 }
 
+func TestFindTypeDefCoreLib(t *testing.T) {
+	spec, err := findTypeDef("net/http", "Request")
+	assert.NoError(t, err)
+	assert.NotNil(t, spec)
+}
+
+func TestFindTypeDefExternalPkg(t *testing.T) {
+	spec, err := findTypeDef("github.com/stretchr/testify/assert", "Assertions")
+	assert.NoError(t, err)
+	assert.NotNil(t, spec)
+}
+
+func TestFindTypeDefInvalidPkg(t *testing.T) {
+	spec, err := findTypeDef("does-not-exist", "foo")
+	assert.Error(t, err)
+	assert.Nil(t, spec)
+}
+
 func TestParseSecurityComment(t *testing.T) {
 	comment := `@Security OAuth2Implicit[read, write]`
 	operation := NewOperation()
