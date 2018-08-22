@@ -50,7 +50,10 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
 	switch strings.ToLower(attribute) {
 	case "@description":
-		operation.Description = lineRemainder
+		if operation.Description != "" {
+			operation.Description += "\n"
+		}
+		operation.Description += lineRemainder
 	case "@summary":
 		operation.Summary = lineRemainder
 	case "@id":
@@ -203,7 +206,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 				if schemaType != "integer" && schemaType != "number" {
 					log.Panicf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
-				attr = strings.TrimSpace(attr[l+1 : r])
+				attr = strings.TrimSpace(attr[l+1: r])
 				n, err := strconv.ParseFloat(attr, 64)
 				if err != nil {
 					log.Panicf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
@@ -218,7 +221,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 				if schemaType != "integer" && schemaType != "number" {
 					log.Panicf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
-				attr = strings.TrimSpace(attr[l+1 : r])
+				attr = strings.TrimSpace(attr[l+1: r])
 				n, err := strconv.ParseFloat(attr, 64)
 				if err != nil {
 					log.Panicf("mininum is allow only a number got=%s", attr)
@@ -230,7 +233,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			l := strings.Index(attr, "(")
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
-				attr = strings.TrimSpace(attr[l+1 : r])
+				attr = strings.TrimSpace(attr[l+1: r])
 				param.Default = defineType(schemaType, attr)
 			}
 		case "maxlength":
@@ -241,7 +244,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 				if schemaType != "string" {
 					log.Panicf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
-				attr = strings.TrimSpace(attr[l+1 : r])
+				attr = strings.TrimSpace(attr[l+1: r])
 				n, err := strconv.ParseInt(attr, 10, 64)
 				if err != nil {
 					log.Panicf("maxlength is allow only a number got=%s", attr)
@@ -256,7 +259,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 				if schemaType != "string" {
 					log.Panicf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
-				attr = strings.TrimSpace(attr[l+1 : r])
+				attr = strings.TrimSpace(attr[l+1: r])
 				n, err := strconv.ParseInt(attr, 10, 64)
 				if err != nil {
 					log.Panicf("minlength is allow only a number got=%s", attr)
@@ -268,7 +271,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			l := strings.Index(attr, "(")
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
-				param.Format = strings.TrimSpace(attr[l+1 : r])
+				param.Format = strings.TrimSpace(attr[l+1: r])
 			}
 		}
 	}
@@ -408,7 +411,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 	r := strings.Index(securitySource, "]")
 	// exists scope
 	if !(l == -1 && r == -1) {
-		scopes := securitySource[l+1 : r]
+		scopes := securitySource[l+1: r]
 		s := []string{}
 		for _, scope := range strings.Split(scopes, ",") {
 			scope = strings.TrimSpace(scope)
