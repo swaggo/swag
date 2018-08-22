@@ -146,7 +146,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				if typeSpec == nil {
 					return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
 				}
-
+				if _, ok := operation.parser.TypeDefinitions[pkgName]; !ok {
+					operation.parser.TypeDefinitions[pkgName] = make(map[string]*ast.TypeSpec)
+				}
 				operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
 				operation.parser.registerTypes[schemaType] = typeSpec
 
