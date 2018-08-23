@@ -10,6 +10,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/swaggo/swag"
+	"strings"
 )
 
 // Gen presents a generate tool for swag.
@@ -54,7 +55,7 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 		Doc       string
 	}{
 		Timestamp: time.Now(),
-		Doc:       "`" + string(b) + "`",
+		Doc:       "`" + strings.Replace(string(b), "`", "` + \"`\" + `", -1) + "`",
 	})
 
 	log.Printf("create docs.go at  %+v", docs.Name())
