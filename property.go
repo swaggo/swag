@@ -68,10 +68,10 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 		return parseFieldSelectorExpr(astTypeSelectorExpr, parser, newProperty)
 	}
 
-	// check if it is a custom primitive type
+	// check if it is a custom type
 	typeName := fmt.Sprintf("%v", field.Type)
-	if customType, isCustomType := parser.CustomPrimitiveTypes[typeName]; isCustomType {
-		return propertyName{SchemaType: customType, ArrayType: customType}
+	if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[typeName]; isCustomType {
+		return propertyName{SchemaType: actualPrimitiveType, ArrayType: actualPrimitiveType}
 	}
 
 	if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
@@ -108,8 +108,11 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 				return propertyName{SchemaType: "array", ArrayType: name}
 			}
 		}
-		str := fmt.Sprintf("%s", astTypeArray.Elt)
-		return propertyName{SchemaType: "array", ArrayType: str}
+		itemTypeName := fmt.Sprintf("%s", astTypeArray.Elt)
+		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[itemTypeName]; isCustomType {
+			itemTypeName = actualPrimitiveType
+		}
+		return propertyName{SchemaType: "array", ArrayType: itemTypeName}
 	}
 	if _, ok := field.Type.(*ast.MapType); ok { // if map
 		//TODO: support map
