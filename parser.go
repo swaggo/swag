@@ -41,6 +41,9 @@ type Parser struct {
 	// TypeDefinitions is a map that stores [package name][type name][*ast.TypeSpec]
 	TypeDefinitions map[string]map[string]*ast.TypeSpec
 
+	// CustomPrimitiveTypes is a map that stores custom types to [package name][type name][string]
+	CustomPrimitiveTypes map[string]string
+
 	//registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
 	registerTypes map[string]*ast.TypeSpec
 
@@ -64,9 +67,10 @@ func New() *Parser {
 				Definitions: make(map[string]spec.Schema),
 			},
 		},
-		files:           make(map[string]*ast.File),
-		TypeDefinitions: make(map[string]map[string]*ast.TypeSpec),
-		registerTypes:   make(map[string]*ast.TypeSpec),
+		files:                make(map[string]*ast.File),
+		TypeDefinitions:      make(map[string]map[string]*ast.TypeSpec),
+		CustomPrimitiveTypes: make(map[string]string),
+		registerTypes:        make(map[string]*ast.TypeSpec),
 	}
 	return parser
 }
@@ -333,7 +337,14 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 		if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
 			for _, astSpec := range generalDeclaration.Specs {
 				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
-					parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
+					typeName := fmt.Sprintf("%v", typeSpec.Type)
+					// check if its a custom primitive type
+					if IsGolangPrimitiveType(typeName) {
+						parser.CustomPrimitiveTypes[typeSpec.Name.String()] = typeName
+					} else {
+						parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
+					}
+
 				}
 			}
 		}

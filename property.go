@@ -67,6 +67,13 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 	if astTypeSelectorExpr, ok := field.Type.(*ast.SelectorExpr); ok {
 		return parseFieldSelectorExpr(astTypeSelectorExpr, parser, newProperty)
 	}
+
+	// check if it is a custom primitive type
+	typeName := fmt.Sprintf("%v", field.Type)
+	if customType, isCustomType := parser.CustomPrimitiveTypes[typeName]; isCustomType {
+		return propertyName{SchemaType: customType, ArrayType: customType}
+	}
+
 	if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
 		name := astTypeIdent.Name
 		schemeType := TransToValidSchemeType(name)
