@@ -41,7 +41,7 @@ type Parser struct {
 	// TypeDefinitions is a map that stores [package name][type name][*ast.TypeSpec]
 	TypeDefinitions map[string]map[string]*ast.TypeSpec
 
-	// CustomPrimitiveTypes is a map that stores custom types to [package name][type name][string]
+	// CustomPrimitiveTypes is a map that stores custom primitive types to actual golang types [type name][string]
 	CustomPrimitiveTypes map[string]string
 
 	//registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
