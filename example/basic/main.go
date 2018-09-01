@@ -2,7 +2,10 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/gin-swagger"
+	"github.com/swaggo/gin-swagger/swaggerFiles"
 	"github.com/swaggo/swag/example/basic/api"
+	_ "github.com/swaggo/swag/example/basic/docs"
 )
 
 // @title Swagger Example API
@@ -24,6 +27,9 @@ func main() {
 	r.GET("/testapi/get-string-by-int/:some_id", api.GetStringByInt)
 	r.GET("//testapi/get-struct-array-by-string/:some_id", api.GetStructArrayByString)
 	r.POST("/testapi/upload", api.Upload)
+	
+	// http://localhost:8080/swagger/index.html
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Run()
 
 }
