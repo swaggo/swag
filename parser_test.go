@@ -937,6 +937,15 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                         }
                     }
                 },
+                "custom_string": {
+                    "type": "string"
+                },
+                "custom_string_arr": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "data": {
                     "type": "object"
                 },

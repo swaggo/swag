@@ -38,3 +38,28 @@ func TransToValidSchemeType(typeName string) string {
 		return typeName // to support user defined types
 	}
 }
+
+// IsGolangPrimitiveType determine whether the type name is a golang primitive type
+func IsGolangPrimitiveType(typeName string) bool {
+	switch typeName {
+	case "uint",
+		"int",
+		"uint8",
+		"int8",
+		"uint16",
+		"int16",
+		"byte",
+		"uint32",
+		"int32",
+		"rune",
+		"uint64",
+		"int64",
+		"float32",
+		"float64",
+		"bool",
+		"string":
+		return true
+	default:
+		return false
+	}
+}
