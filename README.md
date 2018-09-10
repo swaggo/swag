@@ -18,6 +18,23 @@
 
 <p align="center">gopher image source is <a href="https://github.com/tenntenn/gopher-stickers">tenntenn/gopher-stickers.</a> It has licenses <a href="http://creativecommons.org/licenses/by/3.0/deed.en">creative commons licensing.</a></p>
 
+## Content
+ - [Getting started](#getting-started)
+ - [Go web frameworks](#supported-web-frameworks)
+ - [Supported Web Frameworks](#supported-web-frameworks)
+ - [How to use it with `gin`?](#how-to-use-it-with-`gin`?)
+ - [Implementation Status](#implementation-status)
+ - [swag cli](#swag-cli)
+ - [General API Info](#general-api-info)
+ - [Security](#security)
+ - [API Operation](#api-operation)
+ - [TIPS](#tips)
+ 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
+	- [Use multiple path params](#use-multiple-path-params)
+	- [Example value of struct](#example-value-of-struct)
+	- [Description of struct](#description-of-struct)
+- [About the Project](#about-the-project)
+
 ## Summary
 
 Swag converts Go annotations to Swagger Documentation 2.0. We've created a variety of plugins for popular [Go web frameworks](#supported-web-frameworks). This allows you to quickly integrate with an existing Go project (using Swagger UI).
@@ -49,7 +66,7 @@ $ swag init
   swag init -g http/api.go
   ```
 
-## <a name=supported-web-frameworks></a> Supported Web Frameworks
+## Supported Web Frameworks
 
 - [gin](http://github.com/swaggo/gin-swagger)
 - [echo](http://github.com/swaggo/echo-swagger)
@@ -229,9 +246,6 @@ $ swag init
 - [x] Grouping Operations With Tags
 - [ ] Swagger Extensions
 
-## About the Project
-This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks).
-
 # swag cli
 
 ```console
@@ -249,7 +263,7 @@ OPTIONS:
    --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
 ```
 
-# <a name=general-api-info></a> General API Info
+# General API Info
 
 **Example**  
 [celler/main.go](https://github.com/swaggo/swag/blob/master/example/celler/main.go)
@@ -288,7 +302,7 @@ OPTIONS:
 | authorizationurl      | // @authorizationurl https://example.com/oauth/authorize |
 | scope.hoge            | // @scope.write Grants write access                      |
 
-# <a name=api-operation></a>API Operation
+# API Operation
 
 **Example**  
 [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
@@ -447,3 +461,6 @@ type Account struct {
     ID   int    `json:"id"
 }
 ```
+
+## About the Project
+This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks).
