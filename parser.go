@@ -1,7 +1,8 @@
 package swag
 
 import (
-	"errors"
+	"github.com/pkg/errors"
+
 	"fmt"
 	"go/ast"
 	goparser "go/parser"
@@ -102,7 +103,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
 	if err != nil {
-		return errors.New("ParseGeneralApiInfo occurs error: %+v", err)
+		return errors.Wrap(err, "cannot parse soure files")
 	}
 
 	parser.swagger.Swagger = "2.0"

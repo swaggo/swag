@@ -2,7 +2,9 @@ package gen
 
 import (
 	"encoding/json"
-	"errors"
+
+	"github.com/pkg/errors"
+
 	"log"
 	"os"
 	"path"
@@ -59,7 +61,7 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 	defer swaggerYAML.Close()
 	y, err := yaml.JSONToYAML(b)
 	if err != nil {
-		return errors.New("cannot covert json to yaml: %s", err)
+		return errors.Wrap(err, "cannot covert json to yaml")
 	}
 
 	swaggerYAML.Write(y)
