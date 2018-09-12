@@ -93,6 +93,8 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	}
 
 	parser.ParseDefinitions()
+
+	return nil
 }
 
 // ParseGeneralAPIInfo parses general api info for gived mainAPIFile path
@@ -259,6 +261,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	if len(securityMap) > 0 {
 		parser.swagger.SecurityDefinitions = securityMap
 	}
+
+	return nil
 }
 
 func getScopeScheme(scope string) string {
