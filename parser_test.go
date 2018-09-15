@@ -97,9 +97,7 @@ func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	assert.Panics(t, func() {
-		p.ParseGeneralAPIInfo("testdata/noexist.go")
-	})
+	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
