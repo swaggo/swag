@@ -2,6 +2,9 @@ package gen
 
 import (
 	"encoding/json"
+
+	"github.com/pkg/errors"
+
 	"log"
 	"os"
 	"path"
@@ -29,33 +32,49 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 	p.ParseAPI(searchDir, mainAPIFile)
 	swagger := p.GetSwagger()
 
-	b, _ := json.MarshalIndent(swagger, "", "    ")
+	b, err := json.MarshalIndent(swagger, "", "    ")
+	if err != nil {
+		return err
+	}
 
 	os.MkdirAll(path.Join(searchDir, "docs"), os.ModePerm)
-	docs, _ := os.Create(path.Join(searchDir, "docs", "docs.go"))
+	docs, err := os.Create(path.Join(searchDir, "docs", "docs.go"))
+	if err != nil {
+		return err
+	}
 	defer docs.Close()
 
 	os.Mkdir(swaggerConfDir, os.ModePerm)
-	swaggerJSON, _ := os.Create(path.Join(swaggerConfDir, "swagger.json"))
+	swaggerJSON, err := os.Create(path.Join(swaggerConfDir, "swagger.json"))
+	if err != nil {
+		return err
+	}
+
 	defer swaggerJSON.Close()
 	swaggerJSON.Write(b)
 
-	swaggerYAML, _ := os.Create(path.Join(swaggerConfDir, "swagger.yaml"))
+	swaggerYAML, err := os.Create(path.Join(swaggerConfDir, "swagger.yaml"))
+	if err != nil {
+		return err
+	}
+
 	defer swaggerYAML.Close()
 	y, err := yaml.JSONToYAML(b)
 	if err != nil {
-		//TODO: using return error instead of panic
-		log.Fatalf("can't swagger json covert to yaml err: %s", err)
+		return errors.Wrap(err, "cannot covert json to yaml")
 	}
+
 	swaggerYAML.Write(y)
 
-	packageTemplate.Execute(docs, struct {
+	if err := packageTemplate.Execute(docs, struct {
 		Timestamp time.Time
 		Doc       string
 	}{
 		Timestamp: time.Now(),
 		Doc:       "`" + string(b) + "`",
-	})
+	}); err != nil {
+		return err
+	}
 
 	log.Printf("create docs.go at  %+v", docs.Name())
 	return nil

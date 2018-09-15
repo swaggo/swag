@@ -1,6 +1,8 @@
 package swag
 
 import (
+	"github.com/pkg/errors"
+
 	"fmt"
 	"go/ast"
 	goparser "go/parser"
@@ -76,9 +78,11 @@ func New() *Parser {
 }
 
 // ParseAPI parses general api info for gived searchDir and mainAPIFile
-func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) {
+func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	log.Println("Generate general API Info")
-	parser.getAllGoFileInfo(searchDir)
+	if err := parser.getAllGoFileInfo(searchDir); err != nil {
+		return err
+	}
 	parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile))
 
 	for _, astFile := range parser.files {
@@ -90,15 +94,16 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) {
 	}
 
 	parser.ParseDefinitions()
+
+	return nil
 }
 
 // ParseGeneralAPIInfo parses general api info for gived mainAPIFile path
-func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
+func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
-
 	if err != nil {
-		log.Panicf("ParseGeneralApiInfo occur error:%+v", err)
+		return errors.Wrap(err, "cannot parse soure files")
 	}
 
 	parser.swagger.Swagger = "2.0"
@@ -257,6 +262,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 	if len(securityMap) > 0 {
 		parser.swagger.SecurityDefinitions = securityMap
 	}
+
+	return nil
 }
 
 func getScopeScheme(scope string) string {
@@ -728,8 +735,8 @@ func defineTypeOfExample(schemaType string, exampleValue string) interface{} {
 }
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
-func (parser *Parser) getAllGoFileInfo(searchDir string) {
-	filepath.Walk(searchDir, parser.visit)
+func (parser *Parser) getAllGoFileInfo(searchDir string) error {
+	return filepath.Walk(searchDir, parser.visit)
 }
 
 func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
