@@ -445,11 +445,11 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 		}
 
 	case *ast.ArrayType:
-		log.Panic("ParseDefinitions not supported 'Array' yet.")
+		log.Print("ParseDefinitions not supported 'Array' yet.")
 	case *ast.InterfaceType:
-		log.Panic("ParseDefinitions not supported 'Interface' yet.")
+		log.Print("ParseDefinitions not supported 'Interface' yet.")
 	case *ast.MapType:
-		log.Panic("ParseDefinitions not supported 'Map' yet.")
+		log.Print("ParseDefinitions not supported 'Map' yet.")
 	}
 }
 
