@@ -347,7 +347,7 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 					typeName := fmt.Sprintf("%v", typeSpec.Type)
 					// check if its a custom primitive type
 					if IsGolangPrimitiveType(typeName) {
-						parser.CustomPrimitiveTypes[typeSpec.Name.String()] = typeName
+						parser.CustomPrimitiveTypes[typeSpec.Name.String()] = TransToValidSchemeType(typeName)
 					} else {
 						parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
 					}
