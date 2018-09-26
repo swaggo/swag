@@ -386,7 +386,7 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
-	re := regexp.MustCompile(`([\w\.\/\-{}]+)[^\[]+\[([^\]]+)`)
+	re := regexp.MustCompile(`([\w\.\/\-{}\+]+)[^\[]+\[([^\]]+)`)
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
