@@ -1577,6 +1577,8 @@ func TestParseStructComment(t *testing.T) {
         "license": {},
         "version": "1.0"
     },
+    "host": "localhost:4000",
+    "basePath": "/api",
     "paths": {
         "/posts/{post_id}": {
             "get": {
