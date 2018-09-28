@@ -50,7 +50,11 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
 	switch strings.ToLower(attribute) {
 	case "@description":
-		operation.Description = lineRemainder
+		if operation.Description == "" {
+			operation.Description = lineRemainder
+		} else {
+			operation.Description += "<br>" + lineRemainder
+		}
 	case "@summary":
 		operation.Summary = lineRemainder
 	case "@id":
