@@ -46,6 +46,12 @@ definitions:
             - name
             type: object
         type: object
+      custom_string:
+        type: string
+      custom_string_arr:
+        items:
+          type: string
+        type: array
       data:
         type: object
       decimal:
