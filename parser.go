@@ -109,6 +109,13 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	parser.swagger.Swagger = "2.0"
 	securityMap := map[string]*spec.SecurityScheme{}
 
+	// templated defaults
+	parser.swagger.Info.Version = "{{.Version}}"
+	parser.swagger.Info.Title = "{{.Title}}"
+	parser.swagger.Info.Description = "{{.Description}}"
+	parser.swagger.Host = "{{.Host}}"
+	parser.swagger.BasePath = "{{.BasePath}}"
+
 	if fileTree.Comments != nil {
 		for _, comment := range fileTree.Comments {
 			comments := strings.Split(comment.Text(), "\n")
