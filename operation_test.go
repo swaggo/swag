@@ -644,3 +644,28 @@ func TestParseSecurityComment(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 }
+
+func TestParseMultiDescription(t *testing.T) {
+	comment := `@Description line one`
+	operation := NewOperation()
+	operation.parser = New()
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	comment = `@Tags multi`
+	operation.ParseComment(comment, nil)
+
+	comment = `@Description line two`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "description": "line one\u003cbr\u003eline two",
+    "tags": [
+        "multi"
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
