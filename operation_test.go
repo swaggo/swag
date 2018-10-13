@@ -661,11 +661,7 @@ func TestParseMultiDescription(t *testing.T) {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "description": "line one\u003cbr\u003eline two",
-    "tags": [
-        "multi"
-    ]
-}`
-	assert.Equal(t, expected, string(b))
+
+	expected := `"description": "line one\u003cbr\u003eline two"`
+	assert.Contains(t, string(b), expected)
 }
