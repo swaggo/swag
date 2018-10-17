@@ -1,8 +1,6 @@
 package swag
 
 import (
-	"github.com/pkg/errors"
-
 	"fmt"
 	"go/ast"
 	goparser "go/parser"
@@ -19,6 +17,7 @@ import (
 
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
+	"github.com/pkg/errors"
 )
 
 const (
