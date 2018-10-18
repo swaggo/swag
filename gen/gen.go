@@ -2,9 +2,6 @@ package gen
 
 import (
 	"encoding/json"
-
-	"github.com/pkg/errors"
-
 	"log"
 	"os"
 	"path"
@@ -12,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 	"github.com/swaggo/swag"
 )
 
