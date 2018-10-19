@@ -656,12 +656,12 @@ func TestParseMultiDescription(t *testing.T) {
 	comment = `@Tags multi`
 	operation.ParseComment(comment, nil)
 
-	comment = `@Description line two`
+	comment = `@Description line two x`
 	err = operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(operation, "", "    ")
 
-	expected := `"description": "line one\u003cbr\u003eline two"`
+	expected := `"description": "line one\u003cbr\u003eline two x"`
 	assert.Contains(t, string(b), expected)
 }
