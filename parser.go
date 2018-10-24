@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -409,8 +410,19 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 	}
 	structStacks = []string{}
 
+	// created sorted list of properties keys so when we iterate over them it's deterministic
+	ks := make([]string, 0, len(properties))
+	for k := range properties {
+		ks = append(ks, k)
+	}
+	sort.Strings(ks)
+
 	requiredFields := make([]string, 0)
-	for k, prop := range properties {
+
+	// iterate over keys list instead of map to avoid the random shuffle of the order that go does for maps
+	for _, k := range ks {
+		prop := properties[k]
+
 		// todo find the pkgName of the property type
 		tname := prop.SchemaProps.Type[0]
 		if _, ok := parser.TypeDefinitions[pkgName][tname]; ok {
