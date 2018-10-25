@@ -601,7 +601,18 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 }
 
 func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, properties map[string]spec.Schema) {
-	if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
+	// check if ast Field is Ident type
+	astTypeIdent, okTypeIdent := field.Type.(*ast.Ident)
+
+	// if ast Field is not Ident type we check if it's StarExpr
+	// because it might be a pointer to an Ident
+	if !okTypeIdent {
+		if astTypeStar, okTypeStar := field.Type.(*ast.StarExpr); okTypeStar {
+			astTypeIdent, okTypeIdent = astTypeStar.X.(*ast.Ident)
+		}
+	}
+
+	if okTypeIdent {
 		findPgkName := pkgName
 		findBaseTypeName := astTypeIdent.Name
 		ss := strings.Split(astTypeIdent.Name, ".")

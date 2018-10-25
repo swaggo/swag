@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	goparser "go/parser"
 	"go/token"
+	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -1941,6 +1943,19 @@ func TestParseModelNotUnderRoot(t *testing.T) {
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParseComposition(t *testing.T) {
+	searchDir := "testdata/composition"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseAPI(searchDir, mainAPIFile)
+
+	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, string(expected), string(b))
 }
 
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {
