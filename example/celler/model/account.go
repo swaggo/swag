@@ -68,6 +68,7 @@ func AccountOne(id int) (Account, error) {
 func (a Account) Insert() (int, error) {
 	accountMaxID++
 	a.ID = accountMaxID
+	a.Name = fmt.Sprintf("account_%d", accountMaxID)
 	accounts = append(accounts, a)
 	return accountMaxID, nil
 }

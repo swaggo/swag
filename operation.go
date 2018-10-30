@@ -50,7 +50,11 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
 	switch strings.ToLower(attribute) {
 	case "@description":
-		operation.Description = lineRemainder
+		if operation.Description == "" {
+			operation.Description = lineRemainder
+		} else {
+			operation.Description += "<br>" + lineRemainder
+		}
 	case "@summary":
 		operation.Summary = lineRemainder
 	case "@id":
@@ -388,7 +392,7 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
-	re := regexp.MustCompile(`([\w\.\/\-{}]+)[^\[]+\[([^\]]+)`)
+	re := regexp.MustCompile(`([\w\.\/\-{}\+]+)[^\[]+\[([^\]]+)`)
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {

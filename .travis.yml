@@ -1,9 +1,9 @@
 language: go
 
 go:
-  - 1.8.x
   - 1.9.x
   - 1.10.x
+  - 1.11.x
 
 before_install:
   - make deps
@@ -12,7 +12,6 @@ script:
   - make lint
   - make build
   - make test
-  - go test -race -coverprofile=coverage.txt -covermode=atomic
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

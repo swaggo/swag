@@ -3,6 +3,7 @@ package web
 import (
 	"time"
 
+	uuid "github.com/satori/go.uuid"
 	"github.com/shopspring/decimal"
 )
 
@@ -18,19 +19,23 @@ type Pet struct {
 			PhotoUrls []string `example:"http://test/image/1.jpg,http://test/image/2.jpg"`
 		}
 	}
-	Name      string   `example:"poti"`
-	PhotoUrls []string `example:"http://test/image/1.jpg,http://test/image/2.jpg"`
-	Tags      []Tag
-	Pets      *[]Pet2
-	Pets2     []*Pet2
-	Status    string
-	Price     float32  `example:"3.25" validate:"required,gte=0,lte=130"`
-	IsAlive   bool     `example:"true"`
-	Data      interface{}
-	Hidden    string   `json:"-"`
-	UUID      uuid.UUID
-	Decimal   decimal.Decimal
+	Name            string   `example:"poti"`
+	PhotoUrls       []string `example:"http://test/image/1.jpg,http://test/image/2.jpg"`
+	Tags            []Tag
+	Pets            *[]Pet2
+	Pets2           []*Pet2
+	Status          string
+	Price           float32 `example:"3.25" validate:"required,gte=0,lte=130"`
+	IsAlive         bool    `example:"true"`
+	Data            interface{}
+	Hidden          string `json:"-"`
+	UUID            uuid.UUID
+	Decimal         decimal.Decimal
+	customString    CustomString
+	customStringArr []CustomString
 }
+
+type CustomString string
 
 type Tag struct {
 	ID   int `format:"int64"`

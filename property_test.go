@@ -27,7 +27,7 @@ func TestGetPropertyNameSelectorExpr(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
 func TestGetPropertyNameIdentObjectId(t *testing.T) {
@@ -50,7 +50,7 @@ func TestGetPropertyNameIdentObjectId(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
 func TestGetPropertyNameIdentUUID(t *testing.T) {
@@ -73,7 +73,7 @@ func TestGetPropertyNameIdentUUID(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
 func TestGetPropertyNameIdentDecimal(t *testing.T) {
@@ -96,7 +96,7 @@ func TestGetPropertyNameIdentDecimal(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
 func TestGetPropertyNameIdentTime(t *testing.T) {
@@ -138,7 +138,7 @@ func TestGetPropertyNameStarExprIdent(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
 func TestGetPropertyNameArrayStarExpr(t *testing.T) {
@@ -160,7 +160,7 @@ func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
 func TestGetPropertyNameMap(t *testing.T) {
@@ -179,7 +179,7 @@ func TestGetPropertyNameMap(t *testing.T) {
 		"object",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
 func TestGetPropertyNameStruct(t *testing.T) {
@@ -191,7 +191,7 @@ func TestGetPropertyNameStruct(t *testing.T) {
 		"object",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
 func TestGetPropertyNameInterface(t *testing.T) {
@@ -203,5 +203,5 @@ func TestGetPropertyNameInterface(t *testing.T) {
 		"object",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+	assert.Equal(t, expected, getPropertyName(input, New()))
 }

@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	goparser "go/parser"
 	"go/token"
+	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -93,13 +95,89 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "{{.Description}}",
+        "title": "{{.Title}}",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "{{.Version}}"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {},
+    "securityDefinitions": {
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "BasicAuth": {
+            "type": "basic"
+        },
+        "OAuth2AccessCode": {
+            "type": "oauth2",
+            "flow": "accessCode",
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "admin": " Grants read and write access to administrative information"
+            }
+        },
+        "OAuth2Application": {
+            "type": "oauth2",
+            "flow": "application",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "admin": " Grants read and write access to administrative information",
+                "write": " Grants write access"
+            }
+        },
+        "OAuth2Implicit": {
+            "type": "oauth2",
+            "flow": "implicit",
+            "authorizationUrl": "https://example.com/oauth/authorize",
+            "scopes": {
+                "admin": " Grants read and write access to administrative information",
+                "write": " Grants write access"
+            }
+        },
+        "OAuth2Password": {
+            "type": "oauth2",
+            "flow": "password",
+            "tokenUrl": "https://example.com/oauth/token",
+            "scopes": {
+                "admin": " Grants read and write access to administrative information",
+                "read": " Grants read access",
+                "write": " Grants write access"
+            }
+        }
+    }
+}`
+	gopath := os.Getenv("GOPATH")
+	assert.NotNil(t, gopath)
+	p := New()
+	p.ParseGeneralAPIInfo("testdata/templated.go")
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	assert.Panics(t, func() {
-		p.ParseGeneralAPIInfo("testdata/noexist.go")
-	})
+	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
@@ -133,6 +211,7 @@ func TestGetSchemes(t *testing.T) {
 	//fmt.Println(GetSchemes("@schemes http https"))
 
 }
+
 func TestParseSimpleApi(t *testing.T) {
 	expected := `{
     "swagger": "2.0",
@@ -407,6 +486,7 @@ func TestParseSimpleApi(t *testing.T) {
         "web.Pet": {
             "type": "object",
             "required": [
+                "name",
                 "photo_urls"
             ],
             "properties": {
@@ -935,6 +1015,15 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                                 }
                             }
                         }
+                    }
+                },
+                "custom_string": {
+                    "type": "string"
+                },
+                "custom_string_arr": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 },
                 "data": {
@@ -1570,6 +1659,8 @@ func TestParseStructComment(t *testing.T) {
         "license": {},
         "version": "1.0"
     },
+    "host": "localhost:4000",
+    "basePath": "/api",
     "paths": {
         "/posts/{post_id}": {
             "get": {
@@ -1854,6 +1945,19 @@ func TestParseModelNotUnderRoot(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseComposition(t *testing.T) {
+	searchDir := "testdata/composition"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseAPI(searchDir, mainAPIFile)
+
+	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {
 	src := `
 package test
@@ -2087,4 +2191,31 @@ func TestSkip(t *testing.T) {
 	currentPath := "./"
 	currentPathInfo, _ := os.Stat(currentPath)
 	assert.True(t, Skip(currentPathInfo) == nil)
+}
+
+func TestParseDeterministic(t *testing.T) {
+	mainAPIFile := "main.go"
+	for _, searchDir := range []string{
+		"testdata/simple",
+		"testdata/model_not_under_root/cmd",
+	} {
+		t.Run(searchDir, func(t *testing.T) {
+			var expected string
+
+			// run the same code 100 times and check that the output is the same every time
+			for i := 0; i < 100; i++ {
+				p := New()
+				p.PropNamingStrategy = PascalCase
+				p.ParseAPI(searchDir, mainAPIFile)
+				b, _ := json.MarshalIndent(p.swagger, "", "    ")
+				assert.NotEqual(t, "", string(b))
+
+				if expected == "" {
+					expected = string(b)
+				}
+
+				assert.Equal(t, expected, string(b))
+			}
+		})
+	}
 }

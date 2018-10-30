@@ -1,0 +1,139 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "petstore.swagger.io",
+    "basePath": "/v2",
+    "paths": {
+        "/testapi/get-bar": {
+            "get": {
+                "description": "get Bar",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-bar",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.Bar"
+                        }
+                    }
+                }
+            }
+        },
+        "/testapi/get-foo": {
+            "get": {
+                "description": "get Foo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-foo",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.Foo"
+                        }
+                    }
+                }
+            }
+        },
+        "/testapi/get-foobar": {
+            "get": {
+                "description": "get FooBar",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-foobar",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.FooBar"
+                        }
+                    }
+                }
+            }
+        },
+        "/testapi/get-foobar-pointer": {
+            "get": {
+                "description": "get FooBarPointer",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-foobar-pointer",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.FooBarPointer"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.Bar": {
+            "type": "object",
+            "properties": {
+                "field2": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Foo": {
+            "type": "object",
+            "properties": {
+                "field1": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.FooBar": {
+            "type": "object",
+            "properties": {
+                "field1": {
+                    "type": "string"
+                },
+                "field2": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.FooBarPointer": {
+            "type": "object",
+            "properties": {
+                "field1": {
+                    "type": "string"
+                },
+                "field2": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

@@ -55,6 +55,9 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parse
 			parser.ParseDefinition(pkgName.Name, typeDefinitions, astTypeSelectorExpr.Sel.Name)
 			return propertyNewFunc(astTypeSelectorExpr.Sel.Name, pkgName.Name)
 		}
+		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[astTypeSelectorExpr.Sel.Name]; isCustomType {
+			return propertyName{SchemaType: actualPrimitiveType, ArrayType: actualPrimitiveType}
+		}
 	}
 
 	fmt.Printf("%s is not supported. but it will be set with string temporary. Please report any problems.", astTypeSelectorExpr.Sel.Name)
@@ -67,6 +70,13 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 	if astTypeSelectorExpr, ok := field.Type.(*ast.SelectorExpr); ok {
 		return parseFieldSelectorExpr(astTypeSelectorExpr, parser, newProperty)
 	}
+
+	// check if it is a custom type
+	typeName := fmt.Sprintf("%v", field.Type)
+	if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[typeName]; isCustomType {
+		return propertyName{SchemaType: actualPrimitiveType, ArrayType: actualPrimitiveType}
+	}
+
 	if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
 		name := astTypeIdent.Name
 		schemeType := TransToValidSchemeType(name)
@@ -101,8 +111,11 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 				return propertyName{SchemaType: "array", ArrayType: name}
 			}
 		}
-		str := fmt.Sprintf("%s", astTypeArray.Elt)
-		return propertyName{SchemaType: "array", ArrayType: str}
+		itemTypeName := fmt.Sprintf("%s", astTypeArray.Elt)
+		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[itemTypeName]; isCustomType {
+			itemTypeName = actualPrimitiveType
+		}
+		return propertyName{SchemaType: "array", ArrayType: itemTypeName}
 	}
 	if _, ok := field.Type.(*ast.MapType); ok { // if map
 		//TODO: support map
