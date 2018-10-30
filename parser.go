@@ -11,12 +11,14 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"unicode"
 
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -76,9 +78,11 @@ func New() *Parser {
 }
 
 // ParseAPI parses general api info for gived searchDir and mainAPIFile
-func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) {
+func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	log.Println("Generate general API Info")
-	parser.getAllGoFileInfo(searchDir)
+	if err := parser.getAllGoFileInfo(searchDir); err != nil {
+		return err
+	}
 	parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile))
 
 	for _, astFile := range parser.files {
@@ -90,19 +94,27 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) {
 	}
 
 	parser.ParseDefinitions()
+
+	return nil
 }
 
 // ParseGeneralAPIInfo parses general api info for gived mainAPIFile path
-func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
+func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
-
 	if err != nil {
-		log.Panicf("ParseGeneralApiInfo occur error:%+v", err)
+		return errors.Wrap(err, "cannot parse soure files")
 	}
 
 	parser.swagger.Swagger = "2.0"
 	securityMap := map[string]*spec.SecurityScheme{}
+
+	// templated defaults
+	parser.swagger.Info.Version = "{{.Version}}"
+	parser.swagger.Info.Title = "{{.Title}}"
+	parser.swagger.Info.Description = "{{.Description}}"
+	parser.swagger.Host = "{{.Host}}"
+	parser.swagger.BasePath = "{{.BasePath}}"
 
 	if fileTree.Comments != nil {
 		for _, comment := range fileTree.Comments {
@@ -257,6 +269,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) {
 	if len(securityMap) > 0 {
 		parser.swagger.SecurityDefinitions = securityMap
 	}
+
+	return nil
 }
 
 func getScopeScheme(scope string) string {
@@ -340,7 +354,7 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 					typeName := fmt.Sprintf("%v", typeSpec.Type)
 					// check if its a custom primitive type
 					if IsGolangPrimitiveType(typeName) {
-						parser.CustomPrimitiveTypes[typeSpec.Name.String()] = typeName
+						parser.CustomPrimitiveTypes[typeSpec.Name.String()] = TransToValidSchemeType(typeName)
 					} else {
 						parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
 					}
@@ -396,8 +410,19 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 	}
 	structStacks = []string{}
 
+	// created sorted list of properties keys so when we iterate over them it's deterministic
+	ks := make([]string, 0, len(properties))
+	for k := range properties {
+		ks = append(ks, k)
+	}
+	sort.Strings(ks)
+
 	requiredFields := make([]string, 0)
-	for k, prop := range properties {
+
+	// iterate over keys list instead of map to avoid the random shuffle of the order that go does for maps
+	for _, k := range ks {
+		prop := properties[k]
+
 		// todo find the pkgName of the property type
 		tname := prop.SchemaProps.Type[0]
 		if _, ok := parser.TypeDefinitions[pkgName][tname]; ok {
@@ -438,11 +463,11 @@ func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, prop
 		}
 
 	case *ast.ArrayType:
-		log.Panic("ParseDefinitions not supported 'Array' yet.")
+		log.Println("ParseDefinitions not supported 'Array' yet.")
 	case *ast.InterfaceType:
-		log.Panic("ParseDefinitions not supported 'Interface' yet.")
+		log.Println("ParseDefinitions not supported 'Interface' yet.")
 	case *ast.MapType:
-		log.Panic("ParseDefinitions not supported 'Map' yet.")
+		log.Println("ParseDefinitions not supported 'Map' yet.")
 	}
 }
 
@@ -576,7 +601,18 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 }
 
 func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, properties map[string]spec.Schema) {
-	if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
+	// check if ast Field is Ident type
+	astTypeIdent, okTypeIdent := field.Type.(*ast.Ident)
+
+	// if ast Field is not Ident type we check if it's StarExpr
+	// because it might be a pointer to an Ident
+	if !okTypeIdent {
+		if astTypeStar, okTypeStar := field.Type.(*ast.StarExpr); okTypeStar {
+			astTypeIdent, okTypeIdent = astTypeStar.X.(*ast.Ident)
+		}
+	}
+
+	if okTypeIdent {
 		findPgkName := pkgName
 		findBaseTypeName := astTypeIdent.Name
 		ss := strings.Split(astTypeIdent.Name, ".")
@@ -728,8 +764,8 @@ func defineTypeOfExample(schemaType string, exampleValue string) interface{} {
 }
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
-func (parser *Parser) getAllGoFileInfo(searchDir string) {
-	filepath.Walk(searchDir, parser.visit)
+func (parser *Parser) getAllGoFileInfo(searchDir string) error {
+	return filepath.Walk(searchDir, parser.visit)
 }
 
 func (parser *Parser) visit(path string, f os.FileInfo, err error) error {

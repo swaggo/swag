@@ -105,6 +105,15 @@ func TestParseRouterComment(t *testing.T) {
 	assert.Equal(t, "GET", operation.HTTPMethod)
 }
 
+func TestParseRouterCommentWithPlusSign(t *testing.T) {
+	comment := `/@Router /customer/get-wishlist/{proxy+} [post]`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "/customer/get-wishlist/{proxy+}", operation.Path)
+	assert.Equal(t, "POST", operation.HTTPMethod)
+}
+
 func TestParseRouterCommentOccursErr(t *testing.T) {
 	comment := `/@Router /customer/get-wishlist/{wishlist_id}`
 	operation := NewOperation()
@@ -634,4 +643,25 @@ func TestParseSecurityComment(t *testing.T) {
     ]
 }`
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParseMultiDescription(t *testing.T) {
+	comment := `@Description line one`
+	operation := NewOperation()
+	operation.parser = New()
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	comment = `@Tags multi`
+	operation.ParseComment(comment, nil)
+
+	comment = `@Description line two x`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `"description": "line one\u003cbr\u003eline two x"`
+	assert.Contains(t, string(b), expected)
 }
