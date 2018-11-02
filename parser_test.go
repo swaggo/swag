@@ -551,6 +551,12 @@ func TestParseSimpleApi(t *testing.T) {
                     "format": "int64",
                     "example": 1
                 },
+                "int_array": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "is_alive": {
                     "type": "boolean",
                     "example": true

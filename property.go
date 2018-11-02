@@ -96,7 +96,7 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 				return parseFieldSelectorExpr(astTypeArrayExpr, parser, newArrayProperty)
 			}
 			if astTypeArrayIdent, ok := astTypeArray.Elt.(*ast.Ident); ok {
-				name := astTypeArrayIdent.Name
+				name := TransToValidSchemeType(astTypeArrayIdent.Name)
 				return propertyName{SchemaType: "array", ArrayType: name}
 			}
 		}
@@ -107,11 +107,11 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 		}
 		if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.StarExpr); ok {
 			if astTypeArrayIdent, ok := astTypeArrayExpr.X.(*ast.Ident); ok {
-				name := astTypeArrayIdent.Name
+				name := TransToValidSchemeType(astTypeArrayIdent.Name)
 				return propertyName{SchemaType: "array", ArrayType: name}
 			}
 		}
-		itemTypeName := fmt.Sprintf("%s", astTypeArray.Elt)
+		itemTypeName := TransToValidSchemeType(fmt.Sprintf("%s", astTypeArray.Elt))
 		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[itemTypeName]; isCustomType {
 			itemTypeName = actualPrimitiveType
 		}
