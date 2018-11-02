@@ -1027,6 +1027,12 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                         }
                     }
                 },
+                "coeffs": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
                 "custom_string": {
                     "type": "string"
                 },
@@ -1054,6 +1060,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                 "name": {
                     "type": "string",
                     "example": "poti"
+                },
+                "null_int": {
+                    "type": "integer"
                 },
                 "pets": {
                     "type": "array",
