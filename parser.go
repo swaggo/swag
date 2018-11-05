@@ -674,7 +674,7 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 
 	exampleTag := reflect.StructTag(structTag).Get("example")
 	if exampleTag != "" {
-		structField.exampleValue = defineTypeOfExample(structField.schemaType, exampleTag)
+		structField.exampleValue = defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
 	}
 	formatTag := reflect.StructTag(structTag).Get("format")
 	if formatTag != "" {
@@ -734,7 +734,7 @@ func toLowerCamelCase(in string) string {
 }
 
 // defineTypeOfExample example value define the type (object and array unsupported)
-func defineTypeOfExample(schemaType string, exampleValue string) interface{} {
+func defineTypeOfExample(schemaType, arrayType, exampleValue string) interface{} {
 	switch schemaType {
 	case "string":
 		return exampleValue
@@ -757,7 +757,12 @@ func defineTypeOfExample(schemaType string, exampleValue string) interface{} {
 		}
 		return v
 	case "array":
-		return strings.Split(exampleValue, ",")
+		values := strings.Split(exampleValue, ",")
+		result := make([]interface{}, 0)
+		for _, value := range values {
+			result = append(result, defineTypeOfExample(arrayType, "", value))
+		}
+		return result
 	default:
 		panic(fmt.Errorf("%s is unsupported type in example value", schemaType))
 	}

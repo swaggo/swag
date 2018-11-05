@@ -555,7 +555,11 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "array",
                     "items": {
                         "type": "integer"
-                    }
+                    },
+                    "example": [
+                        1,
+                        2
+                    ]
                 },
                 "is_alive": {
                     "type": "boolean",

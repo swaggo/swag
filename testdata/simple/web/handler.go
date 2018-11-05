@@ -32,7 +32,7 @@ type Pet struct {
 	Hidden    string          `json:"-"`
 	UUID      uuid.UUID       `json:"uuid"`
 	Decimal   decimal.Decimal `json:"decimal"`
-	IntArray  []int           `json:"int_array"`
+	IntArray  []int           `json:"int_array" example:"1,2"`
 }
 
 type Tag struct {
