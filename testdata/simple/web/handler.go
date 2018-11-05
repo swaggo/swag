@@ -16,7 +16,7 @@ type Pet struct {
 		PhotoUrls     []string `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg" format:"url"`
 		SmallCategory struct {
 			ID        int      `json:"id" example:"1"`
-			Name      string   `json:"name" example:"detail_category_name" binding:"required"`
+			Name      string   `json:"name" example:"detail_category_name" binding:"required" minLength:"4" maxLength:"16"`
 			PhotoUrls []string `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg"`
 		} `json:"small_category"`
 	} `json:"category"`
@@ -25,14 +25,15 @@ type Pet struct {
 	Tags      []Tag           `json:"tags"`
 	Pets      *[]Pet2         `json:"pets"`
 	Pets2     []*Pet2         `json:"pets2"`
-	Status    string          `json:"status"`
-	Price     float32         `json:"price" example:"3.25"`
-	IsAlive   bool            `json:"is_alive" example:"true"`
+	Status    string          `json:"status" enums:"healthy,ill"`
+	Price     float32         `json:"price" example:"3.25" minimum:"1.0" maximum:"1000"`
+	IsAlive   bool            `json:"is_alive" example:"true" default:"true"`
 	Data      interface{}     `json:"data"`
 	Hidden    string          `json:"-"`
 	UUID      uuid.UUID       `json:"uuid"`
 	Decimal   decimal.Decimal `json:"decimal"`
 	IntArray  []int           `json:"int_array" example:"1,2"`
+	EnumArray []int           `json:"enum_array" enums:"1,2,3,5,7"`
 }
 
 type Tag struct {

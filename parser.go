@@ -479,6 +479,12 @@ type structField struct {
 	isRequired   bool
 	crossPkg     string
 	exampleValue interface{}
+	maximum      *float64
+	minimum      *float64
+	maxLength    *int64
+	minLength    *int64
+	enums        []interface{}
+	defaultValue interface{}
 }
 
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
@@ -542,7 +548,13 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 					Items: &spec.SchemaOrArray{
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
-								Type: []string{structField.arrayType},
+								Type:      []string{structField.arrayType},
+								Maximum:   structField.maximum,
+								Minimum:   structField.minimum,
+								MaxLength: structField.maxLength,
+								MinLength: structField.minLength,
+								Enum:      structField.enums,
+								Default:   structField.defaultValue,
 							},
 						},
 					},
@@ -563,6 +575,12 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 				Description: desc,
 				Format:      structField.formatType,
 				Required:    required,
+				Maximum:     structField.maximum,
+				Minimum:     structField.minimum,
+				MaxLength:   structField.maxLength,
+				MinLength:   structField.minLength,
+				Enum:        structField.enums,
+				Default:     structField.defaultValue,
 			},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{
 				Example: structField.exampleValue,
@@ -590,6 +608,12 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 					Format:      structField.formatType,
 					Properties:  props,
 					Required:    nestRequired,
+					Maximum:     structField.maximum,
+					Minimum:     structField.minimum,
+					MaxLength:   structField.maxLength,
+					MinLength:   structField.minLength,
+					Enum:        structField.enums,
+					Default:     structField.defaultValue,
 				},
 				SwaggerSchemaProps: spec.SwaggerSchemaProps{
 					Example: structField.exampleValue,
@@ -655,8 +679,8 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		return structField
 	}
 	// `json:"tag"` -> json:"tag"
-	structTag := strings.Replace(field.Tag.Value, "`", "", -1)
-	jsonTag := reflect.StructTag(structTag).Get("json")
+	structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
+	jsonTag := structTag.Get("json")
 	// json:"tag,hoge"
 	if strings.Contains(jsonTag, ",") {
 		// json:",hoge"
@@ -672,8 +696,7 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		structField.name = jsonTag
 	}
 
-	typeTag := reflect.StructTag(structTag).Get("swaggertype")
-	if typeTag != "" {
+	if typeTag := structTag.Get("swaggertype"); typeTag != "" {
 		parts := strings.Split(typeTag, ",")
 		if 0 < len(parts) && len(parts) <= 2 {
 			newSchemaType := parts[0]
@@ -688,16 +711,13 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 			structField.arrayType = newArrayType
 		}
 	}
-	exampleTag := reflect.StructTag(structTag).Get("example")
-	if exampleTag != "" {
+	if exampleTag := structTag.Get("example"); exampleTag != "" {
 		structField.exampleValue = defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
 	}
-	formatTag := reflect.StructTag(structTag).Get("format")
-	if formatTag != "" {
+	if formatTag := structTag.Get("format"); formatTag != "" {
 		structField.formatType = formatTag
 	}
-	bindingTag := reflect.StructTag(structTag).Get("binding")
-	if bindingTag != "" {
+	if bindingTag := structTag.Get("binding"); bindingTag != "" {
 		for _, val := range strings.Split(bindingTag, ",") {
 			if val == "required" {
 				structField.isRequired = true
@@ -705,8 +725,7 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 			}
 		}
 	}
-	validateTag := reflect.StructTag(structTag).Get("validate")
-	if validateTag != "" {
+	if validateTag := structTag.Get("validate"); validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
 			if val == "required" {
 				structField.isRequired = true
@@ -714,7 +733,58 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 			}
 		}
 	}
+	if enumsTag := structTag.Get("enums"); enumsTag != "" {
+		enumType := structField.schemaType
+		if structField.schemaType == "array" {
+			enumType = structField.arrayType
+		}
+
+		for _, e := range strings.Split(enumsTag, ",") {
+			structField.enums = append(structField.enums, defineType(enumType, e))
+		}
+	}
+	if defaultTag := structTag.Get("default"); defaultTag != "" {
+		structField.defaultValue = defineType(structField.schemaType, defaultTag)
+	}
+
+	if IsNumericType(structField.schemaType) || IsNumericType(structField.arrayType) {
+		structField.maximum = getFloatTag(structTag, "maximum")
+		structField.minimum = getFloatTag(structTag, "minimum")
+	}
+	if structField.schemaType == "string" || structField.arrayType == "string" {
+		structField.maxLength = getIntTag(structTag, "maxLength")
+		structField.minLength = getIntTag(structTag, "minLength")
+	}
+
 	return structField
+}
+
+func getFloatTag(structTag reflect.StructTag, tagName string) *float64 {
+	strValue := structTag.Get(tagName)
+	if strValue == "" {
+		return nil
+	}
+
+	value, err := strconv.ParseFloat(strValue, 64)
+	if err != nil {
+		panic(fmt.Errorf("can't parse numeric value of %q tag: %v", tagName, err))
+	}
+
+	return &value
+}
+
+func getIntTag(structTag reflect.StructTag, tagName string) *int64 {
+	strValue := structTag.Get(tagName)
+	if strValue == "" {
+		return nil
+	}
+
+	value, err := strconv.ParseInt(strValue, 10, 64)
+	if err != nil {
+		panic(fmt.Errorf("can't parse numeric value of %q tag: %v", tagName, err))
+	}
+
+	return &value
 }
 
 func toSnakeCase(in string) string {
