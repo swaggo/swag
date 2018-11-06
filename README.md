@@ -516,10 +516,10 @@ type Account struct {
 ```go
 type Account struct {
     // Override primitive type by simply specifying it via `swaggertype` tag
-    ID     sql.NullInt64 `json:"id" swaggertype:"integer"
+    ID     sql.NullInt64 `json:"id" swaggertype:"integer"`
 
     // Array types can be overridden using "array,<prim_type>" format
-    Coeffs []big.Float `json:"coeffs" swaggertype:"array,number"
+    Coeffs []big.Float `json:"coeffs" swaggertype:"array,number"`
 }
 ```
 
