@@ -378,12 +378,8 @@ var structStacks []string
 
 // isNotRecurringNestStruct check if a structure that is not a not repeating
 func isNotRecurringNestStruct(refTypeName string, structStacks []string) bool {
-	if len(structStacks) <= 0 {
-		return true
-	}
-	startStruct := structStacks[0]
-	for _, v := range structStacks[1:] {
-		if startStruct == v {
+	for _, v := range structStacks {
+		if refTypeName == v {
 			return false
 		}
 	}

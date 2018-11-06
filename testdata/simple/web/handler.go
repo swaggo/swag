@@ -48,6 +48,10 @@ type Pet2 struct {
 	DeletedAt  *time.Time `json:"deleted_at"`
 }
 
+type IndirectRecursiveTest struct {
+	Tags []Tag
+}
+
 type APIError struct {
 	ErrorCode    int
 	ErrorMessage string

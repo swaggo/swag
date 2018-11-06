@@ -69,6 +69,11 @@ func Pet2() {
 
 }
 
+// @Summary Use IndirectRecursiveTest
+// @Success 200 {object} web.IndirectRecursiveTest
+func IndirectRecursiveTest() {
+}
+
 type Pet3 struct {
 	ID int `json:"id"`
 }

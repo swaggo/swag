@@ -483,6 +483,17 @@ func TestParseSimpleApi(t *testing.T) {
                 }
             }
         },
+        "web.IndirectRecursiveTest": {
+            "type": "object",
+            "properties": {
+                "Tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Tag"
+                    }
+                }
+            }
+        },
         "web.Pet": {
             "type": "object",
             "required": [
