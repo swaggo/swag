@@ -432,6 +432,16 @@ Make it AND condition
 // @Param default query string false "string default" default(A)
 ```
 
+It also works for the struct fields:
+
+```go
+type Foo struct {
+    Bar string `minLength:"4" maxLength:"16"`
+    Baz int `minimum:"10" maximum:"20" default:"15"`
+    Qux []string `enums:"foo,bar,baz"`
+}
+```
+
 ### Available
 
 Field Name | Type | Description
