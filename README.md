@@ -183,7 +183,7 @@ func main() {
 	docs.SwaggerInfo.BasePath = "/v2"
 
 	r := gin.New()
-    
+
 	// use ginSwagger middleware to serve the API docs
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -304,7 +304,7 @@ OPTIONS:
 
 # General API Info
 
-**Example**  
+**Example**
 [celler/main.go](https://github.com/swaggo/swag/blob/master/example/celler/main.go)
 
 | annotation         | description                                                                                     | example                                                         |
@@ -343,7 +343,7 @@ OPTIONS:
 
 # API Operation
 
-**Example**  
+**Example**
 [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
 
 
@@ -498,6 +498,18 @@ type Account struct {
 type Account struct {
     // ID this is userid
     ID   int    `json:"id"
+}
+```
+
+### Override swagger type of a struct field
+
+```go
+type Account struct {
+    // Override primitive type by simply specifying it via `swaggertype` tag
+    ID     sql.NullInt64 `json:"id" swaggertype:"integer"
+
+    // Array types can be overridden using "array,<prim_type>" format
+    Coeffs []big.Float `json:"coeffs" swaggertype:"array,number"
 }
 ```
 

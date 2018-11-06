@@ -46,6 +46,10 @@ definitions:
             - name
             type: object
         type: object
+      coeffs:
+        items:
+          type: number
+        type: array
       custom_string:
         type: string
       custom_string_arr:
@@ -66,6 +70,8 @@ definitions:
       name:
         example: poti
         type: string
+      null_int:
+        type: integer
       pets:
         items:
           $ref: '#/definitions/web.Pet2'

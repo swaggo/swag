@@ -672,6 +672,22 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		structField.name = jsonTag
 	}
 
+	typeTag := reflect.StructTag(structTag).Get("swaggertype")
+	if typeTag != "" {
+		parts := strings.Split(typeTag, ",")
+		if 0 < len(parts) && len(parts) <= 2 {
+			newSchemaType := parts[0]
+			newArrayType := structField.arrayType
+			if len(parts) >= 2 && newSchemaType == "array" {
+				newArrayType = parts[1]
+			}
+
+			CheckSchemaType(newSchemaType)
+			CheckSchemaType(newArrayType)
+			structField.schemaType = newSchemaType
+			structField.arrayType = newArrayType
+		}
+	}
 	exampleTag := reflect.StructTag(structTag).Get("example")
 	if exampleTag != "" {
 		structField.exampleValue = defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
