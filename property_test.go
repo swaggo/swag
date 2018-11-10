@@ -141,6 +141,33 @@ func TestGetPropertyNameStarExprIdent(t *testing.T) {
 	assert.Equal(t, expected, getPropertyName(input, New()))
 }
 
+func TestGetPropertyNameStarExprMap(t *testing.T) {
+	input := &ast.Field{
+		Type: &ast.StarExpr{
+			Star: 1026,
+			X: &ast.MapType{
+				Map: 1027,
+				Key: &ast.Ident{
+					NamePos: 1034,
+					Name:    "string",
+					Obj:     (*ast.Object)(nil),
+				},
+				Value: &ast.Ident{
+					NamePos: 1041,
+					Name:    "string",
+					Obj:     (*ast.Object)(nil),
+				},
+			},
+		},
+	}
+	expected := propertyName{
+		"object",
+		"object",
+		"",
+	}
+	assert.Equal(t, expected, getPropertyName(input, New()))
+}
+
 func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 	input := &ast.Field{
 		Type: &ast.ArrayType{
