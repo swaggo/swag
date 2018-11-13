@@ -86,6 +86,14 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 		if astTypeSelectorExpr, ok := ptr.X.(*ast.SelectorExpr); ok {
 			return parseFieldSelectorExpr(astTypeSelectorExpr, parser, newProperty)
 		}
+		// TODO support custom pointer type?
+		if _, ok := ptr.X.(*ast.MapType); ok { // if map
+			//TODO support map
+			return propertyName{SchemaType: "object", ArrayType: "object"}
+		}
+		if _, ok := ptr.X.(*ast.StructType); ok { // if struct
+			return propertyName{SchemaType: "object", ArrayType: "object"}
+		}
 		if astTypeIdent, ok := ptr.X.(*ast.Ident); ok {
 			name := astTypeIdent.Name
 			schemeType := TransToValidSchemeType(name)
@@ -106,6 +114,9 @@ func getPropertyName(field *ast.Field, parser *Parser) propertyName {
 			return parseFieldSelectorExpr(astTypeArrayExpr, parser, newArrayProperty)
 		}
 		if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.StarExpr); ok {
+			if astTypeArraySel, ok := astTypeArrayExpr.X.(*ast.SelectorExpr); ok {
+				return parseFieldSelectorExpr(astTypeArraySel, parser, newArrayProperty)
+			}
 			if astTypeArrayIdent, ok := astTypeArrayExpr.X.(*ast.Ident); ok {
 				name := TransToValidSchemeType(astTypeArrayIdent.Name)
 				return propertyName{SchemaType: "array", ArrayType: name}
