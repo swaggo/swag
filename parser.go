@@ -144,13 +144,26 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					parser.swagger.Info.License.Name = strings.TrimSpace(commentLine[len(attribute):])
 				case "@license.url":
 					parser.swagger.Info.License.URL = strings.TrimSpace(commentLine[len(attribute):])
+				case "@tag":
+					// @tag name @@ description
+					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
+					splittedStrings := strings.Split(commentInfo, "@@")
+					
+					parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
+						TagProps: spec.TagProps{
+							Name: splittedStrings[0],
+							Description: splittedStrings[1],							
+						}
+					})
 				case "@host":
 					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
 				case "@basepath":
 					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
 				case "@schemes":
 					parser.swagger.Schemes = GetSchemes(commentLine)
+
 				}
+
 			}
 
 			for i := 0; i < len(comments); i++ {
