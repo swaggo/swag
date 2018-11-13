@@ -148,12 +148,12 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					// @tag name @@ description
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					splittedStrings := strings.Split(commentInfo, "@@")
-					
+
 					parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
 						TagProps: spec.TagProps{
-							Name: splittedStrings[0],
-							Description: splittedStrings[1],							
-						}
+							Name:        splittedStrings[0],
+							Description: splittedStrings[1],
+						},
 					})
 				case "@host":
 					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
