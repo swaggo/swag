@@ -22,7 +22,7 @@
  - [Getting started](#getting-started)
  - [Go web frameworks](#supported-web-frameworks)
  - [Supported Web Frameworks](#supported-web-frameworks)
- - [How to use it with `gin`?](#how-to-use-it-with-`gin`?)
+ - [How to use it with `gin`?](#how-to-use-it-with-gin)
  - [Implementation Status](#implementation-status)
  - [swag cli](#swag-cli)
  - [General API Info](#general-api-info)
