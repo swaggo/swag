@@ -15,6 +15,9 @@ package main
 // @host petstore.swagger.io
 // @BasePath /v2
 
+// @tag dogs @@ Dogs are cool
+// @tag cats @@ Cats are the devil
+
 // @securityDefinitions.basic BasicAuth
 
 // @securityDefinitions.apikey ApiKeyAuth
