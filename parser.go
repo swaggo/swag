@@ -150,7 +150,6 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				case "@schemes":
 					parser.swagger.Schemes = GetSchemes(commentLine)
 				case "@tag":
-					// @tag name @@ description
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					splittedStrings := strings.Split(commentInfo, "@@")
 
@@ -160,7 +159,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 							Description: strings.TrimSpace(splittedStrings[1]),
 						},
 					})
-				}				
+				}
 			}
 
 			for i := 0; i < len(comments); i++ {
