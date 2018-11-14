@@ -151,8 +151,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 
 					parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
 						TagProps: spec.TagProps{
-							Name:        splittedStrings[0],
-							Description: splittedStrings[1],
+							Name:        strings.TrimSpace(splittedStrings[0]),
+							Description: strings.TrimSpace(splittedStrings[1]),
 						},
 					})
 				case "@host":

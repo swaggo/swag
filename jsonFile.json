@@ -1,0 +1,23 @@
+{
+     "swagger": "2.0",
+     "info": {
+          "description": "{{.Description}}",
+          "title": "{{.Title}}",
+          "contact": {},
+          "license": {},
+          "version": "{{.Version}}"
+     },
+     "host": "{{.Host}}",
+     "basePath": "{{.BasePath}}",
+     "paths": {},
+     "tags": [
+          {
+               "description": "Dogs are cool",
+               "name": "dogs"
+          },
+          {
+               "description": "Cats are the devil",
+               "name": "cats"
+          }
+     ]
+}
