@@ -483,6 +483,42 @@ func TestParseSimpleApi(t *testing.T) {
                 }
             }
         },
+        "web.AnonymousStructArray": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "foo": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "web.CrossAlias": {
+            "type": "object",
+            "properties": {
+                "Array": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "String": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.IndirectRecursiveTest": {
+            "type": "object",
+            "properties": {
+                "Tags": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.Tag"
+                    }
+                }
+            }
+        },
         "web.Pet": {
             "type": "object",
             "required": [
@@ -524,6 +560,8 @@ func TestParseSimpleApi(t *testing.T) {
                                 },
                                 "name": {
                                     "type": "string",
+                                    "maxLength": 16,
+                                    "minLength": 4,
                                     "example": "detail_category_name"
                                 },
                                 "photo_urls": {
@@ -546,13 +584,37 @@ func TestParseSimpleApi(t *testing.T) {
                 "decimal": {
                     "type": "number"
                 },
+                "enum_array": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "enum": [
+                            1,
+                            2,
+                            3,
+                            5,
+                            7
+                        ]
+                    }
+                },
                 "id": {
                     "type": "integer",
                     "format": "int64",
                     "example": 1
                 },
+                "int_array": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        1,
+                        2
+                    ]
+                },
                 "is_alive": {
                     "type": "boolean",
+                    "default": true,
                     "example": true
                 },
                 "name": {
@@ -583,10 +645,16 @@ func TestParseSimpleApi(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "maximum": 1000,
+                    "minimum": 1,
                     "example": 3.25
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "healthy",
+                        "ill"
+                    ]
                 },
                 "tags": {
                     "type": "array",
@@ -651,6 +719,27 @@ func TestParseSimpleApi(t *testing.T) {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/web.Pet"
+                    }
+                }
+            }
+        },
+        "web.Tags": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "pets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/web.Pet"
+                        }
                     }
                 }
             }
@@ -1017,6 +1106,12 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                         }
                     }
                 },
+                "coeffs": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
                 "custom_string": {
                     "type": "string"
                 },
@@ -1044,6 +1139,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                 "name": {
                     "type": "string",
                     "example": "poti"
+                },
+                "null_int": {
+                    "type": "integer"
                 },
                 "pets": {
                     "type": "array",

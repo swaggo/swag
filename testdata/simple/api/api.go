@@ -69,6 +69,26 @@ func Pet2() {
 
 }
 
+// @Summary Use IndirectRecursiveTest
+// @Success 200 {object} web.IndirectRecursiveTest
+func IndirectRecursiveTest() {
+}
+
+// @Summary Use Tags
+// @Success 200 {object} web.Tags
+func Tags() {
+}
+
+// @Summary Use CrossAlias
+// @Success 200 {object} web.CrossAlias
+func CrossAlias() {
+}
+
+// @Summary Use AnonymousStructArray
+// @Success 200 {object} web.AnonymousStructArray
+func AnonymousStructArray() {
+}
+
 type Pet3 struct {
 	ID int `json:"id"`
 }
