@@ -50,6 +50,9 @@ type Parser struct {
 	registerTypes map[string]*ast.TypeSpec
 
 	PropNamingStrategy string
+
+	// structStack stores full names of the structures that were already parsed or are being parsed now
+	structStack []string
 }
 
 // New creates a new Parser with default properties.
@@ -127,11 +130,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				case "@title":
 					parser.swagger.Info.Title = strings.TrimSpace(commentLine[len(attribute):])
 				case "@description":
-					if parser.swagger.Info.Description == "{{.Description}}" {
-						parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
-					} else {
-						parser.swagger.Info.Description += "<br>" + strings.TrimSpace(commentLine[len(attribute):])
-					}
+					parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
 				case "@termsofservice":
 					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.name":
@@ -144,8 +143,13 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					parser.swagger.Info.License.Name = strings.TrimSpace(commentLine[len(attribute):])
 				case "@license.url":
 					parser.swagger.Info.License.URL = strings.TrimSpace(commentLine[len(attribute):])
+				case "@host":
+					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
+				case "@basepath":
+					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
+				case "@schemes":
+					parser.swagger.Schemes = GetSchemes(commentLine)
 				case "@tag":
-					// @tag name @@ description
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					splittedStrings := strings.Split(commentInfo, "@@")
 
@@ -155,13 +159,6 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 							Description: strings.TrimSpace(splittedStrings[1]),
 						},
 					})
-				case "@host":
-					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
-				case "@basepath":
-					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
-				case "@schemes":
-					parser.swagger.Schemes = GetSchemes(commentLine)
-
 				}
 
 			}
@@ -382,47 +379,46 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 	}
 }
 
+func (parser *Parser) isInStructStack(refTypeName string) bool {
+	for _, structName := range parser.structStack {
+		if refTypeName == structName {
+			return true
+		}
+	}
+	return false
+}
+
 // ParseDefinitions parses Swagger Api definitions.
 func (parser *Parser) ParseDefinitions() {
 	for refTypeName, typeSpec := range parser.registerTypes {
 		ss := strings.Split(refTypeName, ".")
 		pkgName := ss[0]
-		parser.ParseDefinition(pkgName, typeSpec, typeSpec.Name.Name)
+		parser.structStack = nil
+		parser.ParseDefinition(pkgName, typeSpec.Name.Name, typeSpec)
 	}
 }
 
-var structStacks []string
-
-// isNotRecurringNestStruct check if a structure that is not a not repeating
-func isNotRecurringNestStruct(refTypeName string, structStacks []string) bool {
-	for _, v := range structStacks {
-		if refTypeName == v {
-			return false
-		}
-	}
-	return true
-}
-
-// ParseDefinition TODO: NEEDS COMMENT INFO
-func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, typeName string) {
-	var refTypeName string
-	if len(pkgName) > 0 {
-		refTypeName = pkgName + "." + typeName
-	} else {
-		refTypeName = typeName
-	}
-	if _, already := parser.swagger.Definitions[refTypeName]; already {
-		log.Println("Skipping '" + refTypeName + "', already present.")
+// ParseDefinition parses given type spec that corresponds to the type under
+// given name and package, and populates swagger schema definitions registry
+// with a schema for the given type
+func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.TypeSpec) {
+	refTypeName := fullTypeName(pkgName, typeName)
+	if _, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
+		log.Println("Skipping '" + refTypeName + "', already parsed.")
 		return
 	}
-	properties := make(map[string]spec.Schema)
-	// stop repetitive structural parsing
-	if isNotRecurringNestStruct(refTypeName, structStacks) {
-		structStacks = append(structStacks, refTypeName)
-		parser.parseTypeSpec(pkgName, typeSpec, properties)
-	}
-	structStacks = []string{}
 
+	if parser.isInStructStack(refTypeName) {
+		log.Println("Skipping '" + refTypeName + "', recursion detected.")
+		return
+	}
+	parser.structStack = append(parser.structStack, refTypeName)
+
+	log.Println("Generating " + refTypeName)
+	parser.swagger.Definitions[refTypeName] = parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
+}
+
+func (parser *Parser) collectRequiredFields(pkgName string, properties map[string]spec.Schema) (requiredFields []string) {
 	// created sorted list of properties keys so when we iterate over them it's deterministic
 	ks := make([]string, 0, len(properties))
 	for k := range properties {
@@ -430,7 +426,7 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 	}
 	sort.Strings(ks)
 
-	requiredFields := make([]string, 0)
+	requiredFields = make([]string, 0)
 
 	// iterate over keys list instead of map to avoid the random shuffle of the order that go does for maps
 	for _, k := range ks {
@@ -440,7 +436,7 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 		tname := prop.SchemaProps.Type[0]
 		if _, ok := parser.TypeDefinitions[pkgName][tname]; ok {
 			tspec := parser.TypeDefinitions[pkgName][tname]
-			parser.ParseDefinition(pkgName, tspec, tname)
+			parser.ParseDefinition(pkgName, tname, tspec)
 		}
 		if tname != "object" {
 			requiredFields = append(requiredFields, prop.SchemaProps.Required...)
@@ -448,39 +444,98 @@ func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, ty
 		}
 		properties[k] = prop
 	}
-	log.Println("Generating " + refTypeName)
-	parser.swagger.Definitions[refTypeName] = spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type:       []string{"object"},
-			Properties: properties,
-			Required:   requiredFields,
-		},
-	}
+
+	return
 }
 
-func (parser *Parser) parseTypeSpec(pkgName string, typeSpec *ast.TypeSpec, properties map[string]spec.Schema) {
-	switch typeSpec.Type.(type) {
-	case *ast.StructType:
-		structDecl := typeSpec.Type.(*ast.StructType)
-		fields := structDecl.Fields.List
+func fullTypeName(pkgName, typeName string) string {
+	if pkgName != "" {
+		return pkgName + "." + typeName
+	}
+	return typeName
+}
 
-		for _, field := range fields {
-			if field.Names == nil { //anonymous field
-				parser.parseAnonymousField(pkgName, field, properties)
+// parseTypeExpr parses given type expression that corresponds to the type under
+// given name and package, and returns swagger schema for it.
+func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr) spec.Schema {
+	switch expr := typeExpr.(type) {
+	// type Foo struct {...}
+	case *ast.StructType:
+		refTypeName := fullTypeName(pkgName, typeName)
+		if schema, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
+			return schema
+		}
+
+		properties := make(map[string]spec.Schema)
+		for _, field := range expr.Fields.List {
+			var fieldProps map[string]spec.Schema
+			if field.Names == nil {
+				fieldProps = parser.parseAnonymousField(pkgName, field)
 			} else {
-				props := parser.parseStruct(pkgName, field)
-				for k, v := range props {
-					properties[k] = v
-				}
+				fieldProps = parser.parseStruct(pkgName, field)
+			}
+
+			for k, v := range fieldProps {
+				properties[k] = v
 			}
 		}
 
+		return spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type:       []string{"object"},
+				Properties: properties,
+				Required:   parser.collectRequiredFields(pkgName, properties),
+			},
+		}
+
+	// type Foo Baz
+	case *ast.Ident:
+		refTypeName := fullTypeName(pkgName, expr.Name)
+		if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
+			typedef := parser.TypeDefinitions[pkgName][expr.Name]
+			parser.ParseDefinition(pkgName, expr.Name, typedef)
+		}
+		return parser.swagger.Definitions[refTypeName]
+
+	// type Foo *Baz
+	case *ast.StarExpr:
+		return parser.parseTypeExpr(pkgName, typeName, expr.X)
+
+	// type Foo []Baz
 	case *ast.ArrayType:
-		log.Println("ParseDefinitions not supported 'Array' yet.")
-	case *ast.InterfaceType:
-		log.Println("ParseDefinitions not supported 'Interface' yet.")
-	case *ast.MapType:
-		log.Println("ParseDefinitions not supported 'Map' yet.")
+		itemSchema := parser.parseTypeExpr(pkgName, "", expr.Elt)
+		return spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"array"},
+				Items: &spec.SchemaOrArray{
+					Schema: &itemSchema,
+				},
+			},
+		}
+
+	// type Foo pkg.Bar
+	case *ast.SelectorExpr:
+		if xIdent, ok := expr.X.(*ast.Ident); ok {
+			pkgName = xIdent.Name
+			typeName = expr.Sel.Name
+			refTypeName := fullTypeName(pkgName, typeName)
+			if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
+				typedef := parser.TypeDefinitions[pkgName][typeName]
+				parser.ParseDefinition(pkgName, typeName, typedef)
+			}
+			return parser.swagger.Definitions[refTypeName]
+		}
+
+	// type Foo map[string]Bar
+	// ...
+	default:
+		log.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
+	}
+
+	return spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+		},
 	}
 }
 
@@ -517,7 +572,8 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 	}
 	if _, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
-		parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.schemaType], structField.schemaType)
+		parser.ParseDefinition(pkgName, structField.schemaType,
+			parser.TypeDefinitions[pkgName][structField.schemaType])
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type:        []string{"object"}, // to avoid swagger validation error
@@ -530,7 +586,8 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 	} else if structField.schemaType == "array" { // array field type
 		// if defined -- ref it
 		if _, ok := parser.TypeDefinitions[pkgName][structField.arrayType]; ok { // user type in array
-			parser.ParseDefinition(pkgName, parser.TypeDefinitions[pkgName][structField.arrayType], structField.arrayType)
+			parser.ParseDefinition(pkgName, structField.arrayType,
+				parser.TypeDefinitions[pkgName][structField.arrayType])
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
@@ -637,30 +694,48 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 	return
 }
 
-func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field, properties map[string]spec.Schema) {
-	// check if ast Field is Ident type
-	astTypeIdent, okTypeIdent := field.Type.(*ast.Ident)
+func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) map[string]spec.Schema {
+	properties := make(map[string]spec.Schema)
 
-	// if ast Field is not Ident type we check if it's StarExpr
-	// because it might be a pointer to an Ident
-	if !okTypeIdent {
-		if astTypeStar, okTypeStar := field.Type.(*ast.StarExpr); okTypeStar {
-			astTypeIdent, okTypeIdent = astTypeStar.X.(*ast.Ident)
+	fullTypeName := ""
+	switch ftype := field.Type.(type) {
+	case *ast.Ident:
+		fullTypeName = ftype.Name
+	case *ast.StarExpr:
+		if ftypeX, ok := ftype.X.(*ast.Ident); ok {
+			fullTypeName = ftypeX.Name
 		}
+	default:
+		log.Printf("Field type of '%T' is unsupported. Skipping", ftype)
+		return properties
 	}
 
-	if okTypeIdent {
-		findPgkName := pkgName
-		findBaseTypeName := astTypeIdent.Name
-		ss := strings.Split(astTypeIdent.Name, ".")
-		if len(ss) > 1 {
-			findPgkName = ss[0]
-			findBaseTypeName = ss[1]
-		}
-
-		baseTypeSpec := parser.TypeDefinitions[findPgkName][findBaseTypeName]
-		parser.parseTypeSpec(findPgkName, baseTypeSpec, properties)
+	typeName := fullTypeName
+	if splits := strings.Split(fullTypeName, "."); len(splits) > 1 {
+		pkgName = splits[0]
+		typeName = splits[1]
 	}
+
+	typeSpec := parser.TypeDefinitions[pkgName][typeName]
+	schema := parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
+
+	schemaType := "unknown"
+	if len(schema.SchemaProps.Type) > 0 {
+		schemaType = schema.SchemaProps.Type[0]
+	}
+
+	switch schemaType {
+	case "object":
+		for k, v := range schema.SchemaProps.Properties {
+			properties[k] = v
+		}
+	case "array":
+		properties[typeName] = schema
+	default:
+		log.Printf("Can't extract properties from a schema of type '%s'", schemaType)
+	}
+
+	return properties
 }
 
 func (parser *Parser) parseField(field *ast.Field) *structField {

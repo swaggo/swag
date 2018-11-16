@@ -483,6 +483,31 @@ func TestParseSimpleApi(t *testing.T) {
                        }
                   }
              },
+        "web.AnonymousStructArray": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "foo": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "web.CrossAlias": {
+            "type": "object",
+            "properties": {
+                "Array": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "String": {
+                    "type": "string"
+                }
+            }
+        },
              "web.IndirectRecursiveTest": {
                   "type": "object",
                   "properties": {
@@ -694,6 +719,27 @@ func TestParseSimpleApi(t *testing.T) {
                             "type": "array",
                             "items": {
                                  "$ref": "#/definitions/web.Pet"
+                    }
+                }
+            }
+        },
+        "web.Tags": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "pets": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/web.Pet"
+                        }
                             }
                        }
                   }
