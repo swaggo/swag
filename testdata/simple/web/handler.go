@@ -42,6 +42,14 @@ type Tag struct {
 	Pets []Pet  `json:"pets"`
 }
 
+type Tags []*Tag
+
+type AnonymousStructArray []struct {
+	Foo string `json:"foo"`
+}
+
+type CrossAlias cross.Cross
+
 type Pet2 struct {
 	ID         int        `json:"id"`
 	MiddleName *string    `json:"middlename"`
