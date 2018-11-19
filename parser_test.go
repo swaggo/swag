@@ -2317,3 +2317,35 @@ func TestParseDeterministic(t *testing.T) {
 		})
 	}
 }
+
+func TestApiParseTag(t *testing.T) {
+	searchDir := "testdata/tags"
+	mainAPIFile := "main.go"
+	p := New()
+	p.PropNamingStrategy = PascalCase
+	p.ParseAPI(searchDir, mainAPIFile)
+
+	if len(p.swagger.Tags) != 2 {
+		t.Log("Number of tags did not match")
+		t.Fail()
+	}
+
+	dogs := p.swagger.Tags[0]
+	if dogs.TagProps.Name != "dogs" || dogs.TagProps.Description != "Dogs are cool" {
+		t.Log("Failed to parse dogs name or description")
+		t.Fail()
+	}
+
+	cats := p.swagger.Tags[1]
+	if cats.TagProps.Name != "cats" || cats.TagProps.Description != "Cats are the devil" {
+		t.Log("Failed to parse cats name or description")
+		t.Fail()
+	}
+
+	if cats.TagProps.ExternalDocs.URL != "https://google.de" || cats.TagProps.ExternalDocs.Description != "google is super useful to find out that cats are evil!" {
+		t.Log("URL: ", cats.TagProps.ExternalDocs.URL)
+		t.Log("Description: ", cats.TagProps.ExternalDocs.Description)
+		t.Log("Failed to parse cats external documentation")
+		t.Fail()
+	}
+}
