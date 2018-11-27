@@ -92,3 +92,8 @@ func AnonymousStructArray() {
 type Pet3 struct {
 	ID int `json:"id"`
 }
+
+// @Success 200 {object} web.Pet5 "ok"
+func GetPet5() {
+
+}
