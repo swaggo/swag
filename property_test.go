@@ -261,3 +261,26 @@ func TestGetPropertyNameInterface(t *testing.T) {
 	}
 	assert.Equal(t, expected, getPropertyName(input, New()))
 }
+
+func TestParseTag(t *testing.T) {
+	searchDir := "testdata/tags"
+	mainAPIFile := "main.go"
+	p := New()
+	p.PropNamingStrategy = PascalCase
+	p.ParseAPI(searchDir, mainAPIFile)
+
+	if len(p.swagger.Tags) != 2 {
+		t.Log("Number of tags did not match")
+		t.Fail()
+	}
+
+	dogs := p.swagger.Tags[0]
+	if dogs.TagProps.Name != "dogs" || dogs.TagProps.Description != "Dogs are cool" {
+		t.Log("Failed to parse dogs name or description")
+	}
+
+	cats := p.swagger.Tags[1]
+	if cats.TagProps.Name != "cats" || dogs.TagProps.Description != "Cats are the devil" {
+		t.Log("Failed to parse cats name or description")
+	}
+}

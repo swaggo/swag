@@ -153,6 +153,34 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
 				case "@schemes":
 					parser.swagger.Schemes = GetSchemes(commentLine)
+				case "@tag.name":
+					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
+						TagProps: spec.TagProps{
+							Name: strings.TrimSpace(commentInfo),
+						},
+					})
+				case "@tag.description":
+					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
+					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+					tag.TagProps.Description = commentInfo
+					replaceLastTag(parser.swagger.Tags, tag)
+				case "@tag.docs.url":
+					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
+					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+					tag.TagProps.ExternalDocs = &spec.ExternalDocumentation{
+						URL: commentInfo,
+					}
+					replaceLastTag(parser.swagger.Tags, tag)
+
+				case "@tag.docs.description":
+					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
+					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+					if tag.TagProps.ExternalDocs == nil {
+						log.Panic("@tag.docs.description needs to come after a @tags.docs.url")
+					}
+					tag.TagProps.ExternalDocs.Description = commentInfo
+					replaceLastTag(parser.swagger.Tags, tag)
 				}
 			}
 
@@ -838,6 +866,11 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 	}
 
 	return structField
+}
+
+func replaceLastTag(slice []spec.Tag, element spec.Tag) {
+	slice = slice[:len(slice)-1]
+	slice = append(slice, element)
 }
 
 func getFloatTag(structTag reflect.StructTag, tagName string) *float64 {
