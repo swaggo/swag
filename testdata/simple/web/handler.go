@@ -78,3 +78,12 @@ type RevValue struct {
 	Cross   cross.Cross   `json:"cross"`
 	Crosses []cross.Cross `json:"crosses"`
 }
+
+type Pet4 struct {
+	Name string `json:"name" binding:"required"`
+}
+
+type Pet5 struct {
+	*Pet4
+	Odd bool `json:"odd" binding:"required"`
+}

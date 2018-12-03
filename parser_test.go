@@ -681,6 +681,21 @@ func TestParseSimpleApi(t *testing.T) {
                 }
             }
         },
+        "web.Pet5": {
+            "type": "object",
+            "required": [
+                "name",
+                "odd"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "odd": {
+                    "type": "boolean"
+                }
+            }
+        },
         "web.RevValue": {
             "type": "object",
             "properties": {
