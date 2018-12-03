@@ -432,7 +432,7 @@ func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.Ty
 	parser.structStack = append(parser.structStack, refTypeName)
 
 	log.Println("Generating " + refTypeName)
-	parser.swagger.Definitions[refTypeName] = parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
+	parser.swagger.Definitions[refTypeName] = parser.parseTypeExpr(pkgName, typeName, typeSpec.Type, true)
 }
 
 func (parser *Parser) collectRequiredFields(pkgName string, properties map[string]spec.Schema) (requiredFields []string) {
@@ -457,7 +457,6 @@ func (parser *Parser) collectRequiredFields(pkgName string, properties map[strin
 		}
 		if tname != "object" {
 			requiredFields = append(requiredFields, prop.SchemaProps.Required...)
-			prop.SchemaProps.Required = make([]string, 0)
 		}
 		properties[k] = prop
 	}
@@ -474,7 +473,7 @@ func fullTypeName(pkgName, typeName string) string {
 
 // parseTypeExpr parses given type expression that corresponds to the type under
 // given name and package, and returns swagger schema for it.
-func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr) spec.Schema {
+func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr, flattenRequired bool) spec.Schema {
 	switch expr := typeExpr.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
@@ -497,11 +496,24 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 			}
 		}
 
+		required := parser.collectRequiredFields(pkgName, properties)
+
+		// unset required from properties because we've aggregated them
+		if flattenRequired {
+			for k, prop := range properties {
+				tname := prop.SchemaProps.Type[0]
+				if tname != "object" {
+					prop.SchemaProps.Required = make([]string, 0)
+				}
+				properties[k] = prop
+			}
+		}
+
 		return spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type:       []string{"object"},
 				Properties: properties,
-				Required:   parser.collectRequiredFields(pkgName, properties),
+				Required:   required,
 			},
 		}
 
@@ -516,11 +528,11 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 
 	// type Foo *Baz
 	case *ast.StarExpr:
-		return parser.parseTypeExpr(pkgName, typeName, expr.X)
+		return parser.parseTypeExpr(pkgName, typeName, expr.X, true)
 
 	// type Foo []Baz
 	case *ast.ArrayType:
-		itemSchema := parser.parseTypeExpr(pkgName, "", expr.Elt)
+		itemSchema := parser.parseTypeExpr(pkgName, "", expr.Elt, true)
 		return spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"array"},
@@ -734,7 +746,7 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) map[
 	}
 
 	typeSpec := parser.TypeDefinitions[pkgName][typeName]
-	schema := parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
+	schema := parser.parseTypeExpr(pkgName, typeName, typeSpec.Type, false)
 
 	schemaType := "unknown"
 	if len(schema.SchemaProps.Type) > 0 {
