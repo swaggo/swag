@@ -8,6 +8,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOLIST=$(GOCMD) list
 BINARY_NAME=swag
+PACKAGES=$(shell $(GOLIST) -f {{.Dir}} ./... | grep -v /example)
 
 all: test build
 
@@ -21,16 +22,8 @@ clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 
-DIRS=$(shell $(GOLIST) -f {{.Dir}} ./...)
 lint:
-	@for d in $(DIRS) ; do \
-		if [ "`$(GOIMPORT) -l $$d/*.go | tee /dev/stderr`" ]; then \
-			echo "^ - Repo contains improperly formatted go files" && echo && exit 1; \
-		fi \
-	done
-	@if [ "`$(GOLINT) ./... | grep -vf .golint_exclude | tee /dev/stderr`" ]; then \
-		echo "^ - Lint errors!" && echo && exit 1; \
-	fi
+	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
 deps:
 	$(GOGET) -v ./...
