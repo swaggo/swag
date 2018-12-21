@@ -407,7 +407,15 @@ func (parser *Parser) isInStructStack(refTypeName string) bool {
 
 // ParseDefinitions parses Swagger Api definitions.
 func (parser *Parser) ParseDefinitions() {
-	for refTypeName, typeSpec := range parser.registerTypes {
+	// sort the typeNames so that parsing definitions is deterministic
+	typeNames := make([]string, 0, len(parser.registerTypes))
+	for refTypeName := range parser.registerTypes {
+		typeNames = append(typeNames, refTypeName)
+	}
+	sort.Strings(typeNames)
+
+	for _, refTypeName := range typeNames {
+		typeSpec := parser.registerTypes[refTypeName]
 		ss := strings.Split(refTypeName, ".")
 		pkgName := ss[0]
 		parser.structStack = nil
