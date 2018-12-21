@@ -79,11 +79,19 @@ type RevValue struct {
 	Crosses []cross.Cross `json:"crosses"`
 }
 
-type Pet4 struct {
+// Below we have Pet5b as base type and Pet5a and Pet5c both have Pet5b as anonymous field, inheriting it's properties
+// By using these names we ensure that our test will fill if the order of parsing matters at all
+
+type Pet5a struct {
+	*Pet5b
+	Odd bool `json:"odd" binding:"required"`
+}
+
+type Pet5b struct {
 	Name string `json:"name" binding:"required"`
 }
 
-type Pet5 struct {
-	*Pet4
+type Pet5c struct {
+	*Pet5b
 	Odd bool `json:"odd" binding:"required"`
 }
