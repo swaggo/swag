@@ -212,7 +212,7 @@ func TestGetSchemes(t *testing.T) {
 
 }
 
-func TestParseSimpleApi(t *testing.T) {
+func TestParseSimpleApi1(t *testing.T) {
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -681,7 +681,33 @@ func TestParseSimpleApi(t *testing.T) {
                 }
             }
         },
-        "web.Pet5": {
+        "web.Pet5a": {
+            "type": "object",
+            "required": [
+                "name",
+                "odd"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "odd": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "web.Pet5b": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.Pet5c": {
             "type": "object",
             "required": [
                 "name",
