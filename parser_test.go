@@ -2114,7 +2114,7 @@ func Test(){
 
 	p := New()
 	assert.Panics(t, func() {
-		p.ParseRouterAPIInfo(f)
+		p.ParseRouterAPIInfo("", f)
 	})
 }
 
@@ -2131,7 +2131,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterAPIInfo(f)
+	p.ParseRouterAPIInfo("", f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2154,7 +2154,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterAPIInfo(f)
+	p.ParseRouterAPIInfo("", f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2177,7 +2177,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterAPIInfo(f)
+	p.ParseRouterAPIInfo("", f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2200,7 +2200,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterAPIInfo(f)
+	p.ParseRouterAPIInfo("", f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2223,7 +2223,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterAPIInfo(f)
+	p.ParseRouterAPIInfo("", f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2246,7 +2246,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterAPIInfo(f)
+	p.ParseRouterAPIInfo("", f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2269,7 +2269,7 @@ func Test(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterAPIInfo(f)
+	p.ParseRouterAPIInfo("", f)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2300,7 +2300,7 @@ func Test3(){
 		panic(err)
 	}
 	p := New()
-	p.ParseRouterAPIInfo(f)
+	p.ParseRouterAPIInfo("", f)
 
 	ps := p.swagger.Paths.Paths
 
