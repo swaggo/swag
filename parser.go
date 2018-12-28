@@ -749,6 +749,13 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) (map
 	case *ast.StarExpr:
 		if ftypeX, ok := ftype.X.(*ast.Ident); ok {
 			fullTypeName = ftypeX.Name
+		} else if ftypeX, ok := ftype.X.(*ast.SelectorExpr); ok {
+			if packageX, ok := ftypeX.X.(*ast.Ident); ok {
+				fullTypeName = fmt.Sprintf("%s.%s", packageX.Name, ftypeX.Sel.Name)
+			}
+		} else {
+			log.Printf("Composite field type of '%T' is unhandle by parser. Skipping", ftype)
+			return properties, []string{}
 		}
 	default:
 		log.Printf("Field type of '%T' is unsupported. Skipping", ftype)
