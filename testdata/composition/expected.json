@@ -132,6 +132,9 @@
                 },
                 "field2": {
                     "type": "string"
+                },
+                "message": {
+                    "type": "string"
                 }
             }
         }
