@@ -3,6 +3,7 @@ package main
 // @title Swagger Example API
 // @version 1.0
 // @description This is a sample server Petstore server.
+// @description It has a lot of beatiful features.
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name API Support
