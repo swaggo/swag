@@ -130,7 +130,11 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				case "@title":
 					parser.swagger.Info.Title = strings.TrimSpace(commentLine[len(attribute):])
 				case "@description":
-					parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
+					if parser.swagger.Info.Description == "{{.Description}}" {
+						parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
+					} else {
+						parser.swagger.Info.Description += "\n" + strings.TrimSpace(commentLine[len(attribute):])
+					}
 				case "@termsofservice":
 					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.name":
