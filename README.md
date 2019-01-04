@@ -472,6 +472,16 @@ Field Name | Type | Description
 
 ## TIPS
 
+### Descriptions over multiple lines
+
+You can add descriptions spanning multiple lines in either the general api description or routes definitions like so: 
+
+```go
+// @description This is the first line
+// @description This is the second line
+// @description And so forth.
+```
+
 ### User defined structure with an array type
 
 ```go

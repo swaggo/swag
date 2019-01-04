@@ -21,7 +21,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	expected := `{
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server Petstore server.",
+        "description": "This is a sample server Petstore server.\nIt has a lot of beatiful features.",
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
