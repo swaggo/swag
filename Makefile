@@ -27,6 +27,8 @@ clean:
 .PHONY: install
 install:
 	$(GOGET) -v ./...
+	$(GOGET) github.com/stretchr/testify/assert
+
 
 .PHONY: lint
 lint:
