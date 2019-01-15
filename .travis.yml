@@ -6,6 +6,8 @@ go:
   - 1.10.x
   - 1.11.x
 
+install:
+  - make install
 
 script:
   - make lint
