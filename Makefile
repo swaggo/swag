@@ -1,4 +1,3 @@
-#! /usr/bin/make
 GOCMD=$(shell which go)
 GOLINT=$(shell which golint)
 GOIMPORT=$(shell which goimports)
@@ -12,16 +11,20 @@ PACKAGES=$(shell $(GOLIST) -f {{.Dir}} ./... | grep -v /example)
 
 all: test build
 
+.PHONY: build
 build:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./cmd/...
 
+.PHONY: test
 test:
 	$(GOTEST) -v ./...
 
+.PHONY: clean
 clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 
+.PHONY: lint
 lint:
 	@hash golint > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
 		$(GOTEST) -u golang.org/x/lint/golint; \
@@ -29,6 +32,7 @@ lint:
 	
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
+.PHONY: view-covered
 view-covered:
 	$(GOTEST) -coverprofile=cover.out $(TARGET)
 	$(GOCMD) tool cover -html=cover.out
