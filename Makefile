@@ -27,9 +27,6 @@ lint:
 
 deps:
 	$(GOGET) -v ./...
-	$(GOGET) github.com/stretchr/testify/assert
-	$(GOGET) golang.org/x/lint/golint
-	$(GOGET) golang.org/x/tools/cmd/goimports
 
 view-covered:
 	$(GOTEST) -coverprofile=cover.out $(TARGET)
