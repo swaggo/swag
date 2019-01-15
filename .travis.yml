@@ -5,8 +5,6 @@ go:
   - 1.10.x
   - 1.11.x
 
-before_install:
-  - make deps
 
 script:
   - make lint

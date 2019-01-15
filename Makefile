@@ -29,9 +29,6 @@ lint:
 	
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
-deps:
-	$(GOGET) -v ./...
-
 view-covered:
 	$(GOTEST) -coverprofile=cover.out $(TARGET)
 	$(GOCMD) tool cover -html=cover.out
