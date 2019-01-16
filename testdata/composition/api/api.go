@@ -21,6 +21,8 @@ type FooBarPointer struct {
 	*Bar
 }
 
+type BarMap map[string]Bar
+
 // @Description get Foo
 // @ID get-foo
 // @Accept json
@@ -63,4 +65,15 @@ func GetFooBar(c *gin.Context) {
 func GetFooBarPointer(c *gin.Context) {
 	//write your code
 	var _ = FooBarPointer{}
+}
+
+// @Description get BarMap
+// @ID get-bar-map
+// @Accept json
+// @Produce json
+// @Success 200 {object} api.BarMap
+// @Router /testapi/get-barmap [get]
+func GetBarMap(c *gin.Context) {
+	//write your code
+	var _ = BarMap{}
 }

@@ -19,5 +19,6 @@ func main() {
 	r.GET("/testapi/get-bar", api.GetBar)
 	r.GET("/testapi/get-foobar", api.GetFooBar)
 	r.GET("/testapi/get-foobar-pointer", api.GetFooBarPointer)
+	r.GET("/testapi/get-barmap", api.GetBarMap)
 	r.Run()
 }
