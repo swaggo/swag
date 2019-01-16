@@ -32,6 +32,27 @@
                 }
             }
         },
+        "/testapi/get-barmap": {
+            "get": {
+                "description": "get BarMap",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-bar-map",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/api.BarMap"
+                        }
+                    }
+                }
+            }
+        },
         "/testapi/get-foo": {
             "get": {
                 "description": "get Foo",
@@ -102,6 +123,17 @@
             "properties": {
                 "field2": {
                     "type": "string"
+                }
+            }
+        },
+        "api.BarMap": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "properties": {
+                    "field2": {
+                        "type": "string"
+                    }
                 }
             }
         },

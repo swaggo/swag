@@ -576,6 +576,16 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 		}
 
 	// type Foo map[string]Bar
+	case *ast.MapType:
+		itemSchema := parser.parseTypeExpr(pkgName, "", expr.Value)
+		return spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				AdditionalProperties: &spec.SchemaOrBool{
+					Schema: &itemSchema,
+				},
+			},
+		}
 	// ...
 	default:
 		log.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
