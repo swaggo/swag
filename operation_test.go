@@ -662,6 +662,6 @@ func TestParseMultiDescription(t *testing.T) {
 
 	b, _ := json.MarshalIndent(operation, "", "    ")
 
-	expected := `"description": "line one\u003cbr\u003eline two x"`
+	expected := `"description": "line one\nline two x"`
 	assert.Contains(t, string(b), expected)
 }

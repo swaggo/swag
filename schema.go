@@ -2,7 +2,7 @@ package swag
 
 import "fmt"
 
-// CheckSchemaType TODO: NEEDS COMMENT INFO
+// CheckSchemaType begins panicking if typeName is not a name of primitive type
 func CheckSchemaType(typeName string) {
 	if !IsPrimitiveType(typeName) {
 		panic(fmt.Errorf("%s is not basic types", typeName))

@@ -130,7 +130,11 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				case "@title":
 					parser.swagger.Info.Title = strings.TrimSpace(commentLine[len(attribute):])
 				case "@description":
-					parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
+					if parser.swagger.Info.Description == "{{.Description}}" {
+						parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
+					} else {
+						parser.swagger.Info.Description += "\n" + strings.TrimSpace(commentLine[len(attribute):])
+					}
 				case "@termsofservice":
 					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.name":
@@ -759,6 +763,13 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) (map
 	case *ast.StarExpr:
 		if ftypeX, ok := ftype.X.(*ast.Ident); ok {
 			fullTypeName = ftypeX.Name
+		} else if ftypeX, ok := ftype.X.(*ast.SelectorExpr); ok {
+			if packageX, ok := ftypeX.X.(*ast.Ident); ok {
+				fullTypeName = fmt.Sprintf("%s.%s", packageX.Name, ftypeX.Sel.Name)
+			}
+		} else {
+			log.Printf("Composite field type of '%T' is unhandle by parser. Skipping", ftype)
+			return properties, []string{}
 		}
 	default:
 		log.Printf("Field type of '%T' is unsupported. Skipping", ftype)

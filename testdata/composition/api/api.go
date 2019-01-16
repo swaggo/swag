@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/swag/testdata/composition/common"
 )
 
 type Foo struct {
@@ -17,6 +18,7 @@ type FooBar struct {
 }
 
 type FooBarPointer struct {
+	*common.ResponseFormat
 	*Foo
 	*Bar
 }

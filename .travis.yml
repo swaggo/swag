@@ -1,12 +1,19 @@
 language: go
+sudo: false
 
 go:
   - 1.9.x
   - 1.10.x
   - 1.11.x
 
-before_install:
-  - make deps
+matrix:
+  fast_finish: true
+  include:
+  - go: 1.11.x
+    env: GO111MODULE=on
+
+install:
+  - make install
 
 script:
   - make lint
