@@ -455,6 +455,13 @@ func TestParseSimpleApi1(t *testing.T) {
         }
     },
     "definitions": {
+        "api.SwagReturn": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": {}
+            }
+        },
         "cross.Cross": {
             "type": "object",
             "properties": {
