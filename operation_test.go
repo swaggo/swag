@@ -394,7 +394,7 @@ func TestParseParamCommentNotMatch(t *testing.T) {
 	comment := `@Param some_id body mock true`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
-	//panic(err)
+	
 	assert.Error(t, err)
 }
 
