@@ -554,7 +554,7 @@ type Account struct {
     // Override primitive type by simply specifying it via `swaggertype` tag
     ID     sql.NullInt64 `json:"id" swaggertype:"integer"`
 	
-	// Override struct type to a primitive type 'integer' by specifying it via `swaggertype` tag
+    // Override struct type to a primitive type 'integer' by specifying it via `swaggertype` tag
     RegisterTime TimestampTime `json:"register_time" swaggertype:"primitive,integer"`
 
     // Array types can be overridden using "array,<prim_type>" format
