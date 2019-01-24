@@ -14,7 +14,6 @@ type TimestampTime struct {
     time.Time
 }
 
-///implement encoding.JSON.Marshaler interface,override the MarshalJSON and UnmarshalJSON method 
 func (t *TimestampTime) MarshalJSON() ([]byte, error) {
 	bin := make([]byte, 16)
 	bin = strconv.AppendInt(bin[:0], t.Time.Unix(), 10)
@@ -29,7 +28,6 @@ func (t *TimestampTime) UnmarshalJSON(bin []byte) error {
 	t.Time = time.Unix(v, 0)
 	return nil
 }
-///
 
 type Pet struct {
 	ID       int `example:"1" format:"int64"`
