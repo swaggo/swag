@@ -9,6 +9,27 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type TimestampTime struct {
+    time.Time
+}
+
+///implement encoding.JSON.Marshaler interface,override the MarshalJSON and UnmarshalJSON method 
+func (t *TimestampTime) MarshalJSON() ([]byte, error) {
+	bin := make([]byte, 16)
+	bin = strconv.AppendInt(bin[:0], t.Time.Unix(), 10)
+	return bin, nil
+}
+
+func (t *TimestampTime) UnmarshalJSON(bin []byte) error {
+	v, err := strconv.ParseInt(string(bin), 10, 64)
+	if err != nil {
+		return err
+	}
+	t.Time = time.Unix(v, 0)
+	return nil
+}
+///
+
 type Pet struct {
 	ID       int `example:"1" format:"int64"`
 	Category struct {
@@ -37,6 +58,7 @@ type Pet struct {
 	customStringArr []CustomString
 	NullInt         sql.NullInt64 `swaggertype:"integer"`
 	Coeffs          []big.Float   `swaggertype:"array,number"`
+	Birthday    	TimestampTime `swaggertype:"primitive,integer"`
 }
 
 type CustomString string
