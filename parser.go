@@ -856,8 +856,13 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 		if 0 < len(parts) && len(parts) <= 2 {
 			newSchemaType := parts[0]
 			newArrayType := structField.arrayType
-			if len(parts) >= 2 && newSchemaType == "array" {
-				newArrayType = parts[1]
+			if len(parts) >= 2 {
+				if (newSchemaType == "array"){
+					newArrayType = parts[1]
+				}else if (newSchemaType == "primitive"){
+					newSchemaType= parts[1]
+					newArrayType = parts[1]
+				}
 			}
 
 			CheckSchemaType(newSchemaType)

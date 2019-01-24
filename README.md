@@ -529,9 +529,33 @@ type Account struct {
 ### Override swagger type of a struct field
 
 ```go
+type TimestampTime struct {
+    time.Time
+}
+
+///implement encoding.JSON.Marshaler interface
+func (t *TimestampTime) MarshalJSON() ([]byte, error) {
+    bin := make([]byte, 16)
+    bin = strconv.AppendInt(bin[:0], t.Time.Unix(), 10)
+    return bin, nil
+}
+
+func (t *TimestampTime) UnmarshalJSON(bin []byte) error {
+    v, err := strconv.ParseInt(string(bin), 10, 64)
+    if err != nil {
+        return err
+    }
+    t.Time = time.Unix(v, 0)
+    return nil
+}
+///
+
 type Account struct {
     // Override primitive type by simply specifying it via `swaggertype` tag
     ID     sql.NullInt64 `json:"id" swaggertype:"integer"`
+	
+    // Override struct type to a primitive type 'integer' by specifying it via `swaggertype` tag
+    RegisterTime TimestampTime `json:"register_time" swaggertype:"primitive,integer"`
 
     // Array types can be overridden using "array,<prim_type>" format
     Coeffs []big.Float `json:"coeffs" swaggertype:"array,number"`
