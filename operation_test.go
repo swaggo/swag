@@ -382,11 +382,19 @@ func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentByNotSupportedType(t *testing.T) {
+	comment := `@Param some_id not_supported int true "Some ID"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+
+	assert.Error(t, err)
+}
+
 func TestParseParamCommentNotMatch(t *testing.T) {
 	comment := `@Param some_id body mock true`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
-
+	
 	assert.Error(t, err)
 }
 

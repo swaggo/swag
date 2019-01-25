@@ -20,18 +20,18 @@ func main() {
 			Aliases: []string{"i"},
 			Usage:   "Create docs.go",
 			Action: func(c *cli.Context) error {
-				dir := c.String("dir")
+				searchDir := c.String("dir")
 				mainAPIFile := c.String("generalInfo")
 				swaggerConfDir := c.String("swagger")
 				strategy := c.String("propertyStrategy")
+
 				switch strategy {
 				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
 				default:
 					return errors.Errorf("not supported %s propertyStrategy", strategy)
 				}
 
-				gen.New().Build(dir, mainAPIFile, swaggerConfDir, strategy)
-				return nil
+				return gen.New().Build(searchDir, mainAPIFile, swaggerConfDir, strategy)
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{

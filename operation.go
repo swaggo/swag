@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -102,7 +101,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
 	matches := re.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
-		return fmt.Errorf("can not parse param comment \"%s\"", commentLine)
+		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
 	}
 	name := matches[1]
 	paramType := matches[2]
@@ -161,8 +160,13 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		}
 	case "formData":
 		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
+	default:
+		return fmt.Errorf("%s is not suppoted paramType", paramType)
 	}
-	param = operation.parseAndExtractionParamAttribute(commentLine, schemaType, param)
+
+	if err := operation.parseAndExtractionParamAttribute(commentLine, schemaType, &param); err != nil {
+		return err
+	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	return nil
 }
@@ -184,7 +188,7 @@ var regexAttributes = map[string]*regexp.Regexp{
 	"format": regexp.MustCompile(`(?i)format\(.*\)`),
 }
 
-func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param spec.Parameter) spec.Parameter {
+func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
 	for attrKey, re := range regexAttributes {
 		switch attrKey {
@@ -205,12 +209,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
 				if schemaType != "integer" && schemaType != "number" {
-					log.Panicf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+					return fmt.Errorf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
 				attr = strings.TrimSpace(attr[l+1 : r])
 				n, err := strconv.ParseFloat(attr, 64)
 				if err != nil {
-					log.Panicf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+					return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
 				}
 				param.Maximum = &n
 			}
@@ -220,12 +224,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
 				if schemaType != "integer" && schemaType != "number" {
-					log.Panicf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+					return fmt.Errorf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
 				attr = strings.TrimSpace(attr[l+1 : r])
 				n, err := strconv.ParseFloat(attr, 64)
 				if err != nil {
-					log.Panicf("mininum is allow only a number got=%s", attr)
+					return fmt.Errorf("mininum is allow only a number got=%s", attr)
 				}
 				param.Minimum = &n
 			}
@@ -243,12 +247,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
 				if schemaType != "string" {
-					log.Panicf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+					return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
 				attr = strings.TrimSpace(attr[l+1 : r])
 				n, err := strconv.ParseInt(attr, 10, 64)
 				if err != nil {
-					log.Panicf("maxlength is allow only a number got=%s", attr)
+					return fmt.Errorf("maxlength is allow only a number got=%s", attr)
 				}
 				param.MaxLength = &n
 			}
@@ -258,12 +262,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
 				if schemaType != "string" {
-					log.Panicf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+					return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
 				attr = strings.TrimSpace(attr[l+1 : r])
 				n, err := strconv.ParseInt(attr, 10, 64)
 				if err != nil {
-					log.Panicf("minlength is allow only a number got=%s", attr)
+					return fmt.Errorf("minlength is allow only a number got=%s", attr)
 				}
 				param.MinLength = &n
 			}
@@ -276,7 +280,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 		}
 	}
-	return param
+	return nil
 }
 
 // defineType enum value define the type (object and array unsupported)

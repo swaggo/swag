@@ -177,7 +177,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 					if tag.TagProps.ExternalDocs == nil {
-						log.Panic("@tag.docs.description needs to come after a @tags.docs.url")
+						return errors.New("@tag.docs.description needs to come after a @tags.docs.url")
 					}
 					tag.TagProps.ExternalDocs.Description = commentInfo
 					replaceLastTag(parser.swagger.Tags, tag)
@@ -202,7 +202,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						}
 					}
 					if len(attrMap) != 2 {
-						log.Panic("@securitydefinitions.apikey is @name and @in required")
+						return errors.New("@securitydefinitions.apikey is @name and @in required")
 					}
 					securityMap[strings.TrimSpace(comments[i][len(attribute):])] = spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
 				case "@securitydefinitions.oauth2.application":
@@ -221,7 +221,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						}
 					}
 					if len(attrMap) != 1 {
-						log.Panic("@securitydefinitions.oauth2.application is @tokenUrl required")
+						return errors.New("@securitydefinitions.oauth2.application is @tokenUrl required")
 					}
 					securityScheme := spec.OAuth2Application(attrMap["@tokenurl"])
 					for scope, description := range scopes {
@@ -244,7 +244,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						}
 					}
 					if len(attrMap) != 1 {
-						log.Panic("@securitydefinitions.oauth2.implicit is @authorizationUrl required")
+						return errors.New("@securitydefinitions.oauth2.implicit is @authorizationUrl required")
 					}
 					securityScheme := spec.OAuth2Implicit(attrMap["@authorizationurl"])
 					for scope, description := range scopes {
@@ -267,7 +267,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						}
 					}
 					if len(attrMap) != 1 {
-						log.Panic("@securitydefinitions.oauth2.password is @tokenUrl required")
+						return errors.New("@securitydefinitions.oauth2.password is @tokenUrl required")
 					}
 					securityScheme := spec.OAuth2Password(attrMap["@tokenurl"])
 					for scope, description := range scopes {
@@ -290,7 +290,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						}
 					}
 					if len(attrMap) != 2 {
-						log.Panic("@securitydefinitions.oauth2.accessCode is @tokenUrl and @authorizationUrl required")
+						return errors.New("@securitydefinitions.oauth2.accessCode is @tokenUrl and @authorizationUrl required")
 					}
 					securityScheme := spec.OAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"])
 					for scope, description := range scopes {
@@ -541,7 +541,7 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 	case *ast.Ident:
 		refTypeName := fullTypeName(pkgName, expr.Name)
 		if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
-			if typedef, ok := parser.TypeDefinitions[pkgName][expr.Name]; ok{
+			if typedef, ok := parser.TypeDefinitions[pkgName][expr.Name]; ok {
 				parser.ParseDefinition(pkgName, expr.Name, typedef)
 			}
 		}
