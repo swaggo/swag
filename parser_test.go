@@ -684,7 +684,9 @@ func TestParseSimpleApi1(t *testing.T) {
                     "type": "integer"
                 },
                 "middlename": {
-                    "type": "string"
+                    "type": "string",
+                    "x-abc": "def",
+                    "x-nullable": true
                 }
             }
         },

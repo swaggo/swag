@@ -11,7 +11,7 @@ import (
 )
 
 type TimestampTime struct {
-    time.Time
+	time.Time
 }
 
 func (t *TimestampTime) MarshalJSON() ([]byte, error) {
@@ -57,7 +57,7 @@ type Pet struct {
 	customStringArr []CustomString
 	NullInt         sql.NullInt64 `swaggertype:"integer"`
 	Coeffs          []big.Float   `swaggertype:"array,number"`
-	Birthday    	TimestampTime `swaggertype:"primitive,integer"`
+	Birthday        TimestampTime `swaggertype:"primitive,integer"`
 }
 
 type CustomString string

@@ -613,6 +613,7 @@ type structField struct {
 	minLength    *int64
 	enums        []interface{}
 	defaultValue interface{}
+	extensions   map[string]interface{}
 }
 
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties map[string]spec.Schema) {
@@ -715,7 +716,11 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (properties 
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{
 				Example: structField.exampleValue,
 			},
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: structField.extensions,
+			},
 		}
+
 		nestStruct, ok := field.Type.(*ast.StructType)
 		if ok {
 			props := map[string]spec.Schema{}
@@ -857,10 +862,10 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 			newSchemaType := parts[0]
 			newArrayType := structField.arrayType
 			if len(parts) >= 2 {
-				if (newSchemaType == "array"){
+				if newSchemaType == "array" {
 					newArrayType = parts[1]
-				}else if (newSchemaType == "primitive"){
-					newSchemaType= parts[1]
+				} else if newSchemaType == "primitive" {
+					newSchemaType = parts[1]
 					newArrayType = parts[1]
 				}
 			}
@@ -890,6 +895,17 @@ func (parser *Parser) parseField(field *ast.Field) *structField {
 			if val == "required" {
 				structField.isRequired = true
 				break
+			}
+		}
+	}
+	if extensionsTag := structTag.Get("extensions"); extensionsTag != "" {
+		structField.extensions = map[string]interface{}{}
+		for _, val := range strings.Split(extensionsTag, ",") {
+			parts := strings.SplitN(val, "=", 2)
+			if len(parts) == 2 {
+				structField.extensions[parts[0]] = parts[1]
+			} else {
+				structField.extensions[parts[0]] = true
 			}
 		}
 	}
