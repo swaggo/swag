@@ -27,6 +27,9 @@ type Operation struct {
 	parser *Parser
 }
 
+// Regular expression for comment with response
+const responseCommentPattern = `([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`
+
 // NewOperation creates a new Operation with default properties.
 // map[int]Response
 func NewOperation() *Operation {
@@ -80,7 +83,10 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 				}
 			}
 		}
-
+	case "@header":
+		if err := operation.ParseResponseHeaderComment(lineRemainder, astFile); err != nil {
+			return err
+		}
 	case "@router":
 		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
@@ -491,7 +497,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 
 // ParseResponseComment parses comment for gived `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
-	re := regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)
+	re := regexp.MustCompile(responseCommentPattern)
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
@@ -595,6 +601,53 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	operation.Responses.StatusCodeResponses[code] = response
+
+	return nil
+}
+
+// ParseResponseHeaderComment parses comment for gived `response header` comment string.
+func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFile *ast.File) error {
+	re := regexp.MustCompile(responseCommentPattern)
+	var matches []string
+
+	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
+		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+	}
+
+	response := spec.Response{}
+
+	code, _ := strconv.Atoi(matches[1])
+
+	responseDescription := strings.Trim(matches[4], "\"")
+	if responseDescription == "" {
+		responseDescription = http.StatusText(code)
+	}
+	response.Description = responseDescription
+
+	schemaType := strings.Trim(matches[2], "{}")
+	refType := matches[3]
+
+	if operation.Responses == nil {
+		operation.Responses = &spec.Responses{
+			ResponsesProps: spec.ResponsesProps{
+				StatusCodeResponses: make(map[int]spec.Response),
+			},
+		}
+	}
+
+	response, responseExist := operation.Responses.StatusCodeResponses[code]
+	if responseExist {
+		header := spec.Header{}
+		header.Description = responseDescription
+		header.Type = schemaType
+
+		if response.Headers == nil {
+			response.Headers = make(map[string]spec.Header)
+		}
+		response.Headers[refType] = header
+
+		operation.Responses.StatusCodeResponses[code] = response
+	}
 
 	return nil
 }
