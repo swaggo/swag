@@ -215,6 +215,7 @@ import (
 // @Produce  json
 // @Param id path int true "Account ID"
 // @Success 200 {object} model.Account
+// @Header 200 {string} Token "qwerty"
 // @Failure 400 {object} httputil.HTTPError
 // @Failure 404 {object} httputil.HTTPError
 // @Failure 500 {object} httputil.HTTPError
@@ -241,6 +242,7 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 // @Produce  json
 // @Param q query string false "name search by q"
 // @Success 200 {array} model.Account
+// @Header 200 {string} Token "qwerty"
 // @Failure 400 {object} httputil.HTTPError
 // @Failure 404 {object} httputil.HTTPError
 // @Failure 500 {object} httputil.HTTPError
@@ -364,6 +366,7 @@ OPTIONS:
 | security           | [Security](#security) to each API operation.                                                                               |
 | success            | Success response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                              |
 | failure            | Failure response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                              |
+| header             | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                              |
 | router             | Path definition that separated by spaces. `path`,`[httpMethod]`                                                           |
 
 ## Mime Types
@@ -495,6 +498,13 @@ type Account struct {
     ID   int    `json:"id" example:"1"`
     Name string `json:"name" example:"account name"`
 }
+```
+### Add a headers in response
+
+```go
+// @Success 200 {string} string	"ok"
+// @Header 200 {string} Location "/entity/1"
+// @Header 200 {string} Token "qwerty"
 ```
 
 ### Use multiple path params

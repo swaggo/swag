@@ -231,6 +231,31 @@ func TestParseEmptyResponseComment(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseResponseCommentWithHeader(t *testing.T) {
+	comment := `@Success 200 "it's ok"`
+	operation := NewOperation()
+	operation.ParseComment(comment, nil)
+	comment = `@Header 200 {string} Token "qwerty"`
+	operation.ParseComment(comment, nil)
+	b, err := json.MarshalIndent(operation, "", "    ")
+	assert.NoError(t, err)
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "it's ok",
+            "headers": {
+                "Token": {
+                    "type": "string",
+                    "description": "qwerty"
+                }
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseEmptyResponseOnlyCode(t *testing.T) {
 	comment := `@Success 200`
 	operation := NewOperation()
@@ -394,7 +419,7 @@ func TestParseParamCommentNotMatch(t *testing.T) {
 	comment := `@Param some_id body mock true`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
-	
+
 	assert.Error(t, err)
 }
 
