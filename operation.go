@@ -137,10 +137,18 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				var typeSpec *ast.TypeSpec
 				if astFile != nil {
 					for _, imp := range astFile.Imports {
+						impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
 						if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
+							if strings.Contains(impPath,"/") {
+								pkgs:=strings.Split(impPath,"/")
+								impPath = pkgs[len(pkgs)-1]
+							}
+							if typeSpec, ok := operation.parser.TypeDefinitions[impPath][typeName]; ok {
+								operation.parser.registerTypes[schemaType] = typeSpec
+								goto label
+							}
 							break
 						}
-						impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
 						if strings.HasSuffix(impPath, "/"+pkgName) {
 							var err error
 							typeSpec, err = findTypeDef(impPath, typeName)
@@ -160,6 +168,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				operation.parser.registerTypes[schemaType] = typeSpec
 
 			}
+			label:
 			param.Schema.Ref = spec.Ref{
 				Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
 			}
@@ -529,10 +538,18 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 				var typeSpec *ast.TypeSpec
 				if astFile != nil {
 					for _, imp := range astFile.Imports {
+						impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
 						if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
+							if strings.Contains(impPath,"/") {
+								pkgs:=strings.Split(impPath,"/")
+								impPath = pkgs[len(pkgs)-1]
+							}
+							if typeSpec, ok := operation.parser.TypeDefinitions[impPath][typeName]; ok {
+								operation.parser.registerTypes[schemaType] = typeSpec
+								goto label
+							}
 							break
 						}
-						impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
 
 						if strings.HasSuffix(impPath, "/"+pkgName) {
 							var err error
@@ -560,6 +577,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 
 		}
 	}
+	label:
 
 	// so we have to know all type in app
 	//TODO: we might omitted schema.type if schemaType equals 'object'
