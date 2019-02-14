@@ -563,12 +563,35 @@ func (t *TimestampTime) UnmarshalJSON(bin []byte) error {
 type Account struct {
     // Override primitive type by simply specifying it via `swaggertype` tag
     ID     sql.NullInt64 `json:"id" swaggertype:"integer"`
-	
+
     // Override struct type to a primitive type 'integer' by specifying it via `swaggertype` tag
     RegisterTime TimestampTime `json:"register_time" swaggertype:"primitive,integer"`
 
     // Array types can be overridden using "array,<prim_type>" format
     Coeffs []big.Float `json:"coeffs" swaggertype:"array,number"`
+}
+```
+
+### Add extension info to struct field
+
+```go
+type Account struct {
+    ID   int    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
+}
+```
+
+generate swagger doc as follows:
+
+```go
+"Account": {
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "x-nullable": true,
+            "x-abc": "def"
+        }
+    }
 }
 ```
 
