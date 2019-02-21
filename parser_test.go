@@ -2,7 +2,6 @@ package swag
 
 import (
 	"encoding/json"
-	"fmt"
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
@@ -2125,7 +2124,6 @@ func Test(){
 
 	p := New()
 	err = p.ParseRouterAPIInfo("", f)
-	fmt.Println(err)
 	assert.EqualError(t, err, "ParseComment error in file  :unknown accept type can't be accepted")
 }
 
