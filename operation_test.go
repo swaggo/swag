@@ -46,10 +46,12 @@ func TestParseAcceptComment(t *testing.T) {
 		"application/octet-stream",
 		"image/png",
 		"image/jpeg",
-		"image/gif"
+		"image/gif",
+		"application/xhtml+xml",
+		"application/health+json"
     ]
 }`
-	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif`
+	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -79,10 +81,11 @@ func TestParseProduceComment(t *testing.T) {
 		"application/octet-stream",
 		"image/png",
 		"image/jpeg",
-		"image/gif"
+		"image/gif",
+		"application/health+json"
     ]
 }`
-	comment := `/@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif`
+	comment := `/@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/health+json`
 	operation := new(Operation)
 	operation.ParseComment(comment, nil)
 	b, _ := json.MarshalIndent(operation, "", "    ")
