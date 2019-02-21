@@ -93,7 +93,9 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	}
 
 	for fileName, astFile := range parser.files {
-		parser.ParseRouterAPIInfo(fileName, astFile)
+		if err := parser.ParseRouterAPIInfo(fileName, astFile); err != nil {
+			return err
+		}
 	}
 
 	parser.ParseDefinitions()
@@ -335,7 +337,7 @@ func GetSchemes(commentLine string) []string {
 }
 
 // ParseRouterAPIInfo parses router api info for given astFile
-func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) {
+func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) error {
 	for _, astDescription := range astFile.Decls {
 		switch astDeclaration := astDescription.(type) {
 		case *ast.FuncDecl:
@@ -344,7 +346,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) {
 				operation.parser = parser
 				for _, comment := range astDeclaration.Doc.List {
 					if err := operation.ParseComment(comment.Text, astFile); err != nil {
-						log.Panicf("ParseComment panic in file %s :%+v", fileName, err)
+						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
 					}
 				}
 				var pathItem spec.PathItem
@@ -374,6 +376,8 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) {
 			}
 		}
 	}
+
+	return nil
 }
 
 // ParseType parses type info for given astFile.

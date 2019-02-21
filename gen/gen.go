@@ -2,6 +2,7 @@ package gen
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path"
@@ -24,10 +25,17 @@ func New() *Gen {
 
 // Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy string) error {
+	if _, err := os.Stat(searchDir); os.IsNotExist(err) {
+		return fmt.Errorf("dir: %s is not exist", searchDir)
+	}
+
 	log.Println("Generate swagger docs....")
 	p := swag.New()
 	p.PropNamingStrategy = propNamingStrategy
-	p.ParseAPI(searchDir, mainAPIFile)
+
+	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+		return err
+	}
 	swagger := p.GetSwagger()
 
 	b, err := json.MarshalIndent(swagger, "", "    ")
