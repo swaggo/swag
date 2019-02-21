@@ -2126,7 +2126,7 @@ func Test(){
 	p := New()
 	err = p.ParseRouterAPIInfo("", f)
 	fmt.Println(err)
-	assert.EqualError(t, err, "ParseComment error in file  :unknown accept type can't accepted")
+	assert.EqualError(t, err, "ParseComment error in file  :unknown accept type can't be accepted")
 }
 
 func TestParser_ParseRouterApiGet(t *testing.T) {
