@@ -30,6 +30,23 @@ type Operation struct {
 // Regular expression for comment with response
 const responseCommentPattern = `([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`
 
+var mimeTypeAliases = map[string]string{
+	"json":                  "application/json",
+	"xml":                   "text/xml",
+	"plain":                 "text/plain",
+	"html":                  "text/html",
+	"mpfd":                  "multipart/form-data",
+	"x-www-form-urlencoded": "application/x-www-form-urlencoded",
+	"json-api":              "application/vnd.api+json",
+	"json-stream":           "application/x-json-stream",
+	"octet-stream":          "application/octet-stream",
+	"png":                   "image/png",
+	"jpeg":                  "image/jpeg",
+	"gif":                   "image/gif",
+}
+
+var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
+
 // NewOperation creates a new Operation with default properties.
 // map[int]Response
 func NewOperation() *Operation {
@@ -337,71 +354,26 @@ func (operation *Operation) ParseTagsComment(commentLine string) {
 
 // ParseAcceptComment parses comment for given `accept` comment string.
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
-	accepts := strings.Split(commentLine, ",")
-	for _, a := range accepts {
-		switch a {
-		case "json", "application/json":
-			operation.Consumes = append(operation.Consumes, "application/json")
-		case "xml", "text/xml":
-			operation.Consumes = append(operation.Consumes, "text/xml")
-		case "plain", "text/plain":
-			operation.Consumes = append(operation.Consumes, "text/plain")
-		case "html", "text/html":
-			operation.Consumes = append(operation.Consumes, "text/html")
-		case "mpfd", "multipart/form-data":
-			operation.Consumes = append(operation.Consumes, "multipart/form-data")
-		case "x-www-form-urlencoded", "application/x-www-form-urlencoded":
-			operation.Consumes = append(operation.Consumes, "application/x-www-form-urlencoded")
-		case "json-api", "application/vnd.api+json":
-			operation.Consumes = append(operation.Consumes, "application/vnd.api+json")
-		case "json-stream", "application/x-json-stream":
-			operation.Consumes = append(operation.Consumes, "application/x-json-stream")
-		case "octet-stream", "application/octet-stream":
-			operation.Consumes = append(operation.Consumes, "application/octet-stream")
-		case "png", "image/png":
-			operation.Consumes = append(operation.Consumes, "image/png")
-		case "jpeg", "image/jpeg":
-			operation.Consumes = append(operation.Consumes, "image/jpeg")
-		case "gif", "image/gif":
-			operation.Consumes = append(operation.Consumes, "image/gif")
-		default:
-			return fmt.Errorf("%v accept type can't accepted", a)
-		}
-	}
-	return nil
+	return parseMimeTypeList(commentLine, &operation.Consumes, "%v accept type can't be accepted")
 }
 
-// ParseProduceComment parses comment for gived `produce` comment string.
+// ParseProduceComment parses comment for given `produce` comment string.
 func (operation *Operation) ParseProduceComment(commentLine string) error {
-	produces := strings.Split(commentLine, ",")
-	for _, a := range produces {
-		switch a {
-		case "json", "application/json":
-			operation.Produces = append(operation.Produces, "application/json")
-		case "xml", "text/xml":
-			operation.Produces = append(operation.Produces, "text/xml")
-		case "plain", "text/plain":
-			operation.Produces = append(operation.Produces, "text/plain")
-		case "html", "text/html":
-			operation.Produces = append(operation.Produces, "text/html")
-		case "mpfd", "multipart/form-data":
-			operation.Produces = append(operation.Produces, "multipart/form-data")
-		case "x-www-form-urlencoded", "application/x-www-form-urlencoded":
-			operation.Produces = append(operation.Produces, "application/x-www-form-urlencoded")
-		case "json-api", "application/vnd.api+json":
-			operation.Produces = append(operation.Produces, "application/vnd.api+json")
-		case "json-stream", "application/x-json-stream":
-			operation.Produces = append(operation.Produces, "application/x-json-stream")
-		case "octet-stream", "application/octet-stream":
-			operation.Produces = append(operation.Produces, "application/octet-stream")
-		case "png", "image/png":
-			operation.Produces = append(operation.Produces, "image/png")
-		case "jpeg", "image/jpeg":
-			operation.Produces = append(operation.Produces, "image/jpeg")
-		case "gif", "image/gif":
-			operation.Produces = append(operation.Produces, "image/gif")
-		default:
-			return fmt.Errorf("%v produce type can't accepted", a)
+	return parseMimeTypeList(commentLine, &operation.Produces, "%v produce type can't be accepted")
+}
+
+// parseMimeTypeList parses a list of MIME Types for a comment like
+// `produce` (`Content-Type:` response header) or
+// `accept` (`Accept:` request header)
+func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) error {
+	mimeTypes := strings.Split(mimeTypeList, ",")
+	for _, typeName := range mimeTypes {
+		if mimeTypePattern.MatchString(typeName) {
+			*typeList = append(*typeList, typeName)
+		} else if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
+			*typeList = append(*typeList, aliasMimeType)
+		} else {
+			return fmt.Errorf(format, typeName)
 		}
 	}
 	return nil

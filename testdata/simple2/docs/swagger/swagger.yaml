@@ -11,6 +11,8 @@ definitions:
     type: object
   web.Pet:
     properties:
+      birthday:
+        type: integer
       category:
         properties:
           id:

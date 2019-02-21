@@ -371,20 +371,23 @@ OPTIONS:
 
 ## Mime Types
 
-| Mime Type                         | annotation                                                |
-|-----------------------------------|-----------------------------------------------------------|
-| application/json                  | application/json, json                                    |
-| text/xml                          | text/xml, xml                                             |
-| text/plain                        | text/plain, plain                                         |
-| html                              | text/html, html                                           |
-| multipart/form-data               | multipart/form-data, mpfd                                 |
-| application/x-www-form-urlencoded | application/x-www-form-urlencoded, x-www-form-urlencoded  |
-| application/vnd.api+json          | application/vnd.api+json, json-api                        |
-| application/x-json-stream         | application/x-json-stream, json-stream                    |
-| application/octet-stream          | application/octet-stream, octet-stream                    |
-| image/png                         | image/png, png                                            |
-| image/jpeg                        | image/jpeg, jpeg                                          |
-| image/gif                         | image/gif, gif                                            |
+`swag` accepts all MIME Types which are in the correct format, that is, match `*/*`.
+Besides that, `swag` also accepts aliases for some MIME Types as follows:
+
+| Alias                 | MIME Type                         |
+|-----------------------|-----------------------------------|
+| json                  | application/json                  |
+| xml                   | text/xml                          |
+| plain                 | text/plain                        |
+| html                  | text/html                         |
+| mpfd                  | multipart/form-data               |
+| x-www-form-urlencoded | application/x-www-form-urlencoded |
+| json-api              | application/vnd.api+json          |
+| json-stream           | application/x-json-stream         |
+| octet-stream          | application/octet-stream          |
+| png                   | image/png                         |
+| jpeg                  | image/jpeg                        |
+| gif                   | image/gif                         |
 
 ## Security
 
@@ -563,12 +566,35 @@ func (t *TimestampTime) UnmarshalJSON(bin []byte) error {
 type Account struct {
     // Override primitive type by simply specifying it via `swaggertype` tag
     ID     sql.NullInt64 `json:"id" swaggertype:"integer"`
-	
+
     // Override struct type to a primitive type 'integer' by specifying it via `swaggertype` tag
     RegisterTime TimestampTime `json:"register_time" swaggertype:"primitive,integer"`
 
     // Array types can be overridden using "array,<prim_type>" format
     Coeffs []big.Float `json:"coeffs" swaggertype:"array,number"`
+}
+```
+
+### Add extension info to struct field
+
+```go
+type Account struct {
+    ID   int    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
+}
+```
+
+generate swagger doc as follows:
+
+```go
+"Account": {
+    "type": "object",
+    "properties": {
+        "id": {
+            "type": "string",
+            "x-nullable": true,
+            "x-abc": "def"
+        }
+    }
 }
 ```
 

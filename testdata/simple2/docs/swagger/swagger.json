@@ -251,6 +251,9 @@
                 "price"
             ],
             "properties": {
+                "birthday": {
+                    "type": "integer"
+                },
                 "category": {
                     "type": "object",
                     "properties": {
