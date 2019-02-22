@@ -1,52 +1,40 @@
 # swag
 
-<p align="center">
-    <img alt="swaggo" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png" width="200">
-</p>
+<img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
-<p align="center">
-  Automatically generate RESTful API documentation with Swagger 2.0 for Go.
-</p>
+[![Travis Status](https://img.shields.io/travis/swaggo/swag/master.svg)](https://travis-ci.org/swaggo/swag)
+[![Coverage Status](https://img.shields.io/codecov/c/github/swaggo/swag/master.svg)](https://codecov.io/gh/swaggo/swag)
+ [![Go Report Card](https://goreportcard.com/badge/github.com/swaggo/swag)](https://goreportcard.com/badge/github.com/swaggo/swag)
+[![codebeat badge](https://codebeat.co/badges/71e2f5e5-9e6b-405d-baf9-7cc8b5037330)](https://codebeat.co/projects/github-com-swaggo-swag-master)
+[![Go Doc](https://godoc.org/github.com/swaggo/swagg?status.svg)](https://godoc.org/github.com/swaggo/swag)
 
-<p align="center">
-  <a href="https://travis-ci.org/swaggo/swag"><img alt="Travis Status" src="https://img.shields.io/travis/swaggo/swag/master.svg"></a>
-  <a href="https://codecov.io/gh/swaggo/swag"><img alt="Coverage Status" src="https://img.shields.io/codecov/c/github/swaggo/swag/master.svg"></a>
-  <a href="https://goreportcard.com/badge/github.com/swaggo/swag"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/swaggo/swag"></a>
-  <a href="https://codebeat.co/projects/github-com-swaggo-swag-master"><img alt="codebeat badge" src="https://codebeat.co/badges/71e2f5e5-9e6b-405d-baf9-7cc8b5037330" /></a>
-  <a href="https://godoc.org/github.com/swaggo/swag"><img alt="Go Doc" src="https://godoc.org/github.com/swaggo/swagg?status.svg"></a>
-</p>
+Swag converts Go annotations to Swagger Documentation 2.0. We've created a variety of plugins for popular [Go web frameworks](#supported-web-frameworks). This allows you to quickly integrate with an existing Go project (using Swagger UI).
 
-<p align="center">gopher image source is <a href="https://github.com/tenntenn/gopher-stickers">tenntenn/gopher-stickers.</a> It has licenses <a href="http://creativecommons.org/licenses/by/3.0/deed.en">creative commons licensing.</a></p>
-
-## Content
+## Contents
  - [Getting started](#getting-started)
- - [Go web frameworks](#supported-web-frameworks)
  - [Supported Web Frameworks](#supported-web-frameworks)
  - [How to use it with Gin](#how-to-use-it-with-gin)
  - [Implementation Status](#implementation-status)
  - [swag cli](#swag-cli)
- - [General API Info](#general-api-info)
- - [Security](#security)
- - [API Operation](#api-operation)
- - [TIPS](#tips)
- 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
+ - [Declarative Comments Format](#declarative-comments-format)
+	- [General API Info](##general-api-info)
+	- [API Operation](#api-operation)
+	- [Security](#security)
+ - [Examples](#tips)
+	- [Descriptions over multiple lines](#descriptions-over-multiple-lines)
+	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
+	- [Add a headers in response](#add-a-headers-in-response) 
 	- [Use multiple path params](#use-multiple-path-params)
 	- [Example value of struct](#example-value-of-struct)
 	- [Description of struct](#description-of-struct)
+	- [Override swagger type of a struct field](#Override-swagger-type-of-a-struct-field)
+	- [Add extension info to struct field](#add-extension-info-to-struct-field)
+	- [How to using security annotations](#how-to-using-security-annotations)
 - [About the Project](#about-the-project)
-
-## Summary
-
-Swag converts Go annotations to Swagger Documentation 2.0. We've created a variety of plugins for popular [Go web frameworks](#supported-web-frameworks). This allows you to quickly integrate with an existing Go project (using Swagger UI).
-
-## Examples
-
-[swaggo + gin](https://github.com/swaggo/swag/tree/master/example)
-
 
 ## Getting started
 
-1. Add comments to your API source code, [See Declarative Comments Format](#general-api-info).
+1. Add comments to your API source code, See [Declarative Comments Format](#declarative-comments-format).
 
 2. Download swag by using:
 ```sh
@@ -58,10 +46,7 @@ $ go get -u github.com/swaggo/swag/cmd/swag
 $ swag init
 ```
 
-4. In order to serve these files, you can utilize one of our supported plugins. For go's core library, check out [net/http](https://github.com/swaggo/http-swagger).
-
-  * Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed.
-  * If your General API annotation do not live in `main.go`, you can let swag know with `-g`.
+  Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
   ```sh
   swag init -g http/api.go
   ```
@@ -290,7 +275,7 @@ $ swag init
 
 # swag cli
 
-```console
+```sh
 $ swag init -h
 NAME:
    swag init - Create docs.go
@@ -305,50 +290,32 @@ OPTIONS:
    --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
 ```
 
-# General API Info
+# Declarative Comments Format
+
+## General API Info
 
 **Example**
 [celler/main.go](https://github.com/swaggo/swag/blob/master/example/celler/main.go)
 
-| annotation         	| description                                                                                     | example                                                         |
-|-----------------------|-------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| title              	| **Required.** The title of the application.                                                     | // @title Swagger Example API                                   |
-| version            	| **Required.** Provides the version of the application API.                                      | // @version 1.0                                                 |
-| description        	| A short description of the application.                                                         | // @description This is a sample server celler server.          |
-| tag.name      	 	| Name of a tag.                                                        						  | // @tag.name This is the name of the tag                        |
-| tag.description      	| Description of the tag                                                         				  | // @tag.description Cool Description                            |
-| tag.docs.url      	| Url of the external Documentation of the tag                                                    | // @tag.docs.url https://example.com                            |
-| tag.docs.descripiton  | Description of the external Documentation of the tag                                            | // @tag.docs.descirption Best example documentation             |
-| termsOfService 	    | The Terms of Service for the API.                                                               | // @termsOfService http://swagger.io/terms/                     |
-| contact.name      	| The contact information for the exposed API.                                                    | // @contact.name API Support                                    |
-| contact.url        	| The URL pointing to the contact information. MUST be in the format of a URL.                    | // @contact.url http://www.swagger.io/support                   |
-| contact.email      	| The email address of the contact person/organization. MUST be in the format of an email address.| // @contact.email support@swagger.io                            |
-| license.name       	| **Required.** The license name used for the API.                                                | // @license.name Apache 2.0                                     |
-| license.url        	| A URL to the license used for the API. MUST be in the format of a URL.                          | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
-| host               	| The host (name or ip) serving the API.                                                          | // @host localhost:8080                                         |
-| BasePath           	| The base path on which the API is served.                                                       | // @BasePath /api/v1                                            |
+| annotation  | description                                | example                         |
+|-------------|--------------------------------------------|---------------------------------|
+| title       | **Required.** The title of the application.| // @title Swagger Example API   |
+| version     | **Required.** Provides the version of the application API.| // @version 1.0  |
+| description | A short description of the application.    |// @description This is a sample server celler server.         																 |
+| tag.name    | Name of a tag.| // @tag.name This is the name of the tag                     |
+| tag.description   | Description of the tag  | // @tag.description Cool Description         |
+| tag.docs.url      | Url of the external Documentation of the tag | // @tag.docs.url https://example.com|
+| tag.docs.descripiton  | Description of the external Documentation of the tag| // @tag.docs.descirption Best example documentation |
+| termsOfService | The Terms of Service for the API.| // @termsOfService http://swagger.io/terms/                     |
+| contact.name | The contact information for the exposed API.| // @contact.name API Support  |
+| contact.url  | The URL pointing to the contact information. MUST be in the format of a URL.  | // @contact.url http://www.swagger.io/support|
+| contact.email| The email address of the contact person/organization. MUST be in the format of an email address.| // @contact.email support@swagger.io                                   |
+| license.name | **Required.** The license name used for the API.|// @license.name Apache 2.0|
+| license.url  | A URL to the license used for the API. MUST be in the format of a URL.                       | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
+| host        | The host (name or ip) serving the API.     | // @host localhost:8080         |
+| BasePath    | The base path on which the API is served. | // @BasePath /api/v1             |
 
-## Security
-
-| annotation                              | description                                                                                    | parameters                        | example                                                      |
-|-----------------------------------------|------------------------------------------------------------------------------------------------|-----------------------------------|--------------------------------------------------------------|
-| securitydefinitions.basic               | [Basic](https://swagger.io/docs/specification/2-0/authentication/basic-authentication/) auth.  |                                   | // @securityDefinitions.basic BasicAuth                      |
-| securitydefinitions.apikey              | [API key](https://swagger.io/docs/specification/2-0/authentication/api-keys/) auth.            | in, name                          | // @securityDefinitions.apikey ApiKeyAuth                    |
-| securitydefinitions.oauth2.application  | [OAuth2 application](https://swagger.io/docs/specification/authentication/oauth2/) auth.       | tokenUrl, scope                   | // @securitydefinitions.oauth2.application OAuth2Application |
-| securitydefinitions.oauth2.implicit     | [OAuth2 implicit](https://swagger.io/docs/specification/authentication/oauth2/) auth.          | authorizationUrl, scope           | // @securitydefinitions.oauth2.implicit OAuth2Implicit       |
-| securitydefinitions.oauth2.password     | [OAuth2 password](https://swagger.io/docs/specification/authentication/oauth2/) auth.          | tokenUrl, scope                   | // @securitydefinitions.oauth2.password OAuth2Password       |
-| securitydefinitions.oauth2.accessCode   | [OAuth2 access code](https://swagger.io/docs/specification/authentication/oauth2/) auth.       | tokenUrl, authorizationUrl, scope | // @securitydefinitions.oauth2.accessCode OAuth2AccessCode   |
-
-
-| parameters annotation | example                                                  |
-|-----------------------|----------------------------------------------------------|
-| in                    | // @in header                                            |
-| name                  | // @name Authorization                                   |
-| tokenUrl              | // @tokenUrl https://example.com/oauth/token             |
-| authorizationurl      | // @authorizationurl https://example.com/oauth/authorize |
-| scope.hoge            | // @scope.write Grants write access                      |
-
-# API Operation
+## API Operation
 
 **Example**
 [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
@@ -389,31 +356,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 | jpeg                  | image/jpeg                        |
 | gif                   | image/gif                         |
 
-## Security
 
-General API info.
-
-```go
-// @securityDefinitions.basic BasicAuth
-
-// @securitydefinitions.oauth2.application OAuth2Application
-// @tokenUrl https://example.com/oauth/token
-// @scope.write Grants write access
-// @scope.admin Grants read and write access to administrative information
-```
-
-Each API operation.
-
-```go
-// @Security ApiKeyAuth
-```
-
-Make it AND condition
-
-```go
-// @Security ApiKeyAuth
-// @Security OAuth2Application[write, admin]
-```
 
 ## Param Type
 
@@ -431,6 +374,26 @@ Make it AND condition
 - number (float32)
 - boolean (bool)
 - user defined struct
+
+## Security
+| annotation | description | parameters | example |
+|------------|-------------|------------|---------|
+| securitydefinitions.basic  | [Basic](https://swagger.io/docs/specification/2-0/authentication/basic-authentication/) auth.  |                                   | // @securityDefinitions.basic BasicAuth                      |
+| securitydefinitions.apikey | [API key](https://swagger.io/docs/specification/2-0/authentication/api-keys/) auth.            | in, name                          | // @securityDefinitions.apikey ApiKeyAuth                    |
+| securitydefinitions.oauth2.application  | [OAuth2 application](https://swagger.io/docs/specification/authentication/oauth2/) auth.       | tokenUrl, scope                   | // @securitydefinitions.oauth2.application OAuth2Application |
+| securitydefinitions.oauth2.implicit     | [OAuth2 implicit](https://swagger.io/docs/specification/authentication/oauth2/) auth.          | authorizationUrl, scope           | // @securitydefinitions.oauth2.implicit OAuth2Implicit       |
+| securitydefinitions.oauth2.password     | [OAuth2 password](https://swagger.io/docs/specification/authentication/oauth2/) auth.          | tokenUrl, scope                   | // @securitydefinitions.oauth2.password OAuth2Password       |
+| securitydefinitions.oauth2.accessCode   | [OAuth2 access code](https://swagger.io/docs/specification/authentication/oauth2/) auth.       | tokenUrl, authorizationUrl, scope | // @securitydefinitions.oauth2.accessCode OAuth2AccessCode   |
+
+
+| parameters annotation | example                                                  |
+|-----------------------|----------------------------------------------------------|
+| in                    | // @in header                                            |
+| name                  | // @name Authorization                                   |
+| tokenUrl              | // @tokenUrl https://example.com/oauth/token             |
+| authorizationurl      | // @authorizationurl https://example.com/oauth/authorize |
+| scope.hoge            | // @scope.write Grants write access                      |
+
 
 ## Attribute
 
@@ -476,7 +439,7 @@ Field Name | Type | Description
 <a name="parameterUniqueItems"></a>uniqueItems | `boolean` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.3.4.
 <a name="parameterCollectionFormat"></a>collectionFormat | `string` | Determines the format of the array if type array is used. Possible values are: <ul><li>`csv` - comma separated values `foo,bar`. <li>`ssv` - space separated values `foo bar`. <li>`tsv` - tab separated values `foo\tbar`. <li>`pipes` - pipe separated values <code>foo&#124;bar</code>. <li>`multi` - corresponds to multiple parameter instances instead of multiple values for a single instance `foo=bar&foo=baz`. This is valid only for parameters [`in`](#parameterIn) "query" or "formData". </ul> Default value is `csv`.
 
-## TIPS
+## Examples
 
 ### Descriptions over multiple lines
 
@@ -598,5 +561,31 @@ generate swagger doc as follows:
 }
 ```
 
+### How to using security annotations
+
+General API info.
+
+```go
+// @securityDefinitions.basic BasicAuth
+
+// @securitydefinitions.oauth2.application OAuth2Application
+// @tokenUrl https://example.com/oauth/token
+// @scope.write Grants write access
+// @scope.admin Grants read and write access to administrative information
+```
+
+Each API operation.
+
+```go
+// @Security ApiKeyAuth
+```
+
+Make it AND condition
+
+```go
+// @Security ApiKeyAuth
+// @Security OAuth2Application[write, admin]
+```
+
 ## About the Project
-This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks).
+This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks). Gopher image source is [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). It has licenses [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).
