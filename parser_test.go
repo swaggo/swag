@@ -2121,13 +2121,10 @@ func Test(){
 	if err != nil {
 		panic(err)
 	}
-	// Print the AST.
-	//ast.Print(fset, f)
 
 	p := New()
-	assert.Panics(t, func() {
-		p.ParseRouterAPIInfo("", f)
-	})
+	err = p.ParseRouterAPIInfo("", f)
+	assert.EqualError(t, err, "ParseComment error in file  :unknown accept type can't be accepted")
 }
 
 func TestParser_ParseRouterApiGet(t *testing.T) {

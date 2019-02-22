@@ -415,6 +415,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 
 // findTypeDef attempts to find the *ast.TypeSpec for a specific type given the
 // type's name and the package's import path
+// TODO: improve finding external pkg
 func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	cwd, err := os.Getwd()
 	if err != nil {

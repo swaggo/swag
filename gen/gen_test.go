@@ -27,9 +27,7 @@ func TestGen_Build(t *testing.T) {
 
 func TestGen_BuildSnakecase(t *testing.T) {
 	searchDir := "../testdata/simple2"
-	assert.NotPanics(t, func() {
-		New().Build(searchDir, "./main.go", "../testdata/simple2/docs/swagger", "snakecase")
-	})
+	assert.NoError(t, New().Build(searchDir, "./main.go", "../testdata/simple2/docs/swagger", "snakecase"))
 
 	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
 		t.Fatal(err)
@@ -44,9 +42,7 @@ func TestGen_BuildSnakecase(t *testing.T) {
 
 func TestGen_BuildLowerCamelcase(t *testing.T) {
 	searchDir := "../testdata/simple3"
-	assert.NotPanics(t, func() {
-		New().Build(searchDir, "./main.go", "../testdata/simple3/docs/swagger", "")
-	})
+	assert.NoError(t, New().Build(searchDir, "./main.go", "../testdata/simple3/docs/swagger", ""))
 
 	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
 		t.Fatal(err)
@@ -57,4 +53,11 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 	if _, err := os.Stat(path.Join("../testdata/simple3/docs/swagger", "swagger.yaml")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
+}
+
+func TestGen_SearchDirIsNotExist(t *testing.T) {
+	searchDir := "../isNotExistDir"
+
+	var swaggerConfDir, propNamingStrategy string
+	assert.EqualError(t, New().Build(searchDir, "./main.go", swaggerConfDir, propNamingStrategy), "dir: ../isNotExistDir is not exist")
 }
