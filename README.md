@@ -15,7 +15,6 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
  - [Supported Web Frameworks](#supported-web-frameworks)
  - [How to use it with Gin](#how-to-use-it-with-gin)
  - [Implementation Status](#implementation-status)
- - [swag cli](#swag-cli)
  - [Declarative Comments Format](#declarative-comments-format)
 	- [General API Info](##general-api-info)
 	- [API Operation](#api-operation)
@@ -40,6 +39,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 ```sh
 $ go get -u github.com/swaggo/swag/cmd/swag
 ```
+Or download the pre-compiled binaries binray form [release page](https://github.com/swaggo/swag/releases).
 
 3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
 ```sh
@@ -50,6 +50,23 @@ $ swag init
   ```sh
   swag init -g http/api.go
   ```
+
+## swag cli
+
+```sh
+$ swag init -h
+NAME:
+   swag init - Create docs.go
+
+USAGE:
+   swag init [command options] [arguments...]
+
+OPTIONS:
+   --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
+   --dir value, -d value               Directory you want to parse (default: "./")
+   --swagger value, -s value           Output the swagger conf for json and yaml (default: "./docs/swagger")
+   --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
+```
 
 ## Supported Web Frameworks
 
@@ -272,23 +289,6 @@ $ swag init
 - [x] Enums
 - [x] Grouping Operations With Tags
 - [ ] Swagger Extensions
-
-# swag cli
-
-```sh
-$ swag init -h
-NAME:
-   swag init - Create docs.go
-
-USAGE:
-   swag init [command options] [arguments...]
-
-OPTIONS:
-   --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
-   --dir value, -d value               Directory you want to parse (default: "./")
-   --swagger value, -s value           Output the swagger conf for json and yaml (default: "./docs/swagger")
-   --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
-```
 
 # Declarative Comments Format
 
