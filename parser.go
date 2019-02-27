@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -82,7 +81,7 @@ func New() *Parser {
 
 // ParseAPI parses general api info for gived searchDir and mainAPIFile
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
-	log.Println("Generate general API Info")
+	Println("Generate general API Info")
 	if err := parser.getAllGoFileInfo(searchDir); err != nil {
 		return err
 	}
@@ -437,17 +436,17 @@ func (parser *Parser) ParseDefinitions() {
 func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.TypeSpec) {
 	refTypeName := fullTypeName(pkgName, typeName)
 	if _, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
-		log.Println("Skipping '" + refTypeName + "', already parsed.")
+		Println("Skipping '" + refTypeName + "', already parsed.")
 		return
 	}
 
 	if parser.isInStructStack(refTypeName) {
-		log.Println("Skipping '" + refTypeName + "', recursion detected.")
+		Println("Skipping '" + refTypeName + "', recursion detected.")
 		return
 	}
 	parser.structStack = append(parser.structStack, refTypeName)
 
-	log.Println("Generating " + refTypeName)
+	Println("Generating " + refTypeName)
 	parser.swagger.Definitions[refTypeName] = parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
 }
 
@@ -593,7 +592,7 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 		}
 	// ...
 	default:
-		log.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
+		Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}
 
 	return spec.Schema{
@@ -778,11 +777,11 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) (map
 				fullTypeName = fmt.Sprintf("%s.%s", packageX.Name, ftypeX.Sel.Name)
 			}
 		} else {
-			log.Printf("Composite field type of '%T' is unhandle by parser. Skipping", ftype)
+			Printf("Composite field type of '%T' is unhandle by parser. Skipping", ftype)
 			return properties, []string{}
 		}
 	default:
-		log.Printf("Field type of '%T' is unsupported. Skipping", ftype)
+		Printf("Field type of '%T' is unsupported. Skipping", ftype)
 		return properties, []string{}
 	}
 
@@ -808,7 +807,7 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) (map
 	case "array":
 		properties[typeName] = schema
 	default:
-		log.Printf("Can't extract properties from a schema of type '%s'", schemaType)
+		Printf("Can't extract properties from a schema of type '%s'", schemaType)
 	}
 
 	return properties, schema.SchemaProps.Required
@@ -1053,7 +1052,7 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 		fset := token.NewFileSet() // positions are relative to fset
 		astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
 		if err != nil {
-			log.Panicf("ParseFile panic:%+v", err)
+			return fmt.Errorf("ParseFile error:%+v", err)
 		}
 
 		parser.files[path] = astFile
