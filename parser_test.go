@@ -14,6 +14,7 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	swagMode = test
 	New()
 }
 
