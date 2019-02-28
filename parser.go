@@ -780,6 +780,13 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) (map
 			Printf("Composite field type of '%T' is unhandle by parser. Skipping", ftype)
 			return properties, []string{}
 		}
+	case *ast.SelectorExpr:
+		if packageX, ok := ftype.X.(*ast.Ident); ok {
+			fullTypeName = fmt.Sprintf("%s.%s", packageX.Name, ftype.Sel.Name)
+		} else {
+			Printf("Selector exp type of '%T' is unsupported. Skipping", ftype.X)
+			return properties, []string{}
+		}
 	default:
 		Printf("Field type of '%T' is unsupported. Skipping", ftype)
 		return properties, []string{}
