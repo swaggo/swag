@@ -7,7 +7,7 @@ GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
 GOLIST=$(GOCMD) list
 BINARY_NAME=swag
-PACKAGES=$(shell $(GOLIST) -f ./... | grep -v /example)
+PACKAGES=$(shell $(GOLIST) ./... | grep -v /example)
 
 all: test build
 
