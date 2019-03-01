@@ -48,7 +48,7 @@ install:
 .PHONY: lint
 lint:
 	@hash golint > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u golang.org/x/lint/golint; \
+		go install golang.org/x/lint/golint; \
 	fi
 	
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
