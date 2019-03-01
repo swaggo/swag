@@ -48,7 +48,7 @@ install:
 .PHONY: lint
 lint:
 	@hash golint > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		go install golang.org/x/lint/golint; \
+		$(GOGET) -u golang.org/x/lint/golint; \
 	fi
 	
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
@@ -57,3 +57,7 @@ lint:
 view-covered:
 	$(GOTEST) -coverprofile=cover.out $(TARGET)
 	$(GOCMD) tool cover -html=cover.out
+
+.PHONY: tools
+tools:
+	go install golang.org/x/lint/golint;
