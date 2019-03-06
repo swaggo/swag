@@ -107,3 +107,10 @@ func GetPet5b() {
 func GetPet5c() {
 
 }
+
+type SwagReturn []map[string]string
+
+// @Success 200 {object}  api.SwagReturn	"ok"
+func GetPet6MapString() {
+
+}

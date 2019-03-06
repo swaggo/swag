@@ -46,10 +46,12 @@ func TestParseAcceptComment(t *testing.T) {
 		"application/octet-stream",
 		"image/png",
 		"image/jpeg",
-		"image/gif"
+		"image/gif",
+		"application/xhtml+xml",
+		"application/health+json"
     ]
 }`
-	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif`
+	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -79,10 +81,11 @@ func TestParseProduceComment(t *testing.T) {
 		"application/octet-stream",
 		"image/png",
 		"image/jpeg",
-		"image/gif"
+		"image/gif",
+		"application/health+json"
     ]
 }`
-	comment := `/@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif`
+	comment := `/@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/health+json`
 	operation := new(Operation)
 	operation.ParseComment(comment, nil)
 	b, _ := json.MarshalIndent(operation, "", "    ")
@@ -225,6 +228,31 @@ func TestParseEmptyResponseComment(t *testing.T) {
     "responses": {
         "200": {
             "description": "it's ok"
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithHeader(t *testing.T) {
+	comment := `@Success 200 "it's ok"`
+	operation := NewOperation()
+	operation.ParseComment(comment, nil)
+	comment = `@Header 200 {string} Token "qwerty"`
+	operation.ParseComment(comment, nil)
+	b, err := json.MarshalIndent(operation, "", "    ")
+	assert.NoError(t, err)
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "it's ok",
+            "headers": {
+                "Token": {
+                    "type": "string",
+                    "description": "qwerty"
+                }
+            }
         }
     }
 }`
@@ -401,6 +429,14 @@ func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
     ]
 }`
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByNotSupportedType(t *testing.T) {
+	comment := `@Param some_id not_supported int true "Some ID"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+
+	assert.Error(t, err)
 }
 
 func TestParseParamCommentNotMatch(t *testing.T) {

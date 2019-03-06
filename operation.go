@@ -5,7 +5,6 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -27,6 +26,26 @@ type Operation struct {
 
 	parser *Parser
 }
+
+// Regular expression for comment with response
+const responseCommentPattern = `([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`
+
+var mimeTypeAliases = map[string]string{
+	"json":                  "application/json",
+	"xml":                   "text/xml",
+	"plain":                 "text/plain",
+	"html":                  "text/html",
+	"mpfd":                  "multipart/form-data",
+	"x-www-form-urlencoded": "application/x-www-form-urlencoded",
+	"json-api":              "application/vnd.api+json",
+	"json-stream":           "application/x-json-stream",
+	"octet-stream":          "application/octet-stream",
+	"png":                   "image/png",
+	"jpeg":                  "image/jpeg",
+	"gif":                   "image/gif",
+}
+
+var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
 
 // NewOperation creates a new Operation with default properties.
 // map[int]Response
@@ -81,7 +100,10 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 				}
 			}
 		}
-
+	case "@header":
+		if err := operation.ParseResponseHeaderComment(lineRemainder, astFile); err != nil {
+			return err
+		}
 	case "@router":
 		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
 			return err
@@ -102,7 +124,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	re := regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
 	matches := re.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
-		return fmt.Errorf("can not parse param comment \"%s\"", commentLine)
+		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
 	}
 	name := matches[1]
 	paramType := matches[2]
@@ -161,8 +183,13 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		}
 	case "formData":
 		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
+	default:
+		return fmt.Errorf("%s is not suppoted paramType", paramType)
 	}
-	param = operation.parseAndExtractionParamAttribute(commentLine, schemaType, param)
+
+	if err := operation.parseAndExtractionParamAttribute(commentLine, schemaType, &param); err != nil {
+		return err
+	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	return nil
 }
@@ -184,7 +211,7 @@ var regexAttributes = map[string]*regexp.Regexp{
 	"format": regexp.MustCompile(`(?i)format\(.*\)`),
 }
 
-func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param spec.Parameter) spec.Parameter {
+func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
 	for attrKey, re := range regexAttributes {
 		switch attrKey {
@@ -205,12 +232,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
 				if schemaType != "integer" && schemaType != "number" {
-					log.Panicf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+					return fmt.Errorf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
 				attr = strings.TrimSpace(attr[l+1 : r])
 				n, err := strconv.ParseFloat(attr, 64)
 				if err != nil {
-					log.Panicf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+					return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
 				}
 				param.Maximum = &n
 			}
@@ -220,12 +247,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
 				if schemaType != "integer" && schemaType != "number" {
-					log.Panicf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+					return fmt.Errorf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
 				attr = strings.TrimSpace(attr[l+1 : r])
 				n, err := strconv.ParseFloat(attr, 64)
 				if err != nil {
-					log.Panicf("mininum is allow only a number got=%s", attr)
+					return fmt.Errorf("mininum is allow only a number got=%s", attr)
 				}
 				param.Minimum = &n
 			}
@@ -243,12 +270,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
 				if schemaType != "string" {
-					log.Panicf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+					return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
 				attr = strings.TrimSpace(attr[l+1 : r])
 				n, err := strconv.ParseInt(attr, 10, 64)
 				if err != nil {
-					log.Panicf("maxlength is allow only a number got=%s", attr)
+					return fmt.Errorf("maxlength is allow only a number got=%s", attr)
 				}
 				param.MaxLength = &n
 			}
@@ -258,12 +285,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			r := strings.Index(attr, ")")
 			if !(l == -1 && r == -1) {
 				if schemaType != "string" {
-					log.Panicf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+					return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 				}
 				attr = strings.TrimSpace(attr[l+1 : r])
 				n, err := strconv.ParseInt(attr, 10, 64)
 				if err != nil {
-					log.Panicf("minlength is allow only a number got=%s", attr)
+					return fmt.Errorf("minlength is allow only a number got=%s", attr)
 				}
 				param.MinLength = &n
 			}
@@ -276,7 +303,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 		}
 	}
-	return param
+	return nil
 }
 
 // defineType enum value define the type (object and array unsupported)
@@ -318,71 +345,26 @@ func (operation *Operation) ParseTagsComment(commentLine string) {
 
 // ParseAcceptComment parses comment for given `accept` comment string.
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
-	accepts := strings.Split(commentLine, ",")
-	for _, a := range accepts {
-		switch a {
-		case "json", "application/json":
-			operation.Consumes = append(operation.Consumes, "application/json")
-		case "xml", "text/xml":
-			operation.Consumes = append(operation.Consumes, "text/xml")
-		case "plain", "text/plain":
-			operation.Consumes = append(operation.Consumes, "text/plain")
-		case "html", "text/html":
-			operation.Consumes = append(operation.Consumes, "text/html")
-		case "mpfd", "multipart/form-data":
-			operation.Consumes = append(operation.Consumes, "multipart/form-data")
-		case "x-www-form-urlencoded", "application/x-www-form-urlencoded":
-			operation.Consumes = append(operation.Consumes, "application/x-www-form-urlencoded")
-		case "json-api", "application/vnd.api+json":
-			operation.Consumes = append(operation.Consumes, "application/vnd.api+json")
-		case "json-stream", "application/x-json-stream":
-			operation.Consumes = append(operation.Consumes, "application/x-json-stream")
-		case "octet-stream", "application/octet-stream":
-			operation.Consumes = append(operation.Consumes, "application/octet-stream")
-		case "png", "image/png":
-			operation.Consumes = append(operation.Consumes, "image/png")
-		case "jpeg", "image/jpeg":
-			operation.Consumes = append(operation.Consumes, "image/jpeg")
-		case "gif", "image/gif":
-			operation.Consumes = append(operation.Consumes, "image/gif")
-		default:
-			return fmt.Errorf("%v accept type can't accepted", a)
-		}
-	}
-	return nil
+	return parseMimeTypeList(commentLine, &operation.Consumes, "%v accept type can't be accepted")
 }
 
-// ParseProduceComment parses comment for gived `produce` comment string.
+// ParseProduceComment parses comment for given `produce` comment string.
 func (operation *Operation) ParseProduceComment(commentLine string) error {
-	produces := strings.Split(commentLine, ",")
-	for _, a := range produces {
-		switch a {
-		case "json", "application/json":
-			operation.Produces = append(operation.Produces, "application/json")
-		case "xml", "text/xml":
-			operation.Produces = append(operation.Produces, "text/xml")
-		case "plain", "text/plain":
-			operation.Produces = append(operation.Produces, "text/plain")
-		case "html", "text/html":
-			operation.Produces = append(operation.Produces, "text/html")
-		case "mpfd", "multipart/form-data":
-			operation.Produces = append(operation.Produces, "multipart/form-data")
-		case "x-www-form-urlencoded", "application/x-www-form-urlencoded":
-			operation.Produces = append(operation.Produces, "application/x-www-form-urlencoded")
-		case "json-api", "application/vnd.api+json":
-			operation.Produces = append(operation.Produces, "application/vnd.api+json")
-		case "json-stream", "application/x-json-stream":
-			operation.Produces = append(operation.Produces, "application/x-json-stream")
-		case "octet-stream", "application/octet-stream":
-			operation.Produces = append(operation.Produces, "application/octet-stream")
-		case "png", "image/png":
-			operation.Produces = append(operation.Produces, "image/png")
-		case "jpeg", "image/jpeg":
-			operation.Produces = append(operation.Produces, "image/jpeg")
-		case "gif", "image/gif":
-			operation.Produces = append(operation.Produces, "image/gif")
-		default:
-			return fmt.Errorf("%v produce type can't accepted", a)
+	return parseMimeTypeList(commentLine, &operation.Produces, "%v produce type can't be accepted")
+}
+
+// parseMimeTypeList parses a list of MIME Types for a comment like
+// `produce` (`Content-Type:` response header) or
+// `accept` (`Accept:` request header)
+func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) error {
+	mimeTypes := strings.Split(mimeTypeList, ",")
+	for _, typeName := range mimeTypes {
+		if mimeTypePattern.MatchString(typeName) {
+			*typeList = append(*typeList, typeName)
+		} else if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
+			*typeList = append(*typeList, aliasMimeType)
+		} else {
+			return fmt.Errorf(format, typeName)
 		}
 	}
 	return nil
@@ -433,6 +415,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 
 // findTypeDef attempts to find the *ast.TypeSpec for a specific type given the
 // type's name and the package's import path
+// TODO: improve finding external pkg
 func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -487,7 +470,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 
 // ParseResponseComment parses comment for gived `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
-	re := regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)
+	re := regexp.MustCompile(responseCommentPattern)
 	var matches []string
 
 	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
@@ -591,6 +574,53 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	operation.Responses.StatusCodeResponses[code] = response
+
+	return nil
+}
+
+// ParseResponseHeaderComment parses comment for gived `response header` comment string.
+func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFile *ast.File) error {
+	re := regexp.MustCompile(responseCommentPattern)
+	var matches []string
+
+	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
+		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+	}
+
+	response := spec.Response{}
+
+	code, _ := strconv.Atoi(matches[1])
+
+	responseDescription := strings.Trim(matches[4], "\"")
+	if responseDescription == "" {
+		responseDescription = http.StatusText(code)
+	}
+	response.Description = responseDescription
+
+	schemaType := strings.Trim(matches[2], "{}")
+	refType := matches[3]
+
+	if operation.Responses == nil {
+		operation.Responses = &spec.Responses{
+			ResponsesProps: spec.ResponsesProps{
+				StatusCodeResponses: make(map[int]spec.Response),
+			},
+		}
+	}
+
+	response, responseExist := operation.Responses.StatusCodeResponses[code]
+	if responseExist {
+		header := spec.Header{}
+		header.Description = responseDescription
+		header.Type = schemaType
+
+		if response.Headers == nil {
+			response.Headers = make(map[string]spec.Header)
+		}
+		response.Headers[refType] = header
+
+		operation.Responses.StatusCodeResponses[code] = response
+	}
 
 	return nil
 }
