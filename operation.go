@@ -121,7 +121,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 // 			[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // @Param   some_id     path    int     true        "Some ID"
 func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
-	re := regexp.MustCompile(`([-\w]+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
+	re := regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
 	matches := re.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
 		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)

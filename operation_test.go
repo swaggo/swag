@@ -303,6 +303,27 @@ func TestParseParamCommentByPathType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentByID(t *testing.T) {
+	comment := `@Param unsafe_id[lte] query int true "Unsafe query param"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "integer",
+            "description": "Unsafe query param",
+            "name": "unsafe_id[lte]",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByQueryType(t *testing.T) {
 	comment := `@Param some_id query int true "Some ID"`
 	operation := NewOperation()

@@ -14,7 +14,8 @@ matrix:
 
 install:
   - make install
-
+  - if [[ "${GO111MODULE}" = "on" ]]; then make tools; fi
+  
 script:
   - make lint
   - make build
