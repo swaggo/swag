@@ -95,7 +95,7 @@ func (a Account) Update() error {
 
 var accountMaxID = 3
 var accounts = []Account{
-	Account{ID: 1, Name: "account_1"},
-	Account{ID: 2, Name: "account_2"},
-	Account{ID: 3, Name: "account_3"},
+	{ID: 1, Name: "account_1"},
+	{ID: 2, Name: "account_2"},
+	{ID: 3, Name: "account_3"},
 }
