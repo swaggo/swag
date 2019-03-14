@@ -184,7 +184,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	case "formData":
 		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
 	default:
-		return fmt.Errorf("%s is not suppoted paramType", paramType)
+		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
 
 	if err := operation.parseAndExtractionParamAttribute(commentLine, schemaType, &param); err != nil {
