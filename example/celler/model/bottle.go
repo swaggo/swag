@@ -20,7 +20,7 @@ func BottleOne(id int) (*Bottle, error) {
 }
 
 var bottles = []Bottle{
-	Bottle{ID: 1, Name: "bottle_1", Account: Account{ID: 1, Name: "accout_1"}},
-	Bottle{ID: 2, Name: "bottle_2", Account: Account{ID: 2, Name: "accout_2"}},
-	Bottle{ID: 3, Name: "bottle_3", Account: Account{ID: 3, Name: "accout_3"}},
+	{ID: 1, Name: "bottle_1", Account: Account{ID: 1, Name: "accout_1"}},
+	{ID: 2, Name: "bottle_2", Account: Account{ID: 2, Name: "accout_2"}},
+	{ID: 3, Name: "bottle_3", Account: Account{ID: 3, Name: "accout_3"}},
 }
