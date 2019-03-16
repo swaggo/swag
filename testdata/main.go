@@ -15,7 +15,7 @@ package main
 
 // @host petstore.swagger.io
 // @BasePath /v2
-
+// @schemes http https
 // @securityDefinitions.basic BasicAuth
 
 // @securityDefinitions.apikey ApiKeyAuth
