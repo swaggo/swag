@@ -2,6 +2,7 @@ package swag
 
 import (
 	"encoding/json"
+	"fmt"
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
@@ -20,6 +21,10 @@ func TestNew(t *testing.T) {
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	expected := `{
+    "schemes": [
+        "http",
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
         "description": "This is a sample server Petstore server.\nIt has a lot of beatiful features.",
@@ -208,9 +213,9 @@ func TestParser_ParseType(t *testing.T) {
 }
 
 func TestGetSchemes(t *testing.T) {
-	//TODO:
-	//fmt.Println(GetSchemes("@schemes http https"))
-
+	schemes := getSchemes("@schemes http https")
+	expectedSchemes := []string{"http", "https"}
+	assert.Equal(t, expectedSchemes, schemes)
 }
 
 func TestParseSimpleApi1(t *testing.T) {

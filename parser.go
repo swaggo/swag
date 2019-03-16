@@ -153,7 +153,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				case "@basepath":
 					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
 				case "@schemes":
-					parser.swagger.Schemes = GetSchemes(commentLine)
+					parser.swagger.Schemes = getSchemes(commentLine)
 				case "@tag.name":
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
@@ -329,8 +329,8 @@ func isExistsScope(scope string) bool {
 	return strings.Index(scope, "@scope.") != -1
 }
 
-// GetSchemes parses swagger schemes for given commentLine
-func GetSchemes(commentLine string) []string {
+// getSchemes parses swagger schemes for given commentLine
+func getSchemes(commentLine string) []string {
 	attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
