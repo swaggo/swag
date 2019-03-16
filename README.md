@@ -316,6 +316,7 @@ $ swag init
 | license.url  | A URL to the license used for the API. MUST be in the format of a URL.                       | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
 | host        | The host (name or ip) serving the API.     | // @host localhost:8080         |
 | BasePath    | The base path on which the API is served. | // @BasePath /api/v1             |
+| schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
 
 ## API Operation
 
