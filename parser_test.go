@@ -2,7 +2,6 @@ package swag
 
 import (
 	"encoding/json"
-	"fmt"
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
