@@ -10,25 +10,26 @@ import (
 
 func TestGen_Build(t *testing.T) {
 	searchDir := "../testdata/simple"
-	assert.NotPanics(t, func() {
-		config := &Config{
-			SearchDir:          searchDir,
-			MainAPIFile:        "./main.go",
-			SwaggerConfDir:     "../testdata/simple/docs/swagger",
-			PropNamingStrategy: "",
-		}
-		New().Build(config)
-	})
 
-	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		PropNamingStrategy: "",
+	}
+	assert.NoError(t, New().Build(config))
+
+	if _, err := os.Stat(path.Join("../testdata/simple/docs", "docs.go")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple/docs/swagger", "swagger.json")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join("../testdata/simple/docs", "swagger.json")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple/docs/swagger", "swagger.yaml")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join("../testdata/simple/docs", "swagger.yaml")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
+
+	//TODO: remove gen files
 }
 
 func TestGen_BuildSnakecase(t *testing.T) {
@@ -36,21 +37,23 @@ func TestGen_BuildSnakecase(t *testing.T) {
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
-		SwaggerConfDir:     "../testdata/simple2/docs/swagger",
+		OutputDir:          "../testdata/simple2/docs",
 		PropNamingStrategy: "snakecase",
 	}
 
 	assert.NoError(t, New().Build(config))
 
-	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join("../testdata/simple2/docs", "docs.go")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple2/docs/swagger", "swagger.json")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join("../testdata/simple2/docs", "swagger.json")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple2/docs/swagger", "swagger.yaml")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join("../testdata/simple2/docs", "swagger.yaml")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
+
+	//TODO: remove gen files
 }
 
 func TestGen_BuildLowerCamelcase(t *testing.T) {
@@ -58,21 +61,23 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
-		SwaggerConfDir:     "../testdata/simple3/docs/swagger",
+		OutputDir:          "../testdata/simple3/docs",
 		PropNamingStrategy: "",
 	}
 
 	assert.NoError(t, New().Build(config))
 
-	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join("../testdata/simple3/docs", "docs.go")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple3/docs/swagger", "swagger.json")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join("../testdata/simple3/docs", "swagger.json")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple3/docs/swagger", "swagger.yaml")); os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join("../testdata/simple3/docs", "swagger.yaml")); os.IsNotExist(err) {
 		t.Fatal(err)
 	}
+
+	//TODO: remove gen files
 }
 
 func TestGen_SearchDirIsNotExist(t *testing.T) {
@@ -82,8 +87,33 @@ func TestGen_SearchDirIsNotExist(t *testing.T) {
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
-		SwaggerConfDir:     swaggerConfDir,
+		OutputDir:          swaggerConfDir,
 		PropNamingStrategy: propNamingStrategy,
 	}
 	assert.EqualError(t, New().Build(config), "dir: ../isNotExistDir is not exist")
+}
+
+func TestGen_configWithOutputDir(t *testing.T) {
+	searchDir := "../testdata/simple"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		PropNamingStrategy: "",
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	if _, err := os.Stat(path.Join("../testdata/simple/docs", "docs.go")); os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path.Join("../testdata/simple/docs", "swagger.json")); os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(path.Join("../testdata/simple/docs", "swagger.yaml")); os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+
+	//TODO: remove gen files
 }

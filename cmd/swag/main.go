@@ -22,9 +22,8 @@ func main() {
 			Action: func(c *cli.Context) error {
 				searchDir := c.String("dir")
 				mainAPIFile := c.String("generalInfo")
-				swaggerConfDir := c.String("swagger") //TODO: this swagger flag is deprecated and should not be used
 				strategy := c.String("propertyStrategy")
-				//outputDir := c.String("out")
+				outputDir := c.String("output")
 
 				switch strategy {
 				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
@@ -35,8 +34,8 @@ func main() {
 				return gen.New().Build(&gen.Config{
 					SearchDir:          searchDir,
 					MainAPIFile:        mainAPIFile,
-					SwaggerConfDir:     swaggerConfDir,
 					PropNamingStrategy: strategy,
+					OutputDir:          outputDir,
 				})
 			},
 			Flags: []cli.Flag{
@@ -51,11 +50,6 @@ func main() {
 					Usage: "Directory you want to parse",
 				},
 				cli.StringFlag{
-					Name:  "swagger, s",
-					Value: "./docs/swagger",
-					Usage: "Output the swagger conf for json and yaml",
-				},
-				cli.StringFlag{
 					Name:  "propertyStrategy, p",
 					Value: "camelcase",
 					Usage: "Property Naming Strategy like snakecase,camelcase,pascalcase",
@@ -63,7 +57,7 @@ func main() {
 				cli.StringFlag{
 					Name:  "output, o",
 					Value: "./docs",
-					Usage: "Output directory for al the generated files(swagger conf for json, yaml and doc.go)",
+					Usage: "Output directory for al the generated files(swagger.json, swagger.yaml and doc.go)",
 				},
 			},
 		},
