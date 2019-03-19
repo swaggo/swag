@@ -23,17 +23,35 @@ func New() *Gen {
 	return &Gen{}
 }
 
+// Config presents Gen configurations.
+type Config struct {
+	// SearchDir the swag would be parse
+	SearchDir string
+
+	//MainAPIFile the Go file path in which 'swagger general API Info' is written
+	MainAPIFile string
+
+	//SwaggerConfDir the swagger conf for json and yaml
+	SwaggerConfDir string
+
+	//PropNamingStrategy represents property naming strategy like snakecase,camelcase,pascalcase
+	PropNamingStrategy string
+
+	//OutPutDir represents the output directory for al the generated files
+	OutPutDir string
+}
+
 // Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
-func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy string) error {
-	if _, err := os.Stat(searchDir); os.IsNotExist(err) {
-		return fmt.Errorf("dir: %s is not exist", searchDir)
+func (g *Gen) Build(config *Config) error {
+	if _, err := os.Stat(config.SearchDir); os.IsNotExist(err) {
+		return fmt.Errorf("dir: %s is not exist", config.SearchDir)
 	}
 
 	log.Println("Generate swagger docs....")
 	p := swag.New()
-	p.PropNamingStrategy = propNamingStrategy
+	p.PropNamingStrategy = config.PropNamingStrategy
 
-	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
 		return err
 	}
 	swagger := p.GetSwagger()
@@ -43,15 +61,15 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 		return err
 	}
 
-	os.MkdirAll(path.Join(searchDir, "docs"), os.ModePerm)
-	docs, err := os.Create(path.Join(searchDir, "docs", "docs.go"))
+	os.MkdirAll(path.Join(config.SearchDir, "docs"), os.ModePerm)
+	docs, err := os.Create(path.Join(config.SearchDir, "docs", "docs.go"))
 	if err != nil {
 		return err
 	}
 	defer docs.Close()
 
-	os.Mkdir(swaggerConfDir, os.ModePerm)
-	swaggerJSON, err := os.Create(path.Join(swaggerConfDir, "swagger.json"))
+	os.Mkdir(config.SwaggerConfDir, os.ModePerm)
+	swaggerJSON, err := os.Create(path.Join(config.SwaggerConfDir, "swagger.json"))
 	if err != nil {
 		return err
 	}
@@ -59,7 +77,7 @@ func (g *Gen) Build(searchDir, mainAPIFile, swaggerConfDir, propNamingStrategy s
 	defer swaggerJSON.Close()
 	swaggerJSON.Write(b)
 
-	swaggerYAML, err := os.Create(path.Join(swaggerConfDir, "swagger.yaml"))
+	swaggerYAML, err := os.Create(path.Join(config.SwaggerConfDir, "swagger.yaml"))
 	if err != nil {
 		return err
 	}

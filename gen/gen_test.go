@@ -11,7 +11,13 @@ import (
 func TestGen_Build(t *testing.T) {
 	searchDir := "../testdata/simple"
 	assert.NotPanics(t, func() {
-		New().Build(searchDir, "./main.go", "../testdata/simple/docs/swagger", "")
+		config := &Config{
+			SearchDir:          searchDir,
+			MainAPIFile:        "./main.go",
+			SwaggerConfDir:     "../testdata/simple/docs/swagger",
+			PropNamingStrategy: "",
+		}
+		New().Build(config)
 	})
 
 	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
@@ -27,7 +33,14 @@ func TestGen_Build(t *testing.T) {
 
 func TestGen_BuildSnakecase(t *testing.T) {
 	searchDir := "../testdata/simple2"
-	assert.NoError(t, New().Build(searchDir, "./main.go", "../testdata/simple2/docs/swagger", "snakecase"))
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		SwaggerConfDir:     "../testdata/simple2/docs/swagger",
+		PropNamingStrategy: "snakecase",
+	}
+
+	assert.NoError(t, New().Build(config))
 
 	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
 		t.Fatal(err)
@@ -42,7 +55,14 @@ func TestGen_BuildSnakecase(t *testing.T) {
 
 func TestGen_BuildLowerCamelcase(t *testing.T) {
 	searchDir := "../testdata/simple3"
-	assert.NoError(t, New().Build(searchDir, "./main.go", "../testdata/simple3/docs/swagger", ""))
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		SwaggerConfDir:     "../testdata/simple3/docs/swagger",
+		PropNamingStrategy: "",
+	}
+
+	assert.NoError(t, New().Build(config))
 
 	if _, err := os.Stat(path.Join(searchDir, "docs", "docs.go")); os.IsNotExist(err) {
 		t.Fatal(err)
@@ -59,5 +79,11 @@ func TestGen_SearchDirIsNotExist(t *testing.T) {
 	searchDir := "../isNotExistDir"
 
 	var swaggerConfDir, propNamingStrategy string
-	assert.EqualError(t, New().Build(searchDir, "./main.go", swaggerConfDir, propNamingStrategy), "dir: ../isNotExistDir is not exist")
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		SwaggerConfDir:     swaggerConfDir,
+		PropNamingStrategy: propNamingStrategy,
+	}
+	assert.EqualError(t, New().Build(config), "dir: ../isNotExistDir is not exist")
 }

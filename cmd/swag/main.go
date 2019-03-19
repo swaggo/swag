@@ -22,8 +22,9 @@ func main() {
 			Action: func(c *cli.Context) error {
 				searchDir := c.String("dir")
 				mainAPIFile := c.String("generalInfo")
-				swaggerConfDir := c.String("swagger")
+				swaggerConfDir := c.String("swagger") //TODO: this swagger flag is deprecated and should not be used
 				strategy := c.String("propertyStrategy")
+				//outputDir := c.String("out")
 
 				switch strategy {
 				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
@@ -31,7 +32,12 @@ func main() {
 					return errors.Errorf("not supported %s propertyStrategy", strategy)
 				}
 
-				return gen.New().Build(searchDir, mainAPIFile, swaggerConfDir, strategy)
+				return gen.New().Build(&gen.Config{
+					SearchDir:          searchDir,
+					MainAPIFile:        mainAPIFile,
+					SwaggerConfDir:     swaggerConfDir,
+					PropNamingStrategy: strategy,
+				})
 			},
 			Flags: []cli.Flag{
 				cli.StringFlag{
@@ -53,6 +59,11 @@ func main() {
 					Name:  "propertyStrategy, p",
 					Value: "camelcase",
 					Usage: "Property Naming Strategy like snakecase,camelcase,pascalcase",
+				},
+				cli.StringFlag{
+					Name:  "output, o",
+					Value: "./docs",
+					Usage: "Output directory for al the generated files(swagger conf for json, yaml and doc.go)",
 				},
 			},
 		},
