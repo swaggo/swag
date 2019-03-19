@@ -26,7 +26,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
     ],
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server Petstore server.\nIt has a lot of beatiful features.",
+        "description": "This is a sample server Petstore server.\nIt has a lot of beautiful features.",
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
