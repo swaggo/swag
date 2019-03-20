@@ -1065,12 +1065,7 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 // Skip returns filepath.SkipDir error if match vendor and hidden folder
 func (parser *Parser) Skip(path string, f os.FileInfo) error {
 
-	if parser.ParseVendor {
-		// Ignore this project
-		if f.IsDir() && strings.HasSuffix(path, "github.com/swaggo/swag") {
-			return filepath.SkipDir
-		}
-	} else { // ignore vendor
+	if !parser.ParseVendor { // ignore vendor
 		if f.IsDir() && f.Name() == "vendor" {
 			return filepath.SkipDir
 		}
