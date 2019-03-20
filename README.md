@@ -67,8 +67,8 @@ USAGE:
 OPTIONS:
    --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
    --dir value, -d value               Directory you want to parse (default: "./")
-   --swagger value, -s value           Output the swagger conf for json and yaml (default: "./docs/swagger")
    --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
+   --output value, -o value            Output directory for al the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
 ```
 
 ## Supported Web Frameworks
