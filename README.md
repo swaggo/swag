@@ -53,21 +53,10 @@ $ swag init
   swag init -g http/api.go
   ```
 
-## swag cli
+You can see help.
 
 ```sh
 $ swag init -h
-NAME:
-   swag init - Create docs.go
-
-USAGE:
-   swag init [command options] [arguments...]
-
-OPTIONS:
-   --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
-   --dir value, -d value               Directory you want to parse (default: "./")
-   --swagger value, -s value           Output the swagger conf for json and yaml (default: "./docs/swagger")
-   --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
 ```
 
 ## Supported Web Frameworks
