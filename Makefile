@@ -6,11 +6,14 @@ GOBUILD=$(GOCMD) build
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
+GOMOD=$(GOCMD) mod
 GOLIST=$(GOCMD) list
 
 BINARY_NAME=swag
 PACKAGES=$(shell $(GOLIST) ./... | grep -v /example)
 GOFILES := $(shell find . -name "*.go" -type f)
+
+export GO111MODULE := on
 
 all: test build
 
@@ -43,10 +46,12 @@ clean:
 	rm -f $(BINARY_NAME)
 
 .PHONY: install
-install:
-	$(GOGET) -v ./...
-	$(GOGET) github.com/stretchr/testify/assert
+download:
+	$(GOMOD) download
 
+.PHONY: vendor
+vendor:
+	$(GOMOD) vendor
 
 .PHONY: lint
 lint:
@@ -73,7 +78,3 @@ fmt-check:
 view-covered:
 	$(GOTEST) -coverprofile=cover.out $(TARGET)
 	$(GOCMD) tool cover -html=cover.out
-
-.PHONY: tools
-tools:
-	go install golang.org/x/lint/golint;
