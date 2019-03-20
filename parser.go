@@ -50,6 +50,8 @@ type Parser struct {
 
 	PropNamingStrategy string
 
+	ParseVendor bool
+
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []string
 }
@@ -1044,7 +1046,7 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) error {
 }
 
 func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
-	if err := Skip(f); err != nil {
+	if err := parser.Skip(path, f); err != nil {
 		return err
 	}
 
@@ -1061,10 +1063,17 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 }
 
 // Skip returns filepath.SkipDir error if match vendor and hidden folder
-func Skip(f os.FileInfo) error {
-	// exclude vendor folder
-	if f.IsDir() && f.Name() == "vendor" {
-		return filepath.SkipDir
+func (parser *Parser) Skip(path string, f os.FileInfo) error {
+
+	if parser.ParseVendor {
+		// Ignore this project
+		if f.IsDir() && strings.HasSuffix(path, "github.com/swaggo/swag") {
+			return filepath.SkipDir
+		}
+	} else { // ignore vendor
+		if f.IsDir() && f.Name() == "vendor" {
+			return filepath.SkipDir
+		}
 	}
 
 	// exclude all hidden folder
