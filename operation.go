@@ -143,7 +143,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
 	case "body":
 		param = createParameter(paramType, description, name, "object", required) // TODO: if Parameter types can be objects, but also primitives and arrays
-		if err := operation.xxx(schemaType, astFile); err != nil {
+		if err := operation.registerSchemaType(schemaType, astFile); err != nil {
 			return err
 		}
 		param.Schema.Ref = spec.Ref{
@@ -162,7 +162,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	return nil
 }
 
-func (operation *Operation) xxx(schemaType string, astFile *ast.File) error {
+func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.File) error {
 	refSplit := strings.Split(schemaType, ".")
 	if len(refSplit) != 2 {
 		return nil
@@ -174,28 +174,31 @@ func (operation *Operation) xxx(schemaType string, astFile *ast.File) error {
 		return nil
 	}
 	var typeSpec *ast.TypeSpec
-	if astFile != nil {
-		for _, imp := range astFile.Imports {
-			if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
-				break
-			}
-			impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
-			if strings.HasSuffix(impPath, "/"+pkgName) {
-				var err error
-				typeSpec, err = findTypeDef(impPath, typeName)
-				if err != nil {
-					return errors.Wrapf(err, "can not find ref type: %q", schemaType)
-				}
-			}
+	if astFile == nil {
+		return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
+	}
+	for _, imp := range astFile.Imports {
+		if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
+			break
 		}
+		impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
+		if !strings.HasSuffix(impPath, "/"+pkgName) {
+			break
+		}
+		var err error
+		typeSpec, err = findTypeDef(impPath, typeName)
+		if err != nil {
+			return errors.Wrapf(err, "can not find ref type: %q", schemaType)
+		}
+		operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
+		operation.parser.registerTypes[schemaType] = typeSpec
+		return nil
 	}
 
 	if typeSpec == nil {
 		return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
 	}
 
-	operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
-	operation.parser.registerTypes[schemaType] = typeSpec
 	return nil
 }
 
