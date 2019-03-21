@@ -373,18 +373,6 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
-func TestParseParamCommentByBodyTypeErr(t *testing.T) {
-	comment := `@Param some_id body model.OrderRow true "Some ID"`
-	operation := NewOperation()
-	operation.parser = New()
-
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["notexist"] = &ast.TypeSpec{}
-	err := operation.ParseComment(comment, nil)
-
-	assert.Error(t, err)
-}
-
 func TestParseParamCommentByFormDataType(t *testing.T) {
 	comment := `@Param file formData file true "this is a test file"`
 	operation := NewOperation()

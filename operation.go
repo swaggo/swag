@@ -173,32 +173,6 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 		operation.parser.registerTypes[schemaType] = typeSpec
 		return nil
 	}
-	var typeSpec *ast.TypeSpec
-	if astFile == nil {
-		return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
-	}
-	for _, imp := range astFile.Imports {
-		if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
-			break
-		}
-		impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
-		if !strings.HasSuffix(impPath, "/"+pkgName) {
-			break
-		}
-		var err error
-		typeSpec, err = findTypeDef(impPath, typeName)
-		if err != nil {
-			return errors.Wrapf(err, "can not find ref type: %q", schemaType)
-		}
-		operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
-		operation.parser.registerTypes[schemaType] = typeSpec
-		return nil
-	}
-
-	if typeSpec == nil {
-		return fmt.Errorf("can not find ref type:\"%s\"", schemaType)
-	}
-
 	return nil
 }
 
@@ -538,7 +512,6 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 				operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
 				operation.parser.registerTypes[refType] = typeSpec
 			}
-
 		}
 	}
 
