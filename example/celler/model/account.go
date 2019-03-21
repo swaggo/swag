@@ -4,23 +4,27 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
+// Account example
 type Account struct {
 	ID   int       `json:"id" example:"1" format:"int64"`
 	Name string    `json:"name" example:"account name"`
 	UUID uuid.UUID `json:"uuid" example:"550e8400-e29b-41d4-a716-446655440000" format:"uuid"`
 }
 
+//  example
 var (
 	ErrNameInvalid = errors.New("name is empty")
 )
 
+// AddAccount example
 type AddAccount struct {
 	Name string `json:"name" example:"account name"`
 }
 
+// Validation example
 func (a AddAccount) Validation() error {
 	switch {
 	case len(a.Name) == 0:
@@ -30,10 +34,12 @@ func (a AddAccount) Validation() error {
 	}
 }
 
+// UpdateAccount example
 type UpdateAccount struct {
 	Name string `json:"name" example:"account name"`
 }
 
+// Validation example
 func (a UpdateAccount) Validation() error {
 	switch {
 	case len(a.Name) == 0:
@@ -43,6 +49,7 @@ func (a UpdateAccount) Validation() error {
 	}
 }
 
+// AccountsAll example
 func AccountsAll(q string) ([]Account, error) {
 	if q == "" {
 		return accounts, nil
@@ -56,6 +63,7 @@ func AccountsAll(q string) ([]Account, error) {
 	return as, nil
 }
 
+// AccountOne example
 func AccountOne(id int) (Account, error) {
 	for _, v := range accounts {
 		if id == v.ID {
@@ -65,6 +73,7 @@ func AccountOne(id int) (Account, error) {
 	return Account{}, ErrNoRow
 }
 
+// Insert example
 func (a Account) Insert() (int, error) {
 	accountMaxID++
 	a.ID = accountMaxID
@@ -73,6 +82,7 @@ func (a Account) Insert() (int, error) {
 	return accountMaxID, nil
 }
 
+// Delete example
 func Delete(id int) error {
 	for k, v := range accounts {
 		if id == v.ID {
@@ -83,6 +93,7 @@ func Delete(id int) error {
 	return fmt.Errorf("account id=%d is not found", id)
 }
 
+// Update example
 func (a Account) Update() error {
 	for k, v := range accounts {
 		if a.ID == v.ID {

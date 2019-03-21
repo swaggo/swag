@@ -1,15 +1,18 @@
 package model
 
+// Bottle example
 type Bottle struct {
 	ID      int     `json:"id" example:"1"`
 	Name    string  `json:"name" example:"bottle_name"`
 	Account Account `json:"account"`
 }
 
+// BottlesAll example
 func BottlesAll() ([]Bottle, error) {
 	return bottles, nil
 }
 
+// BottleOne example
 func BottleOne(id int) (*Bottle, error) {
 	for _, v := range bottles {
 		if id == v.ID {
