@@ -24,6 +24,7 @@ func main() {
 				mainAPIFile := c.String("generalInfo")
 				strategy := c.String("propertyStrategy")
 				outputDir := c.String("output")
+				parseVendor := c.Bool("parseVendor")
 
 				switch strategy {
 				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
@@ -36,6 +37,7 @@ func main() {
 					MainAPIFile:        mainAPIFile,
 					PropNamingStrategy: strategy,
 					OutputDir:          outputDir,
+					ParseVendor:        parseVendor,
 				})
 			},
 			Flags: []cli.Flag{
@@ -58,6 +60,10 @@ func main() {
 					Name:  "output, o",
 					Value: "./docs",
 					Usage: "Output directory for al the generated files(swagger.json, swagger.yaml and doc.go)",
+				},
+				cli.BoolFlag{
+					Name:  "parseVendor",
+					Usage: "Parse go files in 'vendor' folder, disabled by default",
 				},
 			},
 		},

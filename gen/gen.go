@@ -36,6 +36,9 @@ type Config struct {
 
 	//PropNamingStrategy represents property naming strategy like snakecase,camelcase,pascalcase
 	PropNamingStrategy string
+
+	//ParseVendor whether swag should be parse vendor folder
+	ParseVendor bool
 }
 
 // Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
@@ -47,6 +50,7 @@ func (g *Gen) Build(config *Config) error {
 	log.Println("Generate swagger docs....")
 	p := swag.New()
 	p.PropNamingStrategy = config.PropNamingStrategy
+	p.ParseVendor = config.ParseVendor
 
 	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
 		return err

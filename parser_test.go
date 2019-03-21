@@ -2328,22 +2328,54 @@ func Test3(){
 
 func TestSkip(t *testing.T) {
 	folder1 := "/tmp/vendor"
-	os.Mkdir(folder1, 777)
+	os.Mkdir(folder1, os.ModePerm)
 	f1, _ := os.Stat(folder1)
 
-	assert.True(t, Skip(f1) == filepath.SkipDir)
+	parser := New()
+
+	assert.True(t, parser.Skip(folder1, f1) == filepath.SkipDir)
 	assert.NoError(t, os.Remove(folder1))
 
 	folder2 := "/tmp/.git"
-	os.Mkdir(folder2, 777)
+	os.Mkdir(folder2, os.ModePerm)
 	f2, _ := os.Stat(folder2)
 
-	assert.True(t, Skip(f2) == filepath.SkipDir)
+	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
 	assert.NoError(t, os.Remove(folder2))
 
 	currentPath := "./"
 	currentPathInfo, _ := os.Stat(currentPath)
-	assert.True(t, Skip(currentPathInfo) == nil)
+	assert.True(t, parser.Skip(currentPath, currentPathInfo) == nil)
+}
+
+func TestSkipMustParseVendor(t *testing.T) {
+	folder1 := "/tmp/vendor"
+	os.Mkdir(folder1, os.ModePerm)
+	f1, _ := os.Stat(folder1)
+
+	parser := New()
+	parser.ParseVendor = true
+
+	assert.True(t, parser.Skip(folder1, f1) == nil)
+	assert.NoError(t, os.Remove(folder1))
+
+	folder2 := "/tmp/.git"
+	os.Mkdir(folder2, os.ModePerm)
+	f2, _ := os.Stat(folder2)
+
+	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
+	assert.NoError(t, os.Remove(folder2))
+
+	currentPath := "./"
+	currentPathInfo, _ := os.Stat(currentPath)
+	assert.True(t, parser.Skip(currentPath, currentPathInfo) == nil)
+
+	folder3 := "/tmp/test/vendor/github.com/swaggo/swag"
+	assert.NoError(t, os.MkdirAll(folder3, os.ModePerm))
+	f3, _ := os.Stat(folder3)
+
+	assert.Nil(t, parser.Skip(folder3, f3))
+	assert.NoError(t, os.RemoveAll("/tmp/test"))
 }
 
 // func TestParseDeterministic(t *testing.T) {
