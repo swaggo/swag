@@ -173,7 +173,7 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 		operation.parser.registerTypes[schemaType] = typeSpec
 		return nil
 	}
-	return nil
+	return fmt.Errorf("can not find ref type: %q", schemaType)
 }
 
 var regexAttributes = map[string]*regexp.Regexp{
