@@ -1,16 +1,16 @@
-GOCMD=$(shell which go)
-GOLINT=$(shell which golint)
-GOIMPORT=$(shell which goimports)
-GOFMT =$(shell which gofmt)
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test
-GOGET=$(GOCMD) get
-GOLIST=$(GOCMD) list
+GOCMD:=$(shell which go)
+GOLINT:=$(shell which golint)
+GOIMPORT:=$(shell which goimports)
+GOFMT:=$(shell which gofmt)
+GOBUILD:=$(GOCMD) build
+GOCLEAN:=$(GOCMD) clean
+GOTEST:=$(GOCMD) test
+GOGET:=$(GOCMD) get
+GOLIST:=$(GOCMD) list
 
-BINARY_NAME=swag
-PACKAGES=$(shell $(GOLIST) ./... | grep -v /example)
-GOFILES := $(shell find . -name "*.go" -type f)
+BINARY_NAME:=swag
+PACKAGES:=$(shell $(GOLIST) ./... | grep -v /example)
+GOFILES:=$(shell find . -name "*.go" -type f)
 
 all: test build
 
