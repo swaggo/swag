@@ -181,7 +181,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
 			}
 		}
-	case "formData":
+	case "formData","form":
 		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
