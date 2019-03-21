@@ -7,6 +7,7 @@ GOCLEAN:=$(GOCMD) clean
 GOTEST:=$(GOCMD) test
 GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
+GOVET:=$(GOCMD) vet
 
 BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) ./...)
@@ -55,7 +56,10 @@ lint:
 	fi
 	
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
-	go vet
+
+.PHONY: vet
+vet:
+	$(GOVET) $(PACKAGES)
 
 .PHONY: fmt
 fmt:
