@@ -9,7 +9,7 @@ GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 
 BINARY_NAME:=swag
-PACKAGES:=$(shell $(GOLIST) ./... | grep -v /example)
+PACKAGES:=$(shell $(GOLIST) ./...)
 GOFILES:=$(shell find . -name "*.go" -type f)
 
 all: test build
