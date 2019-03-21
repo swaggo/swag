@@ -182,13 +182,11 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 			break
 		}
 		impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
-
 		if strings.HasSuffix(impPath, "/"+pkgName) {
 			var err error
-
 			typeSpec, err = findTypeDef(impPath, typeName)
 			if err != nil {
-				return errors.Wrapf(err, "can not find ref type: %q", schemaType)
+				return errors.Wrapf(err, "can not find type def: %q", schemaType)
 			}
 			break
 		}
@@ -200,8 +198,8 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 
 	if _, ok := operation.parser.TypeDefinitions[pkgName]; !ok {
 		operation.parser.TypeDefinitions[pkgName] = make(map[string]*ast.TypeSpec)
-
 	}
+
 	operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
 	operation.parser.registerTypes[schemaType] = typeSpec
 	return nil
