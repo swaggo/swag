@@ -173,7 +173,38 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 		operation.parser.registerTypes[schemaType] = typeSpec
 		return nil
 	}
-	return fmt.Errorf("can not find ref type: %q", schemaType)
+	var typeSpec *ast.TypeSpec
+	if astFile == nil {
+		return fmt.Errorf("can not register schema type: %q reason: astFile == nil", schemaType)
+	}
+	for _, imp := range astFile.Imports {
+		if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
+			break
+		}
+		impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
+
+		if strings.HasSuffix(impPath, "/"+pkgName) {
+			var err error
+
+			typeSpec, err = findTypeDef(impPath, typeName)
+			if err != nil {
+				return errors.Wrapf(err, "can not find ref type: %q", schemaType)
+			}
+			break
+		}
+	}
+
+	if typeSpec == nil {
+		return fmt.Errorf("can not find ref type: %q", schemaType)
+	}
+
+	if _, ok := operation.parser.TypeDefinitions[pkgName]; !ok {
+		operation.parser.TypeDefinitions[pkgName] = make(map[string]*ast.TypeSpec)
+
+	}
+	operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
+	operation.parser.registerTypes[schemaType] = typeSpec
+	return nil
 }
 
 var regexAttributes = map[string]*regexp.Regexp{
@@ -473,45 +504,8 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	refType := matches[3]
 
 	if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
-		refSplit := strings.Split(refType, ".")
-		if len(refSplit) == 2 {
-			pkgName := refSplit[0]
-			typeName := refSplit[1]
-
-			if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
-				operation.parser.registerTypes[refType] = typeSpec
-			} else {
-				var typeSpec *ast.TypeSpec
-				if astFile != nil {
-					for _, imp := range astFile.Imports {
-						if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
-							break
-						}
-						impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
-
-						if strings.HasSuffix(impPath, "/"+pkgName) {
-							var err error
-
-							typeSpec, err = findTypeDef(impPath, typeName)
-							if err != nil {
-								return errors.Wrapf(err, "can not find ref type: %q", refType)
-							}
-							break
-						}
-					}
-				}
-
-				if typeSpec == nil {
-					return fmt.Errorf("can not find ref type: %q", refType)
-				}
-
-				if _, ok := operation.parser.TypeDefinitions[pkgName]; !ok {
-					operation.parser.TypeDefinitions[pkgName] = make(map[string]*ast.TypeSpec)
-
-				}
-				operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
-				operation.parser.registerTypes[refType] = typeSpec
-			}
+		if err := operation.registerSchemaType(refType, astFile); err != nil {
+			return err
 		}
 	}
 
