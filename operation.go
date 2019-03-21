@@ -193,7 +193,7 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 	}
 
 	if typeSpec == nil {
-		return fmt.Errorf("can not find ref type: %q", schemaType)
+		return fmt.Errorf("can not find schema type: %q", schemaType)
 	}
 
 	if _, ok := operation.parser.TypeDefinitions[pkgName]; !ok {
