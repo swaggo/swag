@@ -21,7 +21,10 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Your swag version**
-e.g. v1.2.0
+e.g. 1.4.1
+
+**Your go version**
+e.g. 1.12.0
 
 **Desktop (please complete the following information):**
  - OS: [e.g. iOS]
