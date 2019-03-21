@@ -55,6 +55,7 @@ lint:
 	fi
 	
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
+	go vet
 
 .PHONY: fmt
 fmt:
