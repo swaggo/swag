@@ -19,6 +19,7 @@ install:
 script:
   - make fmt-check
   - make lint
+  - make vet
   - make build
   - make test
 
