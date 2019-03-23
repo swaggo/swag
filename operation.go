@@ -370,11 +370,13 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	for _, typeName := range mimeTypes {
 		if mimeTypePattern.MatchString(typeName) {
 			*typeList = append(*typeList, typeName)
-		} else if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
-			*typeList = append(*typeList, aliasMimeType)
-		} else {
-			return fmt.Errorf(format, typeName)
+			continue
 		}
+		if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
+			*typeList = append(*typeList, aliasMimeType)
+			continue
+		}
+		return fmt.Errorf(format, typeName)
 	}
 	return nil
 }
