@@ -91,7 +91,10 @@ func main() {
 			examples.GET("attribute", c.AttributeExample)
 		}
 	}
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	config := &ginSwagger.Config{
+		URL: "http://localhost:8080/swagger/doc.json", //The url pointing to API definition
+	}
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(config, swaggerFiles.Handler))
 	r.Run(":8080")
 }
 
