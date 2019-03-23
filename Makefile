@@ -69,7 +69,7 @@ fmt:
 
 .PHONY: fmt-check
 fmt-check:
-	@diff=$$($(GOFMT) -s -d $(GOFILES)); \
+	@diff=$$($(GOFMT) -s -d $(GOFILES)) | grep -v ./vendor/ ; \
 	if [ -n "$$diff" ]; then \
 		echo "Please run 'make fmt' and commit the result:"; \
 		echo "$${diff}"; \
