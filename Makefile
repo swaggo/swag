@@ -50,9 +50,6 @@ install:
 	$(GOGET) -v ./...
 	$(GOGET) github.com/stretchr/testify/assert
 
-update-pkg:
-	$(GOGET) -u ./...
-
 .PHONY: lint
 lint:
 	which golint || $(GOGET) -u golang.org/x/lint/golint
