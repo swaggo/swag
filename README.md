@@ -22,7 +22,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [General API Info](##general-api-info)
 	- [API Operation](#api-operation)
 	- [Security](#security)
- - [Examples](#tips)
+ - [Examples](#examples)
 	- [Descriptions over multiple lines](#descriptions-over-multiple-lines)
 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
 	- [Add a headers in response](#add-a-headers-in-response) 
