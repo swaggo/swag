@@ -20,7 +20,7 @@ require (
 	github.com/satori/go.uuid v1.2.0
 	github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24 // indirect
 	github.com/stretchr/testify v1.3.0
-	github.com/swaggo/gin-swagger v1.2.0
+	github.com/swaggo/gin-swagger v1.1.0
 	github.com/ugorji/go/codec v0.0.0-20190320090025-2dc34c0b8780 // indirect
 	github.com/urfave/cli v1.20.0
 	golang.org/x/net v0.0.0-20190322120337-addf6b3196f6 // indirect
