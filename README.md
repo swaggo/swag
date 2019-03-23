@@ -152,10 +152,7 @@ func main() {
 		}
     //...
 	}
-	config := &ginSwagger.Config{
-		URL: "http://localhost:8080/swagger/doc.json", //The url pointing to API definition
-	}
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(config,swaggerFiles.Handler))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.Run(":8080")
 }
 //...
@@ -193,11 +190,9 @@ func main() {
 	docs.SwaggerInfo.BasePath = "/v2"
 
 	r := gin.New()
-	config := &ginSwagger.Config{
-		URL: "http://localhost:8080/swagger/doc.json", //The url pointing to API definition
-	}
+
 	// use ginSwagger middleware to serve the API docs
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(config,swaggerFiles.Handler))
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.Run()
 }
