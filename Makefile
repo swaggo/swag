@@ -8,6 +8,7 @@ GOTEST:=$(GOCMD) test
 GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
+GOMOD:=$(GOCMD) mod
 
 BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) ./...)
@@ -47,9 +48,11 @@ clean:
 
 .PHONY: install
 install:
-	$(GOGET) -v ./...
+	$(GOMOD) vendor || $(GOGET) -v ./...
 	$(GOGET) github.com/stretchr/testify/assert
 
+update-pkg:
+	$(GOGET) -u ./...
 
 .PHONY: lint
 lint:
