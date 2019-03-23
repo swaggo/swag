@@ -13,8 +13,6 @@ BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) ./...)
 GOFILES:=$(shell find . -name "*.go" -type f)
 
-export GO111MODULE := on
-
 all: test build
 
 .PHONY: build
