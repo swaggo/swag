@@ -8,7 +8,6 @@ GOTEST:=$(GOCMD) test
 GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
-GOMOD:=$(GOCMD) mod
 
 BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) ./...)
@@ -48,7 +47,7 @@ clean:
 
 .PHONY: install
 install:
-	$(GOMOD) vendor || $(GOGET) -v ./...
+	$(GOGET) -v ./...
 	$(GOGET) github.com/stretchr/testify/assert
 
 update-pkg:
@@ -69,7 +68,7 @@ fmt:
 
 .PHONY: fmt-check
 fmt-check:
-	@diff=$$($(GOFMT) -s -d $(GOFILES)) | grep -v ./vendor/ ; \
+	@diff=$$($(GOFMT) -s -d $(GOFILES)); \
 	if [ -n "$$diff" ]; then \
 		echo "Please run 'make fmt' and commit the result:"; \
 		echo "$${diff}"; \

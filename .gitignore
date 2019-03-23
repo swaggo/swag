@@ -1,7 +1,6 @@
 dist
 testdata/simple*/docs
 cover.out
-vendor
 
 # Test binary, build with `go test -c`
 *.test
