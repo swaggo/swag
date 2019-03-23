@@ -13,6 +13,8 @@ BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) ./...)
 GOFILES:=$(shell find . -name "*.go" -type f)
 
+export GO111MODULE := on
+
 all: test build
 
 .PHONY: build
@@ -51,10 +53,7 @@ install:
 
 .PHONY: lint
 lint:
-	@hash golint > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u golang.org/x/lint/golint; \
-	fi
-	
+	which golint || $(GOGET) -u golang.org/x/lint/golint
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
 .PHONY: vet
@@ -78,7 +77,3 @@ fmt-check:
 view-covered:
 	$(GOTEST) -coverprofile=cover.out $(TARGET)
 	$(GOCMD) tool cover -html=cover.out
-
-.PHONY: tools
-tools:
-	go install golang.org/x/lint/golint;
