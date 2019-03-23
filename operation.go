@@ -27,9 +27,6 @@ type Operation struct {
 	parser *Parser
 }
 
-// Regular expression for comment with response
-const responseCommentPattern = `([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`
-
 var mimeTypeAliases = map[string]string{
 	"json":                  "application/json",
 	"xml":                   "text/xml",
@@ -116,13 +113,14 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	return nil
 }
 
+var paramPattern = regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
+
 // ParseParamComment parses params return []string of param properties
 // E.g. @Param	queryText		form	      string	  true		        "The email for login"
 //              [param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // E.g. @Param   some_id     path    int     true        "Some ID"
 func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
-	re := regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
-	matches := re.FindStringSubmatch(commentLine)
+	matches := paramPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
 		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
 	}
@@ -372,21 +370,24 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	for _, typeName := range mimeTypes {
 		if mimeTypePattern.MatchString(typeName) {
 			*typeList = append(*typeList, typeName)
-		} else if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
-			*typeList = append(*typeList, aliasMimeType)
-		} else {
-			return fmt.Errorf(format, typeName)
+			continue
 		}
+		if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
+			*typeList = append(*typeList, aliasMimeType)
+			continue
+		}
+		return fmt.Errorf(format, typeName)
 	}
 	return nil
 }
 
+var routerPattern = regexp.MustCompile(`([\w\.\/\-{}\+]+)[^\[]+\[([^\]]+)`)
+
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
-	re := regexp.MustCompile(`([\w\.\/\-{}\+]+)[^\[]+\[([^\]]+)`)
 	var matches []string
 
-	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
+	if matches = routerPattern.FindStringSubmatch(commentLine); len(matches) != 3 {
 		return fmt.Errorf("can not parse router comment \"%s\"", commentLine)
 	}
 	path := matches[1]
@@ -479,12 +480,13 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, errors.New("type spec not found")
 }
 
+var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)
+
 // ParseResponseComment parses comment for gived `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
-	re := regexp.MustCompile(responseCommentPattern)
 	var matches []string
 
-	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
+	if matches = responsePattern.FindStringSubmatch(commentLine); len(matches) != 5 {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
@@ -553,10 +555,9 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 
 // ParseResponseHeaderComment parses comment for gived `response header` comment string.
 func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFile *ast.File) error {
-	re := regexp.MustCompile(responseCommentPattern)
 	var matches []string
 
-	if matches = re.FindStringSubmatch(commentLine); len(matches) != 5 {
+	if matches = responsePattern.FindStringSubmatch(commentLine); len(matches) != 5 {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
@@ -598,12 +599,13 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 	return nil
 }
 
+var emptyResponsePattern = regexp.MustCompile(`([\d]+)[\s]+"(.*)"`)
+
 // ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok"
 func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
-	re := regexp.MustCompile(`([\d]+)[\s]+"(.*)"`)
 	var matches []string
 
-	if matches = re.FindStringSubmatch(commentLine); len(matches) != 3 {
+	if matches = emptyResponsePattern.FindStringSubmatch(commentLine); len(matches) != 3 {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
