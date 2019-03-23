@@ -125,8 +125,13 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	if fileTree.Comments != nil {
 		for _, comment := range fileTree.Comments {
 			comments := strings.Split(comment.Text(), "\n")
+			previousAttribute := ""
 			for _, commentLine := range comments {
 				attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+				multilineBlock := false
+				if previousAttribute == attribute {
+					multilineBlock = true
+				}
 				switch attribute {
 				case "@version":
 					parser.swagger.Info.Version = strings.TrimSpace(commentLine[len(attribute):])
@@ -135,7 +140,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				case "@description":
 					if parser.swagger.Info.Description == "{{.Description}}" {
 						parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
-					} else {
+					} else if multilineBlock {
 						parser.swagger.Info.Description += "\n" + strings.TrimSpace(commentLine[len(attribute):])
 					}
 				case "@termsofservice":
@@ -185,6 +190,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					tag.TagProps.ExternalDocs.Description = commentInfo
 					replaceLastTag(parser.swagger.Tags, tag)
 				}
+				previousAttribute = attribute
 			}
 
 			for i := 0; i < len(comments); i++ {
