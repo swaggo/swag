@@ -67,56 +67,42 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parse
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
 // allowedValues: array, boolean, integer, null, number, object, string
 func getPropertyName(field *ast.Field, parser *Parser) propertyName {
-	if astTypeSelectorExpr, ok := field.Type.(*ast.SelectorExpr); ok {
+	return xxx(field.Type, parser)
+}
+
+func xxx(expr ast.Expr, parser *Parser) propertyName {
+	if astTypeSelectorExpr, ok := expr.(*ast.SelectorExpr); ok {
 		return parseFieldSelectorExpr(astTypeSelectorExpr, parser, newProperty)
 	}
 
 	// check if it is a custom type
-	typeName := fmt.Sprintf("%v", field.Type)
+	typeName := fmt.Sprintf("%v", expr)
 	if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[typeName]; isCustomType {
 		return propertyName{SchemaType: actualPrimitiveType, ArrayType: actualPrimitiveType}
 	}
 
-	if astTypeIdent, ok := field.Type.(*ast.Ident); ok {
+	if astTypeIdent, ok := expr.(*ast.Ident); ok {
 		name := astTypeIdent.Name
 		schemeType := TransToValidSchemeType(name)
 		return propertyName{SchemaType: schemeType, ArrayType: schemeType}
 	}
-	if ptr, ok := field.Type.(*ast.StarExpr); ok {
-		if astTypeSelectorExpr, ok := ptr.X.(*ast.SelectorExpr); ok {
-			return parseFieldSelectorExpr(astTypeSelectorExpr, parser, newProperty)
-		}
-		// TODO support custom pointer type?
-		if _, ok := ptr.X.(*ast.MapType); ok { // if map
-			//TODO support map
-			return propertyName{SchemaType: "object", ArrayType: "object"}
-		}
-		if _, ok := ptr.X.(*ast.StructType); ok { // if struct
-			return propertyName{SchemaType: "object", ArrayType: "object"}
-		}
-		if astTypeIdent, ok := ptr.X.(*ast.Ident); ok {
-			name := astTypeIdent.Name
-			schemeType := TransToValidSchemeType(name)
-			return propertyName{SchemaType: schemeType, ArrayType: schemeType}
-		}
-		if astTypeArray, ok := ptr.X.(*ast.ArrayType); ok { // if array
-			return getArrayPropertyName(astTypeArray, parser)
-		}
+	if ptr, ok := expr.(*ast.StarExpr); ok {
+		return xxx(ptr.X, parser)
 	}
-	if astTypeArray, ok := field.Type.(*ast.ArrayType); ok { // if array
+	if astTypeArray, ok := expr.(*ast.ArrayType); ok { // if array
 		return getArrayPropertyName(astTypeArray, parser)
 	}
-	if _, ok := field.Type.(*ast.MapType); ok { // if map
+	if _, ok := expr.(*ast.MapType); ok { // if map
 		//TODO: support map
 		return propertyName{SchemaType: "object", ArrayType: "object"}
 	}
-	if _, ok := field.Type.(*ast.StructType); ok { // if struct
+	if _, ok := expr.(*ast.StructType); ok { // if struct
 		return propertyName{SchemaType: "object", ArrayType: "object"}
 	}
-	if _, ok := field.Type.(*ast.InterfaceType); ok { // if interface{}
+	if _, ok := expr.(*ast.InterfaceType); ok { // if interface{}
 		return propertyName{SchemaType: "object", ArrayType: "object"}
 	}
-	panic("not supported" + fmt.Sprint(field.Type))
+	panic("not supported" + fmt.Sprint(expr))
 }
 
 func getArrayPropertyName(astTypeArray *ast.ArrayType, parser *Parser) propertyName {
