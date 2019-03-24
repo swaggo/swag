@@ -315,6 +315,25 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 	return nil
 }
 
+func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
+	attr := re.FindString(commentLine)
+	l := strings.Index(attr, "(")
+	r := strings.Index(attr, ")")
+	if l == -1 && r == -1 {
+		return "",fmt.Errorf("can not find regex=%s, comment=%s", re.String(),commentLine)
+	}
+	return strings.TrimSpace(attr[l+1 : r]), nil
+}
+
+
+func findAttrList(re *regexp.Regexp, commentLine string) ([]string, error) {
+	attr, err := findAttr(re, commentLine)
+	if err != nil {
+		return []string{""}, nil
+	}
+	return strings.Split(attr, ","), nil
+}
+
 // defineType enum value define the type (object and array unsupported)
 func defineType(schemaType string, value string) interface{} {
 	schemaType = TransToValidSchemeType(schemaType)
