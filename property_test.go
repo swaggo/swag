@@ -8,18 +8,16 @@ import (
 )
 
 func TestGetPropertyNameSelectorExpr(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.SelectorExpr{
-			X: &ast.Ident{
-				NamePos: 1136,
-				Name:    "time",
-				Obj:     (*ast.Object)(nil),
-			},
-			Sel: &ast.Ident{
-				NamePos: 1141,
-				Name:    "Time",
-				Obj:     (*ast.Object)(nil),
-			},
+	input := &ast.SelectorExpr{
+		X: &ast.Ident{
+			NamePos: 1136,
+			Name:    "time",
+			Obj:     (*ast.Object)(nil),
+		},
+		Sel: &ast.Ident{
+			NamePos: 1141,
+			Name:    "Time",
+			Obj:     (*ast.Object)(nil),
 		},
 	}
 	expected := propertyName{
@@ -31,18 +29,16 @@ func TestGetPropertyNameSelectorExpr(t *testing.T) {
 }
 
 func TestGetPropertyNameIdentObjectId(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.SelectorExpr{
-			X: &ast.Ident{
-				NamePos: 1136,
-				Name:    "hoge",
-				Obj:     (*ast.Object)(nil),
-			},
-			Sel: &ast.Ident{
-				NamePos: 1141,
-				Name:    "ObjectId",
-				Obj:     (*ast.Object)(nil),
-			},
+	input := &ast.SelectorExpr{
+		X: &ast.Ident{
+			NamePos: 1136,
+			Name:    "hoge",
+			Obj:     (*ast.Object)(nil),
+		},
+		Sel: &ast.Ident{
+			NamePos: 1141,
+			Name:    "ObjectId",
+			Obj:     (*ast.Object)(nil),
 		},
 	}
 	expected := propertyName{
@@ -54,18 +50,16 @@ func TestGetPropertyNameIdentObjectId(t *testing.T) {
 }
 
 func TestGetPropertyNameIdentUUID(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.SelectorExpr{
-			X: &ast.Ident{
-				NamePos: 1136,
-				Name:    "hoge",
-				Obj:     (*ast.Object)(nil),
-			},
-			Sel: &ast.Ident{
-				NamePos: 1141,
-				Name:    "uuid",
-				Obj:     (*ast.Object)(nil),
-			},
+	input := &ast.SelectorExpr{
+		X: &ast.Ident{
+			NamePos: 1136,
+			Name:    "hoge",
+			Obj:     (*ast.Object)(nil),
+		},
+		Sel: &ast.Ident{
+			NamePos: 1141,
+			Name:    "uuid",
+			Obj:     (*ast.Object)(nil),
 		},
 	}
 	expected := propertyName{
@@ -77,18 +71,16 @@ func TestGetPropertyNameIdentUUID(t *testing.T) {
 }
 
 func TestGetPropertyNameIdentDecimal(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.SelectorExpr{
-			X: &ast.Ident{
-				NamePos: 1136,
-				Name:    "hoge",
-				Obj:     (*ast.Object)(nil),
-			},
-			Sel: &ast.Ident{
-				NamePos: 1141,
-				Name:    "Decimal",
-				Obj:     (*ast.Object)(nil),
-			},
+	input := &ast.SelectorExpr{
+		X: &ast.Ident{
+			NamePos: 1136,
+			Name:    "hoge",
+			Obj:     (*ast.Object)(nil),
+		},
+		Sel: &ast.Ident{
+			NamePos: 1141,
+			Name:    "Decimal",
+			Obj:     (*ast.Object)(nil),
 		},
 	}
 	expected := propertyName{
@@ -100,18 +92,16 @@ func TestGetPropertyNameIdentDecimal(t *testing.T) {
 }
 
 func TestGetPropertyNameIdentTime(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.SelectorExpr{
-			X: &ast.Ident{
-				NamePos: 1136,
-				Name:    "hoge",
-				Obj:     (*ast.Object)(nil),
-			},
-			Sel: &ast.Ident{
-				NamePos: 1141,
-				Name:    "Time",
-				Obj:     (*ast.Object)(nil),
-			},
+	input := &ast.SelectorExpr{
+		X: &ast.Ident{
+			NamePos: 1136,
+			Name:    "hoge",
+			Obj:     (*ast.Object)(nil),
+		},
+		Sel: &ast.Ident{
+			NamePos: 1141,
+			Name:    "Time",
+			Obj:     (*ast.Object)(nil),
 		},
 	}
 	expected := propertyName{
@@ -123,14 +113,12 @@ func TestGetPropertyNameIdentTime(t *testing.T) {
 }
 
 func TestGetPropertyNameStarExprIdent(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.StarExpr{
-			Star: 1026,
-			X: &ast.Ident{
-				NamePos: 1027,
-				Name:    "string",
-				Obj:     (*ast.Object)(nil),
-			},
+	input := &ast.StarExpr{
+		Star: 1026,
+		X: &ast.Ident{
+			NamePos: 1027,
+			Name:    "string",
+			Obj:     (*ast.Object)(nil),
 		},
 	}
 	expected := propertyName{
@@ -142,21 +130,19 @@ func TestGetPropertyNameStarExprIdent(t *testing.T) {
 }
 
 func TestGetPropertyNameStarExprMap(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.StarExpr{
-			Star: 1026,
-			X: &ast.MapType{
-				Map: 1027,
-				Key: &ast.Ident{
-					NamePos: 1034,
-					Name:    "string",
-					Obj:     (*ast.Object)(nil),
-				},
-				Value: &ast.Ident{
-					NamePos: 1041,
-					Name:    "string",
-					Obj:     (*ast.Object)(nil),
-				},
+	input := &ast.StarExpr{
+		Star: 1026,
+		X: &ast.MapType{
+			Map: 1027,
+			Key: &ast.Ident{
+				NamePos: 1034,
+				Name:    "string",
+				Obj:     (*ast.Object)(nil),
+			},
+			Value: &ast.Ident{
+				NamePos: 1041,
+				Name:    "string",
+				Obj:     (*ast.Object)(nil),
 			},
 		},
 	}
@@ -169,16 +155,14 @@ func TestGetPropertyNameStarExprMap(t *testing.T) {
 }
 
 func TestGetPropertyNameArrayStarExpr(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.ArrayType{
-			Lbrack: 465,
-			Len:    nil,
-			Elt: &ast.StarExpr{
-				X: &ast.Ident{
-					NamePos: 467,
-					Name:    "string",
-					Obj:     (*ast.Object)(nil),
-				},
+	input := &ast.ArrayType{
+		Lbrack: 465,
+		Len:    nil,
+		Elt: &ast.StarExpr{
+			X: &ast.Ident{
+				NamePos: 467,
+				Name:    "string",
+				Obj:     (*ast.Object)(nil),
 			},
 		},
 	}
@@ -191,22 +175,20 @@ func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 }
 
 func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.ArrayType{
-			Lbrack: 1111,
-			Len:    nil,
-			Elt: &ast.StarExpr{
-				X: &ast.SelectorExpr{
-					X: &ast.Ident{
-						NamePos: 1136,
-						Name:    "hoge",
-						Obj:     (*ast.Object)(nil),
-					},
-					Sel: &ast.Ident{
-						NamePos: 1141,
-						Name:    "ObjectId",
-						Obj:     (*ast.Object)(nil),
-					},
+	input := &ast.ArrayType{
+		Lbrack: 1111,
+		Len:    nil,
+		Elt: &ast.StarExpr{
+			X: &ast.SelectorExpr{
+				X: &ast.Ident{
+					NamePos: 1136,
+					Name:    "hoge",
+					Obj:     (*ast.Object)(nil),
+				},
+				Sel: &ast.Ident{
+					NamePos: 1141,
+					Name:    "ObjectId",
+					Obj:     (*ast.Object)(nil),
 				},
 			},
 		},
@@ -220,14 +202,12 @@ func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
 }
 
 func TestGetPropertyNameMap(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.MapType{
-			Key: &ast.Ident{
-				Name: "string",
-			},
-			Value: &ast.Ident{
-				Name: "string",
-			},
+	input := &ast.MapType{
+		Key: &ast.Ident{
+			Name: "string",
+		},
+		Value: &ast.Ident{
+			Name: "string",
 		},
 	}
 	expected := propertyName{
@@ -239,9 +219,7 @@ func TestGetPropertyNameMap(t *testing.T) {
 }
 
 func TestGetPropertyNameStruct(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.StructType{},
-	}
+	input := &ast.StructType{}
 	expected := propertyName{
 		"object",
 		"object",
@@ -251,9 +229,7 @@ func TestGetPropertyNameStruct(t *testing.T) {
 }
 
 func TestGetPropertyNameInterface(t *testing.T) {
-	input := &ast.Field{
-		Type: &ast.InterfaceType{},
-	}
+	input := &ast.InterfaceType{}
 	expected := propertyName{
 		"object",
 		"object",
