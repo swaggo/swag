@@ -102,11 +102,11 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 			return err
 		}
 	case "@router":
-		if err := operation.ParseRouterComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+		if err := operation.ParseRouterComment(lineRemainder); err != nil {
 			return err
 		}
 	case "@security":
-		if err := operation.ParseSecurityComment(strings.TrimSpace(commentLine[len(attribute):])); err != nil {
+		if err := operation.ParseSecurityComment(lineRemainder); err != nil {
 			return err
 		}
 	}
