@@ -225,91 +225,78 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 	for attrKey, re := range regexAttributes {
 		switch attrKey {
 		case "enums":
-			attr := re.FindString(commentLine)
-			l := strings.Index(attr, "(")
-			r := strings.Index(attr, ")")
-			if !(l == -1 && r == -1) {
-				enums := strings.Split(attr[l+1:r], ",")
-				for _, e := range enums {
-					e = strings.TrimSpace(e)
-					param.Enum = append(param.Enum, defineType(schemaType, e))
-				}
+			enums, err := findAttrList(re, commentLine)
+			if err != nil {
+				break
+			}
+			for _, e := range enums {
+				e = strings.TrimSpace(e)
+				param.Enum = append(param.Enum, defineType(schemaType, e))
 			}
 		case "maxinum":
-			attr := re.FindString(commentLine)
-			l := strings.Index(attr, "(")
-			r := strings.Index(attr, ")")
-			if !(l == -1 && r == -1) {
-				if schemaType != "integer" && schemaType != "number" {
-					return fmt.Errorf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
-				}
-				attr = strings.TrimSpace(attr[l+1 : r])
-				n, err := strconv.ParseFloat(attr, 64)
-				if err != nil {
-					return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
-				}
-				param.Maximum = &n
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
 			}
+			if schemaType != "integer" && schemaType != "number" {
+				return fmt.Errorf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+			}
+			n, err := strconv.ParseFloat(attr, 64)
+			if err != nil {
+				return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+			}
+			param.Maximum = &n
 		case "mininum":
-			attr := re.FindString(commentLine)
-			l := strings.Index(attr, "(")
-			r := strings.Index(attr, ")")
-			if !(l == -1 && r == -1) {
-				if schemaType != "integer" && schemaType != "number" {
-					return fmt.Errorf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
-				}
-				attr = strings.TrimSpace(attr[l+1 : r])
-				n, err := strconv.ParseFloat(attr, 64)
-				if err != nil {
-					return fmt.Errorf("mininum is allow only a number got=%s", attr)
-				}
-				param.Minimum = &n
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
 			}
+			if schemaType != "integer" && schemaType != "number" {
+				return fmt.Errorf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+			}
+			n, err := strconv.ParseFloat(attr, 64)
+			if err != nil {
+				return fmt.Errorf("mininum is allow only a number got=%s", attr)
+			}
+			param.Minimum = &n
 		case "default":
-			attr := re.FindString(commentLine)
-			l := strings.Index(attr, "(")
-			r := strings.Index(attr, ")")
-			if !(l == -1 && r == -1) {
-				attr = strings.TrimSpace(attr[l+1 : r])
-				param.Default = defineType(schemaType, attr)
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
 			}
+			param.Default = defineType(schemaType, attr)
 		case "maxlength":
-			attr := re.FindString(commentLine)
-			l := strings.Index(attr, "(")
-			r := strings.Index(attr, ")")
-			if !(l == -1 && r == -1) {
-				if schemaType != "string" {
-					return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
-				}
-				attr = strings.TrimSpace(attr[l+1 : r])
-				n, err := strconv.ParseInt(attr, 10, 64)
-				if err != nil {
-					return fmt.Errorf("maxlength is allow only a number got=%s", attr)
-				}
-				param.MaxLength = &n
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
 			}
+			if schemaType != "string" {
+				return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+			}
+			n, err := strconv.ParseInt(attr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("maxlength is allow only a number got=%s", attr)
+			}
+			param.MaxLength = &n
 		case "minlength":
-			attr := re.FindString(commentLine)
-			l := strings.Index(attr, "(")
-			r := strings.Index(attr, ")")
-			if !(l == -1 && r == -1) {
-				if schemaType != "string" {
-					return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
-				}
-				attr = strings.TrimSpace(attr[l+1 : r])
-				n, err := strconv.ParseInt(attr, 10, 64)
-				if err != nil {
-					return fmt.Errorf("minlength is allow only a number got=%s", attr)
-				}
-				param.MinLength = &n
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
 			}
+			if schemaType != "string" {
+				return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
+			}
+			n, err := strconv.ParseInt(attr, 10, 64)
+			if err != nil {
+				return fmt.Errorf("minlength is allow only a number got=%s", attr)
+			}
+			param.MinLength = &n
 		case "format":
-			attr := re.FindString(commentLine)
-			l := strings.Index(attr, "(")
-			r := strings.Index(attr, ")")
-			if !(l == -1 && r == -1) {
-				param.Format = strings.TrimSpace(attr[l+1 : r])
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
 			}
+			param.Format = attr
 		}
 	}
 	return nil
@@ -319,17 +306,16 @@ func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	attr := re.FindString(commentLine)
 	l := strings.Index(attr, "(")
 	r := strings.Index(attr, ")")
-	if l == -1 && r == -1 {
-		return "",fmt.Errorf("can not find regex=%s, comment=%s", re.String(),commentLine)
+	if l == -1 || r == -1 {
+		return "", fmt.Errorf("can not find regex=%s, comment=%s", re.String(), commentLine)
 	}
 	return strings.TrimSpace(attr[l+1 : r]), nil
 }
 
-
 func findAttrList(re *regexp.Regexp, commentLine string) ([]string, error) {
 	attr, err := findAttr(re, commentLine)
 	if err != nil {
-		return []string{""}, nil
+		return []string{""}, err
 	}
 	return strings.Split(attr, ","), nil
 }
