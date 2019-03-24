@@ -66,8 +66,8 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parse
 
 // getPropertyName returns the string value for the given field if it exists, otherwise it panics.
 // allowedValues: array, boolean, integer, null, number, object, string
-func getPropertyName(field *ast.Field, parser *Parser) propertyName {
-	return xxx(field.Type, parser)
+func getPropertyName(expr ast.Expr, parser *Parser) propertyName {
+	return xxx(expr, parser)
 }
 
 func xxx(expr ast.Expr, parser *Parser) propertyName {
@@ -86,22 +86,28 @@ func xxx(expr ast.Expr, parser *Parser) propertyName {
 		schemeType := TransToValidSchemeType(name)
 		return propertyName{SchemaType: schemeType, ArrayType: schemeType}
 	}
+
 	if ptr, ok := expr.(*ast.StarExpr); ok {
 		return xxx(ptr.X, parser)
 	}
+
 	if astTypeArray, ok := expr.(*ast.ArrayType); ok { // if array
 		return getArrayPropertyName(astTypeArray, parser)
 	}
+
 	if _, ok := expr.(*ast.MapType); ok { // if map
 		//TODO: support map
 		return propertyName{SchemaType: "object", ArrayType: "object"}
 	}
+
 	if _, ok := expr.(*ast.StructType); ok { // if struct
 		return propertyName{SchemaType: "object", ArrayType: "object"}
 	}
+
 	if _, ok := expr.(*ast.InterfaceType); ok { // if interface{}
 		return propertyName{SchemaType: "object", ArrayType: "object"}
 	}
+
 	panic("not supported" + fmt.Sprint(expr))
 }
 
