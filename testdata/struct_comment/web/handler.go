@@ -16,6 +16,7 @@ type Post struct {
 }
 
 type APIError struct {
-	Error     string    // Error an Api error
+	// Error an Api error
+	Error     string    // Error this is Line comment
 	CreatedAt time.Time // Error time
 }
