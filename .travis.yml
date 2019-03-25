@@ -5,19 +5,15 @@ go:
   - 1.9.x
   - 1.10.x
   - 1.11.x
-
-matrix:
-  fast_finish: true
-  include:
-  - go: 1.11.x
-    env: GO111MODULE=on
+  - 1.12.x
 
 install:
   - make install
-  - if [[ "${GO111MODULE}" = "on" ]]; then make tools; fi
-  
+
 script:
+  - make fmt-check
   - make lint
+  - make vet
   - make build
   - make test
 

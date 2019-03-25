@@ -1,13 +1,19 @@
-GOCMD=$(shell which go)
-GOLINT=$(shell which golint)
-GOIMPORT=$(shell which goimports)
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test
-GOGET=$(GOCMD) get
-GOLIST=$(GOCMD) list
-BINARY_NAME=swag
-PACKAGES=$(shell $(GOLIST) ./... | grep -v /example)
+GOCMD:=$(shell which go)
+GOLINT:=$(shell which golint)
+GOIMPORT:=$(shell which goimports)
+GOFMT:=$(shell which gofmt)
+GOBUILD:=$(GOCMD) build
+GOCLEAN:=$(GOCMD) clean
+GOTEST:=$(GOCMD) test
+GOGET:=$(GOCMD) get
+GOLIST:=$(GOCMD) list
+GOVET:=$(GOCMD) vet
+
+BINARY_NAME:=swag
+PACKAGES:=$(shell $(GOLIST) ./...)
+GOFILES:=$(shell find . -name "*.go" -type f)
+
+export GO111MODULE := on
 
 all: test build
 
@@ -44,20 +50,29 @@ install:
 	$(GOGET) -v ./...
 	$(GOGET) github.com/stretchr/testify/assert
 
-
 .PHONY: lint
 lint:
-	@hash golint > /dev/null 2>&1; if [ $$? -ne 0 ]; then \
-		$(GOGET) -u golang.org/x/lint/golint; \
-	fi
-	
+	which golint || $(GOGET) -u golang.org/x/lint/golint
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
+
+.PHONY: vet
+vet:
+	$(GOVET) $(PACKAGES)
+
+.PHONY: fmt
+fmt:
+	$(GOFMT) -s -w $(GOFILES)
+
+.PHONY: fmt-check
+fmt-check:
+	@diff=$$($(GOFMT) -s -d $(GOFILES)); \
+	if [ -n "$$diff" ]; then \
+		echo "Please run 'make fmt' and commit the result:"; \
+		echo "$${diff}"; \
+		exit 1; \
+	fi;
 
 .PHONY: view-covered
 view-covered:
 	$(GOTEST) -coverprofile=cover.out $(TARGET)
 	$(GOCMD) tool cover -html=cover.out
-
-.PHONY: tools
-tools:
-	go install golang.org/x/lint/golint;

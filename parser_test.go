@@ -20,9 +20,13 @@ func TestNew(t *testing.T) {
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	expected := `{
+    "schemes": [
+        "http",
+        "https"
+    ],
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server Petstore server.\nIt has a lot of beatiful features.",
+        "description": "This is a sample server Petstore server.\nIt has a lot of beautiful features.",
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
@@ -174,6 +178,31 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.\nIt has a lot of beautiful features.",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "{{.Host}}",
+    "basePath": "{{.BasePath}}",
+    "paths": {}
+}`
+
+	gopath := os.Getenv("GOPATH")
+	assert.NotNil(t, gopath)
+	p := New()
+	p.ParseGeneralAPIInfo("testdata/single_file_api/main.go")
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
@@ -208,9 +237,9 @@ func TestParser_ParseType(t *testing.T) {
 }
 
 func TestGetSchemes(t *testing.T) {
-	//TODO:
-	//fmt.Println(GetSchemes("@schemes http https"))
-
+	schemes := getSchemes("@schemes http https")
+	expectedSchemes := []string{"http", "https"}
+	assert.Equal(t, expectedSchemes, schemes)
 }
 
 func TestParseSimpleApi1(t *testing.T) {
@@ -2324,22 +2353,54 @@ func Test3(){
 
 func TestSkip(t *testing.T) {
 	folder1 := "/tmp/vendor"
-	os.Mkdir(folder1, 777)
+	os.Mkdir(folder1, os.ModePerm)
 	f1, _ := os.Stat(folder1)
 
-	assert.True(t, Skip(f1) == filepath.SkipDir)
+	parser := New()
+
+	assert.True(t, parser.Skip(folder1, f1) == filepath.SkipDir)
 	assert.NoError(t, os.Remove(folder1))
 
 	folder2 := "/tmp/.git"
-	os.Mkdir(folder2, 777)
+	os.Mkdir(folder2, os.ModePerm)
 	f2, _ := os.Stat(folder2)
 
-	assert.True(t, Skip(f2) == filepath.SkipDir)
+	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
 	assert.NoError(t, os.Remove(folder2))
 
 	currentPath := "./"
 	currentPathInfo, _ := os.Stat(currentPath)
-	assert.True(t, Skip(currentPathInfo) == nil)
+	assert.True(t, parser.Skip(currentPath, currentPathInfo) == nil)
+}
+
+func TestSkipMustParseVendor(t *testing.T) {
+	folder1 := "/tmp/vendor"
+	os.Mkdir(folder1, os.ModePerm)
+	f1, _ := os.Stat(folder1)
+
+	parser := New()
+	parser.ParseVendor = true
+
+	assert.True(t, parser.Skip(folder1, f1) == nil)
+	assert.NoError(t, os.Remove(folder1))
+
+	folder2 := "/tmp/.git"
+	os.Mkdir(folder2, os.ModePerm)
+	f2, _ := os.Stat(folder2)
+
+	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
+	assert.NoError(t, os.Remove(folder2))
+
+	currentPath := "./"
+	currentPathInfo, _ := os.Stat(currentPath)
+	assert.True(t, parser.Skip(currentPath, currentPathInfo) == nil)
+
+	folder3 := "/tmp/test/vendor/github.com/swaggo/swag"
+	assert.NoError(t, os.MkdirAll(folder3, os.ModePerm))
+	f3, _ := os.Stat(folder3)
+
+	assert.Nil(t, parser.Skip(folder3, f3))
+	assert.NoError(t, os.RemoveAll("/tmp/test"))
 }
 
 // func TestParseDeterministic(t *testing.T) {

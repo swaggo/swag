@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetStringByInt example
 // @Summary Add a new pet to the store
 // @Description get string by ID
 // @ID get-string-by-int
@@ -19,6 +20,7 @@ func GetStringByInt(c *gin.Context) {
 	//write your code
 }
 
+// GetStructArrayByString example
 // @Description get struct array by ID
 // @ID get-struct-array-by-string
 // @Accept  json
@@ -34,6 +36,7 @@ func GetStructArrayByString(c *gin.Context) {
 	//write your code
 }
 
+// Upload example
 // @Summary Upload file
 // @Description Upload file
 // @ID file.upload
@@ -48,12 +51,14 @@ func Upload(ctx *gin.Context) {
 	//write your code
 }
 
+// AnonymousField example
 // @Summary use Anonymous field
 // @Success 200 {object} web.RevValue "ok"
 func AnonymousField() {
 
 }
 
+// Pet3 example
 type Pet3 struct {
 	ID int `json:"id"`
 }

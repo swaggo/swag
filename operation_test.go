@@ -544,7 +544,7 @@ func TestParseParamCommentByEnums(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
-func TestlParseParamCommentByMaxLength(t *testing.T) {
+func TestParseParamCommentByMaxLength(t *testing.T) {
 	comment := `@Param some_id query string true "Some ID" MaxLength(10)`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
