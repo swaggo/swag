@@ -221,12 +221,18 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
 						if securityAttr == "@tokenurl" {
 							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
-						} else if isExistsScope(securityAttr) {
-							scopScheme, err := getScopeScheme(securityAttr)
+						} else {
+							isExists, err := isExistsScope(securityAttr)
 							if err != nil {
 								return err
 							}
-							scopes[scopScheme] = v[len(securityAttr):]
+							if isExists {
+								scopScheme, err := getScopeScheme(securityAttr)
+								if err != nil {
+									return err
+								}
+								scopes[scopScheme] = v[len(securityAttr):]
+							}
 						}
 						// next securityDefinitions
 						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
@@ -248,12 +254,18 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
 						if securityAttr == "@authorizationurl" {
 							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
-						} else if isExistsScope(securityAttr) {
-							scopeScheme, err := getScopeScheme(securityAttr)
+						} else {
+							isExists, err := isExistsScope(securityAttr)
 							if err != nil {
 								return err
 							}
-							scopes[scopeScheme] = v[len(securityAttr):]
+							if isExists {
+								scopScheme, err := getScopeScheme(securityAttr)
+								if err != nil {
+									return err
+								}
+								scopes[scopScheme] = v[len(securityAttr):]
+							}
 						}
 						// next securityDefinitions
 						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
@@ -275,12 +287,18 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
 						if securityAttr == "@tokenurl" {
 							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
-						} else if isExistsScope(securityAttr) {
-							scopeScheme, err := getScopeScheme(securityAttr)
+						} else {
+							isExists, err := isExistsScope(securityAttr)
 							if err != nil {
 								return err
 							}
-							scopes[scopeScheme] = v[len(securityAttr):]
+							if isExists {
+								scopScheme, err := getScopeScheme(securityAttr)
+								if err != nil {
+									return err
+								}
+								scopes[scopScheme] = v[len(securityAttr):]
+							}
 						}
 						// next securityDefinitions
 						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
@@ -302,12 +320,18 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						securityAttr := strings.ToLower(strings.Split(v, " ")[0])
 						if securityAttr == "@tokenurl" || securityAttr == "@authorizationurl" {
 							attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
-						} else if isExistsScope(securityAttr) {
-							scopeScheme, err := getScopeScheme(securityAttr)
+						} else {
+							isExists, err := isExistsScope(securityAttr)
 							if err != nil {
 								return err
 							}
-							scopes[scopeScheme] = v[len(securityAttr):]
+							if isExists {
+								scopScheme, err := getScopeScheme(securityAttr)
+								if err != nil {
+									return err
+								}
+								scopes[scopScheme] = v[len(securityAttr):]
+							}
 						}
 						// next securityDefinitions
 						if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
@@ -341,16 +365,16 @@ func getScopeScheme(scope string) (string, error) {
 	return scope[len("@scope."):], nil
 }
 
-func isExistsScope(scope string) bool {
+func isExistsScope(scope string) (bool, error) {
 	s := strings.Fields(scope)
 	for _, v := range s {
 		if strings.Index(v, "@scope.") != -1 {
 			if strings.Index(v, ",") != -1 {
-				panic("@scope can't use comma(,) get=" + v)
+				return false, fmt.Errorf("@scope can't use comma(,) get=" + v)
 			}
 		}
 	}
-	return strings.Index(scope, "@scope.") != -1
+	return strings.Index(scope, "@scope.") != -1, nil
 }
 
 // getSchemes parses swagger schemes for given commentLine
