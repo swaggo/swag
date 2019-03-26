@@ -1893,6 +1893,7 @@ func TestParseStructComment(t *testing.T) {
             "type": "object",
             "properties": {
                 "createdAt": {
+                    "description": "Error time",
                     "type": "string"
                 },
                 "error": {
