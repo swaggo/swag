@@ -502,8 +502,9 @@ type Account struct {
 
 ```go
 type Account struct {
-    // ID this is userid
-    ID   int    `json:"id"
+	// ID this is userid
+	ID   int    `json:"id"`
+	Name string `json:"name"` // This is Name
 }
 ```
 
