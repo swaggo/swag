@@ -19,7 +19,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
  - [How to use it with Gin](#how-to-use-it-with-gin)
  - [Implementation Status](#implementation-status)
  - [Declarative Comments Format](#declarative-comments-format)
-	- [General API Info](##general-api-info)
+	- [General API Info](#general-api-info)
 	- [API Operation](#api-operation)
 	- [Security](#security)
  - [Examples](#examples)
