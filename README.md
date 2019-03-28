@@ -69,7 +69,7 @@ OPTIONS:
    --dir value, -d value               Directory you want to parse (default: "./")
    --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
    --output value, -o value            Output directory for al the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
-   --parseVendor                       Parse go files in 'vendor' folder, disabled by default  --output value, -o value            Output directory for al the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
+   --parseVendor                       Parse go files in 'vendor' folder, disabled by default
 ```
 
 ## Supported Web Frameworks
