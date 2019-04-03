@@ -4,6 +4,6 @@ workflow "DangerPullRequest" {
 }
 
 action "Danger" {
-  uses = "./.github/actions/danger"
+  uses = "pei0804/GithubActions/danger@master"
   secrets = ["GITHUB_TOKEN"]
 }
