@@ -19,7 +19,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. It requires Go 1.9 or
  - [How to use it with Gin](#how-to-use-it-with-gin)
  - [Implementation Status](#implementation-status)
  - [Declarative Comments Format](#declarative-comments-format)
-	- [General API Info](##general-api-info)
+	- [General API Info](#general-api-info)
 	- [API Operation](#api-operation)
 	- [Security](#security)
  - [Examples](#examples)
@@ -29,7 +29,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. It requires Go 1.9 or
 	- [Use multiple path params](#use-multiple-path-params)
 	- [Example value of struct](#example-value-of-struct)
 	- [Description of struct](#description-of-struct)
-	- [Override swagger type of a struct field](#Override-swagger-type-of-a-struct-field)
+	- [Use swaggertype tag to supported custom type](#use-swaggertype-tag-to-supported-custom-type)
 	- [Add extension info to struct field](#add-extension-info-to-struct-field)
 	- [How to using security annotations](#how-to-using-security-annotations)
 - [About the Project](#about-the-project)
@@ -69,7 +69,7 @@ OPTIONS:
    --dir value, -d value               Directory you want to parse (default: "./")
    --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
    --output value, -o value            Output directory for al the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
-   --parseVendor                       Parse go files in 'vendor' folder, disabled by default  --output value, -o value            Output directory for al the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
+   --parseVendor                       Parse go files in 'vendor' folder, disabled by default
 ```
 
 ## Supported Web Frameworks
@@ -508,7 +508,8 @@ type Account struct {
 }
 ```
 
-### Override swagger type of a struct field
+### Use swaggertype tag to supported custom type
+[#201](https://github.com/swaggo/swag/issues/201#issuecomment-475479409)
 
 ```go
 type TimestampTime struct {
