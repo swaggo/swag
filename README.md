@@ -11,7 +11,7 @@
 [![Sponsors on Open Collective](https://opencollective.com/swag/sponsors/badge.svg)](#sponsors) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fswaggo%2Fswag.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fswaggo%2Fswag?ref=badge_shield)
 
 
-Swag converts Go annotations to Swagger Documentation 2.0. It requires Go 1.9 or newer to compile. We've created a variety of plugins for popular [Go web frameworks](#supported-web-frameworks). This allows you to quickly integrate with an existing Go project (using Swagger UI).
+Swag converts Go annotations to Swagger Documentation 2.0. We've created a variety of plugins for popular [Go web frameworks](#supported-web-frameworks). This allows you to quickly integrate with an existing Go project (using Swagger UI).
 
 ## Contents
  - [Getting started](#getting-started)
@@ -42,6 +42,8 @@ Swag converts Go annotations to Swagger Documentation 2.0. It requires Go 1.9 or
 ```sh
 $ go get -u github.com/swaggo/swag/cmd/swag
 ```
+To build from source you need [Go](https://golang.org/dl/) (1.9 or newer).
+
 Or download the pre-compiled binaries binray form [release page](https://github.com/swaggo/swag/releases).
 
 3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
