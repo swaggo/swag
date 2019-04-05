@@ -29,7 +29,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [Use multiple path params](#use-multiple-path-params)
 	- [Example value of struct](#example-value-of-struct)
 	- [Description of struct](#description-of-struct)
-	- [Override swagger type of a struct field](#Override-swagger-type-of-a-struct-field)
+	- [Use swaggertype tag to supported custom type](#use-swaggertype-tag-to-supported-custom-type)
 	- [Add extension info to struct field](#add-extension-info-to-struct-field)
 	- [How to using security annotations](#how-to-using-security-annotations)
 - [About the Project](#about-the-project)
@@ -508,7 +508,8 @@ type Account struct {
 }
 ```
 
-### Override swagger type of a struct field
+### Use swaggertype tag to supported custom type
+[#201](https://github.com/swaggo/swag/issues/201#issuecomment-475479409)
 
 ```go
 type TimestampTime struct {
