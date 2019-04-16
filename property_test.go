@@ -274,7 +274,7 @@ func TestGetPropertyNameInterface(t *testing.T) {
 func TestParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)

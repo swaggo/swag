@@ -39,6 +39,9 @@ type Config struct {
 
 	//ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
+
+	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
+	MarkdownFilesDir string
 }
 
 // Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
@@ -48,7 +51,7 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	log.Println("Generate swagger docs....")
-	p := swag.New()
+	p := swag.New(config.MarkdownFilesDir)
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 
@@ -66,6 +69,7 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
+
 	docs, err := os.Create(path.Join(config.OutputDir, "docs.go"))
 	if err != nil {
 		return err
@@ -81,6 +85,7 @@ func (g *Gen) Build(config *Config) error {
 	if _, err := swaggerJSON.Write(b); err != nil {
 		return err
 	}
+	}
 
 	swaggerYAML, err := os.Create(path.Join(config.OutputDir, "swagger.yaml"))
 	if err != nil {
@@ -95,6 +100,7 @@ func (g *Gen) Build(config *Config) error {
 
 	if _, err := swaggerYAML.Write(y); err != nil {
 		return err
+	}
 	}
 
 	if err := packageTemplate.Execute(docs, struct {

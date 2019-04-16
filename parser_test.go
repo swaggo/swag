@@ -15,7 +15,7 @@ import (
 
 func TestNew(t *testing.T) {
 	swagMode = test
-	New()
+    New("")
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -93,7 +93,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
-	p := New()
+	p := New("")
 	err := p.ParseGeneralAPIInfo("testdata/main.go")
 	assert.NoError(t, err)
 
@@ -172,7 +172,7 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
-	p := New()
+	p := New("")
 	err := p.ParseGeneralAPIInfo("testdata/templated.go")
 	assert.NoError(t, err)
 
@@ -198,7 +198,7 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
-	p := New()
+	p := New("")
 	err := p.ParseGeneralAPIInfo("testdata/single_file_api/main.go")
 	assert.NoError(t, err)
 
@@ -209,14 +209,14 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
-	p := New()
+	p := New("")
 	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "testdata/pet"
 
-	p := New()
+	p := New("")
 	err := p.getAllGoFileInfo(searchDir)
 
 	assert.NoError(t, err)
@@ -228,7 +228,7 @@ func TestGetAllGoFileInfo(t *testing.T) {
 func TestParser_ParseType(t *testing.T) {
 	searchDir := "testdata/simple/"
 
-	p := New()
+	p := New("")
 	err := p.getAllGoFileInfo(searchDir)
 	assert.NoError(t, err)
 
@@ -880,7 +880,7 @@ func TestParseSimpleApi1(t *testing.T) {
 }`
 	searchDir := "testdata/simple"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
@@ -1370,7 +1370,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
 }`
 	searchDir := "testdata/simple2"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	p.PropNamingStrategy = SnakeCase
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
@@ -1833,7 +1833,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
 }`
 	searchDir := "testdata/simple3"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
@@ -1945,7 +1945,7 @@ func TestParseStructComment(t *testing.T) {
 }`
 	searchDir := "testdata/struct_comment"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -1978,7 +1978,7 @@ func TestParsePetApi(t *testing.T) {
 }`
 	searchDir := "testdata/pet"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2132,7 +2132,7 @@ func TestParseModelNotUnderRoot(t *testing.T) {
 }`
 	searchDir := "testdata/model_not_under_root/cmd"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2213,7 +2213,7 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 func TestParseComposition(t *testing.T) {
 	searchDir := "testdata/composition"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
@@ -2235,7 +2235,7 @@ func Test(){
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
-	p := New()
+	p := New("")
 	err = p.ParseRouterAPIInfo("", f)
 	assert.EqualError(t, err, "ParseComment error in file  :unknown accept type can't be accepted")
 }
@@ -2251,7 +2251,7 @@ func Test(){
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
-	p := New()
+	p := New("")
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2274,7 +2274,7 @@ func Test(){
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
-	p := New()
+	p := New("")
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2296,7 +2296,7 @@ func Test(){
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
-	p := New()
+	p := New("")
 
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
@@ -2320,7 +2320,7 @@ func Test(){
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
-	p := New()
+	p := New("")
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2343,7 +2343,7 @@ func Test(){
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
-	p := New()
+	p := New("")
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2365,7 +2365,7 @@ func Test(){
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
-	p := New()
+	p := New("")
 
 	err = p.ParseRouterAPIInfo("", f)
 
@@ -2389,7 +2389,7 @@ func Test(){
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
-	p := New()
+	p := New("")
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2420,7 +2420,7 @@ func Test3(){
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
-	p := New()
+	p := New("")
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2440,7 +2440,7 @@ func TestSkip(t *testing.T) {
 	assert.NoError(t, err)
 	f1, _ := os.Stat(folder1)
 
-	parser := New()
+	parser := New("")
 
 	assert.True(t, parser.Skip(folder1, f1) == filepath.SkipDir)
 	assert.NoError(t, os.Remove(folder1))
@@ -2465,7 +2465,7 @@ func TestSkipMustParseVendor(t *testing.T) {
 
 	f1, _ := os.Stat(folder1)
 
-	parser := New()
+	parser := New("")
 	parser.ParseVendor = true
 
 	assert.True(t, parser.Skip(folder1, f1) == nil)
@@ -2503,7 +2503,7 @@ func TestSkipMustParseVendor(t *testing.T) {
 
 // 			// run the same code 100 times and check that the output is the same every time
 // 			for i := 0; i < 100; i++ {
-// 				p := New()
+// 				p := New("")
 // 				p.PropNamingStrategy = PascalCase
 // 				err := p.ParseAPI(searchDir, mainAPIFile)
 // 				b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2522,32 +2522,54 @@ func TestSkipMustParseVendor(t *testing.T) {
 func TestApiParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New("")
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
-	if len(p.swagger.Tags) != 2 {
+	if len(p.swagger.Tags) != 3 {
 		t.Log("Number of tags did not match")
-		t.Fail()
+		t.FailNow()
 	}
 
 	dogs := p.swagger.Tags[0]
 	if dogs.TagProps.Name != "dogs" || dogs.TagProps.Description != "Dogs are cool" {
 		t.Log("Failed to parse dogs name or description")
-		t.Fail()
+		t.FailNow()
 	}
 
 	cats := p.swagger.Tags[1]
 	if cats.TagProps.Name != "cats" || cats.TagProps.Description != "Cats are the devil" {
 		t.Log("Failed to parse cats name or description")
-		t.Fail()
+		t.FailNow()
 	}
 
 	if cats.TagProps.ExternalDocs.URL != "https://google.de" || cats.TagProps.ExternalDocs.Description != "google is super useful to find out that cats are evil!" {
 		t.Log("URL: ", cats.TagProps.ExternalDocs.URL)
 		t.Log("Description: ", cats.TagProps.ExternalDocs.Description)
 		t.Log("Failed to parse cats external documentation")
-		t.Fail()
+		t.FailNow()
 	}
+}
+
+func TestParseTagMarkdownDescription(t *testing.T) {
+	searchDir := "testdata/tags"
+	mainAPIFile := "main.go"
+	p := New("testdata/tags")
+	p.PropNamingStrategy = PascalCase
+    err := p.ParseAPI(searchDir, mainAPIFile)
+    if err != nil {
+        t.Log("Failed to parse api description: " + err.Error())
+    }
+    
+    if len(p.swagger.Tags) != 3 {
+		t.Log("Number of tags did not match")
+		t.FailNow()
+    }
+    
+    apes := p.swagger.Tags[2]
+    if apes.TagProps.Description == "" {
+        t.Log("Failed to parse tag description markdown file")
+        t.FailNow()        
+    }
 }

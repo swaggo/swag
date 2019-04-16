@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -54,10 +55,13 @@ type Parser struct {
 
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []string
+
+	// markdownFileDir holds the path to the folder, where markdown files are stored
+	markdownFileDir string
 }
 
 // New creates a new Parser with default properties.
-func New() *Parser {
+func New(markdownFileDir string) *Parser {
 	parser := &Parser{
 		swagger: &spec.Swagger{
 			SwaggerProps: spec.SwaggerProps{
@@ -77,6 +81,7 @@ func New() *Parser {
 		TypeDefinitions:      make(map[string]map[string]*ast.TypeSpec),
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
+		markdownFileDir:      markdownFileDir,
 	}
 	return parser
 }
@@ -175,6 +180,20 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 					tag.TagProps.Description = commentInfo
+					replaceLastTag(parser.swagger.Tags, tag)
+				case "@tag.description.markdown":
+					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+					filePath, err := getMarkdownFileForTag(tag.TagProps.Name, parser.markdownFileDir)
+					if err != nil {
+						return err
+					}
+
+					commentInfo, err := ioutil.ReadFile(parser.markdownFileDir + "/" + filePath)
+					if err != nil {
+						return errors.New("Failed to find matching markdown file for tag: " + tag.TagProps.Name + " error: " + err.Error())
+					}
+
+					tag.TagProps.Description = string(commentInfo)
 					replaceLastTag(parser.swagger.Tags, tag)
 				case "@tag.docs.url":
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
@@ -358,6 +377,26 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	}
 
 	return nil
+}
+
+func getMarkdownFileForTag(tagName string, dirPath string) (string, error) {
+	filesInfos, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		return "", err
+	}
+
+	for _, fileInfo := range filesInfos {
+		if fileInfo.IsDir() {
+			continue
+		}
+
+		
+		if strings.Contains(fileInfo.Name(), tagName) {
+			return fileInfo.Name(), nil
+		}
+	}
+
+	return "", errors.New("Unable to find Markdown file in the given directory")
 }
 
 func getScopeScheme(scope string) (string, error) {
