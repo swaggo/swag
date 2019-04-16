@@ -127,7 +127,7 @@ func TestParseRouterCommentOccursErr(t *testing.T) {
 func TestParseResponseCommentWithObjectType(t *testing.T) {
 	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200`
 	operation := NewOperation()
-	operation.parser = New()
+	operation.parser = New("")
 
 	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
 	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
@@ -162,7 +162,7 @@ func TestParseResponseCommentWithObjectTypeAnonymousField(t *testing.T) {
 func TestParseResponseCommentWithObjectTypeErr(t *testing.T) {
 	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200"`
 	operation := NewOperation()
-	operation.parser = New()
+	operation.parser = New("")
 
 	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
 	operation.parser.TypeDefinitions["model"]["notexist"] = &ast.TypeSpec{}
@@ -348,7 +348,7 @@ func TestParseParamCommentByQueryType(t *testing.T) {
 func TestParseParamCommentByBodyType(t *testing.T) {
 	comment := `@Param some_id body model.OrderRow true "Some ID"`
 	operation := NewOperation()
-	operation.parser = New()
+	operation.parser = New("")
 
 	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
 	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
@@ -376,7 +376,7 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 func TestParseParamCommentByBodyTypeErr(t *testing.T) {
 	comment := `@Param some_id body model.OrderRow true "Some ID"`
 	operation := NewOperation()
-	operation.parser = New()
+	operation.parser = New("")
 
 	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
 	operation.parser.TypeDefinitions["model"]["notexist"] = &ast.TypeSpec{}
@@ -388,7 +388,7 @@ func TestParseParamCommentByBodyTypeErr(t *testing.T) {
 func TestParseParamCommentByFormDataType(t *testing.T) {
 	comment := `@Param file formData file true "this is a test file"`
 	operation := NewOperation()
-	operation.parser = New()
+	operation.parser = New("")
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -411,7 +411,7 @@ func TestParseParamCommentByFormDataType(t *testing.T) {
 func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
 	comment := `@Param file formData uint64 true "this is a test file"`
 	operation := NewOperation()
-	operation.parser = New()
+	operation.parser = New("")
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -684,7 +684,7 @@ func TestFindTypeDefInvalidPkg(t *testing.T) {
 func TestParseSecurityComment(t *testing.T) {
 	comment := `@Security OAuth2Implicit[read, write]`
 	operation := NewOperation()
-	operation.parser = New()
+	operation.parser = New("")
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
@@ -705,7 +705,7 @@ func TestParseSecurityComment(t *testing.T) {
 func TestParseMultiDescription(t *testing.T) {
 	comment := `@Description line one`
 	operation := NewOperation()
-	operation.parser = New()
+	operation.parser = New("")
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
