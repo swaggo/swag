@@ -406,6 +406,7 @@ func getMarkdownFileForTag(tagName string, dirPath string) (string, error) {
 		if !strings.Contains(fileName, ".md") {
 			continue
 		}
+		
 
 		if strings.Contains(fileName, tagName) {
 			return fileName, nil
