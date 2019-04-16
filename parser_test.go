@@ -15,7 +15,7 @@ import (
 
 func TestNew(t *testing.T) {
 	swagMode = test
-    New("")
+	New("")
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -2557,19 +2557,37 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New("testdata/tags")
 	p.PropNamingStrategy = PascalCase
-    err := p.ParseAPI(searchDir, mainAPIFile)
-    if err != nil {
-        t.Log("Failed to parse api description: " + err.Error())
-    }
-    
-    if len(p.swagger.Tags) != 3 {
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	if err != nil {
+		t.Log("Failed to parse api description: " + err.Error())
+	}
+
+	if len(p.swagger.Tags) != 3 {
 		t.Log("Number of tags did not match")
 		t.FailNow()
-    }
-    
-    apes := p.swagger.Tags[2]
-    if apes.TagProps.Description == "" {
-        t.Log("Failed to parse tag description markdown file")
-        t.FailNow()        
-    }
+	}
+
+	apes := p.swagger.Tags[2]
+	if apes.TagProps.Description == "" {
+		t.Log("Failed to parse tag description markdown file")
+		t.FailNow()
+	}
+}
+
+func TestParseApiMarkdownDescription(t *testing.T) {
+	searchDir := "testdata/tags"
+	mainAPIFile := "main.go"
+	p := New("testdata/tags")
+	p.PropNamingStrategy = PascalCase
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	if err != nil {
+		t.Log("Failed to parse api description: " + err.Error())
+		t.FailNow()
+	}
+
+	if p.swagger.Info.Description == "" {
+		t.Log("Failed to parse api description: " + err.Error())
+		t.FailNow()
+	}
+
 }

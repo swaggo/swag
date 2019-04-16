@@ -151,6 +151,18 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					} else if multilineBlock {
 						parser.swagger.Info.Description += "\n" + strings.TrimSpace(commentLine[len(attribute):])
 					}
+				case "@description.markdown":
+					filePath, err := getMarkdownFileForTag("api", parser.markdownFileDir)
+					if err != nil {
+						return err
+					}
+
+					commentInfo, err := ioutil.ReadFile(parser.markdownFileDir + "/" + filePath)
+					if err != nil {
+						return errors.New("Failed to find matching markdown file for api description: " + "api" + " error: " + err.Error())
+					}
+
+					parser.swagger.Info.Description = string(commentInfo)
 				case "@termsofservice":
 					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.name":
@@ -390,7 +402,6 @@ func getMarkdownFileForTag(tagName string, dirPath string) (string, error) {
 			continue
 		}
 
-		
 		if strings.Contains(fileInfo.Name(), tagName) {
 			return fileInfo.Name(), nil
 		}
