@@ -15,7 +15,7 @@ import (
 
 func TestNew(t *testing.T) {
 	swagMode = test
-	New("")
+	New()
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -2583,7 +2583,7 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 	if err != nil {
 		t.Log("Failed to parse api description: " + err.Error())
 		t.FailNow()
-	}
+    }
 
 	if p.swagger.Info.Description == "" {
 		t.Log("Failed to parse api description: " + err.Error())
