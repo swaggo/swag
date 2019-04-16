@@ -1,5 +1,6 @@
 package main
 
+// @description.markdown
 // @tag.name dogs
 // @tag.description Dogs are cool
 // @tag.name cats
