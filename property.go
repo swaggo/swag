@@ -59,8 +59,6 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parse
 			return propertyName{SchemaType: actualPrimitiveType, ArrayType: actualPrimitiveType}
 		}
 	}
-
-	Printf("%s is not supported. but it will be set with string temporary. Please report any problems.\n", astTypeSelectorExpr.Sel.Name)
 	return propertyName{SchemaType: "string", ArrayType: "string"}
 }
 
@@ -92,7 +90,6 @@ func getPropertyName(expr ast.Expr, parser *Parser) propertyName {
 	}
 
 	if _, ok := expr.(*ast.MapType); ok { // if map
-		//TODO: support map
 		return propertyName{SchemaType: "object", ArrayType: "object"}
 	}
 
