@@ -369,12 +369,11 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 
 ## Param Type
 
-- object (struct)
-- string (string)
-- integer (int, uint, uint32, uint64)
-- number (float32)
-- boolean (bool)
-- array
+- query
+- path
+- header
+- body
+- formData
 
 ## Data Type
 
