@@ -2434,7 +2434,7 @@ func TestSkipMustParseVendor(t *testing.T) {
 func TestApiParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
 	mainAPIFile := "main.go"
-	p := New("")
+	p := New("testdata/tags")
 	p.PropNamingStrategy = PascalCase
 	p.ParseAPI(searchDir, mainAPIFile)
 
