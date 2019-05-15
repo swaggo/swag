@@ -89,7 +89,14 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
                 "write": " Grants write access"
             }
         }
-    }
+    },
+    "x-google-endpoints": [
+        {
+            "allowCors": true,
+            "name": "name.endpoints.environment.cloud.goog"
+        }
+    ],
+    "x-google-marks": "marks values"
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
@@ -168,7 +175,14 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
                 "write": " Grants write access"
             }
         }
-    }
+    },
+    "x-google-endpoints": [
+        {
+            "allowCors": true,
+            "name": "name.endpoints.environment.cloud.goog"
+        }
+    ],
+    "x-google-marks": "marks values"
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
@@ -178,6 +192,32 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
+	// should be return an error because extension value is not a valid json
+	func() {
+		expected := "@x-google-endpoints need a valid json value"
+		gopath := os.Getenv("GOPATH")
+		assert.NotNil(t, gopath)
+		p := New()
+		err := p.ParseGeneralAPIInfo("testdata/extensionsFail1.go")
+		if assert.Error(t, err) {
+			assert.Equal(t, expected, err.Error())
+		}
+	}()
+
+	// should be return an error because extension don't have a value
+	func() {
+		expected := "@x-google-endpoints need a value"
+		gopath := os.Getenv("GOPATH")
+		assert.NotNil(t, gopath)
+		p := New()
+		err := p.ParseGeneralAPIInfo("testdata/extensionsFail2.go")
+		if assert.Error(t, err) {
+			assert.Equal(t, expected, err.Error())
+		}
+	}()
 }
 
 func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {

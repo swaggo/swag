@@ -137,6 +137,8 @@ import "github.com/swaggo/gin-swagger/swaggerFiles" // swagger embed files
 // @authorizationurl https://example.com/oauth/authorize
 // @scope.admin Grants read and write access to administrative information
 
+// @x-extension-openapi {"example": "value on a json format"}
+
 func main() {
 	r := gin.Default()
 
@@ -322,6 +324,7 @@ $ swag init
 | host        | The host (name or ip) serving the API.     | // @host localhost:8080         |
 | BasePath    | The base path on which the API is served. | // @BasePath /api/v1             |
 | schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
+| x-name      | The extension key, must be start by x- and take only json value | // @x-example-key {"key": "value"} |
 
 ### Using markdown descriptions
 When a short string in your documentation is insufficient, or you need images, code examples and things like that you may want to use markdown descriptions. In order to use markdown descriptions use the following annotations.

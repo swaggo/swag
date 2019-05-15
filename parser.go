@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -175,6 +176,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 		for _, comment := range fileTree.Comments {
 			comments := strings.Split(comment.Text(), "\n")
 			previousAttribute := ""
+			// parsing classic meta data model
 			for _, commentLine := range comments {
 				attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 				multilineBlock := false
@@ -255,7 +257,6 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						URL: commentInfo,
 					}
 					replaceLastTag(parser.swagger.Tags, tag)
-
 				case "@tag.docs.description":
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
@@ -267,7 +268,29 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				}
 				previousAttribute = attribute
 			}
-
+			// parsing specific meta data extensions
+			for _, commentLine := range comments {
+				prefixExtension := "@x-"
+				split := strings.Split(commentLine, " ")
+				if len(split[0]) < len(prefixExtension) {
+					continue
+				}
+				attribute := strings.ToLower(split[0])
+				switch attribute[:len(prefixExtension)] {
+				case prefixExtension:
+					var valueJSON interface{}
+					split = strings.SplitAfter(commentLine, attribute+" ")
+					if len(split) < 2 {
+						return errors.New(attribute + " need a value")
+					}
+					extensionName := "x-" + strings.SplitAfter(attribute, prefixExtension)[1]
+					if err := json.Unmarshal([]byte(split[1]), &valueJSON); err != nil {
+						return errors.New(attribute + " need a valid json value")
+					}
+					parser.swagger.AddExtension(extensionName, valueJSON)
+				}
+			}
+			// parsing specific meta data securities
 			for i := 0; i < len(comments); i++ {
 				attribute := strings.ToLower(strings.Split(comments[i], " ")[0])
 				switch attribute {

@@ -35,4 +35,8 @@ package main
 // @tokenUrl https://example.com/oauth/token
 // @authorizationurl https://example.com/oauth/authorize
 // @scope.admin Grants read and write access to administrative information
+
+// @x-google-endpoints [{"name":"name.endpoints.environment.cloud.goog","allowCors":true}]
+// @x-google-marks "marks values"
+
 func main() {}
