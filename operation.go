@@ -223,21 +223,27 @@ var regexAttributes = map[string]*regexp.Regexp{
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
 	for attrKey, re := range regexAttributes {
+		attr, err := findAttr(re, commentLine)
+		if err != nil {
+			return err
+		}
+
 		switch attrKey {
 		case "enums":
 			enums, err := findAttrList(re, commentLine)
 			if err != nil {
-				break
+				return errors.WithStack(err)
 			}
 			for _, e := range enums {
 				e = strings.TrimSpace(e)
-				param.Enum = append(param.Enum, defineType(schemaType, e))
+
+				value,err:=defineType(schemaType, e)
+				if err!=nil{
+					return err
+				}
+				param.Enum = append(param.Enum, value)
 			}
 		case "maxinum":
-			attr, err := findAttr(re, commentLine)
-			if err != nil {
-				break
-			}
 			if schemaType != "integer" && schemaType != "number" {
 				return fmt.Errorf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 			}
@@ -247,10 +253,6 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.Maximum = &n
 		case "mininum":
-			attr, err := findAttr(re, commentLine)
-			if err != nil {
-				break
-			}
 			if schemaType != "integer" && schemaType != "number" {
 				return fmt.Errorf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 			}
@@ -260,16 +262,12 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.Minimum = &n
 		case "default":
-			attr, err := findAttr(re, commentLine)
-			if err != nil {
-				break
+			value,err:=defineType(schemaType, attr)
+			if err!=nil{
+				return nil
 			}
-			param.Default = defineType(schemaType, attr)
+			param.Default = value
 		case "maxlength":
-			attr, err := findAttr(re, commentLine)
-			if err != nil {
-				break
-			}
 			if schemaType != "string" {
 				return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 			}
@@ -279,10 +277,6 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.MaxLength = &n
 		case "minlength":
-			attr, err := findAttr(re, commentLine)
-			if err != nil {
-				break
-			}
 			if schemaType != "string" {
 				return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 			}
@@ -292,10 +286,6 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.MinLength = &n
 		case "format":
-			attr, err := findAttr(re, commentLine)
-			if err != nil {
-				break
-			}
 			param.Format = attr
 		}
 	}
@@ -321,31 +311,31 @@ func findAttrList(re *regexp.Regexp, commentLine string) ([]string, error) {
 }
 
 // defineType enum value define the type (object and array unsupported)
-func defineType(schemaType string, value string) interface{} {
+func defineType(schemaType string, value string) (interface{},error) {
 	schemaType = TransToValidSchemeType(schemaType)
 	switch schemaType {
 	case "string":
-		return value
+		return value,nil
 	case "number":
 		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-		return v
+		return v,nil
 	case "integer":
 		v, err := strconv.Atoi(value)
 		if err != nil {
-			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+			return nil,fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-		return v
+		return v,nil
 	case "boolean":
 		v, err := strconv.ParseBool(value)
 		if err != nil {
-			panic(fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err))
+			return nil,fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-		return v
+		return v,nil
 	default:
-		panic(fmt.Errorf("%s is unsupported type in enum value", schemaType))
+		return nil,fmt.Errorf("%s is unsupported type in enum value", schemaType)
 	}
 }
 
