@@ -223,16 +223,11 @@ var regexAttributes = map[string]*regexp.Regexp{
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
 	for attrKey, re := range regexAttributes {
-		attr, err := findAttr(re, commentLine)
-		if err != nil {
-			return err
-		}
-
 		switch attrKey {
 		case "enums":
 			enums, err := findAttrList(re, commentLine)
 			if err != nil {
-				return errors.WithStack(err)
+				break
 			}
 			for _, e := range enums {
 				e = strings.TrimSpace(e)
@@ -244,6 +239,10 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 				param.Enum = append(param.Enum, value)
 			}
 		case "maxinum":
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				 break
+			}
 			if schemaType != "integer" && schemaType != "number" {
 				return fmt.Errorf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 			}
@@ -253,6 +252,10 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.Maximum = &n
 		case "mininum":
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
+			}
 			if schemaType != "integer" && schemaType != "number" {
 				return fmt.Errorf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 			}
@@ -262,12 +265,20 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.Minimum = &n
 		case "default":
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
+			}
 			value, err := defineType(schemaType, attr)
 			if err != nil {
 				return nil
 			}
 			param.Default = value
 		case "maxlength":
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
+			}
 			if schemaType != "string" {
 				return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 			}
@@ -277,6 +288,10 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.MaxLength = &n
 		case "minlength":
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
+			}
 			if schemaType != "string" {
 				return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
 			}
@@ -286,6 +301,10 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.MinLength = &n
 		case "format":
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
+			}
 			param.Format = attr
 		}
 	}
