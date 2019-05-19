@@ -237,8 +237,8 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			for _, e := range enums {
 				e = strings.TrimSpace(e)
 
-				value,err:=defineType(schemaType, e)
-				if err!=nil{
+				value, err := defineType(schemaType, e)
+				if err != nil {
 					return err
 				}
 				param.Enum = append(param.Enum, value)
@@ -262,8 +262,8 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			}
 			param.Minimum = &n
 		case "default":
-			value,err:=defineType(schemaType, attr)
-			if err!=nil{
+			value, err := defineType(schemaType, attr)
+			if err != nil {
 				return nil
 			}
 			param.Default = value
@@ -311,31 +311,31 @@ func findAttrList(re *regexp.Regexp, commentLine string) ([]string, error) {
 }
 
 // defineType enum value define the type (object and array unsupported)
-func defineType(schemaType string, value string) (interface{},error) {
+func defineType(schemaType string, value string) (interface{}, error) {
 	schemaType = TransToValidSchemeType(schemaType)
 	switch schemaType {
 	case "string":
-		return value,nil
+		return value, nil
 	case "number":
 		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-		return v,nil
+		return v, nil
 	case "integer":
 		v, err := strconv.Atoi(value)
 		if err != nil {
-			return nil,fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
+			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-		return v,nil
+		return v, nil
 	case "boolean":
 		v, err := strconv.ParseBool(value)
 		if err != nil {
-			return nil,fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
+			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-		return v,nil
+		return v, nil
 	default:
-		return nil,fmt.Errorf("%s is unsupported type in enum value", schemaType)
+		return nil, fmt.Errorf("%s is unsupported type in enum value", schemaType)
 	}
 }
 

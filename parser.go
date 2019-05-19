@@ -1003,17 +1003,17 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 		}
 
 		for _, e := range strings.Split(enumsTag, ",") {
-			value,err:=defineType(enumType, e)
-			if err!=nil{
-				return nil,err
+			value, err := defineType(enumType, e)
+			if err != nil {
+				return nil, err
 			}
 			structField.enums = append(structField.enums, value)
 		}
 	}
 	if defaultTag := structTag.Get("default"); defaultTag != "" {
-		value,err:=defineType(structField.schemaType, defaultTag)
-		if err!=nil{
-			return nil,err
+		value, err := defineType(structField.schemaType, defaultTag)
+		if err != nil {
+			return nil, err
 		}
 		structField.defaultValue = value
 	}
