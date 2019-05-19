@@ -894,7 +894,10 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) (map
 }
 
 func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
-	prop := getPropertyName(field.Type, parser)
+	prop, err := getPropertyName(field.Type, parser)
+	if err != nil {
+		return nil, err
+	}
 	if len(prop.ArrayType) == 0 {
 		CheckSchemaType(prop.SchemaType)
 	} else {

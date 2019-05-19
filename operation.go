@@ -241,7 +241,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 		case "maxinum":
 			attr, err := findAttr(re, commentLine)
 			if err != nil {
-				 break
+				break
 			}
 			if schemaType != "integer" && schemaType != "number" {
 				return fmt.Errorf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
