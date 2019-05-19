@@ -2149,9 +2149,7 @@ func Test(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 
 	p := New()
 	err = p.ParseRouterAPIInfo("", f)
@@ -2167,11 +2165,11 @@ func Test(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	p := New()
-	p.ParseRouterAPIInfo("", f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2190,11 +2188,11 @@ func Test(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	p := New()
-	p.ParseRouterAPIInfo("", f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2213,11 +2211,11 @@ func Test(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	p := New()
-	p.ParseRouterAPIInfo("", f)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2236,11 +2234,11 @@ func Test(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	p := New()
-	p.ParseRouterAPIInfo("", f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2259,11 +2257,11 @@ func Test(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	p := New()
-	p.ParseRouterAPIInfo("", f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2282,12 +2280,12 @@ func Test(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
 	p := New()
-	p.ParseRouterAPIInfo("", f)
 
+	err = p.ParseRouterAPIInfo("", f)
+
+	assert.NoError(t, err)
 	ps := p.swagger.Paths.Paths
 
 	val, ok := ps["/api/{id}"]
@@ -2305,11 +2303,11 @@ func Test(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	p := New()
-	p.ParseRouterAPIInfo("", f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
 
@@ -2336,11 +2334,11 @@ func Test3(){
 }
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	if err != nil {
-		panic(err)
-	}
+	assert.NoError(t, err)
+
 	p := New()
-	p.ParseRouterAPIInfo("", f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
 

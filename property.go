@@ -62,7 +62,7 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parse
 	return propertyName{SchemaType: "string", ArrayType: "string"}
 }
 
-// getPropertyName returns the string value for the given field if it exists, otherwise it panics.
+// getPropertyName returns the string value for the given field if it exists
 // allowedValues: array, boolean, integer, null, number, object, string
 func getPropertyName(expr ast.Expr, parser *Parser) (propertyName, error) {
 	if astTypeSelectorExpr, ok := expr.(*ast.SelectorExpr); ok {
