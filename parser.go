@@ -894,7 +894,10 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) (map
 }
 
 func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
-	prop := getPropertyName(field.Type, parser)
+	prop, err := getPropertyName(field.Type, parser)
+	if err != nil {
+		return nil, err
+	}
 	if len(prop.ArrayType) == 0 {
 		CheckSchemaType(prop.SchemaType)
 	} else {
@@ -1003,11 +1006,19 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 		}
 
 		for _, e := range strings.Split(enumsTag, ",") {
-			structField.enums = append(structField.enums, defineType(enumType, e))
+			value, err := defineType(enumType, e)
+			if err != nil {
+				return nil, err
+			}
+			structField.enums = append(structField.enums, value)
 		}
 	}
 	if defaultTag := structTag.Get("default"); defaultTag != "" {
-		structField.defaultValue = defineType(structField.schemaType, defaultTag)
+		value, err := defineType(structField.schemaType, defaultTag)
+		if err != nil {
+			return nil, err
+		}
+		structField.defaultValue = value
 	}
 
 	if IsNumericType(structField.schemaType) || IsNumericType(structField.arrayType) {

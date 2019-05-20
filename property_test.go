@@ -25,7 +25,9 @@ func TestGetPropertyNameSelectorExpr(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameIdentObjectId(t *testing.T) {
@@ -46,7 +48,10 @@ func TestGetPropertyNameIdentObjectId(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameIdentUUID(t *testing.T) {
@@ -67,7 +72,10 @@ func TestGetPropertyNameIdentUUID(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameIdentDecimal(t *testing.T) {
@@ -88,7 +96,9 @@ func TestGetPropertyNameIdentDecimal(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameIdentTime(t *testing.T) {
@@ -109,7 +119,10 @@ func TestGetPropertyNameIdentTime(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, nil))
+
+	propertyName, err := getPropertyName(input, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameStarExprIdent(t *testing.T) {
@@ -126,7 +139,10 @@ func TestGetPropertyNameStarExprIdent(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameStarExprMap(t *testing.T) {
@@ -151,7 +167,10 @@ func TestGetPropertyNameStarExprMap(t *testing.T) {
 		"object",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameArrayStarExpr(t *testing.T) {
@@ -171,7 +190,9 @@ func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
@@ -198,7 +219,10 @@ func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
 		"string",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameMap(t *testing.T) {
@@ -215,7 +239,10 @@ func TestGetPropertyNameMap(t *testing.T) {
 		"object",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameStruct(t *testing.T) {
@@ -225,7 +252,10 @@ func TestGetPropertyNameStruct(t *testing.T) {
 		"object",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameInterface(t *testing.T) {
@@ -235,7 +265,10 @@ func TestGetPropertyNameInterface(t *testing.T) {
 		"object",
 		"",
 	}
-	assert.Equal(t, expected, getPropertyName(input, New()))
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
 }
 
 func TestParseTag(t *testing.T) {
