@@ -95,7 +95,6 @@ func getPropertyName(expr ast.Expr, parser *Parser) (propertyName, error) {
 	}
 
 	if _, ok := expr.(*ast.MapType); ok { // if map
-		//TODO: support map
 		return propertyName{SchemaType: "object", ArrayType: "object"}, nil
 	}
 
