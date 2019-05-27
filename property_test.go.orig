@@ -25,7 +25,7 @@ func TestGetPropertyNameSelectorExpr(t *testing.T) {
 		"string",
 		"",
 	}
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -49,7 +49,7 @@ func TestGetPropertyNameIdentObjectId(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -73,7 +73,7 @@ func TestGetPropertyNameIdentUUID(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -96,7 +96,7 @@ func TestGetPropertyNameIdentDecimal(t *testing.T) {
 		"string",
 		"",
 	}
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -140,7 +140,7 @@ func TestGetPropertyNameStarExprIdent(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -168,7 +168,7 @@ func TestGetPropertyNameStarExprMap(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -190,7 +190,7 @@ func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 		"string",
 		"",
 	}
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -220,7 +220,7 @@ func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -240,7 +240,7 @@ func TestGetPropertyNameMap(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -253,7 +253,7 @@ func TestGetPropertyNameStruct(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -266,7 +266,7 @@ func TestGetPropertyNameInterface(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New(""))
+	propertyName, err := getPropertyName(input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -274,7 +274,11 @@ func TestGetPropertyNameInterface(t *testing.T) {
 func TestParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
 	mainAPIFile := "main.go"
+<<<<<<< HEAD
 	p := New("testdata/tags")
+=======
+	p := New("")
+>>>>>>> Added new Feature that allows to use markdown files as tag description
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	if err != nil {
