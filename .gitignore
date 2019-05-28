@@ -1,6 +1,8 @@
 dist
 testdata/simple*/docs
 cover.out
+coverage/*
+.nyc_output/*
 
 # Test binary, build with `go test -c`
 *.test
