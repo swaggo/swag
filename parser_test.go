@@ -2210,6 +2210,76 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseModelAsTypeAlias(t *testing.T) {
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "host": "petstore.swagger.io",
+    "basePath": "/v2",
+    "paths": {
+        "/testapi/time-as-time-container": {
+            "get": {
+                "description": "test container with time and time alias",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get container with time and time alias",
+                "operationId": "time-as-time-container",
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/data.TimeContainer"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "data.TimeContainer": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+	searchDir := "testdata/alias_type"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseAPI(searchDir, mainAPIFile)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseComposition(t *testing.T) {
 	searchDir := "testdata/composition"
 	mainAPIFile := "main.go"
