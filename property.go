@@ -52,6 +52,11 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parse
 
 	if pkgName, ok := astTypeSelectorExpr.X.(*ast.Ident); ok {
 		if typeDefinitions, ok := parser.TypeDefinitions[pkgName.Name][astTypeSelectorExpr.Sel.Name]; ok {
+			if expr, ok := typeDefinitions.Type.(*ast.SelectorExpr); ok {
+				if primitiveType, err := convertFromSpecificToPrimitive(expr.Sel.Name); err == nil {
+					return propertyNewFunc(primitiveType, "")
+				}
+			}
 			parser.ParseDefinition(pkgName.Name, astTypeSelectorExpr.Sel.Name, typeDefinitions)
 			return propertyNewFunc(astTypeSelectorExpr.Sel.Name, pkgName.Name)
 		}
