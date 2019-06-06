@@ -10,7 +10,11 @@ GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
 
 BINARY_NAME:=swag
-PACKAGES:=$(shell $(GOLIST) ./...)
+PACKAGES="									\
+github.com/swaggo/swag 						\
+github.com/swaggo/swag/cmd/swag				\
+github.com/swaggo/swag/gen					\
+"
 GOFILES:=$(shell find . -name "*.go" -type f)
 
 export GO111MODULE := on
