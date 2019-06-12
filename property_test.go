@@ -278,6 +278,9 @@ func TestParseTag(t *testing.T) {
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
+		t.Log("Failed to parse API: ", err)
+		t.FailNow()
+	}
 
 
 	if len(p.swagger.Tags) != 3 {
