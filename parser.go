@@ -902,9 +902,13 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 		return nil, err
 	}
 	if len(prop.ArrayType) == 0 {
-		CheckSchemaType(prop.SchemaType)
+		if err := CheckSchemaType(prop.SchemaType); err != nil {
+			return nil, err
+		}
 	} else {
-		CheckSchemaType("array")
+		if err := CheckSchemaType("array"); err != nil {
+			return nil, err
+		}
 	}
 	structField := &structField{
 		name:       field.Names[0].Name,
@@ -959,8 +963,12 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 				}
 			}
 
-			CheckSchemaType(newSchemaType)
-			CheckSchemaType(newArrayType)
+			if err := CheckSchemaType(newSchemaType); err != nil {
+				return nil, err
+			}
+			if err := CheckSchemaType(newArrayType); err != nil {
+				return nil, err
+			}
 			structField.schemaType = newSchemaType
 			structField.arrayType = newArrayType
 		}

@@ -247,7 +247,7 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 	comment = `@Header 200 {string} Token "qwerty"`
 	err = operation.ParseComment(comment, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
-	
+
 	b, err := json.MarshalIndent(operation, "", "    ")
 	assert.NoError(t, err)
 
@@ -272,7 +272,7 @@ func TestParseEmptyResponseOnlyCode(t *testing.T) {
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
-	
+
 	b, _ := json.MarshalIndent(operation, "", "    ")
 
 	expected := `{
@@ -745,10 +745,4 @@ func TestParseDeprecationDescription(t *testing.T) {
 	if !operation.Deprecated {
 		t.Error("Failed to parse @deprecated comment")
 	}
-}
-
-// Sample is a sample
-type Sample struct {
-	// this is `name`
-	Name int `json:"name"`
 }
