@@ -87,7 +87,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	if err := parser.getAllGoFileInfo(searchDir); err != nil {
 		return err
 	}
-	
+
 	if err := parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile)); err != nil {
 		return err
 	}
@@ -371,13 +371,13 @@ func getScopeScheme(scope string) (string, error) {
 func isExistsScope(scope string) (bool, error) {
 	s := strings.Fields(scope)
 	for _, v := range s {
-		if strings.Index(v, "@scope.") != -1 {
-			if strings.Index(v, ",") != -1 {
+		if strings.Contains(v, "@scope.") {
+			if strings.Contains(v, ",") {
 				return false, fmt.Errorf("@scope can't use comma(,) get=" + v)
 			}
 		}
 	}
-	return strings.Index(scope, "@scope.") != -1, nil
+	return strings.Contains(scope, "@scope."), nil
 }
 
 // getSchemes parses swagger schemes for given commentLine
