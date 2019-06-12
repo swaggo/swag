@@ -61,7 +61,7 @@ type Parser struct {
 }
 
 // New creates a new Parser with default properties.
-func New(markdownFileDir string) *Parser {
+func New(options ...func(*Parser) error) *Parser {
 	parser := &Parser{
 		swagger: &spec.Swagger{
 			SwaggerProps: spec.SwaggerProps{
@@ -81,9 +81,25 @@ func New(markdownFileDir string) *Parser {
 		TypeDefinitions:      make(map[string]map[string]*ast.TypeSpec),
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
-		markdownFileDir:      markdownFileDir,
+		markdownFileDir:      "markdownFileDir",
 	}
 	return parser
+}
+
+// SetMarkdownFileDirectory sets the directory to search for markdownfiles
+func SetMarkdownFileDirectory(directoryPath string) func(*Parser) error {
+	return func(p *Parser) error {
+		if directoryPath == "" {
+			return nil
+		}
+
+		if _, err := os.Stat(directoryPath); os.IsNotExist(err) {
+			return err
+		}
+
+		p.markdownFileDir = directoryPath
+		return nil
+	}
 }
 
 // ParseAPI parses general api info for gived searchDir and mainAPIFile
