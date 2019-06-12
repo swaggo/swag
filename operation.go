@@ -109,6 +109,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		if err := operation.ParseSecurityComment(lineRemainder); err != nil {
 			return err
 		}
+	case "@deprecated":
+		operation.Deprecate()
 	}
 	return nil
 }
