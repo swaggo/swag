@@ -61,7 +61,7 @@ type Parser struct {
 }
 
 // New creates a new Parser with default properties.
-func New(options ...func(*Parser) error) *Parser {
+func New(options ...func(*Parser)) *Parser {
 	parser := &Parser{
 		swagger: &spec.Swagger{
 			SwaggerProps: spec.SwaggerProps{
@@ -81,24 +81,19 @@ func New(options ...func(*Parser) error) *Parser {
 		TypeDefinitions:      make(map[string]map[string]*ast.TypeSpec),
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
-		markdownFileDir:      "markdownFileDir",
 	}
+
+	for _, option := range options {
+		option(parser)
+	}
+
 	return parser
 }
 
 // SetMarkdownFileDirectory sets the directory to search for markdownfiles
-func SetMarkdownFileDirectory(directoryPath string) func(*Parser) error {
-	return func(p *Parser) error {
-		if directoryPath == "" {
-			return nil
-		}
-
-		if _, err := os.Stat(directoryPath); os.IsNotExist(err) {
-			return err
-		}
-
+func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
+	return func(p *Parser) {
 		p.markdownFileDir = directoryPath
-		return nil
 	}
 }
 
@@ -419,7 +414,6 @@ func getMarkdownFileForTag(tagName string, dirPath string) (string, error) {
 		if !strings.Contains(fileName, ".md") {
 			continue
 		}
-		
 
 		if strings.Contains(fileName, tagName) {
 			return fileName, nil
