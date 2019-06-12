@@ -87,7 +87,10 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	if err := parser.getAllGoFileInfo(searchDir); err != nil {
 		return err
 	}
-	parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile))
+	
+	if err := parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile)); err != nil {
+		return err
+	}
 
 	for _, astFile := range parser.files {
 		parser.ParseType(astFile)
