@@ -94,7 +94,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	p.ParseGeneralAPIInfo("testdata/main.go")
+	err := p.ParseGeneralAPIInfo("testdata/main.go")
+	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -172,7 +173,8 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	p.ParseGeneralAPIInfo("testdata/templated.go")
+	err := p.ParseGeneralAPIInfo("testdata/templated.go")
+	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -197,7 +199,8 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	p.ParseGeneralAPIInfo("testdata/single_file_api/main.go")
+	err := p.ParseGeneralAPIInfo("testdata/single_file_api/main.go")
+	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -214,8 +217,9 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "testdata/pet"
 
 	p := New()
-	p.getAllGoFileInfo(searchDir)
+	err := p.getAllGoFileInfo(searchDir)
 
+	assert.NoError(t, err)
 	assert.NotEmpty(t, p.files["testdata/pet/main.go"])
 	assert.NotEmpty(t, p.files["testdata/pet/web/handler.go"])
 	assert.Equal(t, 2, len(p.files))
@@ -225,7 +229,8 @@ func TestParser_ParseType(t *testing.T) {
 	searchDir := "testdata/simple/"
 
 	p := New()
-	p.getAllGoFileInfo(searchDir)
+	err := p.getAllGoFileInfo(searchDir)
+	assert.NoError(t, err)
 
 	for _, file := range p.files {
 		p.ParseType(file)
@@ -877,7 +882,9 @@ func TestParseSimpleApi1(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = PascalCase
-	p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
@@ -1365,7 +1372,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = SnakeCase
-	p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
@@ -1825,7 +1834,9 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
 	searchDir := "testdata/simple3"
 	mainAPIFile := "main.go"
 	p := New()
-	p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
@@ -1935,7 +1946,8 @@ func TestParseStructComment(t *testing.T) {
 	searchDir := "testdata/struct_comment"
 	mainAPIFile := "main.go"
 	p := New()
-	p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
@@ -1967,8 +1979,8 @@ func TestParsePetApi(t *testing.T) {
 	searchDir := "testdata/pet"
 	mainAPIFile := "main.go"
 	p := New()
-	p.ParseAPI(searchDir, mainAPIFile)
-
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
@@ -2121,8 +2133,8 @@ func TestParseModelNotUnderRoot(t *testing.T) {
 	searchDir := "testdata/model_not_under_root/cmd"
 	mainAPIFile := "main.go"
 	p := New()
-	p.ParseAPI(searchDir, mainAPIFile)
-
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
@@ -2191,7 +2203,8 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 	searchDir := "testdata/alias_type"
 	mainAPIFile := "main.go"
 	p := New()
-	p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -2201,7 +2214,8 @@ func TestParseComposition(t *testing.T) {
 	searchDir := "testdata/composition"
 	mainAPIFile := "main.go"
 	p := New()
-	p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
 
 	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
@@ -2422,7 +2436,8 @@ func Test3(){
 
 func TestSkip(t *testing.T) {
 	folder1 := "/tmp/vendor"
-	os.Mkdir(folder1, os.ModePerm)
+	err := os.Mkdir(folder1, os.ModePerm)
+	assert.NoError(t, err)
 	f1, _ := os.Stat(folder1)
 
 	parser := New()
@@ -2431,7 +2446,8 @@ func TestSkip(t *testing.T) {
 	assert.NoError(t, os.Remove(folder1))
 
 	folder2 := "/tmp/.git"
-	os.Mkdir(folder2, os.ModePerm)
+	err = os.Mkdir(folder2, os.ModePerm)
+	assert.NoError(t, err)
 	f2, _ := os.Stat(folder2)
 
 	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
@@ -2444,7 +2460,9 @@ func TestSkip(t *testing.T) {
 
 func TestSkipMustParseVendor(t *testing.T) {
 	folder1 := "/tmp/vendor"
-	os.Mkdir(folder1, os.ModePerm)
+	err := os.Mkdir(folder1, os.ModePerm)
+	assert.NoError(t, err)
+
 	f1, _ := os.Stat(folder1)
 
 	parser := New()
@@ -2454,7 +2472,9 @@ func TestSkipMustParseVendor(t *testing.T) {
 	assert.NoError(t, os.Remove(folder1))
 
 	folder2 := "/tmp/.git"
-	os.Mkdir(folder2, os.ModePerm)
+	err = os.Mkdir(folder2, os.ModePerm)
+	assert.NoError(t, err)
+
 	f2, _ := os.Stat(folder2)
 
 	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
@@ -2485,7 +2505,7 @@ func TestSkipMustParseVendor(t *testing.T) {
 // 			for i := 0; i < 100; i++ {
 // 				p := New()
 // 				p.PropNamingStrategy = PascalCase
-// 				p.ParseAPI(searchDir, mainAPIFile)
+// 				err := p.ParseAPI(searchDir, mainAPIFile)
 // 				b, _ := json.MarshalIndent(p.swagger, "", "    ")
 // 				assert.NotEqual(t, "", string(b))
 
@@ -2504,7 +2524,8 @@ func TestApiParseTag(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = PascalCase
-	p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
 
 	if len(p.swagger.Tags) != 2 {
 		t.Log("Number of tags did not match")

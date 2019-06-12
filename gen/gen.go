@@ -62,7 +62,10 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
-	os.MkdirAll(config.OutputDir, os.ModePerm)
+	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
+		return err
+	}
+
 	docs, err := os.Create(path.Join(config.OutputDir, "docs.go"))
 	if err != nil {
 		return err
@@ -75,7 +78,9 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	defer swaggerJSON.Close()
-	swaggerJSON.Write(b)
+	if _, err := swaggerJSON.Write(b); err != nil {
+		return err
+	}
 
 	swaggerYAML, err := os.Create(path.Join(config.OutputDir, "swagger.yaml"))
 	if err != nil {
@@ -88,7 +93,9 @@ func (g *Gen) Build(config *Config) error {
 		return errors.Wrap(err, "cannot covert json to yaml")
 	}
 
-	swaggerYAML.Write(y)
+	if _, err := swaggerYAML.Write(y); err != nil {
+		return err
+	}
 
 	if err := packageTemplate.Execute(docs, struct {
 		Timestamp time.Time

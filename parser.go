@@ -87,7 +87,10 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	if err := parser.getAllGoFileInfo(searchDir); err != nil {
 		return err
 	}
-	parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile))
+
+	if err := parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile)); err != nil {
+		return err
+	}
 
 	for _, astFile := range parser.files {
 		parser.ParseType(astFile)
@@ -368,13 +371,13 @@ func getScopeScheme(scope string) (string, error) {
 func isExistsScope(scope string) (bool, error) {
 	s := strings.Fields(scope)
 	for _, v := range s {
-		if strings.Index(v, "@scope.") != -1 {
-			if strings.Index(v, ",") != -1 {
+		if strings.Contains(v, "@scope.") {
+			if strings.Contains(v, ",") {
 				return false, fmt.Errorf("@scope can't use comma(,) get=" + v)
 			}
 		}
 	}
-	return strings.Index(scope, "@scope.") != -1, nil
+	return strings.Contains(scope, "@scope."), nil
 }
 
 // getSchemes parses swagger schemes for given commentLine
@@ -899,9 +902,13 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 		return nil, err
 	}
 	if len(prop.ArrayType) == 0 {
-		CheckSchemaType(prop.SchemaType)
+		if err := CheckSchemaType(prop.SchemaType); err != nil {
+			return nil, err
+		}
 	} else {
-		CheckSchemaType("array")
+		if err := CheckSchemaType("array"); err != nil {
+			return nil, err
+		}
 	}
 	structField := &structField{
 		name:       field.Names[0].Name,
@@ -956,8 +963,12 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 				}
 			}
 
-			CheckSchemaType(newSchemaType)
-			CheckSchemaType(newArrayType)
+			if err := CheckSchemaType(newSchemaType); err != nil {
+				return nil, err
+			}
+			if err := CheckSchemaType(newArrayType); err != nil {
+				return nil, err
+			}
 			structField.schemaType = newSchemaType
 			structField.arrayType = newArrayType
 		}
