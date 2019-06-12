@@ -2472,9 +2472,9 @@ func TestSkipMustParseVendor(t *testing.T) {
 	assert.NoError(t, os.Remove(folder1))
 
 	folder2 := "/tmp/.git"
-    err = os.Mkdir(folder2, os.ModePerm)
-    assert.NoError(t, err)
-    
+	err = os.Mkdir(folder2, os.ModePerm)
+	assert.NoError(t, err)
+
 	f2, _ := os.Stat(folder2)
 
 	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
