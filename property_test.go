@@ -298,4 +298,3 @@ func TestParseTag(t *testing.T) {
 		t.FailNow()
 	}
 }
-
