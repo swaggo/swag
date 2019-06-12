@@ -711,7 +711,8 @@ func TestParseMultiDescription(t *testing.T) {
 	assert.NoError(t, err)
 
 	comment = `@Tags multi`
-	operation.ParseComment(comment, nil)
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
 
 	comment = `@Description line two x`
 	err = operation.ParseComment(comment, nil)
@@ -721,4 +722,17 @@ func TestParseMultiDescription(t *testing.T) {
 
 	expected := `"description": "line one\nline two x"`
 	assert.Contains(t, string(b), expected)
+}
+
+func TestParseDeprecationDescription(t *testing.T) {
+	comment := `@Deprecated`
+	operation := NewOperation()
+	operation.parser = New()
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	if !operation.Deprecated {
+		t.Error("Failed to parse @deprecated comment")
+	}
 }
