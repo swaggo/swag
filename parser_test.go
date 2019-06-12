@@ -2204,8 +2204,8 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile)
-    assert.NoError(t, err)
-    
+	assert.NoError(t, err)
+
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
