@@ -2501,33 +2501,29 @@ func TestSkipMustParseVendor(t *testing.T) {
 
 func TestApiParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
-    mainAPIFile := "main.go"
-    p := New(SetMarkdownFileDirectory(searchDir))
+	mainAPIFile := "main.go"
+	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
 	p.ParseAPI(searchDir, mainAPIFile)
 
 	if len(p.swagger.Tags) != 3 {
-		t.Log("Number of tags did not match")
-		t.FailNow()
+		t.Error("Number of tags did not match")
 	}
 
 	dogs := p.swagger.Tags[0]
 	if dogs.TagProps.Name != "dogs" || dogs.TagProps.Description != "Dogs are cool" {
-		t.Log("Failed to parse dogs name or description")
-		t.FailNow()
+		t.Error("Failed to parse dogs name or description")
 	}
 
 	cats := p.swagger.Tags[1]
 	if cats.TagProps.Name != "cats" || cats.TagProps.Description != "Cats are the devil" {
-		t.Log("Failed to parse cats name or description")
-		t.FailNow()
+		t.Error("Failed to parse cats name or description")
 	}
 
 	if cats.TagProps.ExternalDocs.URL != "https://google.de" || cats.TagProps.ExternalDocs.Description != "google is super useful to find out that cats are evil!" {
-		t.Log("URL: ", cats.TagProps.ExternalDocs.URL)
-		t.Log("Description: ", cats.TagProps.ExternalDocs.Description)
-		t.Log("Failed to parse cats external documentation")
-		t.FailNow()
+		t.Error("URL: ", cats.TagProps.ExternalDocs.URL)
+		t.Error("Description: ", cats.TagProps.ExternalDocs.Description)
+		t.Error("Failed to parse cats external documentation")
 	}
 }
 
@@ -2538,18 +2534,16 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	if err != nil {
-		t.Log("Failed to parse api description: " + err.Error())
+		t.Error("Failed to parse api description: " + err.Error())
 	}
 
 	if len(p.swagger.Tags) != 3 {
-		t.Log("Number of tags did not match")
-		t.FailNow()
+		t.Error("Number of tags did not match")
 	}
 
 	apes := p.swagger.Tags[2]
 	if apes.TagProps.Description == "" {
-		t.Log("Failed to parse tag description markdown file")
-		t.FailNow()
+		t.Error("Failed to parse tag description markdown file")
 	}
 }
 
@@ -2560,13 +2554,10 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	if err != nil {
-		t.Log("Failed to parse api description: " + err.Error())
-		t.FailNow()
-    }
-
-	if p.swagger.Info.Description == "" {
-		t.Log("Failed to parse api description: " + err.Error())
-		t.FailNow()
+		t.Error("Failed to parse api description: " + err.Error())
 	}
 
+	if p.swagger.Info.Description == "" {
+		t.Error("Failed to parse api description: " + err.Error())
+	}
 }
