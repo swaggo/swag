@@ -39,6 +39,9 @@ type Config struct {
 
 	//ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
+
+	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
+	MarkdownFilesDir string
 }
 
 // Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
@@ -48,7 +51,7 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	log.Println("Generate swagger docs....")
-	p := swag.New()
+	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir))
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 

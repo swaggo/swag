@@ -10,6 +10,13 @@ import (
 	"github.com/urfave/cli"
 )
 
+const searchDirFlag = "dir"
+const generalInfoFlag = "generalInfo"
+const propertyStrategyFlag = "propertyStrategy"
+const outputFlag = "output"
+const parseVendorFlag = "parseVendor"
+const markdownFilesDirFlag = "markdownFiles"
+
 func main() {
 	app := cli.NewApp()
 	app.Version = swag.Version
@@ -20,11 +27,12 @@ func main() {
 			Aliases: []string{"i"},
 			Usage:   "Create docs.go",
 			Action: func(c *cli.Context) error {
-				searchDir := c.String("dir")
-				mainAPIFile := c.String("generalInfo")
-				strategy := c.String("propertyStrategy")
-				outputDir := c.String("output")
-				parseVendor := c.Bool("parseVendor")
+				searchDir := c.String(searchDirFlag)
+				mainAPIFile := c.String(generalInfoFlag)
+				strategy := c.String(propertyStrategyFlag)
+				outputDir := c.String(outputFlag)
+				parseVendor := c.Bool(parseVendorFlag)
+				markdownFilesDir := c.String(markdownFilesDirFlag)
 
 				switch strategy {
 				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
@@ -38,6 +46,7 @@ func main() {
 					PropNamingStrategy: strategy,
 					OutputDir:          outputDir,
 					ParseVendor:        parseVendor,
+					MarkdownFilesDir:   markdownFilesDir,
 				})
 			},
 			Flags: []cli.Flag{
@@ -64,6 +73,11 @@ func main() {
 				cli.BoolFlag{
 					Name:  "parseVendor",
 					Usage: "Parse go files in 'vendor' folder, disabled by default",
+				},
+				cli.StringFlag{
+					Name:  "markdownFiles, md",
+					Value: "",
+					Usage: "Parse folder containing markdown files to use as description, disabled by default",
 				},
 			},
 		},

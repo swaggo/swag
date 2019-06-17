@@ -323,6 +323,20 @@ $ swag init
 | BasePath    | The base path on which the API is served. | // @BasePath /api/v1             |
 | schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
 
+### Using markdown descriptions
+When a short string in your documentation is insufficient, or you need images, code examples and things like that you may want to use markdown descriptions. In order to use markdown descriptions use the following annotations.
+
+
+| annotation  | description                                | example                         |
+|-------------|--------------------------------------------|---------------------------------|
+| title       | **Required.** The title of the application.| // @title Swagger Example API   |
+| version     | **Required.** Provides the version of the application API.| // @version 1.0  |
+| description.markdown  | A short description of the application. Parsed from the api.md file. This is an alternative to @description    |// @description.markdown No value needed, this parses the description from api.md         																 |
+| tag.name    | Name of a tag.| // @tag.name This is the name of the tag                     |
+| tag.description.markdown   | Description of the tag this is an alternative to tag.description. The description will be read from a file named like tagname.md  | // @tag.description.markdown         |
+
+
+
 ## API Operation
 
 **Example**

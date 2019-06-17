@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -54,10 +55,13 @@ type Parser struct {
 
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []string
+
+	// markdownFileDir holds the path to the folder, where markdown files are stored
+	markdownFileDir string
 }
 
 // New creates a new Parser with default properties.
-func New() *Parser {
+func New(options ...func(*Parser)) *Parser {
 	parser := &Parser{
 		swagger: &spec.Swagger{
 			SwaggerProps: spec.SwaggerProps{
@@ -78,7 +82,19 @@ func New() *Parser {
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
 	}
+
+	for _, option := range options {
+		option(parser)
+	}
+
 	return parser
+}
+
+// SetMarkdownFileDirectory sets the directory to search for markdownfiles
+func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
+	return func(p *Parser) {
+		p.markdownFileDir = directoryPath
+	}
 }
 
 // ParseAPI parses general api info for gived searchDir and mainAPIFile
@@ -146,6 +162,18 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					} else if multilineBlock {
 						parser.swagger.Info.Description += "\n" + strings.TrimSpace(commentLine[len(attribute):])
 					}
+				case "@description.markdown":
+					filePath, err := getMarkdownFileForTag("api", parser.markdownFileDir)
+					if err != nil {
+						return err
+					}
+
+					commentInfo, err := ioutil.ReadFile(parser.markdownFileDir + "/" + filePath)
+					if err != nil {
+						return errors.New("Failed to find matching markdown file for api description: " + "api" + " error: " + err.Error())
+					}
+
+					parser.swagger.Info.Description = string(commentInfo)
 				case "@termsofservice":
 					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
 				case "@contact.name":
@@ -175,6 +203,20 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 					tag.TagProps.Description = commentInfo
+					replaceLastTag(parser.swagger.Tags, tag)
+				case "@tag.description.markdown":
+					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+					filePath, err := getMarkdownFileForTag(tag.TagProps.Name, parser.markdownFileDir)
+					if err != nil {
+						return err
+					}
+
+					commentInfo, err := ioutil.ReadFile(parser.markdownFileDir + "/" + filePath)
+					if err != nil {
+						return errors.New("Failed to find matching markdown file for tag: " + tag.TagProps.Name + " error: " + err.Error())
+					}
+
+					tag.TagProps.Description = string(commentInfo)
 					replaceLastTag(parser.swagger.Tags, tag)
 				case "@tag.docs.url":
 					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
@@ -358,6 +400,30 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	}
 
 	return nil
+}
+
+func getMarkdownFileForTag(tagName string, dirPath string) (string, error) {
+	filesInfos, err := ioutil.ReadDir(dirPath)
+	if err != nil {
+		return "", err
+	}
+
+	for _, fileInfo := range filesInfos {
+		if fileInfo.IsDir() {
+			continue
+		}
+		fileName := fileInfo.Name()
+
+		if !strings.Contains(fileName, ".md") {
+			continue
+		}
+
+		if strings.Contains(fileName, tagName) {
+			return fileName, nil
+		}
+	}
+
+	return "", errors.New("Unable to find Markdown file in the given directory")
 }
 
 func getScopeScheme(scope string) (string, error) {
