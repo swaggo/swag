@@ -423,7 +423,7 @@ func getMarkdownFileForTag(tagName string, dirPath string) (string, error) {
 		}
 	}
 
-	return "", errors.New("Unable to find Markdown file in the given directory")
+	return "", errors.New("Unable to find Markdown file for tag '" + tagName + "' in the given directory")
 }
 
 func getScopeScheme(scope string) (string, error) {
