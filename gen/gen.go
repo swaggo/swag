@@ -28,27 +28,28 @@ type Config struct {
 	// SearchDir the swag would be parse
 	SearchDir string
 
-	//OutputDir represents the output directory for al the generated files
+	// OutputDir represents the output directory for al the generated files
 	OutputDir string
 
-	//MainAPIFile the Go file path in which 'swagger general API Info' is written
+	// MainAPIFile the Go file path in which 'swagger general API Info' is written
 	MainAPIFile string
 
-	//PropNamingStrategy represents property naming strategy like snakecase,camelcase,pascalcase
+	// PropNamingStrategy represents property naming strategy like snakecase,camelcase,pascalcase
 	PropNamingStrategy string
 
-	//ParseVendor whether swag should be parse vendor folder
+	// ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
 
 	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
 	MarkdownFilesDir string
 }
 
-// Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
+// Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
 	if _, err := os.Stat(config.SearchDir); os.IsNotExist(err) {
 		return fmt.Errorf("dir: %s is not exist", config.SearchDir)
 	}
+
 
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir))

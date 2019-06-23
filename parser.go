@@ -16,6 +16,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
 	"github.com/pkg/errors"
@@ -37,7 +38,7 @@ type Parser struct {
 	// swagger represents the root document object for the API specification
 	swagger *spec.Swagger
 
-	//files is a map that stores map[real_go_file_path][astFile]
+	// files is a map that stores map[real_go_file_path][astFile]
 	files map[string]*ast.File
 
 	// TypeDefinitions is a map that stores [package name][type name][*ast.TypeSpec]
@@ -46,7 +47,7 @@ type Parser struct {
 	// CustomPrimitiveTypes is a map that stores custom primitive types to actual golang types [type name][string]
 	CustomPrimitiveTypes map[string]string
 
-	//registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
+	// registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
 	registerTypes map[string]*ast.TypeSpec
 
 	PropNamingStrategy string
@@ -97,18 +98,27 @@ func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 	}
 }
 
-// ParseAPI parses general api info for gived searchDir and mainAPIFile
+// ParseAPI parses general api info for given searchDir and mainAPIFile
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	Println("Generate general API Info")
+
 	if err := parser.getAllGoFileInfo(searchDir); err != nil {
 		return err
 	}
+
+	pkgs,err:=deps(searchDir)
+	if err!=nil{
+		return err
+	}
+
+	parser.getAllGoFileInfoFromDeps(pkgs)
 
 	if err := parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile)); err != nil {
 		return err
 	}
 
-	for _, astFile := range parser.files {
+	for path, astFile := range parser.files {
+		Printf("Parsing %s\n",path)
 		parser.ParseType(astFile)
 	}
 
@@ -118,17 +128,15 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		}
 	}
 
-	parser.ParseDefinitions()
-
-	return nil
+	return parser.parseDefinitions()
 }
 
-// ParseGeneralAPIInfo parses general api info for gived mainAPIFile path
+// ParseGeneralAPIInfo parses general api info for given mainAPIFile path
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
 	if err != nil {
-		return errors.Wrap(err, "cannot parse soure files")
+		return errors.Wrap(err, "cannot parse source files")
 	}
 
 	parser.swagger.Swagger = "2.0"
@@ -529,8 +537,8 @@ func (parser *Parser) isInStructStack(refTypeName string) bool {
 	return false
 }
 
-// ParseDefinitions parses Swagger Api definitions.
-func (parser *Parser) ParseDefinitions() {
+// parseDefinitions parses Swagger Api definitions.
+func (parser *Parser) parseDefinitions() error {
 	// sort the typeNames so that parsing definitions is deterministic
 	typeNames := make([]string, 0, len(parser.registerTypes))
 	for refTypeName := range parser.registerTypes {
@@ -543,8 +551,11 @@ func (parser *Parser) ParseDefinitions() {
 		ss := strings.Split(refTypeName, ".")
 		pkgName := ss[0]
 		parser.structStack = nil
-		parser.ParseDefinition(pkgName, typeSpec.Name.Name, typeSpec)
+		if err:=parser.ParseDefinition(pkgName, typeSpec.Name.Name, typeSpec);err!=nil{
+			return err
+		}
 	}
+	return nil
 }
 
 // ParseDefinition parses given type spec that corresponds to the type under
@@ -1234,8 +1245,22 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
 func (parser *Parser) getAllGoFileInfo(searchDir string) error {
-	return filepath.Walk(searchDir, parser.visit)
+	 return filepath.Walk(searchDir, parser.visit)
 }
+
+func (parser *Parser)getAllGoFileInfoFromDeps(pkg *depth.Pkg){
+	if pkg.Internal{
+		return
+	}
+	// TOOD:
+	filepath.Walk(pkg.SrcDir, parser.visit)
+
+	for _,dep:=range pkg.Deps{
+		 parser.getAllGoFileInfoFromDeps(&dep)
+	}
+}
+
+
 
 func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	if err := parser.Skip(path, f); err != nil {
@@ -1243,6 +1268,7 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	}
 
 	if ext := filepath.Ext(path); ext == ".go" {
+		Printf("visit path:%s\n",path)
 		fset := token.NewFileSet() // positions are relative to fset
 		astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
 		if err != nil {
@@ -1270,6 +1296,31 @@ func (parser *Parser) Skip(path string, f os.FileInfo) error {
 	return nil
 }
 
+
+func deps(searchDir string)(*depth.Pkg,error){
+	var t depth.Tree
+	err := t.Resolve(searchDir)
+	if err != nil {
+		return nil,err
+	}
+
+	writePkgs(*t.Root)
+	return t.Root,nil
+}
+
+func writePkgs(pkg depth.Pkg){
+	if pkg.Internal==true{
+		return
+		// log.Printf("dep.Name:%s\n",pkg.Name)
+		// log.Printf("dep.SrcDir:%s\n",pkg.SrcDir)
+		// log.Printf("dep.Internal:%v\n",pkg.Internal)
+	}
+
+
+	for _,p:=range pkg.Deps{
+		writePkgs(p)
+	}
+}
 // GetSwagger returns *spec.Swagger which is the root document object for the API specification.
 func (parser *Parser) GetSwagger() *spec.Swagger {
 	return parser.swagger
