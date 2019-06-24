@@ -125,7 +125,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	outStr = f[0]
 	var t depth.Tree
 	if err := t.Resolve(outStr); err != nil {
-		return fmt.Errorf("pkg %s cannot find all dependencies, %s",err)
+		return fmt.Errorf("pkg %s cannot find all dependencies, %s",outStr, err)
 	}
 
 	for i := 0; i < len(t.Root.Deps); i++ {
