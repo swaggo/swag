@@ -140,7 +140,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	for path, astFile := range parser.files {
+	for _, astFile := range parser.files {
 		parser.ParseType(astFile)
 	}
 
