@@ -1280,7 +1280,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return err
 	}
 
-	for i:=0;i< len(pkg.Deps);i++{
+	for i := 0; i < len(pkg.Deps); i++ {
 		if err := parser.getAllGoFileInfoFromDeps(&pkg.Deps[i]); err != nil {
 			return err
 		}
