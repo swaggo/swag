@@ -118,18 +118,25 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	}
 
 	outStr, errStr := stdout.String(), stderr.String()
-	fmt.Printf("out:\n%s\nerr:\n%s\n", outStr, errStr)
 
-	fmt.Printf("ImportPath:%s\n", outStr)
+	if len(errStr)>0{
+		return fmt.Errorf("execute go list error output:%s",errStr)
+	}
+		f:=strings.Split(outStr,"\n")
 
+
+	outStr = f[0]
 	var t depth.Tree
 	if err := t.Resolve(outStr); err != nil {
 		return err
 	}
 
-	if err := parser.getAllGoFileInfoFromDeps(t.Root); err != nil {
-		return err
+	for i:=0;i< len(t.Root.Deps);i++{
+		if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
+			return err
+		}
 	}
+
 
 	if err := parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile)); err != nil {
 		return err
@@ -1271,7 +1278,6 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 
-	fmt.Println(pkg.SrcDir)
 	if err := filepath.Walk(pkg.SrcDir, parser.visit); err != nil {
 		return err
 	}
@@ -1291,7 +1297,7 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	}
 
 	if ext := filepath.Ext(path); ext == ".go" {
-		Printf("visit path:%s\n", path)
+		// Printf("visit path:%s\n", path)
 		fset := token.NewFileSet() // positions are relative to fset
 		astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
 		if err != nil {
