@@ -119,11 +119,10 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 
 	outStr, errStr := stdout.String(), stderr.String()
 
-	if len(errStr)>0{
-		return fmt.Errorf("execute go list error output:%s",errStr)
+	if len(errStr) > 0 {
+		return fmt.Errorf("execute go list error output:%s", errStr)
 	}
-		f:=strings.Split(outStr,"\n")
-
+	f := strings.Split(outStr, "\n")
 
 	outStr = f[0]
 	var t depth.Tree
@@ -131,12 +130,11 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	for i:=0;i< len(t.Root.Deps);i++{
+	for i := 0; i < len(t.Root.Deps); i++ {
 		if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
 			return err
 		}
 	}
-
 
 	if err := parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile)); err != nil {
 		return err
