@@ -1272,7 +1272,7 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) error {
 }
 
 func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
-	if pkg.Internal {
+	if pkg.Internal { // ignored internal dependencies
 		return nil
 	}
 
@@ -1280,8 +1280,8 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return err
 	}
 
-	for _, dep := range pkg.Deps {
-		if err := parser.getAllGoFileInfoFromDeps(&dep); err != nil {
+	for i:=0;i< len(pkg.Deps);i++{
+		if err := parser.getAllGoFileInfoFromDeps(&pkg.Deps[i]); err != nil {
 			return err
 		}
 	}
