@@ -3,6 +3,7 @@ package swag
 import (
 	"fmt"
 	"go/ast"
+	"go/build"
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
@@ -103,10 +104,6 @@ func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	Println("Generate general API Info")
 
-	if err := parser.getAllGoFileInfo(searchDir); err != nil {
-		return err
-	}
-
 	cmd := exec.Command("go", "list", "-f={{.ImportPath}}")
 	cmd.Dir = searchDir
 	var stdout, stderr strings.Builder
@@ -114,15 +111,16 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return err
+		return fmt.Errorf("execute go list command, %s", err)
 	}
 
 	outStr, _ := stdout.String(), stderr.String()
-	// if len(errStr) > 0 {
-	// 	return fmt.Errorf("execute go list error output:%s", errStr)
-	// }
+	if outStr[0] == '_' {
+		outStr = strings.TrimPrefix(outStr, "_"+build.Default.GOPATH+"/src/")
+	}
 	f := strings.Split(outStr, "\n")
 	outStr = f[0]
+
 	var t depth.Tree
 	if err := t.Resolve(outStr); err != nil {
 		return fmt.Errorf("pkg %s cannot find all dependencies, %s", outStr, err)
@@ -1262,11 +1260,6 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 	default:
 		return nil, fmt.Errorf("%s is unsupported type in example value", schemaType)
 	}
-}
-
-// GetAllGoFileInfo gets all Go source files information for given searchDir.
-func (parser *Parser) getAllGoFileInfo(searchDir string) error {
-	return filepath.Walk(searchDir, parser.visit)
 }
 
 func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
