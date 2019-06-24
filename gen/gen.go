@@ -50,7 +50,6 @@ func (g *Gen) Build(config *Config) error {
 		return fmt.Errorf("dir: %s is not exist", config.SearchDir)
 	}
 
-
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir))
 	p.PropNamingStrategy = config.PropNamingStrategy

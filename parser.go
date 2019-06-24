@@ -107,7 +107,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	cmd := exec.Command("go", "list","-f={{.ImportPath}}")
+	cmd := exec.Command("go", "list", "-f={{.ImportPath}}")
 	cmd.Dir = searchDir
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
@@ -117,18 +117,17 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	outStr, errStr := stdout.String(),stderr.String()
+	outStr, errStr := stdout.String(), stderr.String()
 	fmt.Printf("out:\n%s\nerr:\n%s\n", outStr, errStr)
 
-	fmt.Printf("ImportPath:%s\n",outStr)
-
+	fmt.Printf("ImportPath:%s\n", outStr)
 
 	var t depth.Tree
-	if err := t.Resolve(outStr);err!= nil {
+	if err := t.Resolve(outStr); err != nil {
 		return err
 	}
 
-	if err:=parser.getAllGoFileInfoFromDeps(t.Root);err!=nil{
+	if err := parser.getAllGoFileInfoFromDeps(t.Root); err != nil {
 		return err
 	}
 
@@ -137,7 +136,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	}
 
 	for path, astFile := range parser.files {
-		Printf("Parsing %s\n",path)
+		Printf("Parsing %s\n", path)
 		parser.ParseType(astFile)
 	}
 
@@ -149,10 +148,6 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 
 	return parser.parseDefinitions()
 }
-
-
-
-
 
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
@@ -574,7 +569,7 @@ func (parser *Parser) parseDefinitions() error {
 		ss := strings.Split(refTypeName, ".")
 		pkgName := ss[0]
 		parser.structStack = nil
-		if err:=parser.ParseDefinition(pkgName, typeSpec.Name.Name, typeSpec);err!=nil{
+		if err := parser.ParseDefinition(pkgName, typeSpec.Name.Name, typeSpec); err != nil {
 			return err
 		}
 	}
@@ -1268,29 +1263,27 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
 func (parser *Parser) getAllGoFileInfo(searchDir string) error {
-	 return filepath.Walk(searchDir, parser.visit)
+	return filepath.Walk(searchDir, parser.visit)
 }
 
-func (parser *Parser)getAllGoFileInfoFromDeps(pkg *depth.Pkg) error{
-	if pkg.Internal{
+func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
+	if pkg.Internal {
 		return nil
 	}
 
 	fmt.Println(pkg.SrcDir)
-	if err:=filepath.Walk(pkg.SrcDir, parser.visit);err!=nil{
+	if err := filepath.Walk(pkg.SrcDir, parser.visit); err != nil {
 		return err
 	}
 
-	for _,dep:=range pkg.Deps{
-		 if err:=parser.getAllGoFileInfoFromDeps(&dep);err!=nil{
-		 	return err
-		 }
+	for _, dep := range pkg.Deps {
+		if err := parser.getAllGoFileInfoFromDeps(&dep); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
-
-
 
 func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	if err := parser.Skip(path, f); err != nil {
@@ -1298,7 +1291,7 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	}
 
 	if ext := filepath.Ext(path); ext == ".go" {
-		Printf("visit path:%s\n",path)
+		Printf("visit path:%s\n", path)
 		fset := token.NewFileSet() // positions are relative to fset
 		astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
 		if err != nil {
@@ -1325,7 +1318,6 @@ func (parser *Parser) Skip(path string, f os.FileInfo) error {
 	}
 	return nil
 }
-
 
 // GetSwagger returns *spec.Swagger which is the root document object for the API specification.
 func (parser *Parser) GetSwagger() *spec.Swagger {
