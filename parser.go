@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -106,12 +107,30 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	pkgs,err:=deps(searchDir)
-	if err!=nil{
+	cmd := exec.Command("go", "list","-f={{.ImportPath}}")
+	cmd.Dir = searchDir
+	var stdout, stderr strings.Builder
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	parser.getAllGoFileInfoFromDeps(pkgs)
+	outStr, errStr := stdout.String(),stderr.String()
+	fmt.Printf("out:\n%s\nerr:\n%s\n", outStr, errStr)
+
+	fmt.Printf("ImportPath:%s\n",outStr)
+
+
+	var t depth.Tree
+	if err := t.Resolve(outStr);err!= nil {
+		return err
+	}
+
+	if err:=parser.getAllGoFileInfoFromDeps(t.Root);err!=nil{
+		return err
+	}
 
 	if err := parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile)); err != nil {
 		return err
@@ -130,6 +149,10 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 
 	return parser.parseDefinitions()
 }
+
+
+
+
 
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
@@ -1248,16 +1271,23 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) error {
 	 return filepath.Walk(searchDir, parser.visit)
 }
 
-func (parser *Parser)getAllGoFileInfoFromDeps(pkg *depth.Pkg){
+func (parser *Parser)getAllGoFileInfoFromDeps(pkg *depth.Pkg) error{
 	if pkg.Internal{
-		return
+		return nil
 	}
-	// TOOD:
-	filepath.Walk(pkg.SrcDir, parser.visit)
+
+	fmt.Println(pkg.SrcDir)
+	if err:=filepath.Walk(pkg.SrcDir, parser.visit);err!=nil{
+		return err
+	}
 
 	for _,dep:=range pkg.Deps{
-		 parser.getAllGoFileInfoFromDeps(&dep)
+		 if err:=parser.getAllGoFileInfoFromDeps(&dep);err!=nil{
+		 	return err
+		 }
 	}
+
+	return nil
 }
 
 
@@ -1297,30 +1327,6 @@ func (parser *Parser) Skip(path string, f os.FileInfo) error {
 }
 
 
-func deps(searchDir string)(*depth.Pkg,error){
-	var t depth.Tree
-	err := t.Resolve(searchDir)
-	if err != nil {
-		return nil,err
-	}
-
-	writePkgs(*t.Root)
-	return t.Root,nil
-}
-
-func writePkgs(pkg depth.Pkg){
-	if pkg.Internal==true{
-		return
-		// log.Printf("dep.Name:%s\n",pkg.Name)
-		// log.Printf("dep.SrcDir:%s\n",pkg.SrcDir)
-		// log.Printf("dep.Internal:%v\n",pkg.Internal)
-	}
-
-
-	for _,p:=range pkg.Deps{
-		writePkgs(p)
-	}
-}
 // GetSwagger returns *spec.Swagger which is the root document object for the API specification.
 func (parser *Parser) GetSwagger() *spec.Swagger {
 	return parser.swagger
