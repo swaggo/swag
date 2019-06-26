@@ -1271,7 +1271,7 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) error {
 }
 
 func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
-	if pkg.Internal || !pkg.Resolved { // ignored internal dependencies
+	if pkg.Internal || !pkg.Resolved { // ignored internal and not resolved dependencies
 		return nil
 	}
 

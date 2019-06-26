@@ -2583,11 +2583,11 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 	}
 }
 
-func TestIgnoreInvalidPkg(t *testing.T){
+func TestIgnoreInvalidPkg(t *testing.T) {
 	searchDir := "testdata/deps_having_invalid_pkg"
 	mainAPIFile := "main.go"
 	p := New()
-	if err := p.ParseAPI(searchDir, mainAPIFile);err!=nil{
+	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
 	}
 
