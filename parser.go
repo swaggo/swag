@@ -1271,7 +1271,7 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) error {
 }
 
 func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
-	if pkg.Internal { // ignored internal dependencies
+	if pkg.Internal || !pkg.Resolved { // ignored internal and not resolved dependencies
 		return nil
 	}
 
@@ -1294,6 +1294,10 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	}
 
 	if ext := filepath.Ext(path); ext == ".go" {
+		// ignore .go files in 'testdata' folder because it can be invalid like `/golang.org/x/tools/go/loader/testdata/badpkgdecl.go`
+		if strings.HasSuffix(filepath.Dir(path), "testdata") {
+			return nil
+		}
 		// Printf("visit path:%s\n", path)
 		fset := token.NewFileSet() // positions are relative to fset
 		astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
@@ -1314,7 +1318,6 @@ func (parser *Parser) Skip(path string, f os.FileInfo) error {
 			return filepath.SkipDir
 		}
 	}
-
 	// exclude all hidden folder
 	if f.IsDir() && len(f.Name()) > 1 && f.Name()[0] == '.' {
 		return filepath.SkipDir
