@@ -57,6 +57,9 @@ type Parser struct {
 
 	ParseVendor bool
 
+	// ParseDependencies whether swag should be parse outside dependency folder
+	ParseDependency bool
+
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []string
 
@@ -132,9 +135,11 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return fmt.Errorf("pkg %s cannot find all dependencies, %s", outStr, err)
 	}
 
-	for i := 0; i < len(t.Root.Deps); i++ {
-		if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
-			return err
+	if parser.ParseVendor || parser.ParseDependency {
+		for i := 0; i < len(t.Root.Deps); i++ {
+			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
+				return err
+			}
 		}
 	}
 
