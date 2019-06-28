@@ -103,7 +103,7 @@ func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
-	Println("Generate general API Info")
+	Printf("Generate general API Info, search dir:%s", searchDir)
 
 	if err := parser.getAllGoFileInfo(searchDir); err != nil {
 		return err
@@ -116,10 +116,11 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	cmd.Stderr = &stderr
 
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("execute go list command, %s", err)
+		return fmt.Errorf("execute go list command, %s, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
 	}
 
 	outStr, _ := stdout.String(), stderr.String()
+
 	if outStr[0] == '_' { // will shown like _/{GOPATH}/src/{YOUR_PACKAGE} when NOT enable GO MODULE.
 		outStr = strings.TrimPrefix(outStr, "_"+build.Default.GOPATH+"/src/")
 	}
@@ -1299,8 +1300,20 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 
-	if err := filepath.Walk(pkg.SrcDir, parser.visit); err != nil {
+	files, err := ioutil.ReadDir(pkg.SrcDir) // only parsing files in the dir(don't contains sub dir files)
+	if err != nil {
 		return err
+	}
+
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+
+		path := filepath.Join(pkg.SrcDir, f.Name())
+		if err := parser.parseFile(path); err != nil {
+			return err
+		}
 	}
 
 	for i := 0; i < len(pkg.Deps); i++ {
@@ -1316,13 +1329,11 @@ func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
 	if err := parser.Skip(path, f); err != nil {
 		return err
 	}
+	return parser.parseFile(path)
+}
 
+func (parser *Parser) parseFile(path string) error {
 	if ext := filepath.Ext(path); ext == ".go" {
-		// ignore .go files in 'testdata' folder because it can be invalid like `/golang.org/x/tools/go/loader/testdata/badpkgdecl.go`
-		if strings.HasSuffix(filepath.Dir(path), "testdata") {
-			return nil
-		}
-		// Printf("visit path:%s\n", path)
 		fset := token.NewFileSet() // positions are relative to fset
 		astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
 		if err != nil {
