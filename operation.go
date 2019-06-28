@@ -118,7 +118,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 var paramPattern = regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
 
 // ParseParamComment parses params return []string of param properties
-// E.g. @Param	queryText		form	      string	  true		        "The email for login"
+// E.g. @Param	queryText		formData	      string	  true		        "The email for login"
 //              [param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // E.g. @Param   some_id     path    int     true        "Some ID"
 func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
