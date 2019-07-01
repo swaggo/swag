@@ -15,6 +15,7 @@ const generalInfoFlag = "generalInfo"
 const propertyStrategyFlag = "propertyStrategy"
 const outputFlag = "output"
 const parseVendorFlag = "parseVendor"
+const parseDependency = "parseDependency"
 const markdownFilesDirFlag = "markdownFiles"
 
 func main() {
@@ -32,6 +33,7 @@ func main() {
 				strategy := c.String(propertyStrategyFlag)
 				outputDir := c.String(outputFlag)
 				parseVendor := c.Bool(parseVendorFlag)
+				parseDependency := c.Bool(parseDependency)
 				markdownFilesDir := c.String(markdownFilesDirFlag)
 
 				switch strategy {
@@ -46,6 +48,7 @@ func main() {
 					PropNamingStrategy: strategy,
 					OutputDir:          outputDir,
 					ParseVendor:        parseVendor,
+					ParseDependency:    parseDependency,
 					MarkdownFilesDir:   markdownFilesDir,
 				})
 			},
@@ -73,6 +76,10 @@ func main() {
 				cli.BoolFlag{
 					Name:  "parseVendor",
 					Usage: "Parse go files in 'vendor' folder, disabled by default",
+				},
+				cli.BoolFlag{
+					Name:  "parseDependency",
+					Usage: "Parse go files in outside dependency folder, disabled by default",
 				},
 				cli.StringFlag{
 					Name:  "markdownFiles, md",

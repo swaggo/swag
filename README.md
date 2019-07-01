@@ -73,6 +73,7 @@ OPTIONS:
    --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
    --output value, -o value            Output directory for al the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
    --parseVendor                       Parse go files in 'vendor' folder, disabled by default
+   --parseDependency                   Parse go files in outside dependency folder, disabled by default
 ```
 
 ## Supported Web Frameworks
