@@ -128,8 +128,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
 	}
 
-	if parser.ParseVendor || parser.ParseDependency {
-		//TODO:
+	if parser.ParseDependency {
 		for i := 0; i < len(t.Root.Deps); i++ {
 			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
 				return err
