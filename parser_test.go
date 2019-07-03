@@ -2630,5 +2630,14 @@ func TestIgnoreInvalidPkg(t *testing.T) {
 	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
 	}
+}
 
+func TestFixes432(t *testing.T) {
+	searchDir := "testdata/fixes-432"
+	mainAPIFile := "cmd/main.go"
+
+	p := New()
+	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+		t.Error("Failed to ignore valid pkg: " + err.Error())
+	}
 }
