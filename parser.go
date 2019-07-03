@@ -112,30 +112,24 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	cmd := exec.Command("go", "list", "-f={{.ImportPath}}")
-	cmd.Dir = searchDir
-	var stdout, stderr strings.Builder
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("execute go list command, %s, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
-	}
-
-	outStr, _ := stdout.String(), stderr.String()
-
-	if outStr[0] == '_' { // will shown like _/{GOPATH}/src/{YOUR_PACKAGE} when NOT enable GO MODULE.
-		outStr = strings.TrimPrefix(outStr, "_"+build.Default.GOPATH+"/src/")
-	}
-	f := strings.Split(outStr, "\n")
-	outStr = f[0]
-
 	var t depth.Tree
-	if err := t.Resolve(outStr); err != nil {
-		return fmt.Errorf("pkg %s cannot find all dependencies, %s", outStr, err)
+
+	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDir, mainAPIFile))
+	if err != nil {
+		return err
+	}
+
+	pkgName, err := getPkgName(path.Dir(absMainAPIFilePath))
+	if err != nil {
+		return err
+	}
+
+	if err := t.Resolve(pkgName); err != nil {
+		return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
 	}
 
 	if parser.ParseVendor || parser.ParseDependency {
+		//TODO:
 		for i := 0; i < len(t.Root.Deps); i++ {
 			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
 				return err
@@ -143,8 +137,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		}
 	}
 
-	if err := parser.ParseGeneralAPIInfo(path.Join(searchDir, mainAPIFile)); err != nil {
-		fmt.Println("error: ", err)
+	if err := parser.ParseGeneralAPIInfo(absMainAPIFilePath); err != nil {
 		return err
 	}
 
@@ -159,6 +152,28 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	}
 
 	return parser.parseDefinitions()
+}
+
+func getPkgName(searchDir string) (string, error) {
+	cmd := exec.Command("go", "list", "-f={{.ImportPath}}")
+	cmd.Dir = searchDir
+	var stdout, stderr strings.Builder
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("execute go list command, %s, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
+	}
+
+	outStr, _ := stdout.String(), stderr.String()
+
+	if outStr[0] == '_' { // will shown like _/{GOPATH}/src/{YOUR_PACKAGE} when NOT enable GO MODULE.
+		outStr = strings.TrimPrefix(outStr, "_"+build.Default.GOPATH+"/src/")
+	}
+	f := strings.Split(outStr, "\n")
+	outStr = f[0]
+
+	return outStr, nil
 }
 
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path
