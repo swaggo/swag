@@ -9,8 +9,8 @@ import (
 	_ "github.com/swaggo/swag/example/celler/docs"
 	"github.com/swaggo/swag/example/celler/httputil"
 
+	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	swaggerFiles "github.com/swaggo/gin-swagger/swaggerFiles"
 )
 
 // @title Swagger Example API
