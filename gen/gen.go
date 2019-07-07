@@ -117,7 +117,7 @@ func (g *Gen) Build(config *Config) error {
 		Schemes   string
 	}{
 		Timestamp: time.Now(),
-		Doc:       "`" + strings.Replace(string(b), "{", "{\n    \"schemes\": [{{ marshal .Schemes }}],", 1) + "`",
+		Doc:       "`" + strings.Replace(string(b), "{", "{\n    \"schemes\": {{ marshal .Schemes }},", 1) + "`",
 		Schemes:   "[]string{" + strings.Join(schemes, ",") + "}",
 	}); err != nil {
 		return err
