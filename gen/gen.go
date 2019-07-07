@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"text/template"
 	"time"
 
@@ -64,6 +65,12 @@ func (g *Gen) Build(config *Config) error {
 	}
 	swagger := p.GetSwagger()
 
+	schemes := []string{}
+	for _, scheme := range swagger.Schemes {
+		schemes = append(schemes, fmt.Sprintf("%q", scheme))
+	}
+	swagger.Schemes = []string{}
+
 	b, err := json.MarshalIndent(swagger, "", "    ")
 	if err != nil {
 		return err
@@ -107,9 +114,11 @@ func (g *Gen) Build(config *Config) error {
 	if err := packageTemplate.Execute(docs, struct {
 		Timestamp time.Time
 		Doc       string
+		Schemes   string
 	}{
 		Timestamp: time.Now(),
-		Doc:       "`" + string(b) + "`",
+		Doc:       "`" + strings.Replace(string(b), "{", "{\n    \"schemes\": [{{ marshal .Schemes }}],", 1) + "`",
+		Schemes:   "[]string{" + strings.Join(schemes, ",") + "}",
 	}); err != nil {
 		return err
 	}
@@ -129,6 +138,7 @@ package docs
 
 import (
 	"bytes"
+	"encoding/json"
 
 	"github.com/alecthomas/template"
 	"github.com/swaggo/swag"
@@ -140,17 +150,23 @@ type swaggerInfo struct {
 	Version     string
 	Host        string
 	BasePath    string
+	Schemes     []string
 	Title       string
 	Description string
 }
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
-var SwaggerInfo swaggerInfo
+var SwaggerInfo = swaggerInfo{ Schemes: {{.Schemes}}}
 
 type s struct{}
 
 func (s *s) ReadDoc() string {
-	t, err := template.New("swagger_info").Parse(doc)
+	t, err := template.New("swagger_info").Funcs(template.FuncMap{
+		"marshal": func(v interface {}) string {
+			a, _ := json.Marshal(v)
+			return string(a)
+		},
+	}).Parse(doc)
 	if err != nil {
 		return doc
 	}
