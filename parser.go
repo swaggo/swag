@@ -119,16 +119,14 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	pkgName, err := getPkgName(path.Dir(absMainAPIFilePath))
-	if err != nil {
-		return err
-	}
-
-	if err := t.Resolve(pkgName); err != nil {
-		return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
-	}
-
 	if parser.ParseDependency {
+		pkgName, err := getPkgName(path.Dir(absMainAPIFilePath))
+		if err != nil {
+			return err
+		}
+		if err := t.Resolve(pkgName); err != nil {
+			return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
+		}
 		for i := 0; i < len(t.Root.Deps); i++ {
 			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
 				return err
