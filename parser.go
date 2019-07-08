@@ -1014,27 +1014,31 @@ func (parser *Parser) parseAnonymousField(pkgName string, field *ast.Field) (map
 	}
 
 	typeSpec := parser.TypeDefinitions[pkgName][typeName]
-	schema, err := parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
-	if err != nil {
-		return properties, []string{}, err
-	}
-	schemaType := "unknown"
-	if len(schema.SchemaProps.Type) > 0 {
-		schemaType = schema.SchemaProps.Type[0]
-	}
-
-	switch schemaType {
-	case "object":
-		for k, v := range schema.SchemaProps.Properties {
-			properties[k] = v
+	if typeSpec != nil {
+		schema, err := parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
+		if err != nil {
+			return properties, []string{}, err
 		}
-	case "array":
-		properties[typeName] = schema
-	default:
-		Printf("Can't extract properties from a schema of type '%s'", schemaType)
+		schemaType := "unknown"
+		if len(schema.SchemaProps.Type) > 0 {
+			schemaType = schema.SchemaProps.Type[0]
+		}
+
+		switch schemaType {
+		case "object":
+			for k, v := range schema.SchemaProps.Properties {
+				properties[k] = v
+			}
+		case "array":
+			properties[typeName] = schema
+		default:
+			Printf("Can't extract properties from a schema of type '%s'", schemaType)
+		}
+
+		return properties, schema.SchemaProps.Required, nil
 	}
 
-	return properties, schema.SchemaProps.Required, nil
+	return properties, nil, nil
 }
 
 func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
