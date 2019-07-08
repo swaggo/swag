@@ -2642,7 +2642,7 @@ func TestFixes432(t *testing.T) {
 	}
 }
 
-func TestParseOutsideDependencies(t *testing.T){
+func TestParseOutsideDependencies(t *testing.T) {
 	searchDir := "testdata/pare_outside_dependencies"
 	mainAPIFile := "cmd/main.go"
 

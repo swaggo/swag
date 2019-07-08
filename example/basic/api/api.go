@@ -18,7 +18,7 @@ import (
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /testapi/get-string-by-int/{some_id} [get]
 func GetStringByInt(c *gin.Context) {
-	 _ :=web.Pet{}
+	_ := web.Pet{}
 	//write your code
 }
 
