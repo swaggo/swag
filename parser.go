@@ -683,6 +683,8 @@ type structField struct {
 	minimum      *float64
 	maxLength    *int64
 	minLength    *int64
+	description  string
+	alias        string
 	enums        []interface{}
 	defaultValue interface{}
 	extensions   map[string]interface{}
@@ -729,8 +731,9 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 				parser.TypeDefinitions[pkgName][structField.arrayType])
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Type:        []string{structField.schemaType},
-					Description: desc,
+					Type: []string{structField.schemaType},
+					//Description: desc,
+					Description: structField.description,
 					Items: &spec.SchemaOrArray{
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
@@ -757,13 +760,14 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 					Items: &spec.SchemaOrArray{
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
-								Type:      []string{structField.arrayType},
-								Maximum:   structField.maximum,
-								Minimum:   structField.minimum,
-								MaxLength: structField.maxLength,
-								MinLength: structField.minLength,
-								Enum:      structField.enums,
-								Default:   structField.defaultValue,
+								Type:        []string{structField.arrayType},
+								Maximum:     structField.maximum,
+								Minimum:     structField.minimum,
+								MaxLength:   structField.maxLength,
+								MinLength:   structField.minLength,
+								Enum:        structField.enums,
+								Default:     structField.defaultValue,
+								Description: structField.description,
 							},
 						},
 					},
@@ -780,8 +784,8 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 		}
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type:        []string{structField.schemaType},
-				Description: desc,
+				Type: []string{structField.schemaType},
+				//Description: desc,
 				Format:      structField.formatType,
 				Required:    required,
 				Maximum:     structField.maximum,
@@ -790,6 +794,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 				MinLength:   structField.minLength,
 				Enum:        structField.enums,
 				Default:     structField.defaultValue,
+				Description: structField.description,
 			},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{
 				Example: structField.exampleValue,
@@ -811,6 +816,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 				for k, v := range p {
 					if v.SchemaProps.Type[0] != "object" {
 						nestRequired = append(nestRequired, v.SchemaProps.Required...)
+						v.SchemaProps.Description = structField.description
 						v.SchemaProps.Required = make([]string, 0)
 					}
 					props[k] = v
@@ -820,7 +826,8 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
-					Description: desc,
+					//Description: desc,
+					Description: structField.description,
 					Format:      structField.formatType,
 					Properties:  props,
 					Required:    nestRequired,
@@ -987,6 +994,12 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 				break
 			}
 		}
+	}
+	if descriptionTag := structTag.Get("description"); descriptionTag != "" {
+		structField.description = descriptionTag
+	}
+	if aliasTag := structTag.Get("alias"); aliasTag != "" {
+		structField.alias = aliasTag
 	}
 	if extensionsTag := structTag.Get("extensions"); extensionsTag != "" {
 		structField.extensions = map[string]interface{}{}

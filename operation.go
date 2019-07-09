@@ -218,6 +218,10 @@ var regexAttributes = map[string]*regexp.Regexp{
 	"maxlength": regexp.MustCompile(`(?i)maxlength\(.*\)`),
 	// for format(email)
 	"format": regexp.MustCompile(`(?i)format\(.*\)`),
+	// for format(email)
+	"description": regexp.MustCompile(`(?i)description\(.*\)`),
+	// for format(email)
+	"name": regexp.MustCompile(`(?i)name\(.*\)`),
 }
 
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param *spec.Parameter) error {
@@ -306,6 +310,18 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 				break
 			}
 			param.Format = attr
+		case "description":
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
+			}
+			param.Description = attr
+		case "name":
+			attr, err := findAttr(re, commentLine)
+			if err != nil {
+				break
+			}
+			param.Name = attr
 		}
 	}
 	return nil
