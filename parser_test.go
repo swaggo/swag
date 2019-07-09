@@ -1950,6 +1950,14 @@ func TestParseStructComment(t *testing.T) {
                 "error": {
                     "description": "Error an Api error",
                     "type": "string"
+                },
+                "errorCtx": {
+                    "description": "Error context tick comment",
+                    "type": "string"
+                },
+                "errorNo": {
+                    "description": "Error number tick comment",
+                    "type": "integer"
                 }
             }
         },
