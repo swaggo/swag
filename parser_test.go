@@ -2641,3 +2641,14 @@ func TestFixes432(t *testing.T) {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
 	}
 }
+
+func TestParseOutsideDependencies(t *testing.T) {
+	searchDir := "testdata/pare_outside_dependencies"
+	mainAPIFile := "cmd/main.go"
+
+	p := New()
+	p.ParseDependency = true
+	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+		t.Error("Failed to parse api: " + err.Error())
+	}
+}
