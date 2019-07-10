@@ -271,6 +271,12 @@ func TestGetPropertyNameInterface(t *testing.T) {
 	assert.Equal(t, expected, propertyName)
 }
 
+func TestGetPropertyNameChannel(t *testing.T) {
+	input := &ast.ChanType{}
+	_, err := getPropertyName(input, New())
+	assert.Error(t, err)
+}
+
 func TestParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
 	mainAPIFile := "main.go"
