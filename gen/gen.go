@@ -69,7 +69,6 @@ func (g *Gen) Build(config *Config) error {
 	for _, scheme := range swagger.Schemes {
 		schemes = append(schemes, fmt.Sprintf("%q", scheme))
 	}
-	swagger.Schemes = []string{}
 
 	b, err := json.MarshalIndent(swagger, "", "    ")
 	if err != nil {
@@ -108,6 +107,12 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	if _, err := swaggerYAML.Write(y); err != nil {
+		return err
+	}
+
+	swagger.Schemes = []string{}
+	b, err = json.MarshalIndent(swagger, "", "    ")
+	if err != nil {
 		return err
 	}
 
