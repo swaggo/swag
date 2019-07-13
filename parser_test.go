@@ -2,6 +2,7 @@ package swag
 
 import (
 	"encoding/json"
+	"github.com/siddontang/go-log/log"
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
@@ -1893,11 +1894,9 @@ func TestParseStructComment(t *testing.T) {
             "type": "object",
             "properties": {
                 "createdAt": {
-                    "description": "Error time",
                     "type": "string"
                 },
                 "error": {
-                    "description": "Error an Api error",
                     "type": "string"
                 }
             }
@@ -1906,11 +1905,9 @@ func TestParseStructComment(t *testing.T) {
             "type": "object",
             "properties": {
                 "data": {
-                    "description": "Post data",
                     "type": "object",
                     "properties": {
                         "name": {
-                            "description": "Post tag",
                             "type": "array",
                             "items": {
                                 "type": "string"
@@ -1919,12 +1916,12 @@ func TestParseStructComment(t *testing.T) {
                     }
                 },
                 "id": {
+                    "description": "Post primary field.",
                     "type": "integer",
                     "format": "int64",
                     "example": 1
                 },
                 "name": {
-                    "description": "Post name",
                     "type": "string",
                     "example": "poti"
                 }
@@ -1937,6 +1934,8 @@ func TestParseStructComment(t *testing.T) {
 	p := New()
 	p.ParseAPI(searchDir, mainAPIFile)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	log.Println(b)
+	log.Println(expected)
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1968,7 +1967,6 @@ func TestParsePetApi(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseAPI(searchDir, mainAPIFile)
-
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }

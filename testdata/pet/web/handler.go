@@ -1,9 +1,9 @@
 package web
 
 type Pet struct {
-	ID       int `json:"id" example:"1"`
+	ID       int `json:"id" example:"1" description:"id is Pet primary field." `
 	Category struct {
-		ID            int      `json:"id" example:"1"`
+		ID            int      `json:"id" example:"1" description:"id is Category primary field."`
 		Name          string   `json:"name" example:"category_name"`
 		PhotoUrls     []string `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg"`
 		SmallCategory struct {
