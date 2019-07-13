@@ -87,7 +87,8 @@ func TestParseProduceComment(t *testing.T) {
 }`
 	comment := `/@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/health+json`
 	operation := new(Operation)
-	operation.ParseComment(comment, nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
 	b, _ := json.MarshalIndent(operation, "", "    ")
 	assert.JSONEq(t, expected, string(b))
 }
@@ -202,7 +203,8 @@ func TestParseResponseCommentWithArrayType(t *testing.T) {
 func TestParseResponseCommentWithBasicType(t *testing.T) {
 	comment := `@Success 200 {string} string "it's ok'"`
 	operation := NewOperation()
-	operation.ParseComment(comment, nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
 	b, _ := json.MarshalIndent(operation, "", "    ")
 
 	expected := `{
@@ -221,7 +223,9 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 func TestParseEmptyResponseComment(t *testing.T) {
 	comment := `@Success 200 "it's ok"`
 	operation := NewOperation()
-	operation.ParseComment(comment, nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
 	b, _ := json.MarshalIndent(operation, "", "    ")
 
 	expected := `{
@@ -237,9 +241,13 @@ func TestParseEmptyResponseComment(t *testing.T) {
 func TestParseResponseCommentWithHeader(t *testing.T) {
 	comment := `@Success 200 "it's ok"`
 	operation := NewOperation()
-	operation.ParseComment(comment, nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
 	comment = `@Header 200 {string} Token "qwerty"`
-	operation.ParseComment(comment, nil)
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
 	b, err := json.MarshalIndent(operation, "", "    ")
 	assert.NoError(t, err)
 
@@ -262,7 +270,9 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 func TestParseEmptyResponseOnlyCode(t *testing.T) {
 	comment := `@Success 200`
 	operation := NewOperation()
-	operation.ParseComment(comment, nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
 	b, _ := json.MarshalIndent(operation, "", "    ")
 
 	expected := `{
@@ -711,7 +721,8 @@ func TestParseMultiDescription(t *testing.T) {
 	assert.NoError(t, err)
 
 	comment = `@Tags multi`
-	operation.ParseComment(comment, nil)
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
 
 	comment = `@Description line two x`
 	err = operation.ParseComment(comment, nil)
@@ -721,4 +732,17 @@ func TestParseMultiDescription(t *testing.T) {
 
 	expected := `"description": "line one\nline two x"`
 	assert.Contains(t, string(b), expected)
+}
+
+func TestParseDeprecationDescription(t *testing.T) {
+	comment := `@Deprecated`
+	operation := NewOperation()
+	operation.parser = New()
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	if !operation.Deprecated {
+		t.Error("Failed to parse @deprecated comment")
+	}
 }

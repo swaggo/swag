@@ -17,6 +17,9 @@ type Post struct {
 
 type APIError struct {
 	// Error an Api error
-	Error     string    // Error this is Line comment
+	Error string // Error this is Line comment
+	// Error `number` tick comment
+	ErrorNo   int64
+	ErrorCtx  string    // Error `context` tick comment
 	CreatedAt time.Time // Error time
 }

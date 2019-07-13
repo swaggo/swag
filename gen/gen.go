@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"text/template"
 	"time"
 
@@ -28,41 +29,56 @@ type Config struct {
 	// SearchDir the swag would be parse
 	SearchDir string
 
-	//OutputDir represents the output directory for al the generated files
+	// OutputDir represents the output directory for al the generated files
 	OutputDir string
 
-	//MainAPIFile the Go file path in which 'swagger general API Info' is written
+	// MainAPIFile the Go file path in which 'swagger general API Info' is written
 	MainAPIFile string
 
-	//PropNamingStrategy represents property naming strategy like snakecase,camelcase,pascalcase
+	// PropNamingStrategy represents property naming strategy like snakecase,camelcase,pascalcase
 	PropNamingStrategy string
 
-	//ParseVendor whether swag should be parse vendor folder
+	// ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
+
+	// ParseDependencies whether swag should be parse outside dependency folder
+	ParseDependency bool
+
+	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
+	MarkdownFilesDir string
 }
 
-// Build builds swagger json file  for gived searchDir and mainAPIFile. Returns json
+// Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
 	if _, err := os.Stat(config.SearchDir); os.IsNotExist(err) {
 		return fmt.Errorf("dir: %s is not exist", config.SearchDir)
 	}
 
 	log.Println("Generate swagger docs....")
-	p := swag.New()
+	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir))
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
+	p.ParseDependency = config.ParseDependency
 
 	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
 		return err
 	}
 	swagger := p.GetSwagger()
 
+	schemes := []string{}
+	for _, scheme := range swagger.Schemes {
+		schemes = append(schemes, fmt.Sprintf("%q", scheme))
+	}
+
 	b, err := json.MarshalIndent(swagger, "", "    ")
 	if err != nil {
 		return err
 	}
 
-	os.MkdirAll(config.OutputDir, os.ModePerm)
+	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
+		return err
+	}
+
 	docs, err := os.Create(path.Join(config.OutputDir, "docs.go"))
 	if err != nil {
 		return err
@@ -75,7 +91,9 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	defer swaggerJSON.Close()
-	swaggerJSON.Write(b)
+	if _, err := swaggerJSON.Write(b); err != nil {
+		return err
+	}
 
 	swaggerYAML, err := os.Create(path.Join(config.OutputDir, "swagger.yaml"))
 	if err != nil {
@@ -88,14 +106,24 @@ func (g *Gen) Build(config *Config) error {
 		return errors.Wrap(err, "cannot covert json to yaml")
 	}
 
-	swaggerYAML.Write(y)
+	if _, err := swaggerYAML.Write(y); err != nil {
+		return err
+	}
+
+	swagger.Schemes = []string{}
+	b, err = json.MarshalIndent(swagger, "", "    ")
+	if err != nil {
+		return err
+	}
 
 	if err := packageTemplate.Execute(docs, struct {
 		Timestamp time.Time
 		Doc       string
+		Schemes   string
 	}{
 		Timestamp: time.Now(),
-		Doc:       "`" + string(b) + "`",
+		Doc:       "`" + strings.Replace(string(b), "{", "{\n    \"schemes\": {{ marshal .Schemes }},", 1) + "`",
+		Schemes:   "[]string{" + strings.Join(schemes, ",") + "}",
 	}); err != nil {
 		return err
 	}
@@ -115,6 +143,7 @@ package docs
 
 import (
 	"bytes"
+	"encoding/json"
 
 	"github.com/alecthomas/template"
 	"github.com/swaggo/swag"
@@ -126,17 +155,23 @@ type swaggerInfo struct {
 	Version     string
 	Host        string
 	BasePath    string
+	Schemes     []string
 	Title       string
 	Description string
 }
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
-var SwaggerInfo swaggerInfo
+var SwaggerInfo = swaggerInfo{ Schemes: {{.Schemes}}}
 
 type s struct{}
 
 func (s *s) ReadDoc() string {
-	t, err := template.New("swagger_info").Parse(doc)
+	t, err := template.New("swagger_info").Funcs(template.FuncMap{
+		"marshal": func(v interface {}) string {
+			a, _ := json.Marshal(v)
+			return string(a)
+		},
+	}).Parse(doc)
 	if err != nil {
 		return doc
 	}
