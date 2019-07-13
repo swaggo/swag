@@ -834,6 +834,14 @@ type structField struct {
 	extensions   map[string]interface{}
 }
 
+func SelectValidItem(string1 string, string2 string) string {
+	if string1 == "" {
+		return string2
+	} else {
+		return string1
+	}
+}
+
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]spec.Schema, error) {
 	properties := map[string]spec.Schema{}
 	structField, err := parser.parseField(field)
@@ -862,7 +870,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type:        []string{"object"}, // to avoid swagger validation error
-				Description: desc,
+				Description: SelectValidItem(structField.description, desc),
 				Ref: spec.Ref{
 					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
 				},
@@ -875,9 +883,8 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 				parser.TypeDefinitions[pkgName][structField.arrayType])
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Type: []string{structField.schemaType},
-					//Description: desc,
-					Description: structField.description,
+					Type:        []string{structField.schemaType},
+					Description: SelectValidItem(structField.description, desc),
 					Items: &spec.SchemaOrArray{
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
@@ -898,7 +905,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
-					Description: desc,
+					Description: SelectValidItem(structField.description, desc),
 					Format:      structField.formatType,
 					Required:    required,
 					Items: &spec.SchemaOrArray{
@@ -911,7 +918,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 								MinLength:   structField.minLength,
 								Enum:        structField.enums,
 								Default:     structField.defaultValue,
-								Description: structField.description,
+								Description: SelectValidItem(structField.description, desc),
 							},
 						},
 					},
@@ -928,8 +935,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 		}
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{structField.schemaType},
-				//Description: desc,
+				Type:        []string{structField.schemaType},
 				Format:      structField.formatType,
 				Required:    required,
 				Maximum:     structField.maximum,
@@ -938,7 +944,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 				MinLength:   structField.minLength,
 				Enum:        structField.enums,
 				Default:     structField.defaultValue,
-				Description: structField.description,
+				Description: SelectValidItem(structField.description, desc),
 			},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{
 				Example: structField.exampleValue,
@@ -970,7 +976,7 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
-					Description: structField.description,
+					Description: SelectValidItem(structField.description, desc),
 					Format:      structField.formatType,
 					Properties:  props,
 					Required:    nestRequired,

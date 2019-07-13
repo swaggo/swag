@@ -1944,9 +1944,11 @@ func TestParseStructComment(t *testing.T) {
             "type": "object",
             "properties": {
                 "createdAt": {
+                    "description": "Error time",
                     "type": "string"
                 },
                 "error": {
+                    "description": "Error an Api error",
                     "type": "string"
                 },
                 "errorCtx": {
@@ -1963,11 +1965,13 @@ func TestParseStructComment(t *testing.T) {
             "type": "object",
             "properties": {
                 "data": {
+                    "description": "Post data",
                     "type": "object",
                     "properties": {
                         "name": {
                             "type": "array",
                             "items": {
+                                "description": "Post tag",
                                 "type": "string"
                             }
                         }
@@ -1980,6 +1984,7 @@ func TestParseStructComment(t *testing.T) {
                     "example": 1
                 },
                 "name": {
+                    "description": "Post name",
                     "type": "string",
                     "example": "poti"
                 }
