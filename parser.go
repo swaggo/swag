@@ -826,7 +826,6 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
-					//Description: desc,
 					Description: structField.description,
 					Format:      structField.formatType,
 					Properties:  props,
