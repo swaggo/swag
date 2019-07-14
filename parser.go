@@ -837,9 +837,8 @@ type structField struct {
 func selectValidItem(string1 string, string2 string) string {
 	if string1 == "" {
 		return string2
-	} else {
-		return string1
 	}
+	return string1
 }
 
 func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]spec.Schema, error) {
