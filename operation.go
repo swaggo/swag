@@ -220,10 +220,8 @@ var regexAttributes = map[string]*regexp.Regexp{
 	"maxlength": regexp.MustCompile(`(?i)maxlength\(.*\)`),
 	// for format(email)
 	"format": regexp.MustCompile(`(?i)format\(.*\)`),
-	// for format(email)
+	// for description("some feature")
 	"description": regexp.MustCompile(`(?i)description\(.*\)`),
-	// for format(email)
-	"name": regexp.MustCompile(`(?i)name\(.*\)`),
 }
 
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param *spec.Parameter) error {
