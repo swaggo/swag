@@ -5,7 +5,7 @@ import (
 )
 
 type Post struct {
-	ID int `json:"id" example:"1" format:"int64"`
+	ID int `json:"id" example:"1" format:"int64" description:"Post primary field."`
 	// Post name
 	Name string `json:"name" example:"poti"`
 	// Post data

@@ -1978,6 +1978,7 @@ func TestParseStructComment(t *testing.T) {
                     }
                 },
                 "id": {
+                    "description": "Post primary field.",
                     "type": "integer",
                     "format": "int64",
                     "example": 1
