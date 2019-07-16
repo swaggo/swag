@@ -1972,6 +1972,7 @@ func TestParseStructComment(t *testing.T) {
                             "description": "Post tag",
                             "type": "array",
                             "items": {
+                                "description": "Post tag",
                                 "type": "string"
                             }
                         }
