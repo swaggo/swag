@@ -141,7 +141,6 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 
 	response := operation.Responses.StatusCodeResponses[200]
 	assert.Equal(t, `Error message, if code != 200`, response.Description)
-	assert.Equal(t, spec.StringOrArray{"object"}, response.Schema.Type)
 
 	b, _ := json.MarshalIndent(operation, "", "    ")
 
@@ -150,7 +149,6 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
         "200": {
             "description": "Error message, if code != 200",
             "schema": {
-                "type": "object",
                 "$ref": "#/definitions/model.OrderRow"
             }
         }
