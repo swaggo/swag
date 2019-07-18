@@ -2309,6 +2309,75 @@ func Test(){
 
 }
 
+func TestParser_ParseEmbededStruct(t *testing.T) {
+	src := `
+package api
+
+type Response struct {
+	rest.ResponseWrapper
+}
+
+// @Success 200 {object} Response
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	restsrc := `
+package rest
+
+type ResponseWrapper struct {
+	Status   string      
+	Code     int
+	Messages []string
+	Result   interface{}
+}
+`
+	expected := `{
+   "api.Response": {
+      "type": "object",
+      "properties": {
+         "code": {
+            "type": "integer"
+         },
+         "messages": {
+            "type": "array",
+            "items": {
+               "type": "string"
+            }
+         },
+         "result": {
+            "type": "object"
+         },
+         "status": {
+            "type": "string"
+         }
+      }
+   }
+}`
+	parser := New()
+	parser.ParseDependency = true
+
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+	parser.ParseType(f)
+
+	f2, err := goparser.ParseFile(token.NewFileSet(), "", restsrc, goparser.ParseComments)
+	assert.NoError(t, err)
+	parser.ParseType(f2)
+
+	err = parser.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	typeSpec := parser.TypeDefinitions["api"]["Response"]
+	err = parser.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	assert.NoError(t, err)
+
+	out, err := json.MarshalIndent(parser.swagger.Definitions, "", "   ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(out))
+
+}
+
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {
 	src := `
 package test
