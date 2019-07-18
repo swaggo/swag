@@ -886,7 +886,38 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 					},
 				},
 			}
-		} else { // standard type in array
+		} else if structField.arrayType == "object" {
+			// Anonymous struct
+			if astTypeArray, ok := field.Type.(*ast.ArrayType); ok { // if array
+				props := make(map[string]spec.Schema)
+				if expr, ok := astTypeArray.Elt.(*ast.StructType); ok {
+					for _, field := range expr.Fields.List {
+						var fieldProps map[string]spec.Schema
+						fieldProps, err = parser.parseStruct(pkgName, field)
+						if err != nil {
+							return properties, err
+						}
+						for k, v := range fieldProps {
+							props[k] = v
+						}
+					}
+					properties[structField.name] = spec.Schema{
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{structField.schemaType},
+							Description: desc,
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:       []string{"object"},
+										Properties: props,
+									},
+								},
+							},
+						}}
+				}
+			}
+		} else {
+			// standard type in array
 			required := make([]string, 0)
 			if structField.isRequired {
 				required = append(required, structField.name)

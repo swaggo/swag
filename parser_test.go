@@ -2250,6 +2250,65 @@ func TestParseComposition(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParser_ParseStuctArrayObject(t *testing.T) {
+	src := `
+package api
+
+type Response struct {
+	Code int
+	Data []struct{
+		Field1 uint 
+		Field2 string 
+	} 
+}
+
+// @Success 200 {object} Response
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	expected := `{
+   "api.Response": {
+      "type": "object",
+      "properties": {
+         "code": {
+            "type": "integer"
+         },
+         "data": {
+            "type": "array",
+            "items": {
+               "type": "object",
+               "properties": {
+                  "field1": {
+                     "type": "integer"
+                  },
+                  "field2": {
+                     "type": "string"
+                  }
+               }
+            }
+         }
+      }
+   }
+}`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.ParseType(f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	typeSpec := p.TypeDefinitions["api"]["Response"]
+	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	assert.NoError(t, err)
+
+	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(out))
+
+}
+
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {
 	src := `
 package test
