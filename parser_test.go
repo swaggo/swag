@@ -338,7 +338,6 @@ func TestParseSimpleApi1(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
@@ -354,7 +353,6 @@ func TestParseSimpleApi1(t *testing.T) {
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -402,14 +400,12 @@ func TestParseSimpleApi1(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -514,14 +510,12 @@ func TestParseSimpleApi1(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -980,14 +974,12 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1035,14 +1027,12 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1147,14 +1137,12 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1470,14 +1458,12 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1525,14 +1511,12 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1637,14 +1621,12 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1924,14 +1906,12 @@ func TestParseStructComment(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -2112,7 +2092,6 @@ func TestParseModelNotUnderRoot(t *testing.T) {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/data.Foo"
                         }
                     }
@@ -2223,7 +2202,6 @@ func TestParseModelAsTypeAlias(t *testing.T) {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/data.TimeContainer"
                         }
                     }
