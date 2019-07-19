@@ -1412,6 +1412,12 @@ func (parser *Parser) Skip(path string, f os.FileInfo) error {
 			return filepath.SkipDir
 		}
 	}
+
+	// issue
+	if f.IsDir() && f.Name() == "docs" {
+		return filepath.SkipDir
+	}
+
 	// exclude all hidden folder
 	if f.IsDir() && len(f.Name()) > 1 && f.Name()[0] == '.' {
 		return filepath.SkipDir
