@@ -1932,7 +1932,7 @@ func TestParseStructComment(t *testing.T) {
                     "type": "string"
                 },
                 "errorCtx": {
-                    "description": "Error context tick comment",
+                    "description": "Error ` + "`" + `context` + "`" + ` tick comment",
                     "type": "string"
                 },
                 "errorNo": {
