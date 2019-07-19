@@ -140,7 +140,7 @@ func (g *Gen) writeGoDoc(output io.Writer, swagger *spec.Swagger) error {
 			// Add schemes
 			v = "{\n    \"schemes\": {{ marshal .Schemes }}," + v[1:]
 			// Sanitize backticks
-			return strings.Replace(v, "`", "`+\"+`\"+`", -1)
+			return strings.Replace(v, "`", "`+\"`\"+`", -1)
 		},
 	}).Parse(packageTemplate)
 	if err != nil {

@@ -843,10 +843,10 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 	}
 	var desc string
 	if field.Doc != nil {
-		desc = strings.TrimSpace(strings.Replace(field.Doc.Text(), "`", "", -1))
+		desc = strings.TrimSpace(field.Doc.Text())
 	}
 	if desc == "" && field.Comment != nil {
-		desc = strings.TrimSpace(strings.Replace(field.Comment.Text(), "`", "", -1))
+		desc = strings.TrimSpace(field.Comment.Text())
 	}
 	// TODO: find package of schemaType and/or arrayType
 

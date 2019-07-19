@@ -1936,7 +1936,7 @@ func TestParseStructComment(t *testing.T) {
                     "type": "string"
                 },
                 "errorNo": {
-                    "description": "Error number tick comment",
+                    "description": "Error ` + "`" + `number` + "`" + ` tick comment",
                     "type": "integer"
                 }
             }
