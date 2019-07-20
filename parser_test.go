@@ -338,7 +338,6 @@ func TestParseSimpleApi1(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
@@ -354,7 +353,6 @@ func TestParseSimpleApi1(t *testing.T) {
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -402,14 +400,12 @@ func TestParseSimpleApi1(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -514,14 +510,12 @@ func TestParseSimpleApi1(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -980,14 +974,12 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1035,14 +1027,12 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1147,14 +1137,12 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1470,14 +1458,12 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1525,14 +1511,12 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1637,14 +1621,12 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -1924,14 +1906,12 @@ func TestParseStructComment(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -2112,7 +2092,6 @@ func TestParseModelNotUnderRoot(t *testing.T) {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/data.Foo"
                         }
                     }
@@ -2223,7 +2202,6 @@ func TestParseModelAsTypeAlias(t *testing.T) {
                     "200": {
                         "description": "ok",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/data.TimeContainer"
                         }
                     }
@@ -2270,6 +2248,134 @@ func TestParseComposition(t *testing.T) {
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.JSONEq(t, string(expected), string(b))
+}
+
+func TestParser_ParseStuctArrayObject(t *testing.T) {
+	src := `
+package api
+
+type Response struct {
+	Code int
+	Data []struct{
+		Field1 uint 
+		Field2 string 
+	} 
+}
+
+// @Success 200 {object} Response
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	expected := `{
+   "api.Response": {
+      "type": "object",
+      "properties": {
+         "code": {
+            "type": "integer"
+         },
+         "data": {
+            "type": "array",
+            "items": {
+               "type": "object",
+               "properties": {
+                  "field1": {
+                     "type": "integer"
+                  },
+                  "field2": {
+                     "type": "string"
+                  }
+               }
+            }
+         }
+      }
+   }
+}`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.ParseType(f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	typeSpec := p.TypeDefinitions["api"]["Response"]
+	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	assert.NoError(t, err)
+
+	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(out))
+
+}
+
+func TestParser_ParseEmbededStruct(t *testing.T) {
+	src := `
+package api
+
+type Response struct {
+	rest.ResponseWrapper
+}
+
+// @Success 200 {object} Response
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	restsrc := `
+package rest
+
+type ResponseWrapper struct {
+	Status   string      
+	Code     int
+	Messages []string
+	Result   interface{}
+}
+`
+	expected := `{
+   "api.Response": {
+      "type": "object",
+      "properties": {
+         "code": {
+            "type": "integer"
+         },
+         "messages": {
+            "type": "array",
+            "items": {
+               "type": "string"
+            }
+         },
+         "result": {
+            "type": "object"
+         },
+         "status": {
+            "type": "string"
+         }
+      }
+   }
+}`
+	parser := New()
+	parser.ParseDependency = true
+
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+	parser.ParseType(f)
+
+	f2, err := goparser.ParseFile(token.NewFileSet(), "", restsrc, goparser.ParseComments)
+	assert.NoError(t, err)
+	parser.ParseType(f2)
+
+	err = parser.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	typeSpec := parser.TypeDefinitions["api"]["Response"]
+	err = parser.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	assert.NoError(t, err)
+
+	out, err := json.MarshalIndent(parser.swagger.Definitions, "", "   ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(out))
+
 }
 
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {

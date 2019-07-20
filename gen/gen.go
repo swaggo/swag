@@ -161,13 +161,13 @@ type swaggerInfo struct {
 }
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
-var SwaggerInfo = swaggerInfo{ Schemes: {{.Schemes}}}
+var SwaggerInfo = swaggerInfo{Schemes: {{.Schemes}}}
 
 type s struct{}
 
 func (s *s) ReadDoc() string {
 	t, err := template.New("swagger_info").Funcs(template.FuncMap{
-		"marshal": func(v interface {}) string {
+		"marshal": func(v interface{}) string {
 			a, _ := json.Marshal(v)
 			return string(a)
 		},

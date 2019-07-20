@@ -556,10 +556,10 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	// so we have to know all type in app
-	//TODO: we might omitted schema.type if schemaType equals 'object'
 	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{schemaType}}}
 
 	if schemaType == "object" {
+		response.Schema.SchemaProps = spec.SchemaProps{}
 		response.Schema.Ref = spec.Ref{
 			Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
 		}
