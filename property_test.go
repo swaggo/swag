@@ -225,6 +225,23 @@ func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
 	assert.Equal(t, expected, propertyName)
 }
 
+func TestGetPropertyNameArrayStructType(t *testing.T) {
+	input := &ast.ArrayType{
+		Lbrack: 1111,
+		Len:    nil,
+		Elt:    &ast.StructType{},
+	}
+	expected := propertyName{
+		"array",
+		"object",
+		"",
+	}
+
+	propertyName, err := getPropertyName(input, New())
+	assert.NoError(t, err)
+	assert.Equal(t, expected, propertyName)
+}
+
 func TestGetPropertyNameMap(t *testing.T) {
 	input := &ast.MapType{
 		Key: &ast.Ident{

@@ -100,17 +100,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       summary: List accounts
       tags:
       - accounts
@@ -133,22 +130,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Account'
-            type: object
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       summary: Add a account
       tags:
       - accounts
@@ -171,22 +164,18 @@ paths:
           description: No Content
           schema:
             $ref: '#/definitions/model.Account'
-            type: object
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       summary: Update a account
       tags:
       - accounts
@@ -207,22 +196,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Account'
-            type: object
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       summary: Show a account
       tags:
       - accounts
@@ -250,22 +235,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Account'
-            type: object
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       summary: Update a account
       tags:
       - accounts
@@ -292,22 +273,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/controller.Message'
-            type: object
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       summary: Upload account image
       tags:
       - accounts
@@ -323,27 +300,22 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Admin'
-            type: object
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "401":
           description: Unauthorized
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       security:
       - ApiKeyAuth: []
       summary: Auth admin
@@ -368,17 +340,14 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       summary: List bottles
       tags:
       - bottles
@@ -401,22 +370,18 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/model.Bottle'
-            type: object
         "400":
           description: Bad Request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "404":
           description: Not Found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-            type: object
       summary: Show a bottle
       tags:
       - bottles
