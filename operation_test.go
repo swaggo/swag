@@ -913,14 +913,12 @@ func TestArrayBody(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -957,14 +955,12 @@ func TestArrayBody(t *testing.T) {
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
