@@ -2269,7 +2269,7 @@ func TestParseComposition(t *testing.T) {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	assert.Equal(t, string(expected), string(b))
+	assert.JSONEq(t, string(expected), string(b))
 }
 
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {

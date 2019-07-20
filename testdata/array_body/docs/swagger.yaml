@@ -1,0 +1,104 @@
+basePath: /api
+definitions:
+  web.APIError:
+    properties:
+      createdAt:
+        description: Error time
+        type: string
+      error:
+        description: Error an Api error
+        type: string
+      errorCtx:
+        description: Error context tick comment
+        type: string
+      errorNo:
+        description: Error number tick comment
+        type: integer
+    type: object
+  web.Post:
+    properties:
+      data:
+        description: Post data
+        properties:
+          name:
+            description: Post tag
+            items:
+              type: string
+            type: array
+        type: object
+      id:
+        example: 1
+        format: int64
+        type: integer
+      name:
+        description: Post name
+        example: poti
+        type: string
+    type: object
+host: localhost:4000
+info:
+  contact: {}
+  description: This is a sample server.
+  license: {}
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /posts:
+    post:
+      consumes:
+      - application/json
+      description: Post lot of posts to somewhere
+      parameters:
+      - description: This is a lots of posts
+        in: body
+        name: posts
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/web.Post'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/web.APIError'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/web.APIError'
+      summary: Add a lot of posts to somewhere
+  /posts/{post_id}:
+    get:
+      consumes:
+      - application/json
+      description: get string by ID
+      parameters:
+      - description: Some ID
+        format: int64
+        in: path
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/web.APIError'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/web.APIError'
+      summary: Add a new pet to the store
+swagger: "2.0"
