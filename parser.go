@@ -843,10 +843,10 @@ func (parser *Parser) parseStruct(pkgName string, field *ast.Field) (map[string]
 	}
 	var desc string
 	if field.Doc != nil {
-		desc = strings.TrimSpace(strings.Replace(field.Doc.Text(), "`", "", -1))
+		desc = strings.TrimSpace(field.Doc.Text())
 	}
 	if desc == "" && field.Comment != nil {
-		desc = strings.TrimSpace(strings.Replace(field.Comment.Text(), "`", "", -1))
+		desc = strings.TrimSpace(field.Comment.Text())
 	}
 	// TODO: find package of schemaType and/or arrayType
 
@@ -1412,6 +1412,12 @@ func (parser *Parser) Skip(path string, f os.FileInfo) error {
 			return filepath.SkipDir
 		}
 	}
+
+	// issue
+	if f.IsDir() && f.Name() == "docs" {
+		return filepath.SkipDir
+	}
+
 	// exclude all hidden folder
 	if f.IsDir() && len(f.Name()) > 1 && f.Name()[0] == '.' {
 		return filepath.SkipDir
