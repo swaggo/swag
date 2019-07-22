@@ -866,3 +866,33 @@ func TestParseExtentions(t *testing.T) {
 		assert.Equal(t, expected, string(b))
 	}
 }
+
+func TestParseParamQueryArray(t *testing.T) {
+	comment := `@Param some_id []query string true "Some ID"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "array",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "query",
+			"collectionFormat": "csv",
+			"required": true,
+            "items": {
+                "type": "string"
+            }
+        }
+    ]
+}`
+	assert.JSONEq(t, expected, string(b))
+
+	comment = `@Param some_id []query web.Pet true "Some ID"`
+	err = operation.ParseComment(comment, nil)
+
+	assert.EqualError(t, err, "web.Pet is not supported type for parameter []query")
+}

@@ -131,7 +131,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	return nil
 }
 
-var paramPattern = regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
+var paramPattern = regexp.MustCompile(`(\S+)[\s]+([\[\]\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
 
 // ParseParamComment parses params return []string of param properties
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
@@ -155,11 +155,18 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 	//five possible parameter types.
 	switch paramType {
+	case "[]query":
+		validType := TransToValidSchemeType(schemaType)
+		fmt.Println(IsPrimitiveType(validType))
+		if !IsPrimitiveType(validType) {
+			return fmt.Errorf("%s is not supported type for parameter %s", validType, paramType)
+		}
+		param = createParameter(paramType, description, name, validType, required)
 	case "query", "path", "header":
 		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
 	case "body":
 		objType := "object"
-		if strings.HasPrefix(schemaType, "[]") == true {
+		if strings.HasPrefix(schemaType, "[]") {
 			objType = "array"
 		}
 
@@ -702,7 +709,7 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 		Name:        paramName,
 		Description: description,
 		Required:    required,
-		In:          paramType,
+		In:          strings.TrimPrefix(paramType, "[]"),
 	}
 
 	if paramType == "body" && schemaType == "array" {
@@ -713,6 +720,25 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 			ParamProps: paramProps,
 		}
 		return parameter
+	}
+
+	if paramType == "[]query" {
+		param := &spec.Parameter{
+			ParamProps: spec.ParamProps{
+				Name: paramName,
+			},
+			SimpleSchema: spec.SimpleSchema{
+				Type:             "array",
+				CollectionFormat: "csv",
+				Items: &spec.Items{
+					SimpleSchema: spec.SimpleSchema{
+						Type: schemaType,
+					},
+				},
+			},
+		}
+		param.ParamProps = paramProps
+		return *param
 	}
 
 	if paramType == "body" {
