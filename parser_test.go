@@ -2882,11 +2882,11 @@ func TestArrayBody(t *testing.T) {
                     "type": "string"
                 },
                 "errorCtx": {
-                    "description": "Error context tick comment",
+                    "description": "Error ` + "`" + `context` + "`" + ` tick comment",
                     "type": "string"
                 },
                 "errorNo": {
-                    "description": "Error number tick comment",
+                    "description": "Error ` + "`" + `number` + "`" + ` tick comment",
                     "type": "integer"
                 }
             }
