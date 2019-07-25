@@ -184,35 +184,38 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	parser.swagger.Swagger = "2.0"
 	securityMap := map[string]*spec.SecurityScheme{}
 
-	// templated defaults
-	parser.swagger.Info.Version = "{{.Version}}"
-	parser.swagger.Info.Title = "{{.Title}}"
-	parser.swagger.Info.Description = "{{.Description}}"
-	parser.swagger.Host = "{{.Host}}"
-	parser.swagger.BasePath = "{{.BasePath}}"
-
 	if fileTree.Comments != nil {
+	nextComments:
 		for _, comment := range fileTree.Comments {
 			comments := strings.Split(comment.Text(), "\n")
+			// Comments belongs to operation ?
+			for _, commentLine := range comments {
+				attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+				switch attribute {
+				case "@summary", "@router", "@success", "@failure":
+					continue nextComments
+				}
+			}
 			previousAttribute := ""
 			// parsing classic meta data model
 			for _, commentLine := range comments {
 				attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+				value := strings.TrimSpace(commentLine[len(attribute):])
 				multilineBlock := false
 				if previousAttribute == attribute {
 					multilineBlock = true
 				}
 				switch attribute {
 				case "@version":
-					parser.swagger.Info.Version = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Version = value
 				case "@title":
-					parser.swagger.Info.Title = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Title = value
 				case "@description":
-					if parser.swagger.Info.Description == "{{.Description}}" {
-						parser.swagger.Info.Description = strings.TrimSpace(commentLine[len(attribute):])
-					} else if multilineBlock {
-						parser.swagger.Info.Description += "\n" + strings.TrimSpace(commentLine[len(attribute):])
+					if multilineBlock {
+						parser.swagger.Info.Description += "\n" + value
+						continue
 					}
+					parser.swagger.Info.Description = value
 				case "@description.markdown":
 					filePath, err := getMarkdownFileForTag("api", parser.markdownFileDir)
 					if err != nil {
@@ -226,34 +229,32 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 
 					parser.swagger.Info.Description = string(commentInfo)
 				case "@termsofservice":
-					parser.swagger.Info.TermsOfService = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.TermsOfService = value
 				case "@contact.name":
-					parser.swagger.Info.Contact.Name = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Contact.Name = value
 				case "@contact.email":
-					parser.swagger.Info.Contact.Email = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Contact.Email = value
 				case "@contact.url":
-					parser.swagger.Info.Contact.URL = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.Contact.URL = value
 				case "@license.name":
-					parser.swagger.Info.License.Name = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.License.Name = value
 				case "@license.url":
-					parser.swagger.Info.License.URL = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Info.License.URL = value
 				case "@host":
-					parser.swagger.Host = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.Host = value
 				case "@basepath":
-					parser.swagger.BasePath = strings.TrimSpace(commentLine[len(attribute):])
+					parser.swagger.BasePath = value
 				case "@schemes":
 					parser.swagger.Schemes = getSchemes(commentLine)
 				case "@tag.name":
-					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
 						TagProps: spec.TagProps{
-							Name: strings.TrimSpace(commentInfo),
+							Name: value,
 						},
 					})
 				case "@tag.description":
-					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
-					tag.TagProps.Description = commentInfo
+					tag.TagProps.Description = value
 					replaceLastTag(parser.swagger.Tags, tag)
 				case "@tag.description.markdown":
 					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
@@ -270,19 +271,17 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					tag.TagProps.Description = string(commentInfo)
 					replaceLastTag(parser.swagger.Tags, tag)
 				case "@tag.docs.url":
-					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 					tag.TagProps.ExternalDocs = &spec.ExternalDocumentation{
-						URL: commentInfo,
+						URL: value,
 					}
 					replaceLastTag(parser.swagger.Tags, tag)
 				case "@tag.docs.description":
-					commentInfo := strings.TrimSpace(commentLine[len(attribute):])
 					tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 					if tag.TagProps.ExternalDocs == nil {
 						return errors.New("@tag.docs.description needs to come after a @tags.docs.url")
 					}
-					tag.TagProps.ExternalDocs.Description = commentInfo
+					tag.TagProps.ExternalDocs.Description = value
 					replaceLastTag(parser.swagger.Tags, tag)
 				}
 				previousAttribute = attribute
