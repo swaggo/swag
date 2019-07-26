@@ -1,5 +1,7 @@
 dist
 testdata/simple*/docs
+example/basic/docs/*
+example/celler/docs/*
 cover.out
 
 

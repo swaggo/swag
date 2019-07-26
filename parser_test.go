@@ -112,8 +112,6 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 	expected := `{
     "swagger": "2.0",
     "info": {
-        "description": "{{.Description}}",
-        "title": "{{.Title}}",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
@@ -123,11 +121,8 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
         "license": {
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "{{.Version}}"
+        }
     },
-    "host": "{{.Host}}",
-    "basePath": "{{.BasePath}}",
     "paths": {},
     "securityDefinitions": {
         "ApiKeyAuth": {
@@ -231,8 +226,6 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
         "license": {},
         "version": "1.0"
     },
-    "host": "{{.Host}}",
-    "basePath": "{{.BasePath}}",
     "paths": {}
 }`
 
