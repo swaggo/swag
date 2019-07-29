@@ -13,8 +13,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/go-openapi/spec"
-
 	"github.com/ghodss/yaml"
 	"github.com/go-openapi/spec"
 	"github.com/pkg/errors"
