@@ -13,6 +13,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/go-openapi/spec"
+
 	"github.com/ghodss/yaml"
 	"github.com/go-openapi/spec"
 	"github.com/pkg/errors"
@@ -226,6 +228,7 @@ package docs
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 
 	"github.com/alecthomas/template"
 	"github.com/swaggo/swag"
@@ -256,6 +259,7 @@ type s struct{}
 
 func (s *s) ReadDoc() string {
 	sInfo := SwaggerInfo
+	sInfo.Description = strings.Replace(sInfo.Description, "\n", "\\n", -1)
 	sInfo.Description = parseAndExecuteTemplate(sInfo.Description, sInfo)
 	return parseAndExecuteTemplate(doc, sInfo)
 }
