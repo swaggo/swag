@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/go-openapi/spec"
 	"go/format"
 	"io"
 	"log"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/go-openapi/spec"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -225,6 +226,7 @@ package docs
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 
 	"github.com/alecthomas/template"
 	"github.com/swaggo/swag"
@@ -254,6 +256,9 @@ var SwaggerInfo = swaggerInfo{
 type s struct{}
 
 func (s *s) ReadDoc() string {
+	sInfo := SwaggerInfo
+	sInfo.Description = strings.ReplaceAll(sInfo.Description, "\n", "\\n")
+
 	t, err := template.New("swagger_info").Funcs(template.FuncMap{
 		"marshal": func(v interface{}) string {
 			a, _ := json.Marshal(v)
@@ -265,7 +270,7 @@ func (s *s) ReadDoc() string {
 	}
 
 	var tpl bytes.Buffer
-	if err := t.Execute(&tpl, SwaggerInfo); err != nil {
+	if err := t.Execute(&tpl, sInfo); err != nil {
 		return doc
 	}
 
