@@ -3,6 +3,7 @@ package gen
 import (
 	"github.com/go-openapi/spec"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"testing"
@@ -244,4 +245,26 @@ func TestGen_writeGoDoc(t *testing.T) {
 
 	packageTemplate = swapTemplate
 
+}
+
+func TestGen_GeneratedDoc(t *testing.T) {
+
+	searchDir := "../testdata/simple"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		PropNamingStrategy: "",
+	}
+
+	assert.NoError(t, New().Build(config))
+	gocmd, err := exec.LookPath("go")
+	assert.NoError(t, err)
+
+	cmd := exec.Command(gocmd, "build", filepath.Join(config.OutputDir, "docs.go"))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	assert.NoError(t, cmd.Run())
 }
