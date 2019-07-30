@@ -48,6 +48,7 @@ clean:
 .PHONY: install
 install:
 	$(GOGET) -v github.com/swaggo/swag github.com/swaggo/swag/cmd/swag github.com/swaggo/swag/gen
+	$(GOGET) github.com/alecthomas/template
 	$(GOGET) github.com/stretchr/testify/assert
 
 .PHONY: lint
