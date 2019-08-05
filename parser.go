@@ -189,7 +189,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	}
 
 	for _, comment := range fileTree.Comments {
-		if !isGeneralApiComment(comment) {
+		if !isGeneralAPIComment(comment) {
 			continue
 		}
 		comments := strings.Split(comment.Text(), "\n")
@@ -329,7 +329,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	return nil
 }
 
-func isGeneralApiComment(comment *ast.CommentGroup) bool {
+func isGeneralAPIComment(comment *ast.CommentGroup) bool {
 	for _, commentLine := range strings.Split(comment.Text(), "\n") {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
@@ -346,8 +346,8 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 	scopes := map[string]string{}
 	for _, v := range lines {
 		securityAttr := strings.ToLower(strings.Split(v, " ")[0])
-		for _, find_term := range search {
-			if securityAttr == find_term {
+		for _, findterm := range search {
+			if securityAttr == findterm {
 				attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
 				continue
 			}

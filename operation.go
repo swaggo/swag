@@ -69,7 +69,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	var err error
 	switch lowerAttribute {
 	case "@description":
-		operation.ParseDescription(lineRemainder)
+		operation.ParseDescriptionComment(lineRemainder)
 	case "@summary":
 		operation.Summary = lineRemainder
 	case "@id":
@@ -99,7 +99,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	return err
 }
 
-func (operation *Operation) ParseDescription(lineRemainder string) {
+// ParseDescriptionComment godoc
+func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 	if operation.Description == "" {
 		operation.Description = lineRemainder
 		return
@@ -107,6 +108,7 @@ func (operation *Operation) ParseDescription(lineRemainder string) {
 	operation.Description += "\n" + lineRemainder
 }
 
+// ParseMetadata godoc
 func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemainder string) error {
 	// parsing specific meta data extensions
 	if strings.HasPrefix(lowerAttribute, "@x-") {
