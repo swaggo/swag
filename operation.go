@@ -62,17 +62,14 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	if len(commentLine) == 0 {
 		return nil
 	}
-
 	attribute := strings.Fields(commentLine)[0]
 	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
 	lowerAttribute := strings.ToLower(attribute)
+
+	var err error
 	switch lowerAttribute {
 	case "@description":
-		if operation.Description == "" {
-			operation.Description = lineRemainder
-		} else {
-			operation.Description += "\n" + lineRemainder
-		}
+		operation.ParseDescriptionComment(lineRemainder)
 	case "@summary":
 		operation.Summary = lineRemainder
 	case "@id":
@@ -80,41 +77,39 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	case "@tags":
 		operation.ParseTagsComment(lineRemainder)
 	case "@accept":
-		if err := operation.ParseAcceptComment(lineRemainder); err != nil {
-			return err
-		}
+		err = operation.ParseAcceptComment(lineRemainder)
 	case "@produce":
-		if err := operation.ParseProduceComment(lineRemainder); err != nil {
-			return err
-		}
+		err = operation.ParseProduceComment(lineRemainder)
 	case "@param":
-		if err := operation.ParseParamComment(lineRemainder, astFile); err != nil {
-			return err
-		}
+		err = operation.ParseParamComment(lineRemainder, astFile)
 	case "@success", "@failure":
-		if err := operation.ParseResponseComment(lineRemainder, astFile); err != nil {
-			if err := operation.ParseEmptyResponseComment(lineRemainder); err != nil {
-				if err := operation.ParseEmptyResponseOnly(lineRemainder); err != nil {
-					return err
-				}
-			}
-		}
+		err = operation.ParseResponseComment(lineRemainder, astFile)
 	case "@header":
-		if err := operation.ParseResponseHeaderComment(lineRemainder, astFile); err != nil {
-			return err
-		}
+		err = operation.ParseResponseHeaderComment(lineRemainder, astFile)
 	case "@router":
-		if err := operation.ParseRouterComment(lineRemainder); err != nil {
-			return err
-		}
+		err = operation.ParseRouterComment(lineRemainder)
 	case "@security":
-		if err := operation.ParseSecurityComment(lineRemainder); err != nil {
-			return err
-		}
+		err = operation.ParseSecurityComment(lineRemainder)
 	case "@deprecated":
 		operation.Deprecate()
+	default:
+		err = operation.ParseMetadata(attribute, lowerAttribute, lineRemainder)
 	}
 
+	return err
+}
+
+// ParseDescriptionComment godoc
+func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
+	if operation.Description == "" {
+		operation.Description = lineRemainder
+		return
+	}
+	operation.Description += "\n" + lineRemainder
+}
+
+// ParseMetadata godoc
+func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemainder string) error {
 	// parsing specific meta data extensions
 	if strings.HasPrefix(lowerAttribute, "@x-") {
 		if len(lineRemainder) == 0 {
@@ -127,7 +122,6 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		}
 		operation.Operation.AddExtension(attribute[1:], valueJSON) // Trim "@" at head
 	}
-
 	return nil
 }
 
@@ -241,90 +235,50 @@ var regexAttributes = map[string]*regexp.Regexp{
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
 	for attrKey, re := range regexAttributes {
+		attr, err := findAttr(re, commentLine)
+		if err != nil {
+			continue
+		}
 		switch attrKey {
 		case "enums":
-			enums, err := findAttrList(re, commentLine)
+			err := setEnumParam(attr, schemaType, param)
 			if err != nil {
-				break
-			}
-			for _, e := range enums {
-				e = strings.TrimSpace(e)
-
-				value, err := defineType(schemaType, e)
-				if err != nil {
-					return err
-				}
-				param.Enum = append(param.Enum, value)
+				return err
 			}
 		case "maxinum":
-			attr, err := findAttr(re, commentLine)
+			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
-				break
-			}
-			if schemaType != "integer" && schemaType != "number" {
-				return fmt.Errorf("maxinum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
-			}
-			n, err := strconv.ParseFloat(attr, 64)
-			if err != nil {
-				return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+				return err
 			}
 			param.Maximum = &n
 		case "mininum":
-			attr, err := findAttr(re, commentLine)
+			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
-				break
-			}
-			if schemaType != "integer" && schemaType != "number" {
-				return fmt.Errorf("mininum is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
-			}
-			n, err := strconv.ParseFloat(attr, 64)
-			if err != nil {
-				return fmt.Errorf("mininum is allow only a number got=%s", attr)
+				return err
 			}
 			param.Minimum = &n
 		case "default":
-			attr, err := findAttr(re, commentLine)
-			if err != nil {
-				break
-			}
 			value, err := defineType(schemaType, attr)
 			if err != nil {
 				return nil
 			}
 			param.Default = value
 		case "maxlength":
-			attr, err := findAttr(re, commentLine)
+			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
-				break
-			}
-			if schemaType != "string" {
-				return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
-			}
-			n, err := strconv.ParseInt(attr, 10, 64)
-			if err != nil {
-				return fmt.Errorf("maxlength is allow only a number got=%s", attr)
+				return err
 			}
 			param.MaxLength = &n
 		case "minlength":
-			attr, err := findAttr(re, commentLine)
+			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
-				break
-			}
-			if schemaType != "string" {
-				return fmt.Errorf("maxlength is attribute to set to a number. comment=%s got=%s", commentLine, schemaType)
-			}
-			n, err := strconv.ParseInt(attr, 10, 64)
-			if err != nil {
-				return fmt.Errorf("minlength is allow only a number got=%s", attr)
+				return err
 			}
 			param.MinLength = &n
 		case "format":
-			attr, err := findAttr(re, commentLine)
-			if err != nil {
-				break
-			}
 			param.Format = attr
 		}
+
 	}
 	return nil
 }
@@ -339,12 +293,39 @@ func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	return strings.TrimSpace(attr[l+1 : r]), nil
 }
 
-func findAttrList(re *regexp.Regexp, commentLine string) ([]string, error) {
-	attr, err := findAttr(re, commentLine)
-	if err != nil {
-		return []string{""}, err
+func setStringParam(name, schemaType, attr, commentLine string) (int64, error) {
+	if schemaType != "string" {
+		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
-	return strings.Split(attr, ","), nil
+	n, err := strconv.ParseInt(attr, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%s is allow only a number got=%s", name, attr)
+	}
+	return n, nil
+}
+
+func setNumberParam(name, schemaType, attr, commentLine string) (float64, error) {
+	if schemaType != "integer" && schemaType != "number" {
+		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
+	}
+	n, err := strconv.ParseFloat(attr, 64)
+	if err != nil {
+		return 0, fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+	}
+	return n, nil
+}
+
+func setEnumParam(attr, schemaType string, param *spec.Parameter) error {
+	for _, e := range strings.Split(attr, ",") {
+		e = strings.TrimSpace(e)
+
+		value, err := defineType(schemaType, e)
+		if err != nil {
+			return err
+		}
+		param.Enum = append(param.Enum, value)
+	}
+	return nil
 }
 
 // defineType enum value define the type (object and array unsupported)
@@ -519,7 +500,11 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	var matches []string
 
 	if matches = responsePattern.FindStringSubmatch(commentLine); len(matches) != 5 {
-		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+		err := operation.ParseEmptyResponseComment(commentLine)
+		if err != nil {
+			return operation.ParseEmptyResponseOnly(commentLine)
+		}
+		return err
 	}
 
 	response := spec.Response{}
