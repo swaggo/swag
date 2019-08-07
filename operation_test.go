@@ -2,10 +2,9 @@ package swag
 
 import (
 	"encoding/json"
-	"go/token"
-
 	"go/ast"
 	goparser "go/parser"
+	"go/token"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -312,6 +311,58 @@ func TestParseParamCommentByPathType(t *testing.T) {
             "description": "Some ID",
             "name": "some_id",
             "in": "path",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+// Test ParseParamComment Query Params
+func TestParseParamCommentBodyArray(t *testing.T) {
+	comment := `@Param names body []string true "Users List"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "description": "Users List",
+            "name": "names",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "type": "string",
+                "items": {
+                    "type": "string"
+                }
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+// Test ParseParamComment Query Params
+func TestParseParamCommentQueryArray(t *testing.T) {
+	comment := `@Param names query []string true "Users List"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "Users List",
+            "name": "names",
+            "in": "query",
             "required": true
         }
     ]
@@ -707,10 +758,6 @@ func TestParseParamCommentByDefault(t *testing.T) {
     ]
 }`
 	assert.Equal(t, expected, string(b))
-
-	comment = `@Param some_id query time.Duration true "Some ID" Default(10)`
-	operation = NewOperation()
-	assert.NoError(t, operation.ParseComment(comment, nil))
 }
 
 func TestParseIdComment(t *testing.T) {

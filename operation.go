@@ -138,34 +138,78 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	}
 	name := matches[1]
 	paramType := matches[2]
+	refType := TransToValidSchemeType(matches[3])
 
-	schemaType := matches[3]
+	// Detect refType
+	objectType := "object"
+	if strings.HasPrefix(refType, "[]") == true {
+		objectType = "array"
+		refType = strings.TrimPrefix(refType, "[]")
+	} else if IsPrimitiveType(refType) ||
+		paramType == "formData" && refType == "file" {
+		objectType = "primitive"
+	}
 
 	requiredText := strings.ToLower(matches[4])
 	required := requiredText == "true" || requiredText == "required"
 	description := matches[5]
 
-	var param spec.Parameter
+	param := createParameter(paramType, description, name, refType, required)
 
-	//five possible parameter types.
 	switch paramType {
-	case "query", "path", "header":
-		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
+	case "path", "header", "formData":
+		switch objectType {
+		case "array", "object":
+			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
+		}
+	case "query":
+		switch objectType {
+		case "array":
+			if !IsPrimitiveType(refType) {
+				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
+			}
+			param.SimpleSchema.Type = "array"
+			param.SimpleSchema.Items = &spec.Items{
+				SimpleSchema: spec.SimpleSchema{
+					Type: refType,
+				},
+			}
+		case "object":
+			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
+		}
 	case "body":
-		param = createParameter(paramType, description, name, "object", required) // TODO: if Parameter types can be objects, but also primitives and arrays
-		if err := operation.registerSchemaType(schemaType, astFile); err != nil {
-			return err
+		switch objectType {
+		case "primitive":
+			param.Schema.Type = spec.StringOrArray{refType}
+		case "array":
+			param.Schema.Items = &spec.SchemaOrArray{
+				Schema: &spec.Schema{
+					SchemaProps: spec.SchemaProps{},
+				},
+			}
+			// Arrau of Primitive or Object
+			if IsPrimitiveType(refType) {
+				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
+			} else {
+				if err := operation.registerSchemaType(refType, astFile); err != nil {
+					return err
+				}
+				param.Schema.Items.Schema.Ref = spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)}
+			}
+		case "object":
+			if err := operation.registerSchemaType(refType, astFile); err != nil {
+				return err
+			}
+			param.Schema.Type = spec.StringOrArray{objectType}
+			param.Schema.Ref = spec.Ref{
+				Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
+			}
 		}
-		param.Schema.Ref = spec.Ref{
-			Ref: jsonreference.MustCreateRef("#/definitions/" + schemaType),
-		}
-	case "formData":
-		param = createParameter(paramType, description, name, TransToValidSchemeType(schemaType), required)
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
 
-	if err := operation.parseAndExtractionParamAttribute(commentLine, schemaType, &param); err != nil {
+	if err := operation.parseAndExtractionParamAttribute(commentLine, refType, &param); err != nil {
 		return err
 	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
