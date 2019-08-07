@@ -274,7 +274,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 	swapTemplate := packageTemplate
 
 	packageTemplate = `{{{`
-	err := gen.writeGoDoc(nil, nil)
+	err := gen.writeGoDoc(nil, nil, nil)
 	assert.Error(t, err)
 
 	packageTemplate = `{{.Data}}`
@@ -284,7 +284,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 			Info: &spec.Info{},
 		},
 	}
-	err = gen.writeGoDoc(&mocWriter{}, swagger)
+	err = gen.writeGoDoc(&mocWriter{}, swagger, &Config{})
 	assert.Error(t, err)
 
 	packageTemplate = swapTemplate
