@@ -1,10 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
-	"github.com/pkg/errors"
 	"github.com/swaggo/swag"
 	"github.com/swaggo/swag/gen"
 	"github.com/urfave/cli"
@@ -39,7 +39,7 @@ func main() {
 				switch strategy {
 				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
 				default:
-					return errors.Errorf("not supported %s propertyStrategy", strategy)
+					return fmt.Errorf("not supported %s propertyStrategy", strategy)
 				}
 
 				return gen.New().Build(&gen.Config{
