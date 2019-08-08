@@ -14,7 +14,6 @@ import (
 
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
-	"github.com/pkg/errors"
 	"golang.org/x/tools/go/loader"
 )
 
@@ -113,12 +112,12 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 	// parsing specific meta data extensions
 	if strings.HasPrefix(lowerAttribute, "@x-") {
 		if len(lineRemainder) == 0 {
-			return errors.New(attribute + " need a value")
+			return fmt.Errorf("annotation %s need a value", attribute)
 		}
 
 		var valueJSON interface{}
 		if err := json.Unmarshal([]byte(lineRemainder), &valueJSON); err != nil {
-			return errors.New(attribute + " need a valid json value")
+			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 		operation.Operation.AddExtension(attribute[1:], valueJSON) // Trim "@" at head
 	}
@@ -240,7 +239,7 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 			var err error
 			typeSpec, err = findTypeDef(impPath, typeName)
 			if err != nil {
-				return errors.Wrapf(err, "can not find type def: %q", schemaType)
+				return fmt.Errorf("can not find type def: %q error: %s", schemaType, err)
 			}
 			break
 		}
@@ -516,7 +515,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	pkgInfo := lprog.Package(importPath)
 
 	if pkgInfo == nil {
-		return nil, errors.New("package was nil")
+		return nil, fmt.Errorf("package was nil")
 	}
 
 	// TODO: possibly cache pkgInfo since it's an expensive operation
@@ -534,7 +533,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 			}
 		}
 	}
-	return nil, errors.New("type spec not found")
+	return nil, fmt.Errorf("type spec not found")
 }
 
 var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)

@@ -16,7 +16,6 @@ import (
 	"github.com/go-openapi/spec"
 
 	"github.com/ghodss/yaml"
-	"github.com/pkg/errors"
 	"github.com/swaggo/swag"
 )
 
@@ -102,7 +101,7 @@ func (g *Gen) Build(config *Config) error {
 	defer swaggerYAML.Close()
 	y, err := yaml.JSONToYAML(b)
 	if err != nil {
-		return errors.Wrap(err, "cannot covert json to yaml")
+		return fmt.Errorf("cannot covert json to yaml error: %s", err)
 	}
 
 	if _, err := swaggerYAML.Write(y); err != nil {

@@ -879,7 +879,7 @@ func TestParseExtentions(t *testing.T) {
 		operation.parser = New()
 
 		err := operation.ParseComment(comment, nil)
-		assert.EqualError(t, err, "@x-amazon-apigateway-integration need a value")
+		assert.EqualError(t, err, "annotation @x-amazon-apigateway-integration need a value")
 	}
 
 	// Fail if args of attributes are broken.
@@ -889,7 +889,7 @@ func TestParseExtentions(t *testing.T) {
 		operation.parser = New()
 
 		err := operation.ParseComment(comment, nil)
-		assert.EqualError(t, err, "@x-amazon-apigateway-integration need a valid json value")
+		assert.EqualError(t, err, "annotation @x-amazon-apigateway-integration need a valid json value")
 	}
 
 	// OK
