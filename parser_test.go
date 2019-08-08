@@ -192,7 +192,7 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
 	// should be return an error because extension value is not a valid json
 	func() {
-		expected := "@x-google-endpoints need a valid json value"
+		expected := "annotation @x-google-endpoints need a valid json value"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
 		p := New()
@@ -204,7 +204,7 @@ func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
 
 	// should be return an error because extension don't have a value
 	func() {
-		expected := "@x-google-endpoints need a value"
+		expected := "annotation @x-google-endpoints need a value"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
 		p := New()

@@ -22,7 +22,6 @@ import (
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -178,15 +177,11 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
 	if err != nil {
-		return errors.Wrap(err, "cannot parse source files")
+		return fmt.Errorf("cannot parse source files %s: %s", mainAPIFile, err)
 	}
 
 	parser.swagger.Swagger = "2.0"
 	securityMap := map[string]*spec.SecurityScheme{}
-
-	if fileTree.Comments == nil {
-		return errors.Wrap(err, "General api info is missing")
-	}
 
 	for _, comment := range fileTree.Comments {
 		if !isGeneralAPIComment(comment) {
@@ -264,7 +259,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 			case "@tag.docs.description":
 				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 				if tag.TagProps.ExternalDocs == nil {
-					return errors.New("@tag.docs.description needs to come after a @tags.docs.url")
+					return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
 				}
 				tag.TagProps.ExternalDocs.Description = value
 				replaceLastTag(parser.swagger.Tags, tag)
@@ -308,11 +303,11 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						var valueJSON interface{}
 						split := strings.SplitAfter(commentLine, attribute+" ")
 						if len(split) < 2 {
-							return errors.New(attribute + " need a value")
+							return fmt.Errorf("annotation %s need a value", attribute)
 						}
 						extensionName := "x-" + strings.SplitAfter(attribute, prefixExtension)[1]
 						if err := json.Unmarshal([]byte(split[1]), &valueJSON); err != nil {
-							return errors.New(attribute + " need a valid json value")
+							return fmt.Errorf("annotation %s need a valid json value", attribute)
 						}
 						parser.swagger.AddExtension(extensionName, valueJSON)
 					}
@@ -423,21 +418,21 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 		}
 
 		if strings.Contains(fileName, tagName) {
-			commentInfo, err := ioutil.ReadFile(filepath.Join(dirPath, fileName))
+			fullPath := filepath.Join(dirPath, fileName)
+			commentInfo, err := ioutil.ReadFile(fullPath)
 			if err != nil {
-				return nil, errors.New("Failed to find matching markdown file for api description: " + "api" + " error: " + err.Error())
+				return nil, fmt.Errorf("Failed to read markdown file %s error: %s ", fullPath, err)
 			}
 			return commentInfo, nil
 		}
 	}
-
-	return nil, errors.New("Unable to find Markdown file in the given directory")
+	return nil, fmt.Errorf("Unable to find markdown file for tag %s in the given directory", tagName)
 }
 
 func getScopeScheme(scope string) (string, error) {
 	scopeValue := scope[strings.Index(scope, "@scope."):]
 	if scopeValue == "" {
-		return "", errors.New("@scope is empty")
+		return "", fmt.Errorf("@scope is empty")
 	}
 	return scope[len("@scope."):], nil
 }
@@ -1003,8 +998,9 @@ func getFieldType(field interface{}) (string, error) {
 			return "", err
 		}
 		return fullName, nil
+
 	}
-	return "", errors.New("unknown field type")
+	return "", fmt.Errorf("unknown field type %#v", field)
 }
 
 func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
