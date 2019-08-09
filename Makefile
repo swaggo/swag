@@ -53,7 +53,7 @@ install:
 
 .PHONY: lint
 lint:
-	which golint || $(GOGET) -u golang.org/x/lint/golint
+	which golint || GO111MODULE=off $(GOGET) -v -u golang.org/x/lint/golint
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
 .PHONY: vet
