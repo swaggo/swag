@@ -54,20 +54,22 @@ clean:
 .PHONY: deps
 deps:
 	$(GOGET) ${u} -d
+	$(GOGET) github.com/stretchr/testify/assert
+	$(GOGET) github.com/alecthomas/template
 
-.PHONY: dev-tool
-dev-tool:
+.PHONY: devel-deps
+devel-deps:
 	GO111MODULE=off $(GOGET) -v ${u} \
 		golang.org/x/lint/golint \
 		github.com/swaggo/swag/cmd/swag	\
 		github.com/swaggo/swag/gen
 
 .PHONY: lint
-lint: dev-tool
+lint: devel-deps
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
 .PHONY: vet
-vet:
+vet: deps devel-deps
 	$(GOVET) $(PACKAGES)
 
 .PHONY: fmt

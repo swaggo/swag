@@ -7,7 +7,7 @@ go:
   - 1.12.x
 
 install:
-  - make install
+  - make deps
 
 script:
   - make fmt-check
