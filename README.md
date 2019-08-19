@@ -567,6 +567,33 @@ type Account struct {
 }
 ```
 
+[#379](https://github.com/swaggo/swag/issues/379)
+```go
+type CerticateKeyPair struct {
+	Crt []byte `json:"crt" swaggertype:"string" format:"base64" example:"U3dhZ2dlciByb2Nrcw=="`
+	Key []byte `json:"key" swaggertype:"string" format:"base64" example:"U3dhZ2dlciByb2Nrcw=="`
+}
+```
+generated swagger doc as follows:
+```go
+"api.MyBinding": {
+  "type":"object",
+  "properties":{
+    "crt":{
+      "type":"string",
+      "format":"base64",
+      "example":"U3dhZ2dlciByb2Nrcw=="
+    },
+    "key":{
+      "type":"string",
+      "format":"base64",
+      "example":"U3dhZ2dlciByb2Nrcw=="
+    }
+  }
+}
+
+```
+
 ### Add extension info to struct field
 
 ```go
