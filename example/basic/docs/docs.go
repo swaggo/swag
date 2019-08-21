@@ -100,7 +100,6 @@ var doc = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.Pet"
                         }
                     }

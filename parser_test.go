@@ -378,7 +378,6 @@ func TestParseSimpleApi1(t *testing.T) {
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.Pet"
                         }
                     }
@@ -806,7 +805,6 @@ func TestParseSimpleApi1(t *testing.T) {
                     "type": "boolean"
                 },
                 "cross": {
-                    "type": "object",
                     "$ref": "#/definitions/cross.Cross"
                 },
                 "crosses": {
@@ -1005,7 +1003,6 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.Pet"
                         }
                     }
@@ -1489,7 +1486,6 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.Pet"
                         }
                     }
@@ -2045,7 +2041,6 @@ func TestParseModelNotUnderRoot(t *testing.T) {
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/data.Foo"
                         }
                     }

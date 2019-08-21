@@ -57,14 +57,12 @@ var doc = `{
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
@@ -119,14 +117,12 @@ var doc = `{
                     "400": {
                         "description": "We need ID!!",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     },
                     "404": {
                         "description": "Can not find ID",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
