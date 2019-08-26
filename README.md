@@ -316,7 +316,7 @@ $ swag init
 | tag.name    | Name of a tag.| // @tag.name This is the name of the tag                     |
 | tag.description   | Description of the tag  | // @tag.description Cool Description         |
 | tag.docs.url      | Url of the external Documentation of the tag | // @tag.docs.url https://example.com|
-| tag.docs.descripiton  | Description of the external Documentation of the tag| // @tag.docs.descirption Best example documentation |
+| tag.docs.description  | Description of the external Documentation of the tag| // @tag.docs.description Best example documentation |
 | termsOfService | The Terms of Service for the API.| // @termsOfService http://swagger.io/terms/                     |
 | contact.name | The contact information for the exposed API.| // @contact.name API Support  |
 | contact.url  | The URL pointing to the contact information. MUST be in the format of a URL.  | // @contact.url http://www.swagger.io/support|
