@@ -59,6 +59,9 @@ type Parser struct {
 	// ParseDependencies whether swag should be parse outside dependency folder
 	ParseDependency bool
 
+	// ParseInternal whether swag should parse internal packages
+	ParseInternal bool
+
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []string
 
@@ -112,6 +115,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	}
 
 	var t depth.Tree
+	t.ResolveInternal = true
 
 	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDir, mainAPIFile))
 	if err != nil {
@@ -1281,7 +1285,8 @@ func (parser *Parser) getAllGoFileInfo(searchDir string) error {
 }
 
 func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
-	if pkg.Internal || !pkg.Resolved { // ignored internal and not resolved dependencies
+	ignoreInternal := pkg.Internal && !parser.ParseInternal
+	if ignoreInternal || !pkg.Resolved { // ignored internal and not resolved dependencies
 		return nil
 	}
 
