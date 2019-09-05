@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/example/basic/web"
+	"github.com/paulcamper/swag/example/basic/web"
 )
 
 // GetStringByInt example

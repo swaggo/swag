@@ -16,7 +16,7 @@ import (
 	"github.com/go-openapi/spec"
 
 	"github.com/ghodss/yaml"
-	"github.com/swaggo/swag"
+	"github.com/paulcamper/swag"
 )
 
 // Gen presents a generate tool for swag.
@@ -232,7 +232,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/template"
-	"github.com/swaggo/swag"
+	"github.com/paulcamper/swag"
 )
 
 var doc = ` + "`{{ printDoc .Doc}}`" + `

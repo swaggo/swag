@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/paulcamper/swag/example/markdown/api"
+	_ "github.com/paulcamper/swag/example/markdown/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
-	"github.com/swaggo/swag/example/markdown/api"
-	_ "github.com/swaggo/swag/example/markdown/docs"
 	"net/http"
 )
 

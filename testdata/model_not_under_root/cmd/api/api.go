@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/testdata/model_not_under_root/data"
+	"github.com/paulcamper/swag/testdata/model_not_under_root/data"
 )
 
 // @Summary Add a new pet to the store

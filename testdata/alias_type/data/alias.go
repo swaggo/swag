@@ -1,7 +1,7 @@
 package data
 
 import (
-	"github.com/swaggo/swag/testdata/alias_type/types"
+	"github.com/paulcamper/swag/testdata/alias_type/types"
 	"time"
 )
 
