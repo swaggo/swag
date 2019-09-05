@@ -232,7 +232,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/template"
-	"github.com/paulcamper/swag"
+	"github.com/swaggo/swag"
 )
 
 var doc = ` + "`{{ printDoc .Doc}}`" + `
