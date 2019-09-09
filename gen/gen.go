@@ -47,9 +47,6 @@ type Config struct {
 	// ParseDependencies whether swag should be parse outside dependency folder
 	ParseDependency bool
 
-	// ParseInternal whether swag should parse internal packages
-	ParseInternal bool
-
 	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
 	MarkdownFilesDir string
 }
@@ -65,7 +62,6 @@ func (g *Gen) Build(config *Config) error {
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
-	p.ParseInternal = config.ParseInternal
 
 	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
 		return err
