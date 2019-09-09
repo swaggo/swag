@@ -505,9 +505,8 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 
 // ParseType parses type info for given astFile.
 func (parser *Parser) ParseType(astFile *ast.File) {
-	name := parser.FilePaths[astFile] + ":" + astFile.Name.String()
-	if _, ok := parser.TypeDefinitions[name]; !ok {
-		parser.TypeDefinitions[name] = make(map[string]*ast.TypeSpec)
+	if _, ok := parser.TypeDefinitions[astFile.Name.String()]; !ok {
+		parser.TypeDefinitions[astFile.Name.String()] = make(map[string]*ast.TypeSpec)
 	}
 
 	for _, astDeclaration := range astFile.Decls {
@@ -519,8 +518,7 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 					if IsGolangPrimitiveType(typeName) {
 						parser.CustomPrimitiveTypes[typeSpec.Name.String()] = TransToValidSchemeType(typeName)
 					} else {
-						fmt.Println("!!!!!!!!!!!!!!!!!!!", name)
-						parser.TypeDefinitions[name][typeSpec.Name.String()] = typeSpec
+						parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
 					}
 
 				}
