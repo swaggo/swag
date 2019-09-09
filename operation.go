@@ -741,5 +741,9 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 }
 
 func setRefType(filePath, typeName string) string {
-	return filePath + ":" + typeName
+	if strings.Contains(typeName, ".") {
+		return filePath + ":" + typeName
+	}
+
+	return typeName
 }
