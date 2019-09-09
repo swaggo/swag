@@ -740,10 +740,15 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 	return parameter
 }
 
-func setRefType(filePath, typeName string) string {
-	if strings.Contains(typeName, ".") {
-		return filePath + ":" + typeName
+func setRefType(filePath, name string) string {
+	if !IsPrimitiveType(name) {
+		path := strings.ReplaceAll(filePath, ".", "_")
+		path = strings.ReplaceAll(path, "/", "_")
+
+		pkgs := strings.Split(path, "_")
+
+		return pkgs[1] + "_" + name
 	}
 
-	return typeName
+	return name
 }
