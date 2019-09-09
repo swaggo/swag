@@ -138,7 +138,6 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	name := matches[1]
 	paramType := matches[2]
 	refType := TransToValidSchemeType(matches[3])
-	refType = setRefType(operation.parser.FilePaths[astFile], refType)
 
 	// Detect refType
 	objectType := "object"
@@ -563,7 +562,6 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
-	refType = setRefType(operation.parser.FilePaths[astFile], refType)
 
 	if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
 		if err := operation.registerSchemaType(refType, astFile); err != nil {
@@ -738,12 +736,4 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 		},
 	}
 	return parameter
-}
-
-func setRefType(filePath, typeName string) string {
-	if strings.Contains(typeName, ".") {
-		return filePath + ":" + typeName
-	}
-
-	return typeName
 }
