@@ -64,6 +64,9 @@ type Parser struct {
 
 	// markdownFileDir holds the path to the folder, where markdown files are stored
 	markdownFileDir string
+
+	// file paths map[astFile]real_go_file_path
+	FilePaths map[*ast.File]string
 }
 
 // New creates a new Parser with default properties.
@@ -87,6 +90,7 @@ func New(options ...func(*Parser)) *Parser {
 		TypeDefinitions:      make(map[string]map[string]*ast.TypeSpec),
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
+		FilePaths:            make(map[*ast.File]string),
 	}
 
 	for _, option := range options {
@@ -1326,6 +1330,7 @@ func (parser *Parser) parseFile(path string) error {
 		}
 
 		parser.files[path] = astFile
+		parser.FilePaths[astFile] = path
 	}
 	return nil
 }
