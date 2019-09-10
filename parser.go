@@ -571,11 +571,17 @@ func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.Ty
 
 	Println("Generating " + refTypeName)
 
-	schema, err := parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
+	var tp ast.Expr
+	if typeSpec != nil {
+		tp = typeSpec.Type
+	}
+
+	schema, err := parser.parseTypeExpr(pkgName, typeName, tp)
 	if err != nil {
 		return err
 	}
 	parser.swagger.Definitions[refTypeName] = schema
+
 	return nil
 }
 
