@@ -1,10 +1,12 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/testdata/alias_type/data"
 	"log"
 	"time"
+
+	"github.com/gin-gonic/gin"
+
+	"github.com/swaggo/swag/testdata/alias/alias_type/data"
 )
 
 /*// @Summary Get time as string
@@ -50,3 +52,12 @@ func GetTimeAsTimeContainer(c *gin.Context) {
 	log.Println(foo)
 	//write your code
 }
+
+// @Summary Get container with external alias type
+// @Description test container with external alias type
+// @ID external-alias-type-container
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} alias_external_types.SQLNullInt64Alias	"ok"
+// @Router /testapi/external-alias-type-container [get]
+func GetExternalAliasTypeContainer(c *gin.Context) {}

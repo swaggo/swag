@@ -2163,23 +2163,31 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 	expected := `{
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server Petstore server.",
-        "title": "Swagger Example API",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "1.0"
+        "contact": {},
+        "license": {}
     },
-    "host": "petstore.swagger.io",
-    "basePath": "/v2",
     "paths": {
+        "/testapi/external-alias-type-container": {
+            "get": {
+                "description": "test container with external alias type",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Get container with external alias type",
+                "operationId": "external-alias-type-container",
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/alias_external_types.SQLNullInt64Alias"
+                        }
+                    }
+                }
+            }
+        },
         "/testapi/time-as-time-container": {
             "get": {
                 "description": "test container with time and time alias",
@@ -2203,6 +2211,9 @@ func TestParseModelAsTypeAlias(t *testing.T) {
         }
     },
     "definitions": {
+        "alias_external_types.SQLNullInt64Alias": {
+            "type": "object"
+        },
         "data.TimeContainer": {
             "type": "object",
             "properties": {
@@ -2216,10 +2227,13 @@ func TestParseModelAsTypeAlias(t *testing.T) {
                     "type": "string"
                 }
             }
+        },
+        "sql.NullInt64": {
+            "type": "object"
         }
     }
 }`
-	searchDir := "testdata/alias_type"
+	searchDir := "testdata/alias"
 	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile)
