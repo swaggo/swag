@@ -49,6 +49,10 @@ type Config struct {
 
 	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
 	MarkdownFilesDir string
+
+	// PackagesWithDuplicates used to set package name if project has another package with identical
+	// name and with identical structures names
+	PackagesWithDuplicates []string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
@@ -62,6 +66,7 @@ func (g *Gen) Build(config *Config) error {
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
+	p.PackagesWithDuplicates = config.PackagesWithDuplicates
 
 	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
 		return err

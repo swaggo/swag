@@ -17,6 +17,7 @@ const outputFlag = "output"
 const parseVendorFlag = "parseVendor"
 const parseDependency = "parseDependency"
 const markdownFilesDirFlag = "markdownFiles"
+const packagesWithDuplicatesFlag = "packagesWithDuplicate"
 
 func main() {
 	app := cli.NewApp()
@@ -35,6 +36,7 @@ func main() {
 				parseVendor := c.Bool(parseVendorFlag)
 				parseDependency := c.Bool(parseDependency)
 				markdownFilesDir := c.String(markdownFilesDirFlag)
+				packagesWithDuplicates := c.StringSlice(packagesWithDuplicatesFlag)
 
 				switch strategy {
 				case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
@@ -43,13 +45,14 @@ func main() {
 				}
 
 				return gen.New().Build(&gen.Config{
-					SearchDir:          searchDir,
-					MainAPIFile:        mainAPIFile,
-					PropNamingStrategy: strategy,
-					OutputDir:          outputDir,
-					ParseVendor:        parseVendor,
-					ParseDependency:    parseDependency,
-					MarkdownFilesDir:   markdownFilesDir,
+					SearchDir:              searchDir,
+					MainAPIFile:            mainAPIFile,
+					PropNamingStrategy:     strategy,
+					OutputDir:              outputDir,
+					ParseVendor:            parseVendor,
+					ParseDependency:        parseDependency,
+					MarkdownFilesDir:       markdownFilesDir,
+					PackagesWithDuplicates: packagesWithDuplicates,
 				})
 			},
 			Flags: []cli.Flag{
@@ -85,6 +88,10 @@ func main() {
 					Name:  "markdownFiles, md",
 					Value: "",
 					Usage: "Parse folder containing markdown files to use as description, disabled by default",
+				},
+				cli.StringSliceFlag{
+					Name:  "packagesWithDuplicate, pwd",
+					Usage: "Used to set package name if project has another package with identical name and with identical structures names",
 				},
 			},
 		},

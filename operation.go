@@ -138,7 +138,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	name := matches[1]
 	paramType := matches[2]
 	refType := TransToValidSchemeType(matches[3])
-	refType = setRefType(operation.parser.FilePaths[astFile], refType)
+	refType = operation.parser.SetTypeName(astFile, refType)
 
 	// Detect refType
 	objectType := "object"
@@ -223,6 +223,7 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 	}
 	pkgName := refSplit[0]
 	typeName := refSplit[1]
+
 	if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 		operation.parser.registerTypes[schemaType] = typeSpec
 		return nil
@@ -563,7 +564,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
-	refType = setRefType(operation.parser.FilePaths[astFile], refType)
+	refType = operation.parser.SetTypeName(astFile, refType)
 
 	if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
 		if err := operation.registerSchemaType(refType, astFile); err != nil {
@@ -738,17 +739,4 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 		},
 	}
 	return parameter
-}
-
-func setRefType(filePath, name string) string {
-	if !IsPrimitiveType(name) {
-		path := strings.ReplaceAll(filePath, ".", "_")
-		path = strings.ReplaceAll(path, "/", "_")
-
-		pkgs := strings.Split(path, "_")
-
-		return pkgs[1] + "_" + name
-	}
-
-	return name
 }
