@@ -1303,7 +1303,8 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 
-	files, err := ioutil.ReadDir(pkg.SrcDir) // only parsing files in the dir(don't contains sub dir files)
+	srcDir := pkg.Raw.Dir
+	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contains sub dir files)
 	if err != nil {
 		return err
 	}
@@ -1313,7 +1314,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 			continue
 		}
 
-		path := filepath.Join(pkg.SrcDir, f.Name())
+		path := filepath.Join(srcDir, f.Name())
 		if err := parser.parseFile(path); err != nil {
 			return err
 		}
