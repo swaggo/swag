@@ -558,6 +558,12 @@ func (parser *Parser) parseDefinitions() error {
 // with a schema for the given type
 func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.TypeSpec) error {
 	refTypeName := fullTypeName(pkgName, typeName)
+
+	if typeSpec == nil {
+		Println("Skipping '" + refTypeName + "', pkg '" + pkgName + "' not found, try add flag --parseDependency or --parseVendor.")
+		return nil
+	}
+
 	if _, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
 		Println("Skipping '" + refTypeName + "', already parsed.")
 		return nil
@@ -936,6 +942,18 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			VendorExtensible: spec.VendorExtensible{
 				Extensions: structField.extensions,
 			},
+		}
+
+		if nestStruct, ok := field.Type.(*ast.StarExpr); ok {
+			schema, err := parser.parseTypeExpr(pkgName, structField.schemaType, nestStruct.X)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			if len(schema.SchemaProps.Type) > 0 {
+				properties[structField.name] = schema
+				return properties, nil, nil
+			}
 		}
 
 		nestStruct, ok := field.Type.(*ast.StructType)
