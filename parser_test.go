@@ -2243,6 +2243,22 @@ func TestParseComposition(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseNested(t *testing.T) {
+	searchDir := "testdata/nested"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+
+	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	Printf(string(b))
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParser_ParseStuctArrayObject(t *testing.T) {
 	src := `
 package api

@@ -156,6 +156,43 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseResponseCommentWithObjectTypeInSameFile(t *testing.T) {
+	comment := `@Success 200 {object} testOwner "Error message, if code != 200"`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["swag"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["swag"]["testOwner"] = &ast.TypeSpec{}
+
+	fset := token.NewFileSet()
+	astFile, err := goparser.ParseFile(fset, "operation_test.go", `package swag
+	type testOwner struct {
+		
+	}
+	`, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	err = operation.ParseComment(comment, astFile)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "$ref": "#/definitions/swag.testOwner"
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseResponseCommentWithObjectTypeAnonymousField(t *testing.T) {
 	//TODO: test Anonymous
 }
