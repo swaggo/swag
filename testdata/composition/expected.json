@@ -110,6 +110,26 @@
                     }
                 }
             }
+        },
+        "/testapi/get-foobarmap": {
+            "get": {
+                "description": "get FoorBarMap",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-foo-bar-map",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.FooBarMap"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -148,6 +168,22 @@
                 },
                 "field2": {
                     "type": "string"
+                }
+            }
+        },
+        "api.FooBarMap": {
+            "type": "object",
+            "properties": {
+                "field3": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                            "field2": {
+                                "type": "string"
+                            }
+                        }
+                    }
                 }
             }
         },
