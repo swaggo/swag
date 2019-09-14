@@ -563,6 +563,11 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 
+	if !IsPrimitiveType(refType) && !strings.Contains(refType, ".") {
+		currentPkgName := astFile.Name.String()
+		refType = currentPkgName + "." + refType
+	}
+
 	if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
 		if err := operation.registerSchemaType(refType, astFile); err != nil {
 			return err
