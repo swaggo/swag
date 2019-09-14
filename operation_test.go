@@ -813,7 +813,7 @@ func TestFindTypeDefCoreLib(t *testing.T) {
 }
 
 func TestFindTypeDefExternalPkg(t *testing.T) {
-	spec, err := findTypeDef("github.com/satori/go.uuid", "UUID")
+	spec, err := findTypeDef("github.com/alecthomas/template", "Template")
 	assert.NoError(t, err)
 	assert.NotNil(t, spec)
 }
