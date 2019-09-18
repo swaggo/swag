@@ -262,9 +262,14 @@ fmt.Print("Helo world")
 	assert.NotEqual(t, []byte(src2), res, "Should return fmt code")
 }
 
-type mocWriter struct{}
+type mocWriter struct {
+	hook func([]byte)
+}
 
 func (w *mocWriter) Write(data []byte) (int, error) {
+	if w.hook != nil {
+		w.hook(data)
+	}
 	return len(data), nil
 }
 
@@ -274,7 +279,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 	swapTemplate := packageTemplate
 
 	packageTemplate = `{{{`
-	err := gen.writeGoDoc(nil, nil, nil)
+	err := gen.writeGoDoc(nil, nil, &Config{})
 	assert.Error(t, err)
 
 	packageTemplate = `{{.Data}}`
@@ -286,6 +291,20 @@ func TestGen_writeGoDoc(t *testing.T) {
 	}
 	err = gen.writeGoDoc(&mocWriter{}, swagger, &Config{})
 	assert.Error(t, err)
+
+	packageTemplate = `{{ if .GeneratedTime }}Fake Time{{ end }}`
+	err = gen.writeGoDoc(&mocWriter{
+		hook: func(data []byte) {
+			assert.Equal(t, "Fake Time", string(data))
+		},
+	}, swagger, &Config{GeneratedTime: true})
+	assert.NoError(t, err)
+	err = gen.writeGoDoc(&mocWriter{
+		hook: func(data []byte) {
+			assert.Equal(t, "", string(data))
+		},
+	}, swagger, &Config{GeneratedTime: false})
+	assert.NoError(t, err)
 
 	packageTemplate = swapTemplate
 
