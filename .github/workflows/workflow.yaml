@@ -12,5 +12,13 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - uses: actions/checkout@master
+      - name: deps
+        run: make deps
+      - name: static program analysis
+        run: make fmt-check lint vet
+      - name: build
+        run: make build
       - name: test
         run: make test
+      - name: codecov
+        run: bash <(curl -s https://codecov.io/bash)
