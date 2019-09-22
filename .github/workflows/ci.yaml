@@ -1,6 +1,6 @@
 on: push
 jobs:
-  test:
+  lint:
     strategy:
       matrix:
         go: [ '1.10.x', '1.11.x', '1.12.x' ]
@@ -22,3 +22,10 @@ jobs:
         run: make build
       - name: test
         run: make test
+
+    codecov:
+      runs-on: ubuntu-latest
+      needs: [test]
+      steps:
+        - name: Upload Coverage report to CodeCov
+          run: bash <(curl -s https://codecov.io/bash)
