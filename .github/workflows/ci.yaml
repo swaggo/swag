@@ -22,10 +22,3 @@ jobs:
         run: make build
       - name: test
         run: make test
-
-  codecov:
-    runs-on: ubuntu-latest
-    needs: [test]
-    steps:
-      - name: Upload Coverage report to CodeCov
-        run: bash <(curl -s https://codecov.io/bash)
