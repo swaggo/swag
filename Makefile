@@ -60,7 +60,7 @@ deps:
 .PHONY: devel-deps
 devel-deps:
 	GO111MODULE=off $(GOGET) -v -u \
-		github.com/golang/lint/golint \
+		golang.org/x/lint/golint \
 		github.com/swaggo/swag/cmd/swag	\
 		github.com/swaggo/swag/gen
 
