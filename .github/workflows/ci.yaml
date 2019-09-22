@@ -7,11 +7,11 @@ jobs:
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
+      - uses: actions/checkout@master
       - name: Set up Go
         uses: actions/setup-go@v1
         with:
           go-version: ${{ matrix.go }}
-      - uses: actions/checkout@master
       - name: deps
         run: make deps
       - name: static program analysis
