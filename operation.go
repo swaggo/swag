@@ -538,7 +538,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 
 var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/]+)[^"]*(.*)?`)
 
-// ParseResponseComment parses comment for gived `response` comment string.
+// ParseResponseComment parses comment for given `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
 	var matches []string
 
@@ -563,7 +563,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 
-	if !IsPrimitiveType(refType) && !strings.Contains(refType, ".") {
+	if !IsGolangPrimitiveType(refType) && !strings.Contains(refType, ".") {
 		currentPkgName := astFile.Name.String()
 		refType = currentPkgName + "." + refType
 	}
