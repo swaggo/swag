@@ -179,7 +179,7 @@
                     "additionalProperties": {
                         "type": "object",
                         "properties": {
-                            "field2": {
+                            "field4": {
                                 "type": "string"
                             }
                         }
@@ -197,6 +197,14 @@
                     "type": "string"
                 },
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.MapValue": {
+            "type": "object",
+            "properties": {
+                "field4": {
                     "type": "string"
                 }
             }

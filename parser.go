@@ -931,60 +931,6 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			}
 		}
 	} else if astTypeMap, ok := field.Type.(*ast.MapType); ok { // if map
-		props := make(map[string]spec.Schema)
-		// parse key type of map
-		if expr, ok := astTypeMap.Key.(*ast.StructType); ok {
-			for _, field := range expr.Fields.List {
-				var fieldProps map[string]spec.Schema
-				fieldProps, _, err = parser.parseStructField(pkgName, field)
-				if err != nil {
-					return properties, nil, err
-				}
-				for k, v := range fieldProps {
-					props[k] = v
-				}
-			}
-			properties[structField.name] = spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type:        []string{structField.schemaType},
-					Description: desc,
-					Items: &spec.SchemaOrArray{
-						Schema: &spec.Schema{
-							SchemaProps: spec.SchemaProps{
-								Type:       []string{"object"},
-								Properties: props,
-							},
-						},
-					},
-				}}
-		}
-		// parse value type of map
-		if expr, ok := astTypeMap.Value.(*ast.StructType); ok {
-			for _, field := range expr.Fields.List {
-				var fieldProps map[string]spec.Schema
-				fieldProps, _, err = parser.parseStructField(pkgName, field)
-				if err != nil {
-					return properties, nil, err
-				}
-				for k, v := range fieldProps {
-					props[k] = v
-				}
-			}
-			properties[structField.name] = spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type:        []string{structField.schemaType},
-					Description: desc,
-					Items: &spec.SchemaOrArray{
-						Schema: &spec.Schema{
-							SchemaProps: spec.SchemaProps{
-								Type:       []string{"object"},
-								Properties: props,
-							},
-						},
-					},
-				}}
-		}
-
 		itemSchema, err := parser.parseTypeExpr(pkgName, "", astTypeMap.Value)
 		if err != nil {
 			return properties, nil, err
@@ -1011,7 +957,8 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 				},
 			},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{
-				Example: structField.exampleValue,
+				Example:  structField.exampleValue,
+				ReadOnly: structField.readOnly,
 			},
 			VendorExtensible: spec.VendorExtensible{
 				Extensions: structField.extensions,

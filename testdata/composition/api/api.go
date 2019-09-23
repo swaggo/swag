@@ -26,7 +26,11 @@ type FooBarPointer struct {
 type BarMap map[string]Bar
 
 type FooBarMap struct {
-	Field3 map[string]Bar
+	Field3 map[string]MapValue
+}
+
+type MapValue struct {
+	Field4 string
 }
 
 // @Description get Foo
