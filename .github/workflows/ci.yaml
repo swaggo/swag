@@ -4,7 +4,7 @@ jobs:
     strategy:
       matrix:
         go: [ '1.10.x', '1.11.x', '1.12.x' ]
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@master
