@@ -9,7 +9,7 @@ import (
 )
 
 type Pet struct {
-	ID       int `json:"id" example:"1" format:"int64"`
+	ID       int `json:"id" example:"1" format:"int64" readonly:"true"`
 	Category struct {
 		ID            int      `json:"id" example:"1"`
 		Name          string   `json:"name" example:"category_name"`

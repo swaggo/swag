@@ -669,6 +669,7 @@ func TestParseSimpleApi1(t *testing.T) {
                 "id": {
                     "type": "integer",
                     "format": "int64",
+                    "readOnly": true,
                     "example": 1
                 },
                 "int_array": {
