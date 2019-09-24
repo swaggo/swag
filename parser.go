@@ -751,6 +751,7 @@ type structField struct {
 	arrayType    string
 	formatType   string
 	isRequired   bool
+	readOnly     bool
 	crossPkg     string
 	exampleValue interface{}
 	maximum      *float64
@@ -835,6 +836,9 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
 				},
 			},
+			SwaggerSchemaProps: spec.SwaggerSchemaProps{
+				ReadOnly: structField.readOnly,
+			},
 		}
 	} else if structField.schemaType == "array" { // array field type
 		// if defined -- ref it
@@ -854,6 +858,9 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 							},
 						},
 					},
+				},
+				SwaggerSchemaProps: spec.SwaggerSchemaProps{
+					ReadOnly: structField.readOnly,
 				},
 			}
 		} else if structField.arrayType == "object" {
@@ -883,7 +890,11 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 									},
 								},
 							},
-						}}
+						},
+						SwaggerSchemaProps: spec.SwaggerSchemaProps{
+							ReadOnly: structField.readOnly,
+						},
+					}
 				}
 			}
 		} else {
@@ -914,7 +925,8 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					},
 				},
 				SwaggerSchemaProps: spec.SwaggerSchemaProps{
-					Example: structField.exampleValue,
+					Example:  structField.exampleValue,
+					ReadOnly: structField.readOnly,
 				},
 			}
 		}
@@ -937,7 +949,8 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 				Default:     structField.defaultValue,
 			},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{
-				Example: structField.exampleValue,
+				Example:  structField.exampleValue,
+				ReadOnly: structField.readOnly,
 			},
 			VendorExtensible: spec.VendorExtensible{
 				Extensions: structField.extensions,
@@ -989,7 +1002,8 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					Default:     structField.defaultValue,
 				},
 				SwaggerSchemaProps: spec.SwaggerSchemaProps{
-					Example: structField.exampleValue,
+					Example:  structField.exampleValue,
+					ReadOnly: structField.readOnly,
 				},
 			}
 		}
@@ -1184,6 +1198,9 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 			return nil, err
 		}
 		structField.minLength = minLength
+	}
+	if readOnly := structTag.Get("readonly"); readOnly != "" {
+		structField.readOnly = readOnly == "true"
 	}
 
 	return structField, nil
