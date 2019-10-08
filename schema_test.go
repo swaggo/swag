@@ -56,3 +56,31 @@ func TestIsNumericType(t *testing.T) {
 
 	assert.Equal(t, IsNumericType("string"), false)
 }
+
+func TestIsMineType(t *testing.T) {
+	assert.Equal(t, IsMineType("json"), true)
+	assert.Equal(t, IsMineType("application/json"), true)
+	assert.Equal(t, IsMineType("xml"), true)
+	assert.Equal(t, IsMineType("text/xml"), true)
+	assert.Equal(t, IsMineType("plain"), true)
+	assert.Equal(t, IsMineType("text/plain"), true)
+	assert.Equal(t, IsMineType("html"), true)
+	assert.Equal(t, IsMineType("text/html"), true)
+	assert.Equal(t, IsMineType("mpfd"), true)
+	assert.Equal(t, IsMineType("multipart/form-data"), true)
+	assert.Equal(t, IsMineType("x-www-form-urlencoded"), true)
+	assert.Equal(t, IsMineType("application/x-www-form-urlencoded"), true)
+	assert.Equal(t, IsMineType("json-api"), true)
+	assert.Equal(t, IsMineType("application/vnd.api+json"), true)
+	assert.Equal(t, IsMineType("json-stream"), true)
+	assert.Equal(t, IsMineType("application/x-json-stream"), true)
+	assert.Equal(t, IsMineType("octet-stream"), true)
+	assert.Equal(t, IsMineType("application/octet-stream"), true)
+	assert.Equal(t, IsMineType("png"), true)
+	assert.Equal(t, IsMineType("image/png"), true)
+	assert.Equal(t, IsMineType("jpeg"), true)
+	assert.Equal(t, IsMineType("image/jpeg"), true)
+	assert.Equal(t, IsMineType("gif"), true)
+	assert.Equal(t, IsMineType("image/gif"), true)
+	assert.Equal(t, IsMineType("avatar"), false)
+}
