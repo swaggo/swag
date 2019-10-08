@@ -563,7 +563,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 
-	if !IsGolangPrimitiveType(refType) && !strings.Contains(refType, ".") {
+	if !IsGolangPrimitiveType(refType) && !strings.Contains(refType, ".") && !IsMineType(refType) {
 		currentPkgName := astFile.Name.String()
 		refType = currentPkgName + "." + refType
 	}
