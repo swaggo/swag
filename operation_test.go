@@ -867,6 +867,35 @@ func TestParseMultiDescription(t *testing.T) {
 	assert.Contains(t, string(b), expected)
 }
 
+func TestParseMarkdownDescription(t *testing.T) {
+	searchDir := "testdata/tags"
+	mainAPIFile := "main.go"
+	p := New(SetMarkdownFileDirectory(searchDir))
+	p.PropNamingStrategy = PascalCase
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	if err != nil {
+		t.Error("Failed to parse api description: " + err.Error())
+	}
+
+	if len(p.swagger.Tags) != 3 {
+		t.Error("Number of tags did not match")
+	}
+
+	apes := p.swagger.Tags[2]
+	if apes.TagProps.Description == "" {
+		t.Error("Failed to parse tag description markdown file")
+	}
+	operation := NewOperation()
+	operation.parser = New()
+	err = operation.ParseComment(apes.TagProps.Description, nil)
+	assert.NoError(t, err)
+
+	expected := `## Apes 
+
+Apes are very cool!`
+	assert.EqualValues(t, apes.TagProps.Description, expected)
+}
+
 func TestParseSummary(t *testing.T) {
 	comment := `@summary line one`
 	operation := NewOperation()
