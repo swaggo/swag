@@ -23,7 +23,6 @@ import (
 type Gen struct {
 	jsonIndent func(data interface{}) ([]byte, error)
 	jsonToYAML func(data []byte) ([]byte, error)
-
 }
 
 // New creates a new Gen.
