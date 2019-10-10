@@ -868,7 +868,8 @@ func TestParseMultiDescription(t *testing.T) {
 }
 
 func TestParseMarkdownDescription(t *testing.T) {
-	comment := `@description.file apes`
+	// TODO: wirte usefull test
+	comment := `@endpoint.description.markdown apes`
 	operation := NewOperation()
 	operation.parser = New()
 	err := operation.ParseComment(comment, nil)
