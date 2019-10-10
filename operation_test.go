@@ -867,15 +867,6 @@ func TestParseMultiDescription(t *testing.T) {
 	assert.Contains(t, string(b), expected)
 }
 
-func TestParseMarkdownDescription(t *testing.T) {
-	// TODO: wirte usefull test
-	comment := `@endpoint.description.markdown apes`
-	operation := NewOperation()
-	operation.parser = New()
-	err := operation.ParseComment(comment, nil)
-	assert.NoError(t, err)
-}
-
 func TestParseSummary(t *testing.T) {
 	comment := `@summary line one`
 	operation := NewOperation()
