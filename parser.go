@@ -605,9 +605,7 @@ func (parser *Parser) collectRequiredFields(pkgName string, properties map[strin
 			tspec := parser.TypeDefinitions[pkgName][tname]
 			parser.ParseDefinition(pkgName, tname, tspec)
 		}
-		// if tname != "object" {
-			requiredFields = append(requiredFields, prop.SchemaProps.Required...)
-		// }
+		requiredFields = append(requiredFields, prop.SchemaProps.Required...)
 		properties[k] = prop
 	}
 
@@ -730,10 +728,7 @@ func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (spec.S
 
 	// unset required from properties because we've collected them
 	for k, prop := range properties {
-		// tname := prop.SchemaProps.Type[0]
-		// if tname != "object" {
-			prop.SchemaProps.Required = make([]string, 0)
-		// }
+		prop.SchemaProps.Required = make([]string, 0)
 		properties[k] = prop
 	}
 
