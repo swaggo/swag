@@ -831,7 +831,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			SchemaProps: spec.SchemaProps{
 				Type:        []string{"object"}, // to avoid swagger validation error
 				Description: desc,
-				Required: required,
+				Required:    required,
 				Ref: spec.Ref{
 					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
 				},
@@ -853,7 +853,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
 					Description: desc,
-					Required: required,
+					Required:    required,
 					Items: &spec.SchemaOrArray{
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
