@@ -468,7 +468,6 @@ func TestParseParamCommentByBodyType(t *testing.T) {
             "in": "body",
             "required": true,
             "schema": {
-                "type": "object",
                 "$ref": "#/definitions/model.OrderRow"
             }
         }
