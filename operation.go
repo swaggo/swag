@@ -192,7 +192,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					SchemaProps: spec.SchemaProps{},
 				},
 			}
-			// Arrau of Primitive or Object
+			// Array of Primitive or Object
 			if IsPrimitiveType(refType) {
 				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
 			} else {
@@ -205,7 +205,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if err := operation.registerSchemaType(refType, astFile); err != nil {
 				return err
 			}
-			param.Schema.Type = spec.StringOrArray{objectType}
+			param.Schema.Type = []string{}
 			param.Schema.Ref = spec.Ref{
 				Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
 			}

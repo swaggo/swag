@@ -40,7 +40,7 @@ type Config struct {
 	// SearchDir the swag would be parse
 	SearchDir string
 
-	// OutputDir represents the output directory for al the generated files
+	// OutputDir represents the output directory for all the generated files
 	OutputDir string
 
 	// MainAPIFile the Go file path in which 'swagger general API Info' is written

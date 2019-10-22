@@ -45,7 +45,7 @@ $ go get -u github.com/swaggo/swag/cmd/swag
 ```
 To build from source you need [Go](https://golang.org/dl/) (1.9 or newer).
 
-Or download the pre-compiled binaries binray form [release page](https://github.com/swaggo/swag/releases).
+Or download the pre-compiled binaries binary form [release page](https://github.com/swaggo/swag/releases).
 
 3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
 ```sh
@@ -71,7 +71,7 @@ OPTIONS:
    --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
    --dir value, -d value               Directory you want to parse (default: "./")
    --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
-   --output value, -o value            Output directory for al the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
+   --output value, -o value            Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
    --parseVendor                       Parse go files in 'vendor' folder, disabled by default
    --parseDependency                   Parse go files in outside dependency folder, disabled by default
 ```
@@ -277,7 +277,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 $ swag init
 ```
 
-4.Run your app, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
+4. Run your app, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
 
 ![swagger_index.html](https://raw.githubusercontent.com/swaggo/swag/master/assets/swagger-image.png)
 
