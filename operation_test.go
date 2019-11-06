@@ -167,7 +167,7 @@ func TestParseResponseCommentWithObjectTypeInSameFile(t *testing.T) {
 	fset := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fset, "operation_test.go", `package swag
 	type testOwner struct {
-		
+
 	}
 	`, goparser.ParseComments)
 	assert.NoError(t, err)
@@ -371,7 +371,7 @@ func TestParseParamCommentBodyArray(t *testing.T) {
             "in": "body",
             "required": true,
             "schema": {
-                "type": "string",
+                "type": "array",
                 "items": {
                     "type": "string"
                 }
