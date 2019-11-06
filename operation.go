@@ -138,22 +138,23 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	name := matches[1]
 	paramType := matches[2]
 	refType := TransToValidSchemeType(matches[3])
-
-	// Detect refType
-	objectType := "object"
-	if strings.HasPrefix(refType, "[]") == true {
-		objectType = "array"
-		refType = strings.TrimPrefix(refType, "[]")
-	} else if IsPrimitiveType(refType) ||
-		paramType == "formData" && refType == "file" {
-		objectType = "primitive"
-	}
-
 	requiredText := strings.ToLower(matches[4])
 	required := requiredText == "true" || requiredText == "required"
 	description := matches[5]
-
-	param := createParameter(paramType, description, name, refType, required)
+	// Detect refType
+	objectType := "object"
+	var param spec.Parameter
+	if strings.HasPrefix(refType, "[]") == true {
+		objectType = "array"
+		refType = strings.TrimPrefix(refType, "[]")
+		param = createParameter(paramType, description, name, objectType, required)
+	} else if IsPrimitiveType(refType) ||
+		paramType == "formData" && refType == "file" {
+		objectType = "primitive"
+		param = createParameter(paramType, description, name, refType, required)
+	} else {
+		param = createParameter(paramType, description, name, refType, required)
+	}
 
 	switch paramType {
 	case "path", "header", "formData":
