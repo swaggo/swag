@@ -186,7 +186,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					SchemaProps: spec.SchemaProps{},
 				},
 			}
-			// Arrau of Primitive or Object
+			// Array of Primitive or Object
 			if IsPrimitiveType(refType) {
 				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
 			} else {
@@ -199,7 +199,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if err := operation.registerSchemaType(refType, astFile); err != nil {
 				return err
 			}
-			param.Schema.Type = spec.StringOrArray{objectType}
+			param.Schema.Type = []string{}
 			param.Schema.Ref = spec.Ref{
 				Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
 			}
@@ -437,7 +437,7 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`([\w\.\/\-{}\+]+)[^\[]+\[([^\]]+)`)
+var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]+)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
