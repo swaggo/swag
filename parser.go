@@ -605,9 +605,7 @@ func (parser *Parser) collectRequiredFields(pkgName string, properties map[strin
 			tspec := parser.TypeDefinitions[pkgName][tname]
 			parser.ParseDefinition(pkgName, tname, tspec)
 		}
-		if tname != "object" {
-			requiredFields = append(requiredFields, prop.SchemaProps.Required...)
-		}
+		requiredFields = append(requiredFields, prop.SchemaProps.Required...)
 		properties[k] = prop
 	}
 
@@ -730,10 +728,7 @@ func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (spec.S
 
 	// unset required from properties because we've collected them
 	for k, prop := range properties {
-		tname := prop.SchemaProps.Type[0]
-		if tname != "object" {
-			prop.SchemaProps.Required = make([]string, 0)
-		}
+		prop.SchemaProps.Required = make([]string, 0)
 		properties[k] = prop
 	}
 
@@ -828,10 +823,15 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		// write definition if not yet present
 		parser.ParseDefinition(pkgName, structField.schemaType,
 			parser.TypeDefinitions[pkgName][structField.schemaType])
+		required := make([]string, 0)
+		if structField.isRequired {
+			required = append(required, structField.name)
+		}
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type:        []string{"object"}, // to avoid swagger validation error
 				Description: desc,
+				Required:    required,
 				Ref: spec.Ref{
 					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
 				},
@@ -845,10 +845,15 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		if _, ok := parser.TypeDefinitions[pkgName][structField.arrayType]; ok { // user type in array
 			parser.ParseDefinition(pkgName, structField.arrayType,
 				parser.TypeDefinitions[pkgName][structField.arrayType])
+			required := make([]string, 0)
+			if structField.isRequired {
+				required = append(required, structField.name)
+			}
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
 					Description: desc,
+					Required:    required,
 					Items: &spec.SchemaOrArray{
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
