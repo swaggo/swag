@@ -7,7 +7,7 @@ import (
 
 	"github.com/swaggo/swag"
 	"github.com/swaggo/swag/gen"
-	"github.com/urfave/cli"
+	"github.com/swaggo/cli"
 )
 
 const (
