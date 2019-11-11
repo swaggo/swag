@@ -25,8 +25,6 @@ build: deps
 
 .PHONY: install
 install: deps
-	mkdir -p $GOPATH/github.com/swaggo
-	ln -s "$(pwd)"  $GOPATH/github.com/swaggo/swag
 	$(GOINSTALL) ./cmd/swag
 
 .PHONY: test
@@ -64,6 +62,8 @@ deps:
 
 .PHONY: devel-deps
 devel-deps:
+	mkdir -p $GOPATH/github.com/swaggo
+	ln -s "$(pwd)"  $GOPATH/github.com/swaggo/swag
 	GO111MODULE=off $(GOGET) -v -u \
 		golang.org/x/lint/golint 
 
