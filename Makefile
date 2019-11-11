@@ -25,6 +25,8 @@ build: deps
 
 .PHONY: install
 install: deps
+	mkdir -p $GOPATH/github.com/swaggo
+	ln -s "$(pwd)"  $GOPATH/github.com/swaggo/swag
 	$(GOINSTALL) ./cmd/swag
 
 .PHONY: test
