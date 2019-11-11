@@ -54,6 +54,7 @@ clean:
 .PHONY: deps
 deps:
 	$(GOGET) ${u} -d
+	$(GOGET) github.com/swaggo/cli
 	$(GOGET) github.com/stretchr/testify/assert
 	$(GOGET) github.com/alecthomas/template
 
