@@ -62,8 +62,8 @@ deps:
 
 .PHONY: devel-deps
 devel-deps:
-	mkdir -p $GOPATH/github.com/swaggo
-	ln -s "$(pwd)"  $GOPATH/github.com/swaggo/swag
+	mkdir -p ${GOPATH}/github.com/swaggo
+	ln -s "$(pwd)"  ${GOPATH}/github.com/swaggo/swag
 	GO111MODULE=off $(GOGET) -v -u \
 		golang.org/x/lint/golint 
 
