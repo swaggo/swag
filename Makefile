@@ -53,10 +53,9 @@ clean:
 
 .PHONY: deps
 deps:
-/opt/hostedtoolcache/go/1.10.8/x64/bin/go vet 
 	$(GOGET) github.com/KyleBanks/depth
-	$(GOGET) github.com/go-openapi/jsonreference 
-	$(GOGET) github.com/go-openapi/spec 
+	$(GOGET) github.com/go-openapi/jsonreference
+	$(GOGET) github.com/go-openapi/spec
 	$(GOGET) github.com/stretchr/testify/assert
 	$(GOGET) github.com/alecthomas/template
 
