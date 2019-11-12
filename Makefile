@@ -9,6 +9,7 @@ GOTEST:=$(GOCMD) test
 GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
+GOPATH:=$(shell $(GOCMD) env GOPATH)
 u := $(if $(update),-u)
 
 BINARY_NAME:=swag
@@ -18,6 +19,10 @@ GOFILES:=$(shell find . -name "*.go" -type f)
 export GO111MODULE := on
 
 all: test build
+
+.PHONY: env
+env:
+	echo ${GOPATH}
 
 .PHONY: build
 build: deps
@@ -62,8 +67,9 @@ deps:
 
 .PHONY: devel-deps
 devel-deps:
-	mkdir -p $(go env GOPATH)/github.com/swaggo
-	ln -s "$(pwd)"  $(go env GOPATH)/github.com/swaggo/swag
+	mkdir -p ${GOPATH}/github.com/swaggo
+	if [ -L ${GOPATH}/github.com/swaggo/swag ]; then rm ${GOPATH}/github.com/swaggo/swag; fi
+	ln -s "$(shell pwd)"  ${GOPATH}/github.com/swaggo/swag
 	GO111MODULE=off $(GOGET) -v -u \
 		golang.org/x/lint/golint 
 
