@@ -69,6 +69,7 @@ devel-deps: ensure-gopath
 
 .PHONY: ensure-gopath
 ensure-gopath:
+	echo ${GOPATH}
 	mkdir -p ${GOPATH}/github.com/swaggo
 	if [ -L ${GOPATH}/github.com/swaggo/swag ]; then rm ${GOPATH}/github.com/swaggo/swag; fi
 	ln -s "$(shell pwd)"  ${GOPATH}/github.com/swaggo/swag
