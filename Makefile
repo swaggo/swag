@@ -20,10 +20,6 @@ export GO111MODULE := on
 
 all: test build
 
-.PHONY: env
-env:
-	echo ${GOPATH}
-
 .PHONY: build
 build: deps
 	$(GOBUILD) -o $(BINARY_NAME) ./cmd/swag
