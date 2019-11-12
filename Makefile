@@ -72,7 +72,7 @@ ensure-gopath:
 	echo $(GOPATH) $(shell pwd)
 	mkdir -p ${GOPATH}/github.com/swaggo
 	if [ -L ${GOPATH}/github.com/swaggo/swag ]; then rm ${GOPATH}/github.com/swaggo/swag; fi
-	ln -s "$(shell pwd)"  ${GOPATH}/github.com/swaggo/swag
+	if [ ${GOPATH}/github.com/swaggo/swag != $(shell pwd) ]; then ln -s "$(shell pwd)"  ${GOPATH}/github.com/swaggo/swag; fi
 
 .PHONY: lint
 lint: devel-deps
