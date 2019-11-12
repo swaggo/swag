@@ -58,6 +58,7 @@ clean:
 
 .PHONY: deps
 deps:
+	$(GOGET) github.com/swaggo/cli
 	$(GOGET) github.com/ghodss/yaml
 	$(GOGET) github.com/KyleBanks/depth
 	$(GOGET) github.com/go-openapi/jsonreference
