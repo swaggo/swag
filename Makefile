@@ -57,7 +57,7 @@ clean:
 	rm -f $(BINARY_NAME)
 
 .PHONY: deps
-deps:
+deps: ensure-gopath
 	$(GOGET) github.com/swaggo/cli
 	$(GOGET) github.com/ghodss/yaml
 	$(GOGET) github.com/KyleBanks/depth
@@ -67,12 +67,15 @@ deps:
 	$(GOGET) github.com/alecthomas/template
 
 .PHONY: devel-deps
-devel-deps:
+devel-deps: ensure-gopath
+	GO111MODULE=off $(GOGET) -v -u \
+		golang.org/x/lint/golint 
+
+.PHONY: ensure-gopath
+ensure-gopath:
 	mkdir -p ${GOPATH}/github.com/swaggo
 	if [ -L ${GOPATH}/github.com/swaggo/swag ]; then rm ${GOPATH}/github.com/swaggo/swag; fi
 	ln -s "$(shell pwd)"  ${GOPATH}/github.com/swaggo/swag
-	GO111MODULE=off $(GOGET) -v -u \
-		golang.org/x/lint/golint 
 
 .PHONY: lint
 lint: devel-deps
