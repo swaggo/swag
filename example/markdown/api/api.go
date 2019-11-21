@@ -61,7 +61,7 @@ func AddUser(w http.ResponseWriter, r *http.Request) {
 	// write your code
 }
 
-// AddUser example
+// UpdateUser example
 // @Summary Add a new user to the store
 // @Tags admin
 // @Accept  json
