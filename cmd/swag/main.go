@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/swaggo/cli"
 	"github.com/swaggo/swag"
 	"github.com/swaggo/swag/gen"
-	"github.com/urfave/cli"
 )
 
 const (
