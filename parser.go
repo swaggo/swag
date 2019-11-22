@@ -935,6 +935,52 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 				},
 			}
 		}
+	} else if astTypeMap, ok := field.Type.(*ast.MapType); ok { // if map
+		_, err := parser.parseTypeExpr(pkgName, "", astTypeMap.Value)
+		if err != nil {
+			return properties, nil, err
+		}
+
+		fullTypeName, err := getFieldType(astTypeMap.Value)
+		if err != nil {
+			return properties, nil, err
+		}
+		mapValueScheme := &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.Ref{
+					Ref: jsonreference.MustCreateRef("#/definitions/" + fullTypeName),
+				},
+			},
+		}
+
+		required := make([]string, 0)
+		if structField.isRequired {
+			required = append(required, structField.name)
+		}
+		properties[structField.name] = spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type:        []string{structField.schemaType},
+				Description: desc,
+				Format:      structField.formatType,
+				Required:    required,
+				Maximum:     structField.maximum,
+				Minimum:     structField.minimum,
+				MaxLength:   structField.maxLength,
+				MinLength:   structField.minLength,
+				Enum:        structField.enums,
+				Default:     structField.defaultValue,
+				AdditionalProperties: &spec.SchemaOrBool{
+					Schema: mapValueScheme,
+				},
+			},
+			SwaggerSchemaProps: spec.SwaggerSchemaProps{
+				Example:  structField.exampleValue,
+				ReadOnly: structField.readOnly,
+			},
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: structField.extensions,
+			},
+		}
 	} else {
 		required := make([]string, 0)
 		if structField.isRequired {
