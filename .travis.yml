@@ -2,13 +2,12 @@ language: go
 sudo: false
 
 go:
-  - 1.9.x
   - 1.10.x
   - 1.11.x
   - 1.12.x
 
 install:
-  - make install
+  - make deps
 
 script:
   - make fmt-check

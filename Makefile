@@ -3,14 +3,17 @@ GOLINT:=$(shell which golint)
 GOIMPORT:=$(shell which goimports)
 GOFMT:=$(shell which gofmt)
 GOBUILD:=$(GOCMD) build
+GOINSTALL:=$(GOCMD) install
 GOCLEAN:=$(GOCMD) clean
 GOTEST:=$(GOCMD) test
 GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
+GOPATH:=$(shell $(GOCMD) env GOPATH)
+u := $(if $(update),-u)
 
 BINARY_NAME:=swag
-PACKAGES:=$(shell $(GOLIST) ./...)
+PACKAGES:=$(shell $(GOLIST) github.com/swaggo/swag github.com/swaggo/swag/cmd/swag github.com/swaggo/swag/gen)
 GOFILES:=$(shell find . -name "*.go" -type f)
 
 export GO111MODULE := on
@@ -18,8 +21,12 @@ export GO111MODULE := on
 all: test build
 
 .PHONY: build
-build:
-	$(GOBUILD) -o $(BINARY_NAME) -v ./cmd/...
+build: deps
+	$(GOBUILD) -o $(BINARY_NAME) ./cmd/swag
+
+.PHONY: install
+install: deps
+	$(GOINSTALL) ./cmd/swag
 
 .PHONY: test
 test:
@@ -45,18 +52,33 @@ clean:
 	$(GOCLEAN)
 	rm -f $(BINARY_NAME)
 
-.PHONY: install
-install:
-	$(GOGET) -v ./...
+.PHONY: deps
+deps: ensure-gopath
+	$(GOGET) github.com/swaggo/cli
+	$(GOGET) github.com/ghodss/yaml
+	$(GOGET) github.com/KyleBanks/depth
+	$(GOGET) github.com/go-openapi/jsonreference
+	$(GOGET) github.com/go-openapi/spec
 	$(GOGET) github.com/stretchr/testify/assert
+	$(GOGET) github.com/alecthomas/template
+
+.PHONY: devel-deps
+devel-deps: ensure-gopath
+	GO111MODULE=off $(GOGET) -v -u \
+		golang.org/x/lint/golint 
+
+.PHONY: ensure-gopath
+ensure-gopath:
+	mkdir -p ${GOPATH}/github.com/swaggo
+	if [ -L ${GOPATH}/github.com/swaggo/swag ]; then rm ${GOPATH}/github.com/swaggo/swag; fi
+	ln -s "$(shell pwd)"  ${GOPATH}/github.com/swaggo/swag
 
 .PHONY: lint
-lint:
-	which golint || $(GOGET) -u golang.org/x/lint/golint
+lint: devel-deps
 	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
 .PHONY: vet
-vet:
+vet: deps devel-deps
 	$(GOVET) $(PACKAGES)
 
 .PHONY: fmt

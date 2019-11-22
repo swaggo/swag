@@ -7,28 +7,14 @@ import (
 )
 
 func TestValidDataType(t *testing.T) {
-	assert.NotPanics(t, func() {
-		CheckSchemaType("string")
-	})
-	assert.NotPanics(t, func() {
-		CheckSchemaType("number")
-	})
-	assert.NotPanics(t, func() {
-		CheckSchemaType("integer")
-	})
-	assert.NotPanics(t, func() {
-		CheckSchemaType("boolean")
-	})
-	assert.NotPanics(t, func() {
-		CheckSchemaType("array")
-	})
-	assert.NotPanics(t, func() {
-		CheckSchemaType("object")
-	})
+	assert.NoError(t, CheckSchemaType("string"))
+	assert.NoError(t, CheckSchemaType("number"))
+	assert.NoError(t, CheckSchemaType("integer"))
+	assert.NoError(t, CheckSchemaType("boolean"))
+	assert.NoError(t, CheckSchemaType("array"))
+	assert.NoError(t, CheckSchemaType("object"))
 
-	assert.Panics(t, func() {
-		CheckSchemaType("oops")
-	})
+	assert.Error(t, CheckSchemaType("oops"))
 }
 
 func TestTransToValidSchemeType(t *testing.T) {
@@ -40,7 +26,33 @@ func TestTransToValidSchemeType(t *testing.T) {
 	assert.Equal(t, TransToValidSchemeType("string"), "string")
 
 	// should accept any type, due to user defined types
-	assert.NotPanics(t, func() {
-		TransToValidSchemeType("oops")
-	})
+	TransToValidSchemeType("oops")
+}
+
+func TestIsGolangPrimitiveType(t *testing.T) {
+
+	assert.Equal(t, IsGolangPrimitiveType("uint"), true)
+	assert.Equal(t, IsGolangPrimitiveType("int"), true)
+	assert.Equal(t, IsGolangPrimitiveType("uint8"), true)
+	assert.Equal(t, IsGolangPrimitiveType("uint16"), true)
+	assert.Equal(t, IsGolangPrimitiveType("int16"), true)
+	assert.Equal(t, IsGolangPrimitiveType("byte"), true)
+	assert.Equal(t, IsGolangPrimitiveType("uint32"), true)
+	assert.Equal(t, IsGolangPrimitiveType("int32"), true)
+	assert.Equal(t, IsGolangPrimitiveType("rune"), true)
+	assert.Equal(t, IsGolangPrimitiveType("uint64"), true)
+	assert.Equal(t, IsGolangPrimitiveType("int64"), true)
+	assert.Equal(t, IsGolangPrimitiveType("float32"), true)
+	assert.Equal(t, IsGolangPrimitiveType("float64"), true)
+	assert.Equal(t, IsGolangPrimitiveType("bool"), true)
+	assert.Equal(t, IsGolangPrimitiveType("string"), true)
+
+	assert.Equal(t, IsGolangPrimitiveType("oops"), false)
+}
+
+func TestIsNumericType(t *testing.T) {
+	assert.Equal(t, IsNumericType("integer"), true)
+	assert.Equal(t, IsNumericType("number"), true)
+
+	assert.Equal(t, IsNumericType("string"), false)
 }

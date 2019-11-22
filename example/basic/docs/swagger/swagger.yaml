@@ -86,12 +86,10 @@ paths:
           description: We need ID!!
           schema:
             $ref: '#/definitions/web.APIError'
-            type: object
         "404":
           description: Can not find ID
           schema:
             $ref: '#/definitions/web.APIError'
-            type: object
       summary: Upload file
   /testapi/get-string-by-int/{some_id}:
     get:
@@ -123,12 +121,10 @@ paths:
           description: We need ID!!
           schema:
             $ref: '#/definitions/web.APIError'
-            type: object
         "404":
           description: Can not find ID
           schema:
             $ref: '#/definitions/web.APIError'
-            type: object
       summary: Add a new pet to the store
   /testapi/get-struct-array-by-string/{some_id}:
     get:
@@ -163,10 +159,8 @@ paths:
           description: We need ID!!
           schema:
             $ref: '#/definitions/web.APIError'
-            type: object
         "404":
           description: Can not find ID
           schema:
             $ref: '#/definitions/web.APIError'
-            type: object
 swagger: "2.0"

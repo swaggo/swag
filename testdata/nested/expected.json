@@ -1,0 +1,87 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "petstore.swagger.io",
+    "basePath": "/v2",
+    "paths": {
+        "/testapi/get-foo": {
+            "get": {
+                "description": "get Foo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-foo",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.Foo"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.Bar": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Foo": {
+            "type": "object",
+            "required": [
+                "arrayField1",
+                "arrayField2",
+                "field1",
+                "insideData"
+            ],
+            "properties": {
+                "arrayField1": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "arrayField2": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Bar"
+                    }
+                },
+                "field1": {
+                    "type": "string"
+                },
+                "insideData": {
+                    "type": "object",
+                    "$ref": "#/definitions/api.Bar"
+                },
+                "outsideData": {
+                    "type": "object",
+                    "$ref": "#/definitions/nested2.Body"
+                }
+            }
+        },
+        "nested2.Body": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

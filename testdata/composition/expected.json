@@ -25,7 +25,6 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/api.Bar"
                         }
                     }
@@ -46,7 +45,6 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/api.BarMap"
                         }
                     }
@@ -67,7 +65,6 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/api.Foo"
                         }
                     }
@@ -88,7 +85,6 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/api.FooBar"
                         }
                     }
@@ -109,8 +105,27 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/api.FooBarPointer"
+                        }
+                    }
+                }
+            }
+        },
+        "/testapi/get-foobarmap": {
+            "get": {
+                "description": "get FoorBarMap",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-foo-bar-map",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.FooBarMap"
                         }
                     }
                 }
@@ -156,6 +171,17 @@
                 }
             }
         },
+        "api.FooBarMap": {
+            "type": "object",
+            "properties": {
+                "field3": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/MapValue"
+                    }
+                }
+            }
+        },
         "api.FooBarPointer": {
             "type": "object",
             "properties": {
@@ -166,6 +192,14 @@
                     "type": "string"
                 },
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.MapValue": {
+            "type": "object",
+            "properties": {
+                "field4": {
                     "type": "string"
                 }
             }

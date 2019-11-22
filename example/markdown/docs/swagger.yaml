@@ -1,0 +1,158 @@
+basePath: /v2
+definitions:
+  api.APIError:
+    properties:
+      createdAt:
+        type: string
+      errorCode:
+        type: integer
+      errorMessage:
+        type: string
+    type: object
+  api.User:
+    properties:
+      email:
+        type: string
+      id:
+        type: integer
+      password:
+        type: string
+    type: object
+  api.UsersCollection:
+    items:
+      properties:
+        email:
+          type: string
+        id:
+          type: integer
+        password:
+          type: string
+      type: object
+    type: array
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: |-
+    # General API documentation
+
+    **Warning** this api is not production ready. Use at your own risk.
+
+    In order to re-generate the documentation you need to run
+
+    `swago init --md .`
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /admin/user/:
+    get:
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            items:
+              $ref: '#/definitions/api.UsersCollection'
+            type: array
+      summary: List users from the store
+      tags:
+      - admin
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User Data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/api.User'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Add a new user to the store
+      tags:
+      - admin
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User Data
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/api.User'
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Add a new user to the store
+      tags:
+      - admin
+  /admin/user/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/api.User'
+        "400":
+          description: We need ID!!
+          schema:
+            $ref: '#/definitions/api.APIError'
+        "404":
+          description: Can not find ID
+          schema:
+            $ref: '#/definitions/api.APIError'
+      summary: Read user from the store
+      tags:
+      - admin
+swagger: "2.0"
+tags:
+- description: "# Admin TAG API documentation\n\n**Admin** functions goes here \n\nFor
+    more info please read [link](/docs/readme.md).\n\n"
+  name: admin

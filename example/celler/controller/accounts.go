@@ -181,5 +181,5 @@ func (c *Controller) UploadAccountImage(ctx *gin.Context) {
 		httputil.NewError(ctx, http.StatusBadRequest, err)
 		return
 	}
-	ctx.JSON(http.StatusOK, Message{Message: fmt.Sprintf("upload compleate userID=%d finename=%s", id, file.Filename)})
+	ctx.JSON(http.StatusOK, Message{Message: fmt.Sprintf("upload complete userID=%d filename=%s", id, file.Filename)})
 }
