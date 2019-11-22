@@ -69,9 +69,11 @@ devel-deps: ensure-gopath
 
 .PHONY: ensure-gopath
 ensure-gopath:
-	mkdir -p ${GOPATH}/github.com/swaggo
-	if [ -L ${GOPATH}/github.com/swaggo/swag ]; then rm ${GOPATH}/github.com/swaggo/swag; fi
-	ln -s "$(shell pwd)"  ${GOPATH}/github.com/swaggo/swag
+	@if [ ! -d ${GOPATH}/src/github.com/swaggo/swag ]; then \
+	    mkdir -p ${GOPATH}/src//github.com/swaggo; \
+	    if [ -L ${GOPATH}/src/github.com/swaggo/swag ]; then rm ${GOPATH}/src/github.com/swaggo/swag; fi; \
+	    ln -s "$(shell pwd)"  ${GOPATH}/src/github.com/swaggo/swag; \
+	fi
 
 .PHONY: lint
 lint: devel-deps
