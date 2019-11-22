@@ -936,9 +936,21 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			}
 		}
 	} else if astTypeMap, ok := field.Type.(*ast.MapType); ok { // if map
-		itemSchema, err := parser.parseTypeExpr(pkgName, "", astTypeMap.Value)
+		_, err := parser.parseTypeExpr(pkgName, "", astTypeMap.Value)
 		if err != nil {
 			return properties, nil, err
+		}
+
+		fullTypeName, err := getFieldType(astTypeMap.Value)
+		if err != nil {
+			return properties, nil, err
+		}
+		mapValueScheme := &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.Ref{
+					Ref: jsonreference.MustCreateRef("#/definitions/" + fullTypeName),
+				},
+			},
 		}
 
 		required := make([]string, 0)
@@ -958,7 +970,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 				Enum:        structField.enums,
 				Default:     structField.defaultValue,
 				AdditionalProperties: &spec.SchemaOrBool{
-					Schema: &itemSchema,
+					Schema: mapValueScheme,
 				},
 			},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{

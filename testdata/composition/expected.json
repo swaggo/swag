@@ -177,12 +177,7 @@
                 "field3": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "object",
-                        "properties": {
-                            "field4": {
-                                "type": "string"
-                            }
-                        }
+                        "$ref": "#/definitions/MapValue"
                     }
                 }
             }
