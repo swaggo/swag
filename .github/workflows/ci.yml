@@ -13,12 +13,13 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - name: deps
-        run: make deps
+        run: |
+          mkdir -p $(go env GOPATH)/src/github.com/swaggo
+          ln -s $(pwd) $(go env GOPATH)/src/github.com/swaggo/swag
+          make deps
       - name: static program analysis
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin # https://github.com/actions/setup-go/issues/14
-          mkdir -p $(go env GOPATH)/src/github.com/swaggo
-          ln -s $(pwd) $(go env GOPATH)/src/github.com/swaggo/swag
           make fmt-check lint vet
       - name: build
         run: make build
