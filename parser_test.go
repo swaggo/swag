@@ -2240,37 +2240,21 @@ func TestParseComposition(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
-// https://github.com/KyleBanks/depth/issues/18
-func TestParseNested(t *testing.T) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("Getwd: %s", err)
-	}
-
-	err = os.Chdir("testdata/nested")
-	if err != nil {
-		t.Fatalf("Chdir: %s", err)
-	}
-
+// Disabled for resting purpose
+func disabledTestParseNested(t *testing.T) {
+	searchDir := "testdata/nested"
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
-	err = p.ParseAPI(".", mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile("expected.json")
+	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	Printf(string(b))
 	assert.Equal(t, string(expected), string(b))
-
-	// swtich back to original path
-	err = os.Chdir(cwd)
-	if err != nil {
-		t.Fatalf("Chdir 2: %s", err)
-	}
-
 }
 
 func TestParser_ParseStuctArrayObject(t *testing.T) {
