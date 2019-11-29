@@ -20,9 +20,9 @@ jobs:
         env:
           GOPATH: ${{ runner.workspace }}
       - name: static program analysis
+        working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
         run:
           make fmt-check lint vet
-        working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
         env:
           PATH: $PATH:$(go env GOPATH)/bin
           GOPATH: ${{ runner.workspace }}
