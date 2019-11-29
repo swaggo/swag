@@ -22,6 +22,7 @@ jobs:
         run:
           make fmt-check lint vet
         env:
+          PATH: $PATH:$(go env GOPATH)/bin
           GOPATH: ${{ runner.workspace }}
       - name: build
         run: make build
