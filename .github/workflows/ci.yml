@@ -15,22 +15,13 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - name: deps
-        run:  make deps
-        env:
-          GOPATH: ${{ runner.workspace }}
-      - name: static program analysis
-        run: |
+        run:  |
           export PATH=$PATH:$(go env GOPATH)/bin # https://github.com/actions/setup-go/issues/14
-          make fmt-check lint vet
-        env:
-          GOPATH: ${{ runner.workspace }}
+          export GOPATH=${{ runner.workspace }}
+          make deps
+      - name: static program analysis
+        run: make fmt-check lint vet
       - name: build
         run: make build
-        working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
-        env:
-          GOPATH: ${{ runner.workspace }}
       - name: test
         run: make test
-        working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
-        env:
-          GOPATH: ${{ runner.workspace }}
