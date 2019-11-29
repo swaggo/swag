@@ -24,7 +24,7 @@ jobs:
           make fmt-check lint vet
         env:
           GOPATH: ${{ runner.workspace }}
-          PATH: $PATH:$(go env GOPATH)/bin
+          PATH: $PATH:$(go env GOPATH)/bin:${{ runner.workspace }}/src/github.com/${{ github.repository }}
       - name: build
         run: make build
         working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
