@@ -16,7 +16,6 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: deps
         run:  make deps
-        working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
         env:
           GOPATH: ${{ runner.workspace }}
       - name: static program analysis
@@ -24,8 +23,8 @@ jobs:
         run:
           make fmt-check lint vet
         env:
-          PATH: $PATH:$(go env GOPATH)/bin
           GOPATH: ${{ runner.workspace }}
+          PATH: $PATH:$(go env GOPATH)/bin
       - name: build
         run: make build
         working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
