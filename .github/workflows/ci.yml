@@ -21,12 +21,14 @@ jobs:
       - name: static program analysis
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin # https://github.com/actions/setup-go/issues/14
-          export GOPATH=$GOPATH
           make fmt-check lint vet
         env:
           GOPATH: ${{ runner.workspace }}
       - name: build
         run: make build
-        working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
+        env:
+          GOPATH: ${{ runner.workspace }}
       - name: test
         run: make test
+        env:
+          GOPATH: ${{ runner.workspace }}
