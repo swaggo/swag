@@ -9,19 +9,24 @@ jobs:
     steps:
       - uses: actions/checkout@master
         with:
-            path: ./src/github.com/${{ github.repository }}
+          path: ./src/github.com/${{ github.repository }}
       - name: Set up Go
         uses: actions/setup-go@v1
         with:
           go-version: ${{ matrix.go }}
       - name: deps
-        run:  |
-          export PATH=$PATH:$(go env GOPATH)/bin # https://github.com/actions/setup-go/issues/14
-          export GOPATH=${{ runner.workspace }}
-          make deps
+        run:  make deps
+        env:
+          GOPATH: ${{ runner.workspace }}
       - name: static program analysis
-        run: make fmt-check lint vet
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin # https://github.com/actions/setup-go/issues/14
+          export GOPATH=$GOPATH
+          make fmt-check lint vet
+        env:
+          GOPATH: ${{ runner.workspace }}
       - name: build
         run: make build
+        working-directory: ${{ runner.workspace }}/src/github.com/${{ github.repository }}
       - name: test
         run: make test
