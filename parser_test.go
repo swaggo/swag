@@ -2240,8 +2240,7 @@ func TestParseComposition(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
-// Disabled for resting purpose
-func disabledTestParseNested(t *testing.T) {
+func TestParseNested(t *testing.T) {
 	searchDir := "testdata/nested"
 	mainAPIFile := "main.go"
 	p := New()
