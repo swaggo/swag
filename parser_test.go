@@ -2240,8 +2240,7 @@ func TestParseComposition(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
-// Disabled for resting purpose
-func disabledTestParseNested(t *testing.T) {
+func TestParseNested(t *testing.T) {
 	searchDir := "testdata/nested"
 	mainAPIFile := "main.go"
 	p := New()
@@ -2763,7 +2762,7 @@ func TestFixes432(t *testing.T) {
 	}
 }
 
-func disabledTestParseOutsideDependencies(t *testing.T) {
+func TestParseOutsideDependencies(t *testing.T) {
 	searchDir := "testdata/pare_outside_dependencies"
 	mainAPIFile := "cmd/main.go"
 
