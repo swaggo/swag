@@ -41,7 +41,7 @@ var initFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:  outputFlag + ", o",
 		Value: "./docs",
-		Usage: "Output directory for all the generated files(swagger.json, swagger.yaml and doc.go)",
+		Usage: "Output directory for all the generated files (swagger.json, swagger.yaml and docs.go)",
 	},
 	cli.StringFlag{
 		Name:  outputTypesFlag + ", ot",
