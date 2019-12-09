@@ -14,11 +14,13 @@ import (
 
 func TestGen_Build(t *testing.T) {
 	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
 
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 	assert.NoError(t, New().Build(config))
@@ -38,10 +40,12 @@ func TestGen_Build(t *testing.T) {
 
 func TestGen_BuildSnakecase(t *testing.T) {
 	searchDir := "../testdata/simple2"
+	outputTypes := []string{"go", "json", "yaml"}
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple2/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "snakecase",
 	}
 
@@ -62,10 +66,12 @@ func TestGen_BuildSnakecase(t *testing.T) {
 
 func TestGen_BuildLowerCamelcase(t *testing.T) {
 	searchDir := "../testdata/simple3"
+	outputTypes := []string{"go", "json", "yaml"}
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple3/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 
@@ -86,11 +92,13 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 
 func TestGen_jsonIndent(t *testing.T) {
 	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
 
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 	gen := New()
@@ -102,11 +110,13 @@ func TestGen_jsonIndent(t *testing.T) {
 
 func TestGen_jsonToYAML(t *testing.T) {
 	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
 
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 	gen := New()
@@ -129,12 +139,14 @@ func TestGen_jsonToYAML(t *testing.T) {
 
 func TestGen_SearchDirIsNotExist(t *testing.T) {
 	searchDir := "../isNotExistDir"
+	outputTypes := []string{"go", "json", "yaml"}
 
 	var swaggerConfDir, propNamingStrategy string
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          swaggerConfDir,
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: propNamingStrategy,
 	}
 	assert.EqualError(t, New().Build(config), "dir: ../isNotExistDir is not exist")
@@ -142,12 +154,14 @@ func TestGen_SearchDirIsNotExist(t *testing.T) {
 
 func TestGen_MainAPiNotExist(t *testing.T) {
 	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
 
 	var swaggerConfDir, propNamingStrategy string
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./notexists.go",
 		OutputDir:          swaggerConfDir,
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: propNamingStrategy,
 	}
 	assert.Error(t, New().Build(config))
@@ -155,12 +169,14 @@ func TestGen_MainAPiNotExist(t *testing.T) {
 
 func TestGen_OutputIsNotExist(t *testing.T) {
 	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
 
 	var propNamingStrategy string
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "/dev/null",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: propNamingStrategy,
 	}
 	assert.Error(t, New().Build(config))
@@ -170,12 +186,14 @@ func TestGen_FailToWrite(t *testing.T) {
 	searchDir := "../testdata/simple"
 
 	outputDir := filepath.Join(os.TempDir(), "swagg", "test")
+	outputTypes := []string{"go", "json", "yaml"}
 
 	var propNamingStrategy string
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          outputDir,
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: propNamingStrategy,
 	}
 
@@ -215,11 +233,13 @@ func TestGen_FailToWrite(t *testing.T) {
 
 func TestGen_configWithOutputDir(t *testing.T) {
 	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
 
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 
@@ -235,6 +255,64 @@ func TestGen_configWithOutputDir(t *testing.T) {
 			t.Fatal(err)
 		}
 		os.Remove(expectedFile)
+	}
+}
+
+func TestGen_configWithOutputTypesAll(t *testing.T) {
+	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
+		PropNamingStrategy: "",
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
+	}
+}
+
+func TestGen_configWithOutputTypesSingle(t *testing.T) {
+	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
+
+	for _, outputType := range outputTypes {
+		config := &Config{
+			SearchDir:          searchDir,
+			MainAPIFile:        "./main.go",
+			OutputDir:          "../testdata/simple/docs",
+			OutputTypes:        []string{outputType},
+			PropNamingStrategy: "",
+		}
+
+		assert.NoError(t, New().Build(config))
+
+		outFileName := "swagger"
+		if outputType == "go" {
+			outFileName = "docs"
+		}
+		expectedFiles := []string{
+			path.Join(config.OutputDir, outFileName+"."+outputType),
+		}
+		for _, expectedFile := range expectedFiles {
+			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+				t.Fatal(err)
+			}
+			os.Remove(expectedFile)
+		}
 	}
 }
 
@@ -292,13 +370,14 @@ func TestGen_writeGoDoc(t *testing.T) {
 }
 
 func TestGen_GeneratedDoc(t *testing.T) {
-
 	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
 
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 
