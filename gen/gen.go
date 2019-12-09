@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -24,20 +25,36 @@ var open = os.Open
 // DefaultOverridesFile is the location swaggo will look for type overrides.
 const DefaultOverridesFile = ".swaggo"
 
+type genTypeWriter func(*Config, *spec.Swagger) error
+
 // Gen presents a generate tool for swag.
 type Gen struct {
-	jsonIndent func(data interface{}) ([]byte, error)
-	jsonToYAML func(data []byte) ([]byte, error)
+	json          func(data interface{}) ([]byte, error)
+	jsonIndent    func(data interface{}) ([]byte, error)
+	jsonToYAML    func(data []byte) ([]byte, error)
+	outputTypeMap map[string]genTypeWriter
 }
 
 // New creates a new Gen.
 func New() *Gen {
-	return &Gen{
+	gen := &Gen{
+		json: func(data interface{}) ([]byte, error) {
+			return json.Marshal(data)
+		},
 		jsonIndent: func(data interface{}) ([]byte, error) {
 			return json.MarshalIndent(data, "", "    ")
 		},
 		jsonToYAML: yaml.JSONToYAML,
 	}
+
+	gen.outputTypeMap = map[string]genTypeWriter{
+		"go":   gen.writeDocSwagger,
+		"json": gen.writeJSONSwagger,
+		"yaml": gen.writeYAMLSwagger,
+		"yml":  gen.writeYAMLSwagger,
+	}
+
+	return gen
 }
 
 // Config presents Gen configurations.
@@ -50,6 +67,9 @@ type Config struct {
 
 	// OutputDir represents the output directory for all the generated files
 	OutputDir string
+
+	// OutputTypes define types of files which should be generated
+	OutputTypes []string
 
 	// MainAPIFile the Go file path in which 'swagger general API Info' is written
 	MainAPIFile string
@@ -137,23 +157,32 @@ func (g *Gen) Build(config *Config) error {
 	}
 	swagger := p.GetSwagger()
 
-	b, err := g.jsonIndent(swagger)
-	if err != nil {
-		return err
-	}
-
 	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
 		return err
 	}
+
+	for _, outputType := range config.OutputTypes {
+		outputType = strings.ToLower(strings.TrimSpace(outputType))
+		if typeWriter, ok := g.outputTypeMap[outputType]; ok {
+			if err := typeWriter(config, swagger); err != nil {
+				return err
+			}
+		} else {
+			log.Printf("output type '%s' not supported", outputType)
+		}
+	}
+
+	return nil
+}
+
+func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
+	docFileName := path.Join(config.OutputDir, "docs.go")
 
 	absOutputDir, err := filepath.Abs(config.OutputDir)
 	if err != nil {
 		return err
 	}
 	packageName := filepath.Base(absOutputDir)
-	docFileName := filepath.Join(config.OutputDir, "docs.go")
-	jsonFileName := filepath.Join(config.OutputDir, "swagger.json")
-	yamlFileName := filepath.Join(config.OutputDir, "swagger.yaml")
 
 	docs, err := os.Create(docFileName)
 	if err != nil {
@@ -161,14 +190,44 @@ func (g *Gen) Build(config *Config) error {
 	}
 	defer docs.Close()
 
+	// Write doc
+	err = g.writeGoDoc(packageName, docs, swagger, config)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("create docs.go at  %+v", docFileName)
+	return nil
+}
+
+func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
+	jsonFileName := path.Join(config.OutputDir, "swagger.json")
+
+	b, err := g.jsonIndent(swagger)
+	if err != nil {
+		return err
+	}
+
 	err = g.writeFile(b, jsonFileName)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("create swagger.json at  %+v", jsonFileName)
+	return nil
+}
+
+func (g *Gen) writeYAMLSwagger(config *Config, swagger *spec.Swagger) error {
+	yamlFileName := path.Join(config.OutputDir, "swagger.yaml")
+
+	b, err := g.json(swagger)
 	if err != nil {
 		return err
 	}
 
 	y, err := g.jsonToYAML(b)
 	if err != nil {
-		return fmt.Errorf("cannot convert json to yaml error: %s", err)
+		return fmt.Errorf("cannot covert json to yaml error: %s", err)
 	}
 
 	err = g.writeFile(y, yamlFileName)
@@ -176,16 +235,7 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
-	// Write doc
-	err = g.writeGoDoc(packageName, docs, swagger, config)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("create docs.go at %+v", docFileName)
-	log.Printf("create swagger.json at %+v", jsonFileName)
-	log.Printf("create swagger.yaml at %+v", yamlFileName)
-
+	log.Printf("create swagger.yaml at  %+v", yamlFileName)
 	return nil
 }
 
