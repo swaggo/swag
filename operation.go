@@ -181,6 +181,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		case "primitive":
 			param.Schema.Type = spec.StringOrArray{refType}
 		case "array":
+			param.Schema.Type = spec.StringOrArray{objectType}
 			param.Schema.Items = &spec.SchemaOrArray{
 				Schema: &spec.Schema{
 					SchemaProps: spec.SchemaProps{},
@@ -188,6 +189,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			}
 			// Array of Primitive or Object
 			if IsPrimitiveType(refType) {
+				param.SimpleSchema.Type = objectType
+				param.SimpleSchema.Items = &spec.Items{SimpleSchema: spec.SimpleSchema{Type: refType}}
 				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
 			} else {
 				if err := operation.registerSchemaType(refType, astFile); err != nil {
