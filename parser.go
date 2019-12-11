@@ -46,6 +46,9 @@ type Parser struct {
 	// TypeDefinitions is a map that stores [package name][type name][*ast.TypeSpec]
 	TypeDefinitions map[string]map[string]*ast.TypeSpec
 
+	// ImportAliases is map that stores [import name][import package name][*ast.ImportSpec]
+	ImportAliases map[string]map[string]*ast.ImportSpec
+
 	// CustomPrimitiveTypes is a map that stores custom primitive types to actual golang types [type name][string]
 	CustomPrimitiveTypes map[string]string
 
@@ -85,6 +88,7 @@ func New(options ...func(*Parser)) *Parser {
 		},
 		files:                make(map[string]*ast.File),
 		TypeDefinitions:      make(map[string]map[string]*ast.TypeSpec),
+		ImportAliases:        make(map[string]map[string]*ast.ImportSpec),
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
 	}
@@ -521,6 +525,23 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 			}
 		}
 	}
+
+	for _, importSpec := range astFile.Imports {
+		if importSpec.Name == nil {
+			continue
+		}
+
+		alias := importSpec.Name.Name
+
+		if _, ok := parser.ImportAliases[alias]; !ok {
+			parser.ImportAliases[alias] = make(map[string]*ast.ImportSpec)
+		}
+
+		importParts := strings.Split(strings.Trim(importSpec.Path.Value, "\""), "/")
+		importPkgName := importParts[len(importParts)-1]
+
+		parser.ImportAliases[alias][importPkgName] = importSpec
+	}
 }
 
 func (parser *Parser) isInStructStack(refTypeName string) bool {
@@ -934,6 +955,52 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					ReadOnly: structField.readOnly,
 				},
 			}
+		}
+	} else if astTypeMap, ok := field.Type.(*ast.MapType); ok { // if map
+		_, err := parser.parseTypeExpr(pkgName, "", astTypeMap.Value)
+		if err != nil {
+			return properties, nil, err
+		}
+
+		fullTypeName, err := getFieldType(astTypeMap.Value)
+		if err != nil {
+			return properties, nil, err
+		}
+		mapValueScheme := &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.Ref{
+					Ref: jsonreference.MustCreateRef("#/definitions/" + fullTypeName),
+				},
+			},
+		}
+
+		required := make([]string, 0)
+		if structField.isRequired {
+			required = append(required, structField.name)
+		}
+		properties[structField.name] = spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type:        []string{structField.schemaType},
+				Description: desc,
+				Format:      structField.formatType,
+				Required:    required,
+				Maximum:     structField.maximum,
+				Minimum:     structField.minimum,
+				MaxLength:   structField.maxLength,
+				MinLength:   structField.minLength,
+				Enum:        structField.enums,
+				Default:     structField.defaultValue,
+				AdditionalProperties: &spec.SchemaOrBool{
+					Schema: mapValueScheme,
+				},
+			},
+			SwaggerSchemaProps: spec.SwaggerSchemaProps{
+				Example:  structField.exampleValue,
+				ReadOnly: structField.readOnly,
+			},
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: structField.extensions,
+			},
 		}
 	} else {
 		required := make([]string, 0)
