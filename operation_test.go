@@ -394,7 +394,7 @@ func TestParseParamCommentBodyArray(t *testing.T) {
             "in": "body",
             "required": true,
             "schema": {
-                "type": "string",
+                "type": "array",
                 "items": {
                     "type": "string"
                 }
