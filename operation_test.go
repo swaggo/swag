@@ -389,10 +389,6 @@ func TestParseParamCommentBodyArray(t *testing.T) {
 	expected := `{
     "parameters": [
         {
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
             "description": "Users List",
             "name": "names",
             "in": "body",
