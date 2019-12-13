@@ -682,8 +682,6 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 				},
 			},
 		}, nil
-		/*schema := parser.swagger.Definitions[refTypeName]
-		return &schema, nil*/
 
 	// type Foo *Baz
 	case *ast.StarExpr:
