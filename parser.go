@@ -602,7 +602,7 @@ func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.Ty
 	if err != nil {
 		return err
 	}
-	parser.swagger.Definitions[refTypeName] = schema
+	parser.swagger.Definitions[refTypeName] = *schema
 	return nil
 }
 
@@ -648,28 +648,42 @@ func fullTypeName(pkgName, typeName string) string {
 
 // parseTypeExpr parses given type expression that corresponds to the type under
 // given name and package, and returns swagger schema for it.
-func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr) (spec.Schema, error) {
-	//TODO: return pointer to spec.Schema
+func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr) (*spec.Schema, error) {
 
 	switch expr := typeExpr.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
 		refTypeName := fullTypeName(pkgName, typeName)
 		if schema, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
-			return schema, nil
+			return &schema, nil
 		}
 
 		return parser.parseStruct(pkgName, expr.Fields)
 
 	// type Foo Baz
 	case *ast.Ident:
+		if IsGolangPrimitiveType(expr.Name) {
+			return &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: spec.StringOrArray{TransToValidSchemeType(expr.Name)},
+				},
+			}, nil
+		}
 		refTypeName := fullTypeName(pkgName, expr.Name)
 		if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
 			if typedef, ok := parser.TypeDefinitions[pkgName][expr.Name]; ok {
 				parser.ParseDefinition(pkgName, expr.Name, typedef)
 			}
 		}
-		return parser.swagger.Definitions[refTypeName], nil
+		return &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.Ref{
+					Ref: jsonreference.MustCreateRef("#/definitions/" + refTypeName),
+				},
+			},
+		}, nil
+		/*schema := parser.swagger.Definitions[refTypeName]
+		return &schema, nil*/
 
 	// type Foo *Baz
 	case *ast.StarExpr:
@@ -679,13 +693,13 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 	case *ast.ArrayType:
 		itemSchema, err := parser.parseTypeExpr(pkgName, "", expr.Elt)
 		if err != nil {
-			return spec.Schema{}, err
+			return &spec.Schema{}, err
 		}
-		return spec.Schema{
+		return &spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"array"},
 				Items: &spec.SchemaOrArray{
-					Schema: &itemSchema,
+					Schema: itemSchema,
 				},
 			},
 		}, nil
@@ -693,28 +707,25 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			pkgName = xIdent.Name
-			typeName = expr.Sel.Name
-			refTypeName := fullTypeName(pkgName, typeName)
-			if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
-				typedef := parser.TypeDefinitions[pkgName][typeName]
-				parser.ParseDefinition(pkgName, typeName, typedef)
-			}
-			return parser.swagger.Definitions[refTypeName], nil
+			return parser.parseTypeExpr(xIdent.Name, expr.Sel.Name, expr.Sel)
 		}
 
 	// type Foo map[string]Bar
 	case *ast.MapType:
-		itemSchema, err := parser.parseTypeExpr(pkgName, "", expr.Value)
-		if err != nil {
-			return spec.Schema{}, err
+		var valueSchema spec.SchemaOrBool
+		if _, ok := expr.Value.(*ast.InterfaceType); ok {
+			valueSchema.Allows = true
+		} else {
+			schema, err := parser.parseTypeExpr(pkgName, "", expr.Value)
+			if err != nil {
+				return &spec.Schema{}, err
+			}
+			valueSchema.Schema = schema
 		}
-		return spec.Schema{
+		return &spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				AdditionalProperties: &spec.SchemaOrBool{
-					Schema: &itemSchema,
-				},
+				Type:                 []string{"object"},
+				AdditionalProperties: &valueSchema,
 			},
 		}, nil
 	// ...
@@ -722,21 +733,21 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 		Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}
 
-	return spec.Schema{
+	return &spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type: []string{"object"},
 		},
 	}, nil
 }
 
-func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (spec.Schema, error) {
+func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (*spec.Schema, error) {
 
 	extraRequired := make([]string, 0)
 	properties := make(map[string]spec.Schema)
 	for _, field := range fields.List {
 		fieldProps, requiredFromAnon, err := parser.parseStructField(pkgName, field)
 		if err != nil {
-			return spec.Schema{}, err
+			return &spec.Schema{}, err
 		}
 		extraRequired = append(extraRequired, requiredFromAnon...)
 		for k, v := range fieldProps {
@@ -753,7 +764,7 @@ func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (spec.S
 		properties[k] = prop
 	}
 
-	return spec.Schema{
+	return &spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type:       []string{"object"},
 			Properties: properties,
@@ -812,7 +823,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					properties[k] = v
 				}
 			case "array":
-				properties[typeName] = schema
+				properties[typeName] = *schema
 			default:
 				Printf("Can't extract properties from a schema of type '%s'", schemaType)
 			}
@@ -957,51 +968,33 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			}
 		}
 	} else if astTypeMap, ok := field.Type.(*ast.MapType); ok { // if map
-		_, err := parser.parseTypeExpr(pkgName, "", astTypeMap.Value)
+		mapValueScheme, err := parser.parseTypeExpr(pkgName, "", astTypeMap)
 		if err != nil {
 			return properties, nil, err
-		}
-
-		fullTypeName, err := getFieldType(astTypeMap.Value)
-		if err != nil {
-			return properties, nil, err
-		}
-		mapValueScheme := &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Ref: spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + fullTypeName),
-				},
-			},
 		}
 
 		required := make([]string, 0)
 		if structField.isRequired {
 			required = append(required, structField.name)
 		}
-		properties[structField.name] = spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:        []string{structField.schemaType},
-				Description: desc,
-				Format:      structField.formatType,
-				Required:    required,
-				Maximum:     structField.maximum,
-				Minimum:     structField.minimum,
-				MaxLength:   structField.maxLength,
-				MinLength:   structField.minLength,
-				Enum:        structField.enums,
-				Default:     structField.defaultValue,
-				AdditionalProperties: &spec.SchemaOrBool{
-					Schema: mapValueScheme,
-				},
-			},
-			SwaggerSchemaProps: spec.SwaggerSchemaProps{
-				Example:  structField.exampleValue,
-				ReadOnly: structField.readOnly,
-			},
-			VendorExtensible: spec.VendorExtensible{
-				Extensions: structField.extensions,
-			},
+		mapValueScheme.Type = []string{structField.schemaType}
+		mapValueScheme.Description = desc
+		mapValueScheme.Format = structField.formatType
+		mapValueScheme.Required = required
+		mapValueScheme.Maximum = structField.maximum
+		mapValueScheme.Minimum = structField.minimum
+		mapValueScheme.MaxLength = structField.maxLength
+		mapValueScheme.MinLength = structField.minLength
+		mapValueScheme.Enum = structField.enums
+		mapValueScheme.Default = structField.defaultValue
+		mapValueScheme.SwaggerSchemaProps = spec.SwaggerSchemaProps{
+			Example:  structField.exampleValue,
+			ReadOnly: structField.readOnly,
 		}
+		mapValueScheme.VendorExtensible = spec.VendorExtensible{
+			Extensions: structField.extensions,
+		}
+		properties[structField.name] = *mapValueScheme
 	} else {
 		required := make([]string, 0)
 		if structField.isRequired {
@@ -1036,7 +1029,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			}
 
 			if len(schema.SchemaProps.Type) > 0 {
-				properties[structField.name] = schema
+				properties[structField.name] = *schema
 				return properties, nil, nil
 			}
 		}

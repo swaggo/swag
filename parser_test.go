@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -253,8 +254,13 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	err := p.getAllGoFileInfo(searchDir)
 
 	assert.NoError(t, err)
-	assert.NotEmpty(t, p.files["testdata/pet/main.go"])
-	assert.NotEmpty(t, p.files["testdata/pet/web/handler.go"])
+	if runtime.GOOS == "windows" {
+		assert.NotEmpty(t, p.files["testdata\\pet\\main.go"])
+		assert.NotEmpty(t, p.files["testdata\\pet\\web\\handler.go"])
+	} else {
+		assert.NotEmpty(t, p.files["testdata/pet/main.go"])
+		assert.NotEmpty(t, p.files["testdata/pet/web/handler.go"])
+	}
 	assert.Equal(t, 2, len(p.files))
 }
 
@@ -520,7 +526,9 @@ func TestParseSimpleApi1(t *testing.T) {
             "type": "array",
             "items": {
                 "type": "object",
-                "additionalProperties": {}
+                "additionalProperties": {
+                    "type": "string"
+                }
             }
         },
         "cross.Cross": {
@@ -563,18 +571,7 @@ func TestParseSimpleApi1(t *testing.T) {
             }
         },
         "web.CrossAlias": {
-            "type": "object",
-            "properties": {
-                "Array": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "String": {
-                    "type": "string"
-                }
-            }
+            "$ref": "#/definitions/cross.Cross"
         },
         "web.IndirectRecursiveTest": {
             "type": "object",
@@ -746,9 +743,7 @@ func TestParseSimpleApi1(t *testing.T) {
                     "type": "integer"
                 },
                 "middlename": {
-                    "type": "string",
-                    "x-abc": "def",
-                    "x-nullable": true
+                    "type": "string"
                 }
             }
         },
@@ -838,22 +833,7 @@ func TestParseSimpleApi1(t *testing.T) {
         "web.Tags": {
             "type": "array",
             "items": {
-                "type": "object",
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "format": "int64"
-                    },
-                    "name": {
-                        "type": "string"
-                    },
-                    "pets": {
-                        "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/web.Pet"
-                        }
-                    }
-                }
+                "$ref": "#/definitions/web.Tag"
             }
         }
     },
@@ -2237,6 +2217,8 @@ func TestParseComposition(t *testing.T) {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+
+	//windows will fail: \r\n \n
 	assert.Equal(t, string(expected), string(b))
 }
 
@@ -2251,6 +2233,7 @@ func TestParseImportAliases(t *testing.T) {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	//windows will fail: \r\n \n
 	assert.Equal(t, string(expected), string(b))
 }
 
@@ -2270,7 +2253,7 @@ func TestParseNested(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
-func TestParser_ParseStuctArrayObject(t *testing.T) {
+func TestParser_ParseStructArrayObject(t *testing.T) {
 	src := `
 package api
 
@@ -2393,6 +2376,116 @@ type ResponseWrapper struct {
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(parser.swagger.Definitions, "", "   ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(out))
+
+}
+
+func TestParser_ParseStructMapMember(t *testing.T) {
+	src := `
+package api
+
+type MyMapType map[string]string
+
+type Child struct {
+	Name string
+}
+
+type Parent struct {
+	Test1 map[string]interface{}
+	Test2 map[string]string
+	Test3 map[string]*string
+	Test4 map[string]Child
+	Test5 map[string]*Child
+	Test6 MyMapType
+	Test7 []Child
+	Test8 []*Child
+}
+
+// @Success 200 {object} Parent
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	expected := `{
+   "api.Child": {
+      "type": "object",
+      "properties": {
+         "name": {
+            "type": "string"
+         }
+      }
+   },
+   "api.MyMapType": {
+      "type": "object",
+      "additionalProperties": {
+         "type": "string"
+      }
+   },
+   "api.Parent": {
+      "type": "object",
+      "properties": {
+         "test1": {
+            "type": "object",
+            "additionalProperties": true
+         },
+         "test2": {
+            "type": "object",
+            "additionalProperties": {
+               "type": "string"
+            }
+         },
+         "test3": {
+            "type": "object",
+            "additionalProperties": {
+               "type": "string"
+            }
+         },
+         "test4": {
+            "type": "object",
+            "additionalProperties": {
+               "$ref": "#/definitions/api.Child"
+            }
+         },
+         "test5": {
+            "type": "object",
+            "additionalProperties": {
+               "$ref": "#/definitions/api.Child"
+            }
+         },
+         "test6": {
+            "type": "object",
+            "$ref": "#/definitions/api.MyMapType"
+         },
+         "test7": {
+            "type": "array",
+            "items": {
+               "$ref": "#/definitions/api.Child"
+            }
+         },
+         "test8": {
+            "type": "array",
+            "items": {
+               "$ref": "#/definitions/api.Child"
+            }
+         }
+      }
+   }
+}`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.ParseType(f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	typeSpec := p.TypeDefinitions["api"]["Parent"]
+	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	assert.NoError(t, err)
+
+	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
+
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(out))
 

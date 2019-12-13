@@ -144,12 +144,7 @@
         "api.BarMap": {
             "type": "object",
             "additionalProperties": {
-                "type": "object",
-                "properties": {
-                    "field2": {
-                        "type": "string"
-                    }
-                }
+                "$ref": "#/definitions/api.Bar"
             }
         },
         "api.Foo": {
@@ -177,7 +172,7 @@
                 "field3": {
                     "type": "object",
                     "additionalProperties": {
-                        "$ref": "#/definitions/MapValue"
+                        "$ref": "#/definitions/api.MapValue"
                     }
                 }
             }
