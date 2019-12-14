@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -254,13 +253,8 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	err := p.getAllGoFileInfo(searchDir)
 
 	assert.NoError(t, err)
-	if runtime.GOOS == "windows" {
-		assert.NotEmpty(t, p.files["testdata\\pet\\main.go"])
-		assert.NotEmpty(t, p.files["testdata\\pet\\web\\handler.go"])
-	} else {
-		assert.NotEmpty(t, p.files["testdata/pet/main.go"])
-		assert.NotEmpty(t, p.files["testdata/pet/web/handler.go"])
-	}
+	assert.NotEmpty(t, p.files["testdata/pet/main.go"])
+	assert.NotEmpty(t, p.files["testdata/pet/web/handler.go"])
 	assert.Equal(t, 2, len(p.files))
 }
 
