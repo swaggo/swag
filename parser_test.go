@@ -743,7 +743,9 @@ func TestParseSimpleApi1(t *testing.T) {
                     "type": "integer"
                 },
                 "middlename": {
-                    "type": "string"
+                    "type": "string",
+                    "x-abc": "def",
+                    "x-nullable": true
                 }
             }
         },
@@ -2249,7 +2251,6 @@ func TestParseNested(t *testing.T) {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	Printf(string(b))
 	assert.Equal(t, string(expected), string(b))
 }
 
@@ -2381,6 +2382,67 @@ type ResponseWrapper struct {
 
 }
 
+func TestParser_ParseStructPointerMembers(t *testing.T) {
+	src := `
+package api
+
+type Child struct {
+	Name string
+}
+
+type Parent struct {
+	Test1 *string  //test1
+	Test2 *Child   //test2
+}
+
+// @Success 200 {object} Parent
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+
+	expected := `{
+   "api.Child": {
+      "type": "object",
+      "properties": {
+         "name": {
+            "type": "string"
+         }
+      }
+   },
+   "api.Parent": {
+      "type": "object",
+      "properties": {
+         "test1": {
+            "description": "test1",
+            "type": "string"
+         },
+         "test2": {
+            "description": "test2",
+            "type": "object",
+            "$ref": "#/definitions/api.Child"
+         }
+      }
+   }
+}`
+
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.ParseType(f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	typeSpec := p.TypeDefinitions["api"]["Parent"]
+	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	assert.NoError(t, err)
+
+	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(out))
+}
+
 func TestParser_ParseStructMapMember(t *testing.T) {
 	src := `
 package api
@@ -2392,14 +2454,14 @@ type Child struct {
 }
 
 type Parent struct {
-	Test1 map[string]interface{}
-	Test2 map[string]string
-	Test3 map[string]*string
-	Test4 map[string]Child
-	Test5 map[string]*Child
-	Test6 MyMapType
-	Test7 []Child
-	Test8 []*Child
+	Test1 map[string]interface{}  //test1
+	Test2 map[string]string		  //test2
+	Test3 map[string]*string	  //test3
+	Test4 map[string]Child		  //test4
+	Test5 map[string]*Child		  //test5
+	Test6 MyMapType				  //test6
+	Test7 []Child				  //test7
+	Test8 []*Child				  //test8
 }
 
 // @Success 200 {object} Parent
@@ -2426,44 +2488,52 @@ func Test(){
       "type": "object",
       "properties": {
          "test1": {
+            "description": "test1",
             "type": "object",
             "additionalProperties": true
          },
          "test2": {
+            "description": "test2",
             "type": "object",
             "additionalProperties": {
                "type": "string"
             }
          },
          "test3": {
+            "description": "test3",
             "type": "object",
             "additionalProperties": {
                "type": "string"
             }
          },
          "test4": {
+            "description": "test4",
             "type": "object",
             "additionalProperties": {
                "$ref": "#/definitions/api.Child"
             }
          },
          "test5": {
+            "description": "test5",
             "type": "object",
             "additionalProperties": {
                "$ref": "#/definitions/api.Child"
             }
          },
          "test6": {
+            "description": "test6",
             "type": "object",
             "$ref": "#/definitions/api.MyMapType"
          },
          "test7": {
+            "description": "test7",
             "type": "array",
             "items": {
                "$ref": "#/definitions/api.Child"
             }
          },
          "test8": {
+            "description": "test8",
             "type": "array",
             "items": {
                "$ref": "#/definitions/api.Child"
@@ -2485,10 +2555,8 @@ func Test(){
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
-
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(out))
-
 }
 
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {

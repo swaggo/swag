@@ -772,6 +772,7 @@ func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (*spec.
 
 type structField struct {
 	name         string
+	desc         string
 	schemaType   string
 	arrayType    string
 	formatType   string
@@ -786,6 +787,34 @@ type structField struct {
 	enums        []interface{}
 	defaultValue interface{}
 	extensions   map[string]interface{}
+}
+
+func (sf *structField) toStandardSchema() *spec.Schema {
+	required := make([]string, 0)
+	if sf.isRequired {
+		required = append(required, sf.name)
+	}
+	return &spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type:        []string{sf.schemaType},
+			Description: sf.desc,
+			Format:      sf.formatType,
+			Required:    required,
+			Maximum:     sf.maximum,
+			Minimum:     sf.minimum,
+			MaxLength:   sf.maxLength,
+			MinLength:   sf.minLength,
+			Enum:        sf.enums,
+			Default:     sf.defaultValue,
+		},
+		SwaggerSchemaProps: spec.SwaggerSchemaProps{
+			Example:  sf.exampleValue,
+			ReadOnly: sf.readOnly,
+		},
+		VendorExtensible: spec.VendorExtensible{
+			Extensions: sf.extensions,
+		},
+	}
 }
 
 func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[string]spec.Schema, []string, error) {
@@ -838,17 +867,33 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 	if structField.name == "" {
 		return properties, nil, nil
 	}
-	var desc string
-	if field.Doc != nil {
-		desc = strings.TrimSpace(field.Doc.Text())
-	}
-	if desc == "" && field.Comment != nil {
-		desc = strings.TrimSpace(field.Comment.Text())
-	}
+
 	// TODO: find package of schemaType and/or arrayType
 	if structField.crossPkg != "" {
 		pkgName = structField.crossPkg
 	}
+
+	fillObject := func(src, dest interface{}) error {
+		bin, err := json.Marshal(src)
+		if err != nil {
+			return err
+		}
+		return json.Unmarshal(bin, dest)
+	}
+
+	//for spec.Schema have implemented json.Marshaler, here in another way to convert
+	fillSchema := func(src, dest *spec.Schema) error {
+		err = fillObject(&src.SchemaProps, &dest.SchemaProps)
+		if err != nil {
+			return err
+		}
+		err = fillObject(&src.SwaggerSchemaProps, &dest.SwaggerSchemaProps)
+		if err != nil {
+			return err
+		}
+		return fillObject(&src.VendorExtensible, &dest.VendorExtensible)
+	}
+
 	if _, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
 		parser.ParseDefinition(pkgName, structField.schemaType,
@@ -860,7 +905,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type:        []string{"object"}, // to avoid swagger validation error
-				Description: desc,
+				Description: structField.desc,
 				Required:    required,
 				Ref: spec.Ref{
 					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
@@ -882,7 +927,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
-					Description: desc,
+					Description: structField.desc,
 					Required:    required,
 					Items: &spec.SchemaOrArray{
 						Schema: &spec.Schema{
@@ -916,7 +961,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					properties[structField.name] = spec.Schema{
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{structField.schemaType},
-							Description: desc,
+							Description: structField.desc,
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -942,7 +987,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
-					Description: desc,
+					Description: structField.desc,
 					Format:      structField.formatType,
 					Required:    required,
 					Items: &spec.SchemaOrArray{
@@ -966,74 +1011,35 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			}
 		}
 	} else if astTypeMap, ok := field.Type.(*ast.MapType); ok { // if map
-		mapValueScheme, err := parser.parseTypeExpr(pkgName, "", astTypeMap)
+		stdSchema := structField.toStandardSchema()
+		mapValueSchema, err := parser.parseTypeExpr(pkgName, "", astTypeMap)
 		if err != nil {
 			return properties, nil, err
 		}
-
-		required := make([]string, 0)
-		if structField.isRequired {
-			required = append(required, structField.name)
-		}
-		mapValueScheme.Type = []string{structField.schemaType}
-		mapValueScheme.Description = desc
-		mapValueScheme.Format = structField.formatType
-		mapValueScheme.Required = required
-		mapValueScheme.Maximum = structField.maximum
-		mapValueScheme.Minimum = structField.minimum
-		mapValueScheme.MaxLength = structField.maxLength
-		mapValueScheme.MinLength = structField.minLength
-		mapValueScheme.Enum = structField.enums
-		mapValueScheme.Default = structField.defaultValue
-		mapValueScheme.SwaggerSchemaProps = spec.SwaggerSchemaProps{
-			Example:  structField.exampleValue,
-			ReadOnly: structField.readOnly,
-		}
-		mapValueScheme.VendorExtensible = spec.VendorExtensible{
-			Extensions: structField.extensions,
-		}
-		properties[structField.name] = *mapValueScheme
+		stdSchema.Type = mapValueSchema.Type
+		stdSchema.AdditionalProperties = mapValueSchema.AdditionalProperties
+		properties[structField.name] = *stdSchema
 	} else {
-		required := make([]string, 0)
-		if structField.isRequired {
-			required = append(required, structField.name)
-		}
-		properties[structField.name] = spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:        []string{structField.schemaType},
-				Description: desc,
-				Format:      structField.formatType,
-				Required:    required,
-				Maximum:     structField.maximum,
-				Minimum:     structField.minimum,
-				MaxLength:   structField.maxLength,
-				MinLength:   structField.minLength,
-				Enum:        structField.enums,
-				Default:     structField.defaultValue,
-			},
-			SwaggerSchemaProps: spec.SwaggerSchemaProps{
-				Example:  structField.exampleValue,
-				ReadOnly: structField.readOnly,
-			},
-			VendorExtensible: spec.VendorExtensible{
-				Extensions: structField.extensions,
-			},
-		}
+		stdSchema := structField.toStandardSchema()
+		properties[structField.name] = *stdSchema
 
-		if nestStruct, ok := field.Type.(*ast.StarExpr); ok {
-			schema, err := parser.parseTypeExpr(pkgName, structField.schemaType, nestStruct.X)
-			if err != nil {
-				return nil, nil, err
+		if nestStar, ok := field.Type.(*ast.StarExpr); ok {
+			if !IsGolangPrimitiveType(structField.schemaType) {
+				schema, err := parser.parseTypeExpr(pkgName, structField.schemaType, nestStar.X)
+				if err != nil {
+					return properties, nil, err
+				}
+
+				if len(schema.SchemaProps.Type) > 0 {
+					err = fillSchema(schema, stdSchema)
+					if err != nil {
+						return properties, nil, err
+					}
+					properties[structField.name] = *stdSchema
+					return properties, nil, nil
+				}
 			}
-
-			if len(schema.SchemaProps.Type) > 0 {
-				properties[structField.name] = *schema
-				return properties, nil, nil
-			}
-		}
-
-		nestStruct, ok := field.Type.(*ast.StructType)
-		if ok {
+		} else if nestStruct, ok := field.Type.(*ast.StructType); ok {
 			props := map[string]spec.Schema{}
 			nestRequired := make([]string, 0)
 			for _, v := range nestStruct.Fields.List {
@@ -1049,26 +1055,9 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					props[k] = v
 				}
 			}
-
-			properties[structField.name] = spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type:        []string{structField.schemaType},
-					Description: desc,
-					Format:      structField.formatType,
-					Properties:  props,
-					Required:    nestRequired,
-					Maximum:     structField.maximum,
-					Minimum:     structField.minimum,
-					MaxLength:   structField.maxLength,
-					MinLength:   structField.minLength,
-					Enum:        structField.enums,
-					Default:     structField.defaultValue,
-				},
-				SwaggerSchemaProps: spec.SwaggerSchemaProps{
-					Example:  structField.exampleValue,
-					ReadOnly: structField.readOnly,
-				},
-			}
+			stdSchema.Properties = props
+			stdSchema.Required = nestRequired
+			properties[structField.name] = *stdSchema
 		}
 	}
 	return properties, nil, nil
@@ -1130,6 +1119,13 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 		structField.name = toLowerCamelCase(structField.name)
 	default:
 		structField.name = toLowerCamelCase(structField.name)
+	}
+
+	if field.Doc != nil {
+		structField.desc = strings.TrimSpace(field.Doc.Text())
+	}
+	if structField.desc == "" && field.Comment != nil {
+		structField.desc = strings.TrimSpace(field.Comment.Text())
 	}
 
 	if field.Tag == nil {
