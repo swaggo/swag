@@ -181,6 +181,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		case "primitive":
 			param.Schema.Type = spec.StringOrArray{refType}
 		case "array":
+			param.Schema.Type = spec.StringOrArray{objectType}
 			param.Schema.Items = &spec.SchemaOrArray{
 				Schema: &spec.Schema{
 					SchemaProps: spec.SchemaProps{},

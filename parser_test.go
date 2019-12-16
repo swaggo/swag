@@ -2240,6 +2240,20 @@ func TestParseComposition(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseImportAliases(t *testing.T) {
+	searchDir := "testdata/alias_import"
+	mainAPIFile := "main.go"
+	p := New()
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+
+	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParseNested(t *testing.T) {
 	searchDir := "testdata/nested"
 	mainAPIFile := "main.go"
