@@ -602,7 +602,7 @@ func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.Ty
 	if err != nil {
 		return err
 	}
-	parser.swagger.Definitions[refTypeName] = schema
+	parser.swagger.Definitions[refTypeName] = *schema
 	return nil
 }
 
@@ -648,28 +648,40 @@ func fullTypeName(pkgName, typeName string) string {
 
 // parseTypeExpr parses given type expression that corresponds to the type under
 // given name and package, and returns swagger schema for it.
-func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr) (spec.Schema, error) {
-	//TODO: return pointer to spec.Schema
+func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr) (*spec.Schema, error) {
 
 	switch expr := typeExpr.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
 		refTypeName := fullTypeName(pkgName, typeName)
 		if schema, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
-			return schema, nil
+			return &schema, nil
 		}
 
 		return parser.parseStruct(pkgName, expr.Fields)
 
 	// type Foo Baz
 	case *ast.Ident:
+		if IsGolangPrimitiveType(expr.Name) {
+			return &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: spec.StringOrArray{TransToValidSchemeType(expr.Name)},
+				},
+			}, nil
+		}
 		refTypeName := fullTypeName(pkgName, expr.Name)
 		if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
 			if typedef, ok := parser.TypeDefinitions[pkgName][expr.Name]; ok {
 				parser.ParseDefinition(pkgName, expr.Name, typedef)
 			}
 		}
-		return parser.swagger.Definitions[refTypeName], nil
+		return &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Ref: spec.Ref{
+					Ref: jsonreference.MustCreateRef("#/definitions/" + refTypeName),
+				},
+			},
+		}, nil
 
 	// type Foo *Baz
 	case *ast.StarExpr:
@@ -679,13 +691,13 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 	case *ast.ArrayType:
 		itemSchema, err := parser.parseTypeExpr(pkgName, "", expr.Elt)
 		if err != nil {
-			return spec.Schema{}, err
+			return &spec.Schema{}, err
 		}
-		return spec.Schema{
+		return &spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"array"},
 				Items: &spec.SchemaOrArray{
-					Schema: &itemSchema,
+					Schema: itemSchema,
 				},
 			},
 		}, nil
@@ -693,28 +705,25 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			pkgName = xIdent.Name
-			typeName = expr.Sel.Name
-			refTypeName := fullTypeName(pkgName, typeName)
-			if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
-				typedef := parser.TypeDefinitions[pkgName][typeName]
-				parser.ParseDefinition(pkgName, typeName, typedef)
-			}
-			return parser.swagger.Definitions[refTypeName], nil
+			return parser.parseTypeExpr(xIdent.Name, expr.Sel.Name, expr.Sel)
 		}
 
 	// type Foo map[string]Bar
 	case *ast.MapType:
-		itemSchema, err := parser.parseTypeExpr(pkgName, "", expr.Value)
-		if err != nil {
-			return spec.Schema{}, err
+		var valueSchema spec.SchemaOrBool
+		if _, ok := expr.Value.(*ast.InterfaceType); ok {
+			valueSchema.Allows = true
+		} else {
+			schema, err := parser.parseTypeExpr(pkgName, "", expr.Value)
+			if err != nil {
+				return &spec.Schema{}, err
+			}
+			valueSchema.Schema = schema
 		}
-		return spec.Schema{
+		return &spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				AdditionalProperties: &spec.SchemaOrBool{
-					Schema: &itemSchema,
-				},
+				Type:                 []string{"object"},
+				AdditionalProperties: &valueSchema,
 			},
 		}, nil
 	// ...
@@ -722,21 +731,21 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 		Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}
 
-	return spec.Schema{
+	return &spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type: []string{"object"},
 		},
 	}, nil
 }
 
-func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (spec.Schema, error) {
+func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (*spec.Schema, error) {
 
 	extraRequired := make([]string, 0)
 	properties := make(map[string]spec.Schema)
 	for _, field := range fields.List {
 		fieldProps, requiredFromAnon, err := parser.parseStructField(pkgName, field)
 		if err != nil {
-			return spec.Schema{}, err
+			return &spec.Schema{}, err
 		}
 		extraRequired = append(extraRequired, requiredFromAnon...)
 		for k, v := range fieldProps {
@@ -753,7 +762,7 @@ func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (spec.S
 		properties[k] = prop
 	}
 
-	return spec.Schema{
+	return &spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type:       []string{"object"},
 			Properties: properties,
@@ -763,6 +772,7 @@ func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (spec.S
 
 type structField struct {
 	name         string
+	desc         string
 	schemaType   string
 	arrayType    string
 	formatType   string
@@ -777,6 +787,34 @@ type structField struct {
 	enums        []interface{}
 	defaultValue interface{}
 	extensions   map[string]interface{}
+}
+
+func (sf *structField) toStandardSchema() *spec.Schema {
+	required := make([]string, 0)
+	if sf.isRequired {
+		required = append(required, sf.name)
+	}
+	return &spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type:        []string{sf.schemaType},
+			Description: sf.desc,
+			Format:      sf.formatType,
+			Required:    required,
+			Maximum:     sf.maximum,
+			Minimum:     sf.minimum,
+			MaxLength:   sf.maxLength,
+			MinLength:   sf.minLength,
+			Enum:        sf.enums,
+			Default:     sf.defaultValue,
+		},
+		SwaggerSchemaProps: spec.SwaggerSchemaProps{
+			Example:  sf.exampleValue,
+			ReadOnly: sf.readOnly,
+		},
+		VendorExtensible: spec.VendorExtensible{
+			Extensions: sf.extensions,
+		},
+	}
 }
 
 func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[string]spec.Schema, []string, error) {
@@ -812,7 +850,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					properties[k] = v
 				}
 			case "array":
-				properties[typeName] = schema
+				properties[typeName] = *schema
 			default:
 				Printf("Can't extract properties from a schema of type '%s'", schemaType)
 			}
@@ -829,17 +867,33 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 	if structField.name == "" {
 		return properties, nil, nil
 	}
-	var desc string
-	if field.Doc != nil {
-		desc = strings.TrimSpace(field.Doc.Text())
-	}
-	if desc == "" && field.Comment != nil {
-		desc = strings.TrimSpace(field.Comment.Text())
-	}
+
 	// TODO: find package of schemaType and/or arrayType
 	if structField.crossPkg != "" {
 		pkgName = structField.crossPkg
 	}
+
+	fillObject := func(src, dest interface{}) error {
+		bin, err := json.Marshal(src)
+		if err != nil {
+			return err
+		}
+		return json.Unmarshal(bin, dest)
+	}
+
+	//for spec.Schema have implemented json.Marshaler, here in another way to convert
+	fillSchema := func(src, dest *spec.Schema) error {
+		err = fillObject(&src.SchemaProps, &dest.SchemaProps)
+		if err != nil {
+			return err
+		}
+		err = fillObject(&src.SwaggerSchemaProps, &dest.SwaggerSchemaProps)
+		if err != nil {
+			return err
+		}
+		return fillObject(&src.VendorExtensible, &dest.VendorExtensible)
+	}
+
 	if _, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
 		parser.ParseDefinition(pkgName, structField.schemaType,
@@ -851,7 +905,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type:        []string{"object"}, // to avoid swagger validation error
-				Description: desc,
+				Description: structField.desc,
 				Required:    required,
 				Ref: spec.Ref{
 					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
@@ -873,7 +927,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
-					Description: desc,
+					Description: structField.desc,
 					Required:    required,
 					Items: &spec.SchemaOrArray{
 						Schema: &spec.Schema{
@@ -907,7 +961,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					properties[structField.name] = spec.Schema{
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{structField.schemaType},
-							Description: desc,
+							Description: structField.desc,
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -933,7 +987,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			properties[structField.name] = spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Type:        []string{structField.schemaType},
-					Description: desc,
+					Description: structField.desc,
 					Format:      structField.formatType,
 					Required:    required,
 					Items: &spec.SchemaOrArray{
@@ -957,92 +1011,35 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			}
 		}
 	} else if astTypeMap, ok := field.Type.(*ast.MapType); ok { // if map
-		_, err := parser.parseTypeExpr(pkgName, "", astTypeMap.Value)
+		stdSchema := structField.toStandardSchema()
+		mapValueSchema, err := parser.parseTypeExpr(pkgName, "", astTypeMap)
 		if err != nil {
 			return properties, nil, err
 		}
-
-		fullTypeName, err := getFieldType(astTypeMap.Value)
-		if err != nil {
-			return properties, nil, err
-		}
-		mapValueScheme := &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Ref: spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + fullTypeName),
-				},
-			},
-		}
-
-		required := make([]string, 0)
-		if structField.isRequired {
-			required = append(required, structField.name)
-		}
-		properties[structField.name] = spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:        []string{structField.schemaType},
-				Description: desc,
-				Format:      structField.formatType,
-				Required:    required,
-				Maximum:     structField.maximum,
-				Minimum:     structField.minimum,
-				MaxLength:   structField.maxLength,
-				MinLength:   structField.minLength,
-				Enum:        structField.enums,
-				Default:     structField.defaultValue,
-				AdditionalProperties: &spec.SchemaOrBool{
-					Schema: mapValueScheme,
-				},
-			},
-			SwaggerSchemaProps: spec.SwaggerSchemaProps{
-				Example:  structField.exampleValue,
-				ReadOnly: structField.readOnly,
-			},
-			VendorExtensible: spec.VendorExtensible{
-				Extensions: structField.extensions,
-			},
-		}
+		stdSchema.Type = mapValueSchema.Type
+		stdSchema.AdditionalProperties = mapValueSchema.AdditionalProperties
+		properties[structField.name] = *stdSchema
 	} else {
-		required := make([]string, 0)
-		if structField.isRequired {
-			required = append(required, structField.name)
-		}
-		properties[structField.name] = spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:        []string{structField.schemaType},
-				Description: desc,
-				Format:      structField.formatType,
-				Required:    required,
-				Maximum:     structField.maximum,
-				Minimum:     structField.minimum,
-				MaxLength:   structField.maxLength,
-				MinLength:   structField.minLength,
-				Enum:        structField.enums,
-				Default:     structField.defaultValue,
-			},
-			SwaggerSchemaProps: spec.SwaggerSchemaProps{
-				Example:  structField.exampleValue,
-				ReadOnly: structField.readOnly,
-			},
-			VendorExtensible: spec.VendorExtensible{
-				Extensions: structField.extensions,
-			},
-		}
+		stdSchema := structField.toStandardSchema()
+		properties[structField.name] = *stdSchema
 
-		if nestStruct, ok := field.Type.(*ast.StarExpr); ok {
-			schema, err := parser.parseTypeExpr(pkgName, structField.schemaType, nestStruct.X)
-			if err != nil {
-				return nil, nil, err
+		if nestStar, ok := field.Type.(*ast.StarExpr); ok {
+			if !IsGolangPrimitiveType(structField.schemaType) {
+				schema, err := parser.parseTypeExpr(pkgName, structField.schemaType, nestStar.X)
+				if err != nil {
+					return properties, nil, err
+				}
+
+				if len(schema.SchemaProps.Type) > 0 {
+					err = fillSchema(schema, stdSchema)
+					if err != nil {
+						return properties, nil, err
+					}
+					properties[structField.name] = *stdSchema
+					return properties, nil, nil
+				}
 			}
-
-			if len(schema.SchemaProps.Type) > 0 {
-				properties[structField.name] = schema
-				return properties, nil, nil
-			}
-		}
-
-		nestStruct, ok := field.Type.(*ast.StructType)
-		if ok {
+		} else if nestStruct, ok := field.Type.(*ast.StructType); ok {
 			props := map[string]spec.Schema{}
 			nestRequired := make([]string, 0)
 			for _, v := range nestStruct.Fields.List {
@@ -1058,26 +1055,9 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					props[k] = v
 				}
 			}
-
-			properties[structField.name] = spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type:        []string{structField.schemaType},
-					Description: desc,
-					Format:      structField.formatType,
-					Properties:  props,
-					Required:    nestRequired,
-					Maximum:     structField.maximum,
-					Minimum:     structField.minimum,
-					MaxLength:   structField.maxLength,
-					MinLength:   structField.minLength,
-					Enum:        structField.enums,
-					Default:     structField.defaultValue,
-				},
-				SwaggerSchemaProps: spec.SwaggerSchemaProps{
-					Example:  structField.exampleValue,
-					ReadOnly: structField.readOnly,
-				},
-			}
+			stdSchema.Properties = props
+			stdSchema.Required = nestRequired
+			properties[structField.name] = *stdSchema
 		}
 	}
 	return properties, nil, nil
@@ -1139,6 +1119,13 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 		structField.name = toLowerCamelCase(structField.name)
 	default:
 		structField.name = toLowerCamelCase(structField.name)
+	}
+
+	if field.Doc != nil {
+		structField.desc = strings.TrimSpace(field.Doc.Text())
+	}
+	if structField.desc == "" && field.Comment != nil {
+		structField.desc = strings.TrimSpace(field.Comment.Text())
 	}
 
 	if field.Tag == nil {
