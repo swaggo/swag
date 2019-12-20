@@ -104,9 +104,6 @@ func getPropertyName(expr ast.Expr, parser *Parser) (propertyName, error) {
 	}
 
 	if astTypeArray, ok := expr.(*ast.ArrayType); ok { // if array
-		if _, ok := astTypeArray.Elt.(*ast.StructType); ok {
-			return propertyName{SchemaType: "array", ArrayType: "object"}, nil
-		}
 		return getArrayPropertyName(astTypeArray, parser), nil
 	}
 
@@ -125,10 +122,13 @@ func getPropertyName(expr ast.Expr, parser *Parser) (propertyName, error) {
 }
 
 func getArrayPropertyName(astTypeArray *ast.ArrayType, parser *Parser) propertyName {
-	if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.SelectorExpr); ok {
+	if _, ok := astTypeArray.Elt.(*ast.StructType); ok {
+		return propertyName{SchemaType: "array", ArrayType: "object"}
+	} else if _, ok := astTypeArray.Elt.(*ast.MapType); ok {
+		return propertyName{SchemaType: "array", ArrayType: "object"}
+	} else if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.SelectorExpr); ok {
 		return parseFieldSelectorExpr(astTypeArrayExpr, parser, newArrayProperty)
-	}
-	if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.StarExpr); ok {
+	} else if astTypeArrayExpr, ok := astTypeArray.Elt.(*ast.StarExpr); ok {
 		if astTypeArraySel, ok := astTypeArrayExpr.X.(*ast.SelectorExpr); ok {
 			return parseFieldSelectorExpr(astTypeArraySel, parser, newArrayProperty)
 		}

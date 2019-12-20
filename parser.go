@@ -975,6 +975,20 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 							ReadOnly: structField.readOnly,
 						},
 					}
+				} else {
+					schema, _ := parser.parseTypeExpr(pkgName, "", astTypeArray.Elt)
+					properties[structField.name] = spec.Schema{
+						SchemaProps: spec.SchemaProps{
+							Type:        []string{structField.schemaType},
+							Description: structField.desc,
+							Items: &spec.SchemaOrArray{
+								Schema: schema,
+							},
+						},
+						SwaggerSchemaProps: spec.SwaggerSchemaProps{
+							ReadOnly: structField.readOnly,
+						},
+					}
 				}
 			}
 		} else {
