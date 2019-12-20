@@ -120,7 +120,30 @@ func TestParseRouterCommentWithPlusSign(t *testing.T) {
 	assert.Equal(t, "POST", operation.HTTPMethod)
 }
 
-func TestParseRouterCommentOccursErr(t *testing.T) {
+func TestParseRouterCommentWithColonSign(t *testing.T) {
+	comment := `/@Router /customer/get-wishlist/{wishlist_id}:move [post]`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}:move", operation.Path)
+	assert.Equal(t, "POST", operation.HTTPMethod)
+}
+
+func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {
+	comment := `/@Router :customer/get-wishlist/{wishlist_id}:move [post]`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+}
+
+func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
+	comment := `/@Router /api/{id}|,*[get`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+}
+
+func TestParseRouterCommentMethodMissingErr(t *testing.T) {
 	comment := `/@Router /customer/get-wishlist/{wishlist_id}`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)

@@ -60,6 +60,19 @@ func parseFieldSelectorExpr(astTypeSelectorExpr *ast.SelectorExpr, parser *Parse
 			parser.ParseDefinition(pkgName.Name, astTypeSelectorExpr.Sel.Name, typeDefinitions)
 			return propertyNewFunc(astTypeSelectorExpr.Sel.Name, pkgName.Name)
 		}
+		if aliasedNames, ok := parser.ImportAliases[pkgName.Name]; ok {
+			for aliasedName := range aliasedNames {
+				if typeDefinitions, ok := parser.TypeDefinitions[aliasedName][astTypeSelectorExpr.Sel.Name]; ok {
+					if expr, ok := typeDefinitions.Type.(*ast.SelectorExpr); ok {
+						if primitiveType, err := convertFromSpecificToPrimitive(expr.Sel.Name); err == nil {
+							return propertyNewFunc(primitiveType, "")
+						}
+					}
+					parser.ParseDefinition(aliasedName, astTypeSelectorExpr.Sel.Name, typeDefinitions)
+					return propertyNewFunc(astTypeSelectorExpr.Sel.Name, aliasedName)
+				}
+			}
+		}
 		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[astTypeSelectorExpr.Sel.Name]; isCustomType {
 			return propertyName{SchemaType: actualPrimitiveType, ArrayType: actualPrimitiveType}
 		}

@@ -182,6 +182,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		case "primitive":
 			param.Schema.Type = spec.StringOrArray{refType}
 		case "array":
+			param.Schema.Type = spec.StringOrArray{objectType}
 			param.Schema.Items = &spec.SchemaOrArray{
 				Schema: &spec.Schema{
 					SchemaProps: spec.SchemaProps{},
@@ -438,7 +439,7 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`([\w\.\/\-{}\+]+)[^\[]+\[([^\]]+)`)
+var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]+)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {

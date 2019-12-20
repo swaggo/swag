@@ -1,8 +1,8 @@
-package main
+package alias_import
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/example/basic/api"
+	"github.com/swaggo/swag/testdata/alias_import/api"
 )
 
 // @title Swagger Example API
@@ -21,9 +21,6 @@ import (
 // @BasePath /v2
 func main() {
 	r := gin.New()
-	r.GET("/testapi/get-string-by-int/:some_id", api.GetStringByInt)
-	r.GET("//testapi/get-struct-array-by-string/:some_id", api.GetStructArrayByString)
-	r.POST("/testapi/upload", api.Upload)
+	r.GET("/testapi/application", api.GetApplication)
 	r.Run()
-
 }

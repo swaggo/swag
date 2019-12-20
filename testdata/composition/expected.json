@@ -110,6 +110,26 @@
                     }
                 }
             }
+        },
+        "/testapi/get-foobarmap": {
+            "get": {
+                "description": "get FoorBarMap",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "operationId": "get-foo-bar-map",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/api.FooBarMap"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -124,12 +144,7 @@
         "api.BarMap": {
             "type": "object",
             "additionalProperties": {
-                "type": "object",
-                "properties": {
-                    "field2": {
-                        "type": "string"
-                    }
-                }
+                "$ref": "#/definitions/api.Bar"
             }
         },
         "api.Foo": {
@@ -151,6 +166,17 @@
                 }
             }
         },
+        "api.FooBarMap": {
+            "type": "object",
+            "properties": {
+                "field3": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/api.MapValue"
+                    }
+                }
+            }
+        },
         "api.FooBarPointer": {
             "type": "object",
             "properties": {
@@ -161,6 +187,14 @@
                     "type": "string"
                 },
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.MapValue": {
+            "type": "object",
+            "properties": {
+                "field4": {
                     "type": "string"
                 }
             }

@@ -9,6 +9,7 @@ GOTEST:=$(GOCMD) test
 GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
+GOPATH:=$(shell $(GOCMD) env GOPATH)
 u := $(if $(update),-u)
 
 BINARY_NAME:=swag
@@ -53,16 +54,20 @@ clean:
 
 .PHONY: deps
 deps:
-	$(GOGET) ${u} -d
+	$(GOGET) github.com/swaggo/cli
+	$(GOGET) github.com/ghodss/yaml
+	$(GOGET) github.com/gin-gonic/gin
+	$(GOGET) github.com/KyleBanks/depth
+	$(GOGET) github.com/go-openapi/jsonreference
+	$(GOGET) github.com/go-openapi/spec
 	$(GOGET) github.com/stretchr/testify/assert
 	$(GOGET) github.com/alecthomas/template
+	$(GOGET) golang.org/x/tools/go/loader
 
 .PHONY: devel-deps
-devel-deps:
+devel-deps: 
 	GO111MODULE=off $(GOGET) -v -u \
-		golang.org/x/lint/golint \
-		github.com/swaggo/swag/cmd/swag	\
-		github.com/swaggo/swag/gen
+		golang.org/x/lint/golint 
 
 .PHONY: lint
 lint: devel-deps
