@@ -253,8 +253,8 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	err := p.getAllGoFileInfo(searchDir)
 
 	assert.NoError(t, err)
-	assert.NotEmpty(t, p.files["testdata/pet/main.go"])
-	assert.NotEmpty(t, p.files["testdata/pet/web/handler.go"])
+	assert.NotEmpty(t, p.files[filepath.Join("testdata", "pet", "main.go")])
+	assert.NotEmpty(t, p.files[filepath.Join("testdata", "pet", "web", "handler.go")])
 	assert.Equal(t, 2, len(p.files))
 }
 
@@ -2456,6 +2456,7 @@ type Parent struct {
 	Test6 MyMapType				  //test6
 	Test7 []Child				  //test7
 	Test8 []*Child				  //test8
+	Test9 []map[string]string	  //test9
 }
 
 // @Success 200 {object} Parent
@@ -2531,6 +2532,16 @@ func Test(){
             "type": "array",
             "items": {
                "$ref": "#/definitions/api.Child"
+            }
+         },
+         "test9": {
+            "description": "test9",
+            "type": "array",
+            "items": {
+               "type": "object",
+               "additionalProperties": {
+                  "type": "string"
+               }
             }
          }
       }
