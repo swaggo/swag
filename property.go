@@ -123,7 +123,7 @@ func getPropertyName(expr ast.Expr, parser *Parser) (propertyName, error) {
 
 func getArrayPropertyName(astTypeArrayElt ast.Expr, parser *Parser) propertyName {
 	switch elt := astTypeArrayElt.(type) {
-	case *ast.StructType, *ast.MapType:
+	case *ast.StructType, *ast.MapType, *ast.InterfaceType:
 		return propertyName{SchemaType: "array", ArrayType: "object"}
 	case *ast.ArrayType:
 		return propertyName{SchemaType: "array", ArrayType: "array"}
