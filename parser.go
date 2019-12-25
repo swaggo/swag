@@ -862,7 +862,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 
 	structField, err := parser.parseField(field)
 	if err != nil {
-		return properties, nil, nil
+		return properties, nil, err
 	}
 	if structField.name == "" {
 		return properties, nil, nil
@@ -1187,6 +1187,9 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 			if len(parts) >= 2 {
 				if newSchemaType == "array" {
 					newArrayType = parts[1]
+					if err := CheckSchemaType(newArrayType); err != nil {
+						return nil, err
+					}
 				} else if newSchemaType == "primitive" {
 					newSchemaType = parts[1]
 					newArrayType = parts[1]
@@ -1196,9 +1199,7 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 			if err := CheckSchemaType(newSchemaType); err != nil {
 				return nil, err
 			}
-			if err := CheckSchemaType(newArrayType); err != nil {
-				return nil, err
-			}
+
 			structField.schemaType = newSchemaType
 			structField.arrayType = newArrayType
 		}
