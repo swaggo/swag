@@ -991,6 +991,22 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					}
 				}
 			}
+		} else if structField.arrayType == "array" {
+			if astTypeArray, ok := field.Type.(*ast.ArrayType); ok {
+				schema, _ := parser.parseTypeExpr(pkgName, "", astTypeArray.Elt)
+				properties[structField.name] = spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Type:        []string{structField.schemaType},
+						Description: structField.desc,
+						Items: &spec.SchemaOrArray{
+							Schema: schema,
+						},
+					},
+					SwaggerSchemaProps: spec.SwaggerSchemaProps{
+						ReadOnly: structField.readOnly,
+					},
+				}
+			}
 		} else {
 			// standard type in array
 			required := make([]string, 0)

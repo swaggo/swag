@@ -2254,6 +2254,7 @@ package api
 
 type Response struct {
 	Code int
+	Table [][]string
 	Data []struct{
 		Field1 uint 
 		Field2 string 
@@ -2283,6 +2284,15 @@ func Test(){
                   "field2": {
                      "type": "string"
                   }
+               }
+            }
+         },
+         "table": {
+            "type": "array",
+            "items": {
+               "type": "array",
+               "items": {
+                  "type": "string"
                }
             }
          }
