@@ -862,8 +862,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 
 	structField, err := parser.parseField(field)
 	if err != nil {
-		Println(err)
-		return properties, nil, nil
+		return properties, nil, err
 	}
 	if structField.name == "" {
 		return properties, nil, nil
