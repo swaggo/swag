@@ -862,7 +862,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 
 	structField, err := parser.parseField(field)
 	if err != nil {
-		return properties, nil, nil
+		return properties, nil, err
 	}
 	if structField.name == "" {
 		return properties, nil, nil
@@ -989,6 +989,22 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 							ReadOnly: structField.readOnly,
 						},
 					}
+				}
+			}
+		} else if structField.arrayType == "array" {
+			if astTypeArray, ok := field.Type.(*ast.ArrayType); ok {
+				schema, _ := parser.parseTypeExpr(pkgName, "", astTypeArray.Elt)
+				properties[structField.name] = spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Type:        []string{structField.schemaType},
+						Description: structField.desc,
+						Items: &spec.SchemaOrArray{
+							Schema: schema,
+						},
+					},
+					SwaggerSchemaProps: spec.SwaggerSchemaProps{
+						ReadOnly: structField.readOnly,
+					},
 				}
 			}
 		} else {
@@ -1171,6 +1187,9 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 			if len(parts) >= 2 {
 				if newSchemaType == "array" {
 					newArrayType = parts[1]
+					if err := CheckSchemaType(newArrayType); err != nil {
+						return nil, err
+					}
 				} else if newSchemaType == "primitive" {
 					newSchemaType = parts[1]
 					newArrayType = parts[1]
@@ -1180,9 +1199,7 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 			if err := CheckSchemaType(newSchemaType); err != nil {
 				return nil, err
 			}
-			if err := CheckSchemaType(newArrayType); err != nil {
-				return nil, err
-			}
+
 			structField.schemaType = newSchemaType
 			structField.arrayType = newArrayType
 		}
