@@ -598,7 +598,7 @@ generated swagger doc as follows:
 
 ```go
 type Account struct {
-    ID   int    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
+    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
 }
 ```
 

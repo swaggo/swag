@@ -191,12 +191,18 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if IsPrimitiveType(refType) {
 				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
 			} else {
+				if !strings.Contains(refType, ".") {
+					refType = astFile.Name.String() + "." + refType
+				}
 				if err := operation.registerSchemaType(refType, astFile); err != nil {
 					return err
 				}
 				param.Schema.Items.Schema.Ref = spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)}
 			}
 		case "object":
+			if !strings.Contains(refType, ".") {
+				refType = astFile.Name.String() + "." + refType
+			}
 			if err := operation.registerSchemaType(refType, astFile); err != nil {
 				return err
 			}

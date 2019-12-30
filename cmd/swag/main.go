@@ -18,6 +18,7 @@ const (
 	parseVendorFlag      = "parseVendor"
 	parseDependencyFlag  = "parseDependency"
 	markdownFilesFlag    = "markdownFiles"
+	generatedTimeFlag    = "generatedTime"
 )
 
 var initFlags = []cli.Flag{
@@ -54,6 +55,10 @@ var initFlags = []cli.Flag{
 		Value: "",
 		Usage: "Parse folder containing markdown files to use as description, disabled by default",
 	},
+	cli.BoolTFlag{
+		Name:  "generatedTime",
+		Usage: "Generate timestamp at the top of docs.go, true by default",
+	},
 }
 
 func initAction(c *cli.Context) error {
@@ -73,6 +78,7 @@ func initAction(c *cli.Context) error {
 		ParseVendor:        c.Bool(parseVendorFlag),
 		ParseDependency:    c.Bool(parseDependencyFlag),
 		MarkdownFilesDir:   c.String(markdownFilesFlag),
+		GeneratedTime:      c.BoolT(generatedTimeFlag),
 	})
 }
 
