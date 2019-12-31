@@ -499,6 +499,33 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
+	comment := `@Param some_id body []int true "Some ID"`
+	operation := NewOperation()
+	operation.parser = New()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "integer"
+                }
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByBodyTypeErr(t *testing.T) {
 	comment := `@Param some_id body model.OrderRow true "Some ID"`
 	operation := NewOperation()

@@ -144,6 +144,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	if strings.HasPrefix(refType, "[]") == true {
 		objectType = "array"
 		refType = strings.TrimPrefix(refType, "[]")
+		refType = TransToValidSchemeType(refType)
 	} else if IsPrimitiveType(refType) ||
 		paramType == "formData" && refType == "file" {
 		objectType = "primitive"
