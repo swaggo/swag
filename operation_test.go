@@ -944,7 +944,6 @@ func TestParseDeprecationDescription(t *testing.T) {
 
 func TestRegisterSchemaType(t *testing.T) {
 	operation := NewOperation()
-	assert.NoError(t, operation.registerSchemaType("string", nil))
 
 	fset := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fset, "main.go", `package main
@@ -954,7 +953,8 @@ func TestRegisterSchemaType(t *testing.T) {
 	assert.NoError(t, err)
 
 	operation.parser = New()
-	assert.Error(t, operation.registerSchemaType("timer.Location", astFile))
+	_, _, err = operation.registerSchemaType("timer.Location", astFile)
+	assert.Error(t, err)
 }
 
 func TestParseExtentions(t *testing.T) {
