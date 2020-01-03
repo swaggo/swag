@@ -2962,3 +2962,32 @@ func TestParseOutsideDependencies(t *testing.T) {
 		t.Error("Failed to parse api: " + err.Error())
 	}
 }
+
+func TestParseStructParamCommentByQueryType(t *testing.T) {
+	src := `
+package main
+
+type Student struct {
+	Name string
+	Age int
+	Teachers []string
+	SkipField map[string]string
+}
+
+// @Param request query Student true "query params"
+// @Success 200
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.ParseType(f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 3, len(p.swagger.Paths.Paths["/test"].Get.Parameters))
+}
