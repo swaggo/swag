@@ -251,20 +251,22 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if IsPrimitiveType(refType) {
 				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
 			} else {
-				if refType, _, err := operation.registerSchemaType(refType, astFile); err != nil {
+				var err error
+				refType, _, err = operation.registerSchemaType(refType, astFile)
+				if err != nil {
 					return err
-				} else {
-					param.Schema.Items.Schema.Ref = spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)}
 				}
+				param.Schema.Items.Schema.Ref = spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)}
 			}
 		case "object":
-			if refType, _, err := operation.registerSchemaType(refType, astFile); err != nil {
+			var err error
+			refType, _, err = operation.registerSchemaType(refType, astFile)
+			if err != nil {
 				return err
-			} else {
-				param.Schema.Type = []string{}
-				param.Schema.Ref = spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
-				}
+			}
+			param.Schema.Type = []string{}
+			param.Schema.Ref = spec.Ref{
+				Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
 			}
 		}
 	default:
@@ -282,9 +284,8 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 	if !strings.ContainsRune(schemaType, '.') {
 		if astFile == nil {
 			return schemaType, nil, fmt.Errorf("no package name for type %s", schemaType)
-		} else {
-			schemaType = astFile.Name.String() + "." + schemaType
 		}
+		schemaType = astFile.Name.String() + "." + schemaType
 	}
 	refSplit := strings.Split(schemaType, ".")
 	pkgName := refSplit[0]
