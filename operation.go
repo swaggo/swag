@@ -505,7 +505,7 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]+)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
