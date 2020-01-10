@@ -111,6 +111,15 @@ func TestParseRouterComment(t *testing.T) {
 	assert.Equal(t, "GET", operation.HTTPMethod)
 }
 
+func TestParseRouterOnlySlash(t *testing.T) {
+	comment := `// @Router / [get]`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "/", operation.Path)
+	assert.Equal(t, "GET", operation.HTTPMethod)
+}
+
 func TestParseRouterCommentWithPlusSign(t *testing.T) {
 	comment := `/@Router /customer/get-wishlist/{proxy+} [post]`
 	operation := NewOperation()

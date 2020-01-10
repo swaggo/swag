@@ -2991,26 +2991,3 @@ func Fun()  {
 
 	assert.Equal(t, 3, len(p.swagger.Paths.Paths["/test"].Get.Parameters))
 }
-
-func TestParser_ParseRouterOnlySlash(t *testing.T) {
-	src := `
-package test
-
-// @Router / [get]
-func Test(){
-}
-`
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
-	assert.NoError(t, err)
-
-	ps := p.swagger.Paths.Paths
-
-	val, ok := ps["/"]
-
-	assert.True(t, ok)
-	assert.NotNil(t, val.Get)
-}
