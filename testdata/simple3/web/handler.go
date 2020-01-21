@@ -31,6 +31,7 @@ type Pet struct {
 	Hidden    string `json:"-"`
 	UUID      uuid.UUID
 	Decimal   decimal.Decimal
+	Function  func()
 }
 
 type Tag struct {
