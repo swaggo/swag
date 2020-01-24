@@ -2,13 +2,13 @@ package gen
 
 import (
 	"errors"
-	"github.com/go-openapi/spec"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"testing"
 
+	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -262,11 +262,11 @@ fmt.Print("Helo world")
 	assert.NotEqual(t, []byte(src2), res, "Should return fmt code")
 }
 
-type mocWriter struct {
+type mockWriter struct {
 	hook func([]byte)
 }
 
-func (w *mocWriter) Write(data []byte) (int, error) {
+func (w *mockWriter) Write(data []byte) (int, error) {
 	if w.hook != nil {
 		w.hook(data)
 	}
@@ -279,7 +279,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 	swapTemplate := packageTemplate
 
 	packageTemplate = `{{{`
-	err := gen.writeGoDoc(nil, nil, &Config{})
+	err := gen.writeGoDoc("docs", nil, nil, &Config{})
 	assert.Error(t, err)
 
 	packageTemplate = `{{.Data}}`
@@ -289,21 +289,23 @@ func TestGen_writeGoDoc(t *testing.T) {
 			Info: &spec.Info{},
 		},
 	}
-	err = gen.writeGoDoc(&mocWriter{}, swagger, &Config{})
+	err = gen.writeGoDoc("docs", &mockWriter{}, swagger, &Config{})
 	assert.Error(t, err)
 
 	packageTemplate = `{{ if .GeneratedTime }}Fake Time{{ end }}`
-	err = gen.writeGoDoc(&mocWriter{
-		hook: func(data []byte) {
-			assert.Equal(t, "Fake Time", string(data))
-		},
-	}, swagger, &Config{GeneratedTime: true})
+	err = gen.writeGoDoc("docs",
+		&mockWriter{
+			hook: func(data []byte) {
+				assert.Equal(t, "Fake Time", string(data))
+			},
+		}, swagger, &Config{GeneratedTime: true})
 	assert.NoError(t, err)
-	err = gen.writeGoDoc(&mocWriter{
-		hook: func(data []byte) {
-			assert.Equal(t, "", string(data))
-		},
-	}, swagger, &Config{GeneratedTime: false})
+	err = gen.writeGoDoc("docs",
+		&mockWriter{
+			hook: func(data []byte) {
+				assert.Equal(t, "", string(data))
+			},
+		}, swagger, &Config{GeneratedTime: false})
 	assert.NoError(t, err)
 
 	packageTemplate = swapTemplate
