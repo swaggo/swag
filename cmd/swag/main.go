@@ -55,7 +55,7 @@ var initFlags = []cli.Flag{
 		Value: "",
 		Usage: "Parse folder containing markdown files to use as description, disabled by default",
 	},
-	cli.BoolFlag{
+	&cli.BoolFlag{
 		Name:  "generatedTime",
 		Usage: "Generate timestamp at the top of docs.go, true by default",
 	},
