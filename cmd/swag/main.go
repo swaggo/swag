@@ -78,7 +78,7 @@ func initAction(c *cli.Context) error {
 		ParseVendor:        c.Bool(parseVendorFlag),
 		ParseDependency:    c.Bool(parseDependencyFlag),
 		MarkdownFilesDir:   c.String(markdownFilesFlag),
-		GeneratedTime:      c.BoolT(generatedTimeFlag),
+		GeneratedTime:      c.Bool(generatedTimeFlag),
 	})
 }
 
@@ -86,7 +86,7 @@ func main() {
 	app := cli.NewApp()
 	app.Version = swag.Version
 	app.Usage = "Automatically generate RESTful API documentation with Swagger 2.0 for Go."
-	app.Commands = []cli.Command{
+	app.Commands = &[]cli.Command{
 		{
 			Name:    "init",
 			Aliases: []string{"i"},
