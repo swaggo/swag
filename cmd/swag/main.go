@@ -22,40 +22,40 @@ const (
 )
 
 var initFlags = []cli.Flag{
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  generalInfoFlag + ", g",
 		Value: "main.go",
 		Usage: "Go file path in which 'swagger general API Info' is written",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  searchDirFlag + ", d",
 		Value: "./",
 		Usage: "Directory you want to parse",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  propertyStrategyFlag + ", p",
 		Value: "camelcase",
 		Usage: "Property Naming Strategy like snakecase,camelcase,pascalcase",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  outputFlag + ", o",
 		Value: "./docs",
 		Usage: "Output directory for all the generated files(swagger.json, swagger.yaml and doc.go)",
 	},
-	cli.BoolFlag{
+	&cli.BoolFlag{
 		Name:  parseVendorFlag,
 		Usage: "Parse go files in 'vendor' folder, disabled by default",
 	},
-	cli.BoolFlag{
+	&cli.BoolFlag{
 		Name:  parseDependencyFlag,
 		Usage: "Parse go files in outside dependency folder, disabled by default",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  markdownFilesFlag + ", md",
 		Value: "",
 		Usage: "Parse folder containing markdown files to use as description, disabled by default",
 	},
-	cli.BoolTFlag{
+	&cli.BoolTFlag{
 		Name:  "generatedTime",
 		Usage: "Generate timestamp at the top of docs.go, true by default",
 	},
