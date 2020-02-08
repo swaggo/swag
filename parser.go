@@ -1133,6 +1133,11 @@ func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
 		}
 	}
 
+	// Skip func fields.
+	if prop.SchemaType == "func" {
+		return &structField{name: ""}, nil
+	}
+
 	structField := &structField{
 		name:       field.Names[0].Name,
 		schemaType: prop.SchemaType,
