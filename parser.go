@@ -516,7 +516,8 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 					typeName := fmt.Sprintf("%v", typeSpec.Type)
 					// check if its a custom primitive type
 					if IsGolangPrimitiveType(typeName) {
-						parser.CustomPrimitiveTypes[typeSpec.Name.String()] = TransToValidSchemeType(typeName)
+						var typeSpecFullName = fmt.Sprintf("%s.%s", astFile.Name.String(), typeSpec.Name.String())
+						parser.CustomPrimitiveTypes[typeSpecFullName] = TransToValidSchemeType(typeName)
 					} else {
 						parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
 					}
@@ -860,7 +861,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		return properties, nil, nil
 	}
 
-	structField, err := parser.parseField(field)
+	structField, err := parser.parseField(pkgName, field)
 	if err != nil {
 		return properties, nil, err
 	}
@@ -1117,8 +1118,8 @@ func getFieldType(field interface{}) (string, error) {
 	return "", fmt.Errorf("unknown field type %#v", field)
 }
 
-func (parser *Parser) parseField(field *ast.Field) (*structField, error) {
-	prop, err := getPropertyName(field.Type, parser)
+func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField, error) {
+	prop, err := getPropertyName(pkgName, field.Type, parser)
 	if err != nil {
 		return nil, err
 	}
