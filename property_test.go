@@ -187,7 +187,7 @@ func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 	}
 	expected := propertyName{
 		"array",
-		"test.string",
+		"string",
 		"",
 	}
 	propertyName, err := getPropertyName("test", input, New())
