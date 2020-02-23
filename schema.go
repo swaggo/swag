@@ -10,10 +10,20 @@ func CheckSchemaType(typeName string) error {
 	return nil
 }
 
+// IsSimplePrimitiveType determine whether the type name is a simple primitive type
+func IsSimplePrimitiveType(typeName string) bool {
+	switch typeName {
+	case "string", "number", "integer", "boolean":
+		return true
+	default:
+		return false
+	}
+}
+
 // IsPrimitiveType determine whether the type name is a primitive type
 func IsPrimitiveType(typeName string) bool {
 	switch typeName {
-	case "string", "number", "integer", "boolean", "array", "object":
+	case "string", "number", "integer", "boolean", "array", "object", "func":
 		return true
 	default:
 		return false

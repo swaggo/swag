@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/swaggo/cli"
 	"github.com/swaggo/swag"
 	"github.com/swaggo/swag/gen"
+	"github.com/urfave/cli/v2"
 )
 
 const (
@@ -18,41 +18,46 @@ const (
 	parseVendorFlag      = "parseVendor"
 	parseDependencyFlag  = "parseDependency"
 	markdownFilesFlag    = "markdownFiles"
+	generatedTimeFlag    = "generatedTime"
 )
 
 var initFlags = []cli.Flag{
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  generalInfoFlag + ", g",
 		Value: "main.go",
 		Usage: "Go file path in which 'swagger general API Info' is written",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  searchDirFlag + ", d",
 		Value: "./",
 		Usage: "Directory you want to parse",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  propertyStrategyFlag + ", p",
 		Value: "camelcase",
 		Usage: "Property Naming Strategy like snakecase,camelcase,pascalcase",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  outputFlag + ", o",
 		Value: "./docs",
 		Usage: "Output directory for all the generated files(swagger.json, swagger.yaml and doc.go)",
 	},
-	cli.BoolFlag{
+	&cli.BoolFlag{
 		Name:  parseVendorFlag,
 		Usage: "Parse go files in 'vendor' folder, disabled by default",
 	},
-	cli.BoolFlag{
+	&cli.BoolFlag{
 		Name:  parseDependencyFlag,
 		Usage: "Parse go files in outside dependency folder, disabled by default",
 	},
-	cli.StringFlag{
+	&cli.StringFlag{
 		Name:  markdownFilesFlag + ", md",
 		Value: "",
 		Usage: "Parse folder containing markdown files to use as description, disabled by default",
+	},
+	&cli.BoolFlag{
+		Name:  "generatedTime",
+		Usage: "Generate timestamp at the top of docs.go, true by default",
 	},
 }
 
@@ -73,6 +78,7 @@ func initAction(c *cli.Context) error {
 		ParseVendor:        c.Bool(parseVendorFlag),
 		ParseDependency:    c.Bool(parseDependencyFlag),
 		MarkdownFilesDir:   c.String(markdownFilesFlag),
+		GeneratedTime:      c.Bool(generatedTimeFlag),
 	})
 }
 
@@ -80,7 +86,7 @@ func main() {
 	app := cli.NewApp()
 	app.Version = swag.Version
 	app.Usage = "Automatically generate RESTful API documentation with Swagger 2.0 for Go."
-	app.Commands = []cli.Command{
+	app.Commands = []*cli.Command{
 		{
 			Name:    "init",
 			Aliases: []string{"i"},

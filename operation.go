@@ -150,6 +150,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	if strings.HasPrefix(refType, "[]") == true {
 		objectType = "array"
 		refType = strings.TrimPrefix(refType, "[]")
+		refType = TransToValidSchemeType(refType)
 	} else if IsPrimitiveType(refType) ||
 		paramType == "formData" && refType == "file" {
 		objectType = "primitive"
@@ -180,13 +181,73 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				},
 			}
 		case "object":
-			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
+			refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
+			if err != nil {
+				return err
+			}
+			structType, ok := typeSpec.Type.(*ast.StructType)
+			if !ok {
+				return fmt.Errorf("%s is not supported type for %s", refType, paramType)
+			}
+			refSplit := strings.Split(refType, ".")
+			schema, err := operation.parser.parseStruct(refSplit[0], structType.Fields)
+			if err != nil {
+				return err
+			}
+			if len(schema.Properties) == 0 {
+				return nil
+			}
+			find := func(arr []string, target string) bool {
+				for _, str := range arr {
+					if str == target {
+						return true
+					}
+				}
+				return false
+			}
+			for name, prop := range schema.Properties {
+				if len(prop.Type) == 0 {
+					continue
+				}
+				if prop.Type[0] == "array" &&
+					prop.Items.Schema != nil &&
+					len(prop.Items.Schema.Type) > 0 &&
+					IsSimplePrimitiveType(prop.Items.Schema.Type[0]) {
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], find(schema.Required, name))
+					param.SimpleSchema.Type = prop.Type[0]
+					param.SimpleSchema.Items = &spec.Items{
+						SimpleSchema: spec.SimpleSchema{
+							Type: prop.Items.Schema.Type[0],
+						},
+					}
+				} else if IsSimplePrimitiveType(prop.Type[0]) {
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], find(schema.Required, name))
+				} else {
+					Println(fmt.Sprintf("skip field [%s] in %s is not supported type for %s", name, refType, paramType))
+					continue
+				}
+				param.CommonValidations.Maximum = prop.Maximum
+				param.CommonValidations.Minimum = prop.Minimum
+				param.CommonValidations.ExclusiveMaximum = prop.ExclusiveMaximum
+				param.CommonValidations.ExclusiveMinimum = prop.ExclusiveMinimum
+				param.CommonValidations.MaxLength = prop.MaxLength
+				param.CommonValidations.MinLength = prop.MinLength
+				param.CommonValidations.Pattern = prop.Pattern
+				param.CommonValidations.MaxItems = prop.MaxItems
+				param.CommonValidations.MinItems = prop.MinItems
+				param.CommonValidations.UniqueItems = prop.UniqueItems
+				param.CommonValidations.MultipleOf = prop.MultipleOf
+				param.CommonValidations.Enum = prop.Enum
+				operation.Operation.Parameters = append(operation.Operation.Parameters, param)
+			}
+			return nil
 		}
 	case "body":
 		switch objectType {
 		case "primitive":
 			param.Schema.Type = spec.StringOrArray{refType}
 		case "array":
+			param.Schema.Type = spec.StringOrArray{objectType}
 			param.Schema.Items = &spec.SchemaOrArray{
 				Schema: &spec.Schema{
 					SchemaProps: spec.SchemaProps{},
@@ -196,13 +257,17 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if IsPrimitiveType(refType) {
 				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
 			} else {
-				if err := operation.registerSchemaType(refType, astFile); err != nil {
+				var err error
+				refType, _, err = operation.registerSchemaType(refType, astFile)
+				if err != nil {
 					return err
 				}
 				param.Schema.Items.Schema.Ref = spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)}
 			}
 		case "object":
-			if err := operation.registerSchemaType(refType, astFile); err != nil {
+			var err error
+			refType, _, err = operation.registerSchemaType(refType, astFile)
+			if err != nil {
 				return err
 			}
 			param.Schema.Type = []string{}
@@ -221,20 +286,23 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	return nil
 }
 
-func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.File) error {
-	refSplit := strings.Split(schemaType, ".")
-	if len(refSplit) != 2 {
-		return nil
+func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.File) (string, *ast.TypeSpec, error) {
+	if !strings.ContainsRune(schemaType, '.') {
+		if astFile == nil {
+			return schemaType, nil, fmt.Errorf("no package name for type %s", schemaType)
+		}
+		schemaType = astFile.Name.String() + "." + schemaType
 	}
+	refSplit := strings.Split(schemaType, ".")
 	pkgName := refSplit[0]
 	typeName := refSplit[1]
 	if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
 		operation.parser.registerTypes[schemaType] = typeSpec
-		return nil
+		return schemaType, typeSpec, nil
 	}
 	var typeSpec *ast.TypeSpec
 	if astFile == nil {
-		return fmt.Errorf("can not register schema type: %q reason: astFile == nil", schemaType)
+		return schemaType, nil, fmt.Errorf("can not register schema type: %q reason: astFile == nil", schemaType)
 	}
 	for _, imp := range astFile.Imports {
 		if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
@@ -245,14 +313,14 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 			var err error
 			typeSpec, err = findTypeDef(impPath, typeName)
 			if err != nil {
-				return fmt.Errorf("can not find type def: %q error: %s", schemaType, err)
+				return schemaType, nil, fmt.Errorf("can not find type def: %q error: %s", schemaType, err)
 			}
 			break
 		}
 	}
 
 	if typeSpec == nil {
-		return fmt.Errorf("can not find schema type: %q", schemaType)
+		return schemaType, nil, fmt.Errorf("can not find schema type: %q", schemaType)
 	}
 
 	if _, ok := operation.parser.TypeDefinitions[pkgName]; !ok {
@@ -261,7 +329,7 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 
 	operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
 	operation.parser.registerTypes[schemaType] = typeSpec
-	return nil
+	return schemaType, typeSpec, nil
 }
 
 var regexAttributes = map[string]*regexp.Regexp{
@@ -443,7 +511,7 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]+)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
@@ -569,14 +637,12 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 
-	if !IsGolangPrimitiveType(refType) && !strings.Contains(refType, ".") {
-		currentPkgName := astFile.Name.String()
-		refType = currentPkgName + "." + refType
-	}
-
-	if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
-		if err := operation.registerSchemaType(refType, astFile); err != nil {
-			return err
+	if !IsGolangPrimitiveType(refType) {
+		if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
+			var err error
+			if refType, _, err = operation.registerSchemaType(refType, astFile); err != nil {
+				return err
+			}
 		}
 	}
 

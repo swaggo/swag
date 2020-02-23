@@ -45,7 +45,7 @@ $ go get -u github.com/swaggo/swag/cmd/swag
 ```
 To build from source you need [Go](https://golang.org/dl/) (1.9 or newer).
 
-Or download the pre-compiled binaries binary form [release page](https://github.com/swaggo/swag/releases).
+Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
 3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
 ```sh
@@ -453,7 +453,7 @@ Field Name | Type | Description
 <a name="parameterMaxLength"></a>maxLength | `integer` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.2.1.
 <a name="parameterMinLength"></a>minLength | `integer` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.2.2.
 <a name="parameterEnums"></a>enums | [\*] | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.1.
-<a name="parameterFormat"></a>format | `string` | The extending format for the previously mentioned [`type`](#parameterType). See [Data Type Formats](#dataTypeFormat) for further details.
+<a name="parameterFormat"></a>format | `string` | The extending format for the previously mentioned [`type`](#parameterType). See [Data Type Formats](https://swagger.io/specification/v2/#dataTypeFormat) for further details.
 
 ### Future
 
@@ -598,7 +598,7 @@ generated swagger doc as follows:
 
 ```go
 type Account struct {
-    ID   int    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
+    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
 }
 ```
 

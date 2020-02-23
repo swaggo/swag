@@ -111,6 +111,15 @@ func TestParseRouterComment(t *testing.T) {
 	assert.Equal(t, "GET", operation.HTTPMethod)
 }
 
+func TestParseRouterOnlySlash(t *testing.T) {
+	comment := `// @Router / [get]`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "/", operation.Path)
+	assert.Equal(t, "GET", operation.HTTPMethod)
+}
+
 func TestParseRouterCommentWithPlusSign(t *testing.T) {
 	comment := `/@Router /customer/get-wishlist/{proxy+} [post]`
 	operation := NewOperation()
@@ -394,7 +403,7 @@ func TestParseParamCommentBodyArray(t *testing.T) {
             "in": "body",
             "required": true,
             "schema": {
-                "type": "string",
+                "type": "array",
                 "items": {
                     "type": "string"
                 }
@@ -492,6 +501,33 @@ func TestParseParamCommentByBodyType(t *testing.T) {
             "required": true,
             "schema": {
                 "$ref": "#/definitions/model.OrderRow"
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
+	comment := `@Param some_id body []int true "Some ID"`
+	operation := NewOperation()
+	operation.parser = New()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "integer"
+                }
             }
         }
     ]
@@ -835,7 +871,7 @@ func TestFindTypeDefCoreLib(t *testing.T) {
 }
 
 func TestFindTypeDefExternalPkg(t *testing.T) {
-	spec, err := findTypeDef("github.com/stretchr/testify/assert", "Assertions")
+	spec, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
 	assert.NoError(t, err)
 	assert.NotNil(t, spec)
 }
@@ -917,7 +953,6 @@ func TestParseDeprecationDescription(t *testing.T) {
 
 func TestRegisterSchemaType(t *testing.T) {
 	operation := NewOperation()
-	assert.NoError(t, operation.registerSchemaType("string", nil))
 
 	fset := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fset, "main.go", `package main
@@ -927,7 +962,8 @@ func TestRegisterSchemaType(t *testing.T) {
 	assert.NoError(t, err)
 
 	operation.parser = New()
-	assert.Error(t, operation.registerSchemaType("timer.Location", astFile))
+	_, _, err = operation.registerSchemaType("timer.Location", astFile)
+	assert.Error(t, err)
 }
 
 func TestParseExtentions(t *testing.T) {
