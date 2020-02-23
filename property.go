@@ -120,15 +120,19 @@ func getArrayPropertyName(pkgName string, astTypeArrayElt ast.Expr, parser *Pars
 	case *ast.SelectorExpr:
 		return parseFieldSelectorExpr(elt, parser, newArrayProperty)
 	case *ast.Ident:
-		name := TransToValidSchemeType(elt.Name)
+		name := elt.Name
 		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[pkgName+"."+name]; isCustomType {
 			name = actualPrimitiveType
+		} else {
+			name = TransToValidSchemeType(elt.Name)
 		}
 		return propertyName{SchemaType: "array", ArrayType: name}
 	default:
-		name := TransToValidSchemeType(fmt.Sprintf("%s", astTypeArrayElt))
+		name := fmt.Sprintf("%s", astTypeArrayElt)
 		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[pkgName+"."+name]; isCustomType {
 			name = actualPrimitiveType
+		} else {
+			name = TransToValidSchemeType(name)
 		}
 		return propertyName{SchemaType: "array", ArrayType: name}
 	}
