@@ -25,7 +25,7 @@ func TestGetPropertyNameSelectorExpr(t *testing.T) {
 		"string",
 		"",
 	}
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -49,7 +49,7 @@ func TestGetPropertyNameIdentObjectId(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -73,7 +73,7 @@ func TestGetPropertyNameIdentUUID(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -96,7 +96,7 @@ func TestGetPropertyNameIdentDecimal(t *testing.T) {
 		"string",
 		"",
 	}
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -120,7 +120,7 @@ func TestGetPropertyNameIdentTime(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, nil)
+	propertyName, err := getPropertyName("test", input, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -140,7 +140,7 @@ func TestGetPropertyNameStarExprIdent(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -168,7 +168,7 @@ func TestGetPropertyNameStarExprMap(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -190,7 +190,7 @@ func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 		"string",
 		"",
 	}
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -220,7 +220,7 @@ func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -237,7 +237,7 @@ func TestGetPropertyNameArrayStructType(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -257,7 +257,7 @@ func TestGetPropertyNameMap(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -270,7 +270,7 @@ func TestGetPropertyNameStruct(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
@@ -283,14 +283,14 @@ func TestGetPropertyNameInterface(t *testing.T) {
 		"",
 	}
 
-	propertyName, err := getPropertyName(input, New())
+	propertyName, err := getPropertyName("test", input, New())
 	assert.NoError(t, err)
 	assert.Equal(t, expected, propertyName)
 }
 
 func TestGetPropertyNameChannel(t *testing.T) {
 	input := &ast.ChanType{}
-	_, err := getPropertyName(input, New())
+	_, err := getPropertyName("test", input, New())
 	assert.Error(t, err)
 }
 
