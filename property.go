@@ -102,8 +102,8 @@ func getPropertyName(pkgName string, expr ast.Expr, parser *Parser) (propertyNam
 			return propertyName{SchemaType: actualPrimitiveType, ArrayType: actualPrimitiveType}, nil
 		}
 
-		schemeType := TransToValidSchemeType(name)
-		return propertyName{SchemaType: schemeType, ArrayType: schemeType}, nil
+		name = TransToValidSchemeType(name)
+		return propertyName{SchemaType: name, ArrayType: name}, nil
 	default:
 		return propertyName{}, errors.New("not supported" + fmt.Sprint(expr))
 	}
