@@ -579,7 +579,7 @@ func (parser *Parser) parseDefinitions() error {
 // given name and package, and populates swagger schema definitions registry
 // with a schema for the given type
 func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.TypeSpec) error {
-	refTypeName := fullTypeName(pkgName, typeName)
+	refTypeName := TypeDocName(pkgName,typeSpec)
 
 	if typeSpec == nil {
 		Println("Skipping '" + refTypeName + "', pkg '" + pkgName + "' not found, try add flag --parseDependency or --parseVendor.")
@@ -603,7 +603,6 @@ func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.Ty
 	if err != nil {
 		return err
 	}
-	refTypeName = TypeDocName(pkgName,typeSpec)
 	parser.swagger.Definitions[refTypeName] = *schema
 	return nil
 }
@@ -655,9 +654,11 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 	switch expr := typeExpr.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
-		refTypeName := fullTypeName(pkgName, typeName)
-		if schema, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
-			return &schema, nil
+		if typedef, ok := parser.TypeDefinitions[pkgName][typeName]; ok {
+			refTypeName := TypeDocName(pkgName,typedef)
+			if schema, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
+				return &schema, nil
+			}
 		}
 
 		return parser.parseStruct(pkgName, expr.Fields)
