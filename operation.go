@@ -256,7 +256,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					return err
 				}
 				param.Schema.Items.Schema.Ref = spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType,typeSpec)),
+					Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
 				}
 			}
 		case "object":
@@ -266,7 +266,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			}
 			param.Schema.Type = []string{}
 			param.Schema.Ref = spec.Ref{
-				Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType,typeSpec)),
+				Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
 			}
 		}
 	default:
@@ -285,7 +285,7 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 		if astFile == nil {
 			return schemaType, nil, fmt.Errorf("no package name for type %s", schemaType)
 		}
-		schemaType = fullTypeName(astFile.Name.String(),schemaType)
+		schemaType = fullTypeName(astFile.Name.String(), schemaType)
 	}
 	refSplit := strings.Split(schemaType, ".")
 	pkgName := refSplit[0]
@@ -647,9 +647,9 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	if schemaType == "object" {
 		response.Schema.SchemaProps = spec.SchemaProps{}
 		response.Schema.Ref = spec.Ref{
-			Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType,typeSpec)),
+			Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
 		}
-	}else if schemaType == "array" {
+	} else if schemaType == "array" {
 		refType = TransToValidSchemeType(refType)
 		if IsPrimitiveType(refType) {
 			response.Schema.Items = &spec.SchemaOrArray{
@@ -663,7 +663,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 			response.Schema.Items = &spec.SchemaOrArray{
 				Schema: &spec.Schema{
 					SchemaProps: spec.SchemaProps{
-						Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType,typeSpec))},
+						Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec))},
 					},
 				},
 			}

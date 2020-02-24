@@ -85,21 +85,21 @@ func IsGolangPrimitiveType(typeName string) bool {
 }
 
 // TypeDocName get alias from comment '// @name ', otherwise the original type name to display in doc
-func TypeDocName(pkgName string,spec *ast.TypeSpec) string {
+func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
 	if spec != nil {
 		if spec.Comment != nil {
 			for _, comment := range spec.Comment.List {
 				text := strings.TrimSpace(comment.Text)
-				text = strings.TrimLeft(text,"//")
+				text = strings.TrimLeft(text, "//")
 				text = strings.TrimSpace(text)
-				texts := strings.Split(text," ")
+				texts := strings.Split(text, " ")
 				if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
 					return texts[1]
 				}
 			}
 		}
 		if spec.Name != nil {
-			return fullTypeName(strings.Split(pkgName,".")[0],spec.Name.Name)
+			return fullTypeName(strings.Split(pkgName, ".")[0], spec.Name.Name)
 		}
 	}
 

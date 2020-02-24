@@ -3025,14 +3025,14 @@ func Fun()  {
 
 	err = p.parseDefinitions()
 	assert.NoError(t, err)
-	teacher,ok := p.swagger.Definitions["Teacher"]
+	teacher, ok := p.swagger.Definitions["Teacher"]
 	assert.True(t, ok)
 	ref := teacher.Properties["child"].SchemaProps.Ref
-	assert.Equal(t,"#/definitions/Student",ref.String())
-	_,ok = p.swagger.Definitions["Student"]
+	assert.Equal(t, "#/definitions/Student", ref.String())
+	_, ok = p.swagger.Definitions["Student"]
 	assert.True(t, ok)
-	path,ok := p.swagger.Paths.Paths["/test"]
-	assert.Equal(t,"#/definitions/Teacher",path.Get.Parameters[0].Schema.Ref.String())
+	path, ok := p.swagger.Paths.Paths["/test"]
+	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
 	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
-	assert.Equal(t,"#/definitions/Teacher",ref.String())
+	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }

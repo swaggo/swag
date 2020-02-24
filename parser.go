@@ -579,7 +579,7 @@ func (parser *Parser) parseDefinitions() error {
 // given name and package, and populates swagger schema definitions registry
 // with a schema for the given type
 func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.TypeSpec) error {
-	refTypeName := TypeDocName(pkgName,typeSpec)
+	refTypeName := TypeDocName(pkgName, typeSpec)
 
 	if typeSpec == nil {
 		Println("Skipping '" + refTypeName + "', pkg '" + pkgName + "' not found, try add flag --parseDependency or --parseVendor.")
@@ -655,7 +655,7 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 	// type Foo struct {...}
 	case *ast.StructType:
 		if typedef, ok := parser.TypeDefinitions[pkgName][typeName]; ok {
-			refTypeName := TypeDocName(pkgName,typedef)
+			refTypeName := TypeDocName(pkgName, typedef)
 			if schema, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
 				return &schema, nil
 			}
@@ -674,7 +674,7 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 		}
 		refTypeName := fullTypeName(pkgName, expr.Name)
 		if typedef, ok := parser.TypeDefinitions[pkgName][expr.Name]; ok {
-			refTypeName = TypeDocName(pkgName,typedef)
+			refTypeName = TypeDocName(pkgName, typedef)
 			if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
 				parser.ParseDefinition(pkgName, expr.Name, typedef)
 			}
@@ -901,7 +901,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 
 	if typeSpec, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
-		parser.ParseDefinition(pkgName, structField.schemaType,typeSpec)
+		parser.ParseDefinition(pkgName, structField.schemaType, typeSpec)
 		required := make([]string, 0)
 		if structField.isRequired {
 			required = append(required, structField.name)
@@ -912,7 +912,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 				Description: structField.desc,
 				Required:    required,
 				Ref: spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(pkgName,typeSpec)),
+					Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(pkgName, typeSpec)),
 				},
 			},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{
@@ -937,7 +937,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
 								Ref: spec.Ref{
-									Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(pkgName,typeSpec)),
+									Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(pkgName, typeSpec)),
 								},
 							},
 						},
