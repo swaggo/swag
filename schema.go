@@ -1,6 +1,10 @@
 package swag
 
-import "fmt"
+import (
+	"fmt"
+	"go/ast"
+	"strings"
+)
 
 // CheckSchemaType checks if typeName is not a name of primitive type
 func CheckSchemaType(typeName string) error {
@@ -78,4 +82,24 @@ func IsGolangPrimitiveType(typeName string) bool {
 	default:
 		return false
 	}
+}
+
+// TypeDocName get alias from comment '// @name ', otherwise the original type name to display in doc
+func TypeDocName(pkgName string,spec *ast.TypeSpec) string {
+	if spec == nil {
+		return ""
+	}
+	if spec.Comment != nil {
+		for _, comment := range spec.Comment.List {
+			text := strings.TrimSpace(comment.Text)
+			text = strings.TrimLeft(text,"//")
+			text = strings.TrimSpace(text)
+			texts := strings.Split(text," ")
+			if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
+				return texts[1]
+			}
+		}
+	}
+
+	return fullTypeName(strings.Split(pkgName,".")[0],spec.Name.Name)
 }
