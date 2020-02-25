@@ -69,6 +69,12 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	switch lowerAttribute {
 	case "@description":
 		operation.ParseDescriptionComment(lineRemainder)
+	case "@description.markdown":
+		commentInfo, err := getMarkdownForTag(lineRemainder, operation.parser.markdownFileDir)
+		if err != nil {
+			return err
+		}
+		operation.ParseDescriptionComment(string(commentInfo))
 	case "@summary":
 		operation.Summary = lineRemainder
 	case "@id":
