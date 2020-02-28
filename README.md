@@ -618,6 +618,13 @@ generate swagger doc as follows:
     }
 }
 ```
+### Rename model to display
+
+```golang
+type Resp struct {
+	Code int
+}//@name Response
+```
 
 ### How to using security annotations
 

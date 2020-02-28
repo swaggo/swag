@@ -2991,3 +2991,48 @@ func Fun()  {
 
 	assert.Equal(t, 3, len(p.swagger.Paths.Paths["/test"].Get.Parameters))
 }
+
+func TestParseRenamedStructDefinition(t *testing.T) {
+	src := `
+package main
+
+type Child struct {
+	Name string
+}//@name Student
+
+type Parent struct {
+	Name string
+	Child Child
+}//@name Teacher
+
+// @Param request body Parent true "query params"
+// @Success 200 {object} Parent
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.ParseType(f)
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	err = p.parseDefinitions()
+	assert.NoError(t, err)
+	teacher, ok := p.swagger.Definitions["Teacher"]
+	assert.True(t, ok)
+	ref := teacher.Properties["child"].SchemaProps.Ref
+	assert.Equal(t, "#/definitions/Student", ref.String())
+	_, ok = p.swagger.Definitions["Student"]
+	assert.True(t, ok)
+	path, ok := p.swagger.Paths.Paths["/test"]
+	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
+	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
+	assert.Equal(t, "#/definitions/Teacher", ref.String())
+}

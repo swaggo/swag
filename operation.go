@@ -257,22 +257,22 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if IsPrimitiveType(refType) {
 				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
 			} else {
-				var err error
-				refType, _, err = operation.registerSchemaType(refType, astFile)
+				refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
 				if err != nil {
 					return err
 				}
-				param.Schema.Items.Schema.Ref = spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)}
+				param.Schema.Items.Schema.Ref = spec.Ref{
+					Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
+				}
 			}
 		case "object":
-			var err error
-			refType, _, err = operation.registerSchemaType(refType, astFile)
+			refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
 			if err != nil {
 				return err
 			}
 			param.Schema.Type = []string{}
 			param.Schema.Ref = spec.Ref{
-				Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
+				Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
 			}
 		}
 	default:
@@ -291,7 +291,7 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 		if astFile == nil {
 			return schemaType, nil, fmt.Errorf("no package name for type %s", schemaType)
 		}
-		schemaType = astFile.Name.String() + "." + schemaType
+		schemaType = fullTypeName(astFile.Name.String(), schemaType)
 	}
 	refSplit := strings.Split(schemaType, ".")
 	pkgName := refSplit[0]
@@ -637,10 +637,11 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 
+	var typeSpec *ast.TypeSpec
 	if !IsGolangPrimitiveType(refType) {
 		if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
 			var err error
-			if refType, _, err = operation.registerSchemaType(refType, astFile); err != nil {
+			if refType, typeSpec, err = operation.registerSchemaType(refType, astFile); err != nil {
 				return err
 			}
 		}
@@ -652,11 +653,9 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	if schemaType == "object" {
 		response.Schema.SchemaProps = spec.SchemaProps{}
 		response.Schema.Ref = spec.Ref{
-			Ref: jsonreference.MustCreateRef("#/definitions/" + refType),
+			Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
 		}
-	}
-
-	if schemaType == "array" {
+	} else if schemaType == "array" {
 		refType = TransToValidSchemeType(refType)
 		if IsPrimitiveType(refType) {
 			response.Schema.Items = &spec.SchemaOrArray{
@@ -670,7 +669,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 			response.Schema.Items = &spec.SchemaOrArray{
 				Schema: &spec.Schema{
 					SchemaProps: spec.SchemaProps{
-						Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + refType)},
+						Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec))},
 					},
 				},
 			}

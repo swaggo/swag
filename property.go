@@ -98,7 +98,7 @@ func getPropertyName(pkgName string, expr ast.Expr, parser *Parser) (propertyNam
 	case *ast.Ident:
 		name := tp.Name
 		// check if it is a custom type
-		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[pkgName+"."+name]; isCustomType {
+		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[fullTypeName(pkgName, name)]; isCustomType {
 			return propertyName{SchemaType: actualPrimitiveType, ArrayType: actualPrimitiveType}, nil
 		}
 
@@ -121,7 +121,7 @@ func getArrayPropertyName(pkgName string, astTypeArrayElt ast.Expr, parser *Pars
 		return parseFieldSelectorExpr(elt, parser, newArrayProperty)
 	case *ast.Ident:
 		name := elt.Name
-		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[pkgName+"."+name]; isCustomType {
+		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[fullTypeName(pkgName, name)]; isCustomType {
 			name = actualPrimitiveType
 		} else {
 			name = TransToValidSchemeType(elt.Name)
@@ -129,7 +129,7 @@ func getArrayPropertyName(pkgName string, astTypeArrayElt ast.Expr, parser *Pars
 		return propertyName{SchemaType: "array", ArrayType: name}
 	default:
 		name := fmt.Sprintf("%s", astTypeArrayElt)
-		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[pkgName+"."+name]; isCustomType {
+		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[fullTypeName(pkgName, name)]; isCustomType {
 			name = actualPrimitiveType
 		} else {
 			name = TransToValidSchemeType(name)

@@ -579,7 +579,7 @@ func (parser *Parser) parseDefinitions() error {
 // given name and package, and populates swagger schema definitions registry
 // with a schema for the given type
 func (parser *Parser) ParseDefinition(pkgName, typeName string, typeSpec *ast.TypeSpec) error {
-	refTypeName := fullTypeName(pkgName, typeName)
+	refTypeName := TypeDocName(pkgName, typeSpec)
 
 	if typeSpec == nil {
 		Println("Skipping '" + refTypeName + "', pkg '" + pkgName + "' not found, try add flag --parseDependency or --parseVendor.")
@@ -654,9 +654,11 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 	switch expr := typeExpr.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
-		refTypeName := fullTypeName(pkgName, typeName)
-		if schema, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
-			return &schema, nil
+		if typedef, ok := parser.TypeDefinitions[pkgName][typeName]; ok {
+			refTypeName := TypeDocName(pkgName, typedef)
+			if schema, isParsed := parser.swagger.Definitions[refTypeName]; isParsed {
+				return &schema, nil
+			}
 		}
 
 		return parser.parseStruct(pkgName, expr.Fields)
@@ -671,11 +673,13 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 			}, nil
 		}
 		refTypeName := fullTypeName(pkgName, expr.Name)
-		if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
-			if typedef, ok := parser.TypeDefinitions[pkgName][expr.Name]; ok {
+		if typedef, ok := parser.TypeDefinitions[pkgName][expr.Name]; ok {
+			refTypeName = TypeDocName(pkgName, typedef)
+			if _, isParsed := parser.swagger.Definitions[refTypeName]; !isParsed {
 				parser.ParseDefinition(pkgName, expr.Name, typedef)
 			}
 		}
+
 		return &spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Ref: spec.Ref{
@@ -895,10 +899,9 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		return fillObject(&src.VendorExtensible, &dest.VendorExtensible)
 	}
 
-	if _, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
+	if typeSpec, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
-		parser.ParseDefinition(pkgName, structField.schemaType,
-			parser.TypeDefinitions[pkgName][structField.schemaType])
+		parser.ParseDefinition(pkgName, structField.schemaType, typeSpec)
 		required := make([]string, 0)
 		if structField.isRequired {
 			required = append(required, structField.name)
@@ -909,7 +912,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 				Description: structField.desc,
 				Required:    required,
 				Ref: spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.schemaType),
+					Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(pkgName, typeSpec)),
 				},
 			},
 			SwaggerSchemaProps: spec.SwaggerSchemaProps{
@@ -918,7 +921,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		}
 	} else if structField.schemaType == "array" { // array field type
 		// if defined -- ref it
-		if _, ok := parser.TypeDefinitions[pkgName][structField.arrayType]; ok { // user type in array
+		if typeSpec, ok := parser.TypeDefinitions[pkgName][structField.arrayType]; ok { // user type in array
 			parser.ParseDefinition(pkgName, structField.arrayType,
 				parser.TypeDefinitions[pkgName][structField.arrayType])
 			required := make([]string, 0)
@@ -934,7 +937,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 						Schema: &spec.Schema{
 							SchemaProps: spec.SchemaProps{
 								Ref: spec.Ref{
-									Ref: jsonreference.MustCreateRef("#/definitions/" + pkgName + "." + structField.arrayType),
+									Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(pkgName, typeSpec)),
 								},
 							},
 						},
