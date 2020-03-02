@@ -1172,6 +1172,12 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 	}
 	// `json:"tag"` -> json:"tag"
 	structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
+
+	if ignoreTag := structTag.Get("swaggerignore"); ignoreTag == "true" {
+		structField.name = ""
+		return structField, nil
+	}
+
 	jsonTag := structTag.Get("json")
 	// json:"tag,hoge"
 	if strings.Contains(jsonTag, ",") {
@@ -1184,6 +1190,7 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 	}
 	if jsonTag == "-" {
 		structField.name = ""
+		return structField, nil
 	} else if jsonTag != "" {
 		structField.name = jsonTag
 	}
