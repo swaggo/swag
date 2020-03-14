@@ -67,7 +67,7 @@ type Parser struct {
 	// markdownFileDir holds the path to the folder, where markdown files are stored
 	markdownFileDir string
 
-	// collectionFormatInQuery set the default collectionFormat other thn 'csv' for array in query params
+	// collectionFormatInQuery set the default collectionFormat otherwise then 'csv' for array in query params
 	collectionFormatInQuery string
 }
 
