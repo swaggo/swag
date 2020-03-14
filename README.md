@@ -31,7 +31,9 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [Example value of struct](#example-value-of-struct)
 	- [Description of struct](#description-of-struct)
 	- [Use swaggertype tag to supported custom type](#use-swaggertype-tag-to-supported-custom-type)
+	- [Use swaggerignore tag to exclude a field](#use-swaggerignore-tag-to-exclude-a-field)
 	- [Add extension info to struct field](#add-extension-info-to-struct-field)
+	- [Rename model to display](#rename-model-to-display)
 	- [How to using security annotations](#how-to-using-security-annotations)
 - [About the Project](#about-the-project)
 
@@ -594,6 +596,17 @@ generated swagger doc as follows:
   }
 }
 
+```
+
+
+### Use swaggerignore tag to exclude a field
+
+```go
+type Account struct {
+    ID   string    `json:"id"`
+    Name string     `json:"name"`
+    Ignored int     `swaggerignore:"true"`
+}
 ```
 
 ### Add extension info to struct field
