@@ -2,6 +2,7 @@ package swag
 
 import (
 	"encoding/json"
+	"fmt"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -429,6 +430,33 @@ func TestParseParamCommentQueryArray(t *testing.T) {
             "items": {
                 "type": "string"
             },
+            "description": "Users List",
+            "name": "names",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+// Test ParseParamComment Query Params
+func TestParseParamCommentQueryArrayFormat(t *testing.T) {
+	comment := `@Param names query [multi]string true "Users List"`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	fmt.Println(string(b))
+	expected := `{
+    "parameters": [
+        {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "Users List",
             "name": "names",
             "in": "query",
