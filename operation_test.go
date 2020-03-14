@@ -2,7 +2,6 @@ package swag
 
 import (
 	"encoding/json"
-	"fmt"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -448,7 +447,6 @@ func TestParseParamCommentQueryArrayFormat(t *testing.T) {
 
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(operation, "", "    ")
-	fmt.Println(string(b))
 	expected := `{
     "parameters": [
         {
