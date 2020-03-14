@@ -147,10 +147,16 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 	// Detect refType
 	objectType := "object"
-	if strings.HasPrefix(refType, "[]") == true {
+	var collectionFormat string
+	if strings.HasPrefix(refType, "[]") {
 		objectType = "array"
 		refType = strings.TrimPrefix(refType, "[]")
 		refType = TransToValidSchemeType(refType)
+		collectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
+	} else if pos := strings.IndexRune(refType, ']'); pos > 0 && strings.HasPrefix(refType, "[") { //for example: [csv]int
+		objectType = "array"
+		collectionFormat = TransToValidCollectionFormat(refType[1:pos])
+		refType = TransToValidSchemeType(refType[pos+1:])
 	} else if IsPrimitiveType(refType) ||
 		paramType == "formData" && refType == "file" {
 		objectType = "primitive"
@@ -175,6 +181,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
 			}
 			param.SimpleSchema.Type = "array"
+			param.SimpleSchema.CollectionFormat = collectionFormat
 			param.SimpleSchema.Items = &spec.Items{
 				SimpleSchema: spec.SimpleSchema{
 					Type: refType,

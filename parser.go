@@ -67,6 +67,9 @@ type Parser struct {
 
 	// markdownFileDir holds the path to the folder, where markdown files are stored
 	markdownFileDir string
+
+	// collectionFormatInQuery set the default collectionFormat other thn 'csv' for array in query params
+	collectionFormatInQuery string
 }
 
 // New creates a new Parser with default properties.
@@ -299,7 +302,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					return err
 				}
 				securityMap[value] = securitySchemeOAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"], scopes)
-
+			case "@query.collection.format":
+				parser.collectionFormatInQuery = value
 			default:
 				prefixExtension := "@x-"
 				if len(attribute) > 5 { // Prefix extension + 1 char + 1 space  + 1 char
