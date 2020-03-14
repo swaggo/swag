@@ -152,7 +152,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		objectType = "array"
 		refType = strings.TrimPrefix(refType, "[]")
 		refType = TransToValidSchemeType(refType)
-		collectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
+		if operation.parser != nil {
+			collectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
+		}
 	} else if pos := strings.IndexRune(refType, ']'); pos > 0 && strings.HasPrefix(refType, "[") { //for example: [csv]int
 		objectType = "array"
 		collectionFormat = TransToValidCollectionFormat(refType[1:pos])
