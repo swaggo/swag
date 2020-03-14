@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -126,7 +125,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	}
 
 	if parser.ParseDependency {
-		pkgName, err := getPkgName(path.Dir(absMainAPIFilePath))
+		pkgName, err := getPkgName(filepath.Dir(absMainAPIFilePath))
 		if err != nil {
 			return err
 		}
@@ -1478,22 +1477,14 @@ func (parser *Parser) parseFile(path string) error {
 
 // Skip returns filepath.SkipDir error if match vendor and hidden folder
 func (parser *Parser) Skip(path string, f os.FileInfo) error {
-
-	if !parser.ParseVendor { // ignore vendor
-		if f.IsDir() && f.Name() == "vendor" {
+	if f.IsDir() {
+		if !parser.ParseVendor && f.Name() == "vendor" || //ignore "vendor"
+			f.Name() == "docs" || //exclude docs
+			len(f.Name()) > 1 && f.Name()[0] == '.' { // exclude all hidden folder
 			return filepath.SkipDir
 		}
 	}
 
-	// issue
-	if f.IsDir() && f.Name() == "docs" {
-		return filepath.SkipDir
-	}
-
-	// exclude all hidden folder
-	if f.IsDir() && len(f.Name()) > 1 && f.Name()[0] == '.' {
-		return filepath.SkipDir
-	}
 	return nil
 }
 
