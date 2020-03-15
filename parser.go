@@ -69,6 +69,9 @@ type Parser struct {
 
 	// collectionFormatInQuery set the default collectionFormat otherwise then 'csv' for array in query params
 	collectionFormatInQuery string
+
+	// excludes excludes dirs and files in SearchDir
+	excludes map[string]bool
 }
 
 // New creates a new Parser with default properties.
@@ -93,6 +96,7 @@ func New(options ...func(*Parser)) *Parser {
 		ImportAliases:        make(map[string]map[string]*ast.ImportSpec),
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
+		excludes:             make(map[string]bool),
 	}
 
 	for _, option := range options {
@@ -106,6 +110,18 @@ func New(options ...func(*Parser)) *Parser {
 func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 	return func(p *Parser) {
 		p.markdownFileDir = directoryPath
+	}
+}
+
+func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
+	return func(p *Parser) {
+		for _, f := range strings.Split(excludes, ",") {
+			f = strings.TrimSpace(f)
+			if f != "" {
+				f = filepath.Clean(f)
+				p.excludes[f] = true
+			}
+		}
 	}
 }
 
@@ -1482,6 +1498,12 @@ func (parser *Parser) Skip(path string, f os.FileInfo) error {
 			f.Name() == "docs" || //exclude docs
 			len(f.Name()) > 1 && f.Name()[0] == '.' { // exclude all hidden folder
 			return filepath.SkipDir
+		}
+
+		if parser.excludes != nil {
+			if _, ok := parser.excludes[path]; ok {
+				return filepath.SkipDir
+			}
 		}
 	}
 
