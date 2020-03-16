@@ -113,6 +113,7 @@ func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 	}
 }
 
+// SetExcludedDirsAndFiles sets directories and files to be excluded when searching
 func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 	return func(p *Parser) {
 		for _, f := range strings.Split(excludes, ",") {
