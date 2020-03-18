@@ -441,7 +441,7 @@ func TestParseParamCommentQueryArray(t *testing.T) {
 
 // Test ParseParamComment Query Params
 func TestParseParamCommentQueryArrayFormat(t *testing.T) {
-	comment := `@Param names query [multi]string true "Users List"`
+	comment := `@Param names query []string true "Users List" collectionFormat(multi)`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
 

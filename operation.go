@@ -147,18 +147,10 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 	// Detect refType
 	objectType := "object"
-	var collectionFormat string
 	if strings.HasPrefix(refType, "[]") {
 		objectType = "array"
 		refType = strings.TrimPrefix(refType, "[]")
 		refType = TransToValidSchemeType(refType)
-		if operation.parser != nil {
-			collectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
-		}
-	} else if pos := strings.IndexRune(refType, ']'); pos > 0 && strings.HasPrefix(refType, "[") { //for example: [csv]int
-		objectType = "array"
-		collectionFormat = TransToValidCollectionFormat(refType[1:pos])
-		refType = TransToValidSchemeType(refType[pos+1:])
 	} else if IsPrimitiveType(refType) ||
 		paramType == "formData" && refType == "file" {
 		objectType = "primitive"
@@ -183,7 +175,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
 			}
 			param.SimpleSchema.Type = "array"
-			param.SimpleSchema.CollectionFormat = collectionFormat
+			if operation.parser != nil {
+				param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
+			}
 			param.SimpleSchema.Items = &spec.Items{
 				SimpleSchema: spec.SimpleSchema{
 					Type: refType,
@@ -224,6 +218,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					IsSimplePrimitiveType(prop.Items.Schema.Type[0]) {
 					param = createParameter(paramType, prop.Description, name, prop.Type[0], find(schema.Required, name))
 					param.SimpleSchema.Type = prop.Type[0]
+					if operation.parser != nil && operation.parser.collectionFormatInQuery != "" && param.CollectionFormat == "" {
+						param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
+					}
 					param.SimpleSchema.Items = &spec.Items{
 						SimpleSchema: spec.SimpleSchema{
 							Type: prop.Items.Schema.Type[0],
@@ -288,7 +285,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
 
-	if err := operation.parseAndExtractionParamAttribute(commentLine, refType, &param); err != nil {
+	if err := operation.parseAndExtractionParamAttribute(commentLine, objectType, refType, &param); err != nil {
 		return err
 	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
@@ -343,22 +340,24 @@ func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.F
 
 var regexAttributes = map[string]*regexp.Regexp{
 	// for Enums(A, B)
-	"enums": regexp.MustCompile(`(?i)enums\(.*\)`),
+	"enums": regexp.MustCompile(`(?i)\s+enums\(.*\)`),
 	// for Minimum(0)
-	"maxinum": regexp.MustCompile(`(?i)maxinum\(.*\)`),
+	"maxinum": regexp.MustCompile(`(?i)\s+maxinum\(.*\)`),
 	// for Maximum(0)
-	"mininum": regexp.MustCompile(`(?i)mininum\(.*\)`),
+	"mininum": regexp.MustCompile(`(?i)\s+mininum\(.*\)`),
 	// for Maximum(0)
-	"default": regexp.MustCompile(`(?i)default\(.*\)`),
+	"default": regexp.MustCompile(`(?i)\s+default\(.*\)`),
 	// for minlength(0)
-	"minlength": regexp.MustCompile(`(?i)minlength\(.*\)`),
+	"minlength": regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
 	// for maxlength(0)
-	"maxlength": regexp.MustCompile(`(?i)maxlength\(.*\)`),
+	"maxlength": regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
 	// for format(email)
-	"format": regexp.MustCompile(`(?i)format\(.*\)`),
+	"format": regexp.MustCompile(`(?i)\s+format\(.*\)`),
+	// for collectionFormat(csv)
+	"collectionFormat": regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
 }
 
-func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schemaType string, param *spec.Parameter) error {
+func (operation *Operation) parseAndExtractionParamAttribute(commentLine, objectType, schemaType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
 	for attrKey, re := range regexAttributes {
 		attr, err := findAttr(re, commentLine)
@@ -403,8 +402,13 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, schema
 			param.MinLength = &n
 		case "format":
 			param.Format = attr
+		case "collectionFormat":
+			n, err := setCollectionFormatParam(attrKey, objectType, attr, commentLine)
+			if err != nil {
+				return err
+			}
+			param.CollectionFormat = n
 		}
-
 	}
 	return nil
 }
@@ -452,6 +456,13 @@ func setEnumParam(attr, schemaType string, param *spec.Parameter) error {
 		param.Enum = append(param.Enum, value)
 	}
 	return nil
+}
+
+func setCollectionFormatParam(name, schemaType, attr, commentLine string) (string, error) {
+	if schemaType != "array" {
+		return "", fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
+	}
+	return TransToValidCollectionFormat(attr), nil
 }
 
 // defineType enum value define the type (object and array unsupported)
