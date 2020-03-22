@@ -229,7 +229,6 @@ func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
-
 func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
 	comment := `@Success 200 {object} model.CommonHeader{data=[]string} "Error message, if code != 200`
 	operation := NewOperation()
@@ -273,7 +272,6 @@ func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 }
-
 
 func TestParseResponseCommentWithNestedObjectType(t *testing.T) {
 	comment := `@Success 200 {object} model.CommonHeader{data=model.Payload} "Error message, if code != 200`
