@@ -496,6 +496,32 @@ type Account struct {
     Name string `json:"name" example:"account name"`
 }
 ```
+
+### Model composition in response
+```go
+@success 200 {object} jsonresult.JSONResult{data=proto.Order} "desc"
+```
+
+```go
+type JSONResult struct {
+	Code    int          `json:"code" `
+	Message string       `json:"message"`
+	Data    interface{}  `json:"data"`
+}
+
+type Order struct { //in `proto` package
+	...
+}
+```
+
+- also support array of objects and primitive types as nested response
+```go
+@success 200 {object} jsonresult.JSONResult{data=[]proto.Order} "desc"
+@success 200 {object} jsonresult.JSONResult{data=string} "desc"
+@success 200 {object} jsonresult.JSONResult{data=[]string} "desc"
+```
+
+
 ### Add a headers in response
 
 ```go
