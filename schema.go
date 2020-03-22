@@ -84,6 +84,16 @@ func IsGolangPrimitiveType(typeName string) bool {
 	}
 }
 
+// TransToValidCollectionFormat determine valid collection format
+func TransToValidCollectionFormat(format string) string {
+	switch format {
+	case "csv", "multi", "pipes", "tsv", "ssv":
+		return format
+	default:
+		return ""
+	}
+}
+
 // TypeDocName get alias from comment '// @name ', otherwise the original type name to display in doc
 func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
 	if spec != nil {
