@@ -26,6 +26,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
  - [Examples](#examples)
 	- [Descriptions over multiple lines](#descriptions-over-multiple-lines)
 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
+	- [Model composition in response](#model-composition-in-response)
 	- [Add a headers in response](#add-a-headers-in-response) 
 	- [Use multiple path params](#use-multiple-path-params)
 	- [Example value of struct](#example-value-of-struct)
