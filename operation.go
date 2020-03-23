@@ -647,7 +647,7 @@ func (nested *nestedField) getSchema() *spec.Schema {
 	return &spec.Schema{SchemaProps: spec.SchemaProps{Ref: nested.Ref}}
 }
 
-func (nested *nestedField) fillNestedSchema(response spec.Response, ref spec.Ref) {
+func (nested *nestedField) fillNestedSchema(response *spec.Response, ref spec.Ref) {
 	props := make(map[string]spec.Schema, 0)
 	if nested.IsArray {
 		props[nested.Name] = spec.Schema{SchemaProps: spec.SchemaProps{
@@ -663,9 +663,7 @@ func (nested *nestedField) fillNestedSchema(response spec.Response, ref spec.Ref
 			Properties: props,
 		},
 	}
-	response.Schema.AllOf = make([]spec.Schema, 0)
-	response.Schema.AllOf = append(response.Schema.AllOf, spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}})
-	response.Schema.AllOf = append(response.Schema.AllOf, nestedSpec)
+	response.Schema.AllOf = []spec.Schema{spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}},nestedSpec}
 }
 
 var nestedObjectPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)=([^\[\]]*)\}$`)
@@ -748,7 +746,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		if nested == nil {
 			response.Schema.Ref = ref
 		} else {
-			nested.fillNestedSchema(response, ref)
+			nested.fillNestedSchema(&response, ref)
 		}
 
 	} else if schemaType == "array" {
