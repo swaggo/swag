@@ -663,7 +663,7 @@ func (nested *nestedField) fillNestedSchema(response *spec.Response, ref spec.Re
 			Properties: props,
 		},
 	}
-	response.Schema.AllOf = []spec.Schema{spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}, nestedSpec}
+	response.Schema.AllOf = []spec.Schema{{SchemaProps: spec.SchemaProps{Ref: ref}}, nestedSpec}
 }
 
 var nestedObjectPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)=([^\[\]]*)\}$`)
