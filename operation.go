@@ -651,32 +651,32 @@ var nestedPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)\}$`)
 var nestedObjectPattern = regexp.MustCompile(`^(.*)=(.*)$`)
 
 func (operation *Operation) tryExtractNestedFields(specStr string, astFile *ast.File) (refType string, nestedFields []*nestedField, err error) {
-	if matches := nestedPattern.FindStringSubmatch(specStr); len(matches) != 3 {
+	matches := nestedPattern.FindStringSubmatch(specStr)
+	if len(matches) != 3 {
 		return specStr, nil, nil
-	} else {
-		refType = matches[1]
-		fields := strings.Split(matches[2], ",")
-		for _, field := range fields {
-			if matches := nestedObjectPattern.FindStringSubmatch(field); len(matches) == 3 {
-				nested := &nestedField{Name: matches[1], Type: matches[2], IsArray: strings.HasPrefix(matches[2], "[]")}
-				if nested.IsArray {
-					nested.Type = nested.Type[2:]
-				}
-				nested.Type = TransToValidSchemeType(nested.Type)
-				if !IsPrimitiveType(nested.Type) {
-					if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
-						refType, typeSpec, err := operation.registerSchemaType(nested.Type, astFile)
-						if err != nil {
-							return specStr, nil, err
-						}
+	}
+	refType = matches[1]
+	fields := strings.Split(matches[2], ",")
+	for _, field := range fields {
+		if matches := nestedObjectPattern.FindStringSubmatch(field); len(matches) == 3 {
+			nested := &nestedField{Name: matches[1], Type: matches[2], IsArray: strings.HasPrefix(matches[2], "[]")}
+			if nested.IsArray {
+				nested.Type = nested.Type[2:]
+			}
+			nested.Type = TransToValidSchemeType(nested.Type)
+			if !IsPrimitiveType(nested.Type) {
+				if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
+					refType, typeSpec, err := operation.registerSchemaType(nested.Type, astFile)
+					if err != nil {
+						return specStr, nil, err
+					}
 
-						nested.Ref = spec.Ref{
-							Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
-						}
+					nested.Ref = spec.Ref{
+						Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
 					}
 				}
-				nestedFields = append(nestedFields, nested)
 			}
+			nestedFields = append(nestedFields, nested)
 		}
 	}
 	return
