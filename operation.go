@@ -647,24 +647,8 @@ func (nested *nestedField) getSchema() *spec.Schema {
 	return &spec.Schema{SchemaProps: spec.SchemaProps{Ref: nested.Ref}}
 }
 
-func (nested *nestedField) fillNestedSchema(response *spec.Response, ref spec.Ref) {
-	props := make(map[string]spec.Schema, 0)
-	if nested.IsArray {
-		props[nested.Name] = spec.Schema{SchemaProps: spec.SchemaProps{
-			Type:  []string{"array"},
-			Items: &spec.SchemaOrArray{Schema: nested.getSchema()},
-		}}
-	} else {
-		props[nested.Name] = *nested.getSchema()
-	}
-	nestedSpec := spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type:       []string{"object"},
-			Properties: props,
-		},
-	}
-	response.Schema.AllOf = []spec.Schema{{SchemaProps: spec.SchemaProps{Ref: ref}}, nestedSpec}
-}
+//RepsonseType{data1=Type1,data2=Type2}
+var nestedPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)\}$`)
 
 var nestedObjectPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)=([^\[\]]*)\}$`)
 var nestedArrayPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)=\[\]([^\[\]]*)\}$`)
