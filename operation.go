@@ -630,7 +630,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type spec not found")
 }
 
-var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=\[\]]+)[^"]*(.*)?`)
+var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
 type nestedField struct {
 	Name    string
@@ -640,7 +640,7 @@ type nestedField struct {
 }
 
 func (nested *nestedField) getSchema() *spec.Schema {
-	if IsGolangPrimitiveType(nested.Type) {
+	if IsPrimitiveType(nested.Type) {
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{nested.Type}}}
 	}
 
@@ -650,31 +650,35 @@ func (nested *nestedField) getSchema() *spec.Schema {
 //RepsonseType{data1=Type1,data2=Type2}
 var nestedPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)\}$`)
 
-var nestedObjectPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)=([^\[\]]*)\}$`)
-var nestedArrayPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)=\[\]([^\[\]]*)\}$`)
-
-func (operation *Operation) tryExtractNestedField(specStr string, astFile *ast.File) (refType string, nested *nestedField, err error) {
-	if matches := nestedObjectPattern.FindStringSubmatch(specStr); len(matches) == 4 {
-		refType, nested = matches[1], &nestedField{Name: matches[2], Type: matches[3], IsArray: false}
-	} else if matches := nestedArrayPattern.FindStringSubmatch(specStr); len(matches) == 4 {
-		refType, nested = matches[1], &nestedField{Name: matches[2], Type: matches[3], IsArray: true}
-	} else {
+func (operation *Operation) tryExtractNestedFields(specStr string, astFile *ast.File) (refType string, nestedFields []*nestedField, err error) {
+	matches := nestedPattern.FindStringSubmatch(specStr)
+	if len(matches) != 3 {
 		return specStr, nil, nil
 	}
-
-	if !IsGolangPrimitiveType(nested.Type) {
-		if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
-			refType, typeSpec, err := operation.registerSchemaType(nested.Type, astFile)
-			if err != nil {
-				return specStr, nil, err
+	refType = matches[1]
+	fields := strings.Split(matches[2], ",")
+	for _, field := range fields {
+		if matches := strings.Split(field, "="); len(matches) == 2 {
+			nested := &nestedField{Name: matches[0], Type: matches[1], IsArray: strings.HasPrefix(matches[1], "[]")}
+			if nested.IsArray {
+				nested.Type = nested.Type[2:]
 			}
+			nested.Type = TransToValidSchemeType(nested.Type)
+			if !IsPrimitiveType(nested.Type) {
+				if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
+					refType, typeSpec, err := operation.registerSchemaType(nested.Type, astFile)
+					if err != nil {
+						return specStr, nil, err
+					}
 
-			nested.Ref = spec.Ref{
-				Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
+					nested.Ref = spec.Ref{
+						Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
+					}
+				}
 			}
+			nestedFields = append(nestedFields, nested)
 		}
 	}
-
 	return
 }
 
@@ -703,7 +707,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 
-	refType, nested, err := operation.tryExtractNestedField(refType, astFile)
+	refType, nestedFields, err := operation.tryExtractNestedFields(refType, astFile)
 	if err != nil {
 		return err
 	}
@@ -727,10 +731,27 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 			Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
 		}
 
-		if nested == nil {
+		if nestedFields == nil {
 			response.Schema.Ref = ref
 		} else {
-			nested.fillNestedSchema(&response, ref)
+			props := make(map[string]spec.Schema)
+			for _, nested := range nestedFields {
+				if nested.IsArray {
+					props[nested.Name] = spec.Schema{SchemaProps: spec.SchemaProps{
+						Type:  []string{"array"},
+						Items: &spec.SchemaOrArray{Schema: nested.getSchema()},
+					}}
+				} else {
+					props[nested.Name] = *nested.getSchema()
+				}
+			}
+			nestedSpec := spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type:       []string{"object"},
+					Properties: props,
+				},
+			}
+			response.Schema.AllOf = []spec.Schema{{SchemaProps: spec.SchemaProps{Ref: ref}}, nestedSpec}
 		}
 
 	} else if schemaType == "array" {

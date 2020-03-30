@@ -504,6 +504,7 @@ type Account struct {
 
 ### Model composition in response
 ```go
+// JSONResult's data field will be overridden by the specific type proto.Order
 @success 200 {object} jsonresult.JSONResult{data=proto.Order} "desc"
 ```
 
@@ -526,6 +527,10 @@ type Order struct { //in `proto` package
 @success 200 {object} jsonresult.JSONResult{data=[]string} "desc"
 ```
 
+- overriding multiple fields. field will be added if not exists 
+```go
+@success 200 {object} jsonresult.JSONResult{data1=string,data2=[]string,data3=proto.Order,data4=[]proto.Order} "desc"
+```
 
 ### Add a headers in response
 
