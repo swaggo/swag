@@ -921,7 +921,10 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 
 	if typeSpec, ok := parser.TypeDefinitions[pkgName][structField.schemaType]; ok { // user type field
 		// write definition if not yet present
-		parser.ParseDefinition(pkgName, structField.schemaType, typeSpec)
+		err = parser.ParseDefinition(pkgName, structField.schemaType, typeSpec)
+		if err != nil {
+			return properties, nil, err
+		}
 		required := make([]string, 0)
 		if structField.isRequired {
 			required = append(required, structField.name)
