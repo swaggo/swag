@@ -189,7 +189,7 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
-	comment := `@Success 200 {object} model.CommonHeader{data=string} "Error message, if code != 200`
+	comment := `@Success 200 {object} model.CommonHeader{data=string,data2=int} "Error message, if code != 200`
 	operation := NewOperation()
 	operation.parser = New()
 
@@ -218,6 +218,9 @@ func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
                         "properties": {
                             "data": {
                                 "type": "string"
+                            },
+                            "data2": {
+                                "type": "integer"
                             }
                         }
                     }
@@ -230,7 +233,7 @@ func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
-	comment := `@Success 200 {object} model.CommonHeader{data=[]string} "Error message, if code != 200`
+	comment := `@Success 200 {object} model.CommonHeader{data=[]string,data2=[]int} "Error message, if code != 200`
 	operation := NewOperation()
 	operation.parser = New()
 
@@ -262,6 +265,12 @@ func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
                                 "items": {
                                     "type": "string"
                                 }
+                            },
+                            "data2": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
                             }
                         }
                     }
@@ -274,13 +283,14 @@ func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedObjectType(t *testing.T) {
-	comment := `@Success 200 {object} model.CommonHeader{data=model.Payload} "Error message, if code != 200`
+	comment := `@Success 200 {object} model.CommonHeader{data=model.Payload,data2=model.Payload2} "Error message, if code != 200`
 	operation := NewOperation()
 	operation.parser = New()
 
 	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
 	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
 	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload2"] = &ast.TypeSpec{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -304,6 +314,9 @@ func TestParseResponseCommentWithNestedObjectType(t *testing.T) {
                         "properties": {
                             "data": {
                                 "$ref": "#/definitions/model.Payload"
+                            },
+                            "data2": {
+                                "$ref": "#/definitions/model.Payload2"
                             }
                         }
                     }
@@ -316,7 +329,59 @@ func TestParseResponseCommentWithNestedObjectType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedArrayObjectType(t *testing.T) {
-	comment := `@Success 200 {object} model.CommonHeader{data=[]model.Payload} "Error message, if code != 200`
+	comment := `@Success 200 {object} model.CommonHeader{data=[]model.Payload,data2=[]model.Payload2} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload2"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/model.Payload"
+                                }
+                            },
+                            "data2": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/model.Payload2"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithNestedFields(t *testing.T) {
+	comment := `@Success 200 {object} model.CommonHeader{data1=int,data2=[]int,data3=model.Payload,data4=[]model.Payload} "Error message, if code != 200`
 	operation := NewOperation()
 	operation.parser = New()
 
@@ -344,7 +409,19 @@ func TestParseResponseCommentWithNestedArrayObjectType(t *testing.T) {
                     {
                         "type": "object",
                         "properties": {
-                            "data": {
+                            "data1": {
+                                "type": "integer"
+                            },
+                            "data2": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            "data3": {
+                                "$ref": "#/definitions/model.Payload"
+                            },
+                            "data4": {
                                 "type": "array",
                                 "items": {
                                     "$ref": "#/definitions/model.Payload"
