@@ -33,7 +33,7 @@ func (c *Controller) PingExample(ctx *gin.Context) {
 // @Produce json
 // @Param val1 query int true "used for calc"
 // @Param val2 query int true "used for calc"
-// @Success 200 {integer} integer "answer"
+// @Success 200 {integer} string "answer"
 // @Failure 400 {string} string "ok"
 // @Failure 404 {string} string "ok"
 // @Failure 500 {string} string "ok"
