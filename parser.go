@@ -1449,6 +1449,10 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 
+	// Skip cgo
+	if pkg.Raw == nil && pkg.Name == "C" {
+		return nil
+	}
 	srcDir := pkg.Raw.Dir
 	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contains sub dir files)
 	if err != nil {
