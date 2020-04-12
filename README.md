@@ -510,13 +510,13 @@ type Account struct {
 
 ```go
 type JSONResult struct {
-	Code    int          `json:"code" `
-	Message string       `json:"message"`
-	Data    interface{}  `json:"data"`
+    Code    int          `json:"code" `
+    Message string       `json:"message"`
+    Data    interface{}  `json:"data"`
 }
 
 type Order struct { //in `proto` package
-	Id  uint            `json:"id"`
+    Id  uint            `json:"id"`
     Data  interface{}   `json:"data"`
 }
 ```
