@@ -1907,34 +1907,6 @@ func TestParseStructComment(t *testing.T) {
                     "type": "integer"
                 }
             }
-        },
-        "web.Post": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Post data",
-                    "type": "object",
-                    "properties": {
-                        "name": {
-                            "description": "Post tag",
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "id": {
-                    "type": "integer",
-                    "format": "int64",
-                    "example": 1
-                },
-                "name": {
-                    "description": "Post name",
-                    "type": "string",
-                    "example": "poti"
-                }
-            }
         }
     }
 }`

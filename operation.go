@@ -738,7 +738,7 @@ func (operation *Operation) parseResponseSchema(schemaType, refType string, astF
 			Items: &spec.SchemaOrArray{Schema: schema}},
 		}, nil
 	default:
-		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{refType}}}, nil
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{schemaType}}}, nil
 	}
 }
 
