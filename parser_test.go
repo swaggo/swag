@@ -1947,6 +1947,176 @@ func TestParseStructComment(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseNonExportedJSONFields(t *testing.T) {
+
+	//region declaration
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/posts/{post_id}": {
+            "get": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add a new pet to the store",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "format": "int64",
+                        "description": "Some ID",
+                        "name": "post_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "We need ID!!",
+                        "schema": {
+                            "$ref": "#/definitions/web.APIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Can not find ID",
+                        "schema": {
+                            "$ref": "#/definitions/web.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/so-something": {
+            "get": {
+                "description": "Does something, but internal (non-exported) fields inside a struct won't be marshaled into JSON",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Call DoSomething",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.MyStruct": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        },
+        "web.APIError": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Error time",
+                    "type": "string"
+                },
+                "error": {
+                    "description": "Error an Api error",
+                    "type": "string"
+                },
+                "errorCtx": {
+                    "description": "Error ` + "`" + `context` + "`" + ` tick comment",
+                    "type": "string"
+                },
+                "errorNo": {
+                    "description": "Error ` + "`" + `number` + "`" + ` tick comment",
+                    "type": "integer"
+                }
+            }
+        },
+        "web.Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        }
+    }
+}`
+	//endregion declaration
+
+	searchDir := "testdata/non_exported_json_fields"
+	mainAPIFile := "main.go"
+	p := New()
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	ioutil.WriteFile("/tmp/test1", b, 0644)
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParsePetApi(t *testing.T) {
 	expected := `{
     "schemes": [
