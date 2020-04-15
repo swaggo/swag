@@ -1947,6 +1947,81 @@ func TestParseStructComment(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseNonExportedJSONFields(t *testing.T) {
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/so-something": {
+            "get": {
+                "description": "Does something, but internal (non-exported) fields inside a struct won't be marshaled into JSON",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Call DoSomething",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.MyStruct": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        }
+    }
+}`
+
+	searchDir := "testdata/non_exported_json_fields"
+	mainAPIFile := "main.go"
+	p := New()
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParsePetApi(t *testing.T) {
 	expected := `{
     "schemes": [

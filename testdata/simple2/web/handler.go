@@ -53,8 +53,8 @@ type Pet struct {
 	Hidden          string `json:"-"`
 	UUID            uuid.UUID
 	Decimal         decimal.Decimal
-	customString    CustomString
-	customStringArr []CustomString
+	CustomString    CustomString
+	CustomStringArr []CustomString
 	NullInt         sql.NullInt64 `swaggertype:"integer"`
 	Coeffs          []big.Float   `swaggertype:"array,number"`
 	Birthday        TimestampTime `swaggertype:"primitive,integer"`
