@@ -3111,3 +3111,96 @@ func Fun()  {
 	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }
+
+func TestParseJSONFieldString(t *testing.T) {
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/",
+    "paths": {
+        "/do-something": {
+            "post": {
+                "description": "Does something",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Call DoSomething",
+                "parameters": [
+                    {
+                        "description": "My Struct",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.MyStruct"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.MyStruct"
+                        }
+                    },
+                    "500": {}
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.MyStruct": {
+            "type": "object",
+            "properties": {
+                "boolvar": {
+                    "description": "boolean as a string",
+                    "type": "string",
+                    "example": "false"
+                },
+                "floatvar": {
+                    "description": "float as a string",
+                    "type": "string",
+                    "example": "0"
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "myint": {
+                    "description": "integer as string",
+                    "type": "string",
+                    "example": "0"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "poti"
+                },
+                "truebool": {
+                    "description": "boolean as a string",
+                    "type": "string",
+                    "example": "true"
+                }
+            }
+        }
+    }
+}`
+
+	searchDir := "testdata/json_field_string"
+	mainAPIFile := "main.go"
+	p := New()
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
