@@ -1165,6 +1165,11 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 		return &structField{name: ""}, nil
 	}
 
+	// Skip non-exported fields.
+	if !ast.IsExported(field.Names[0].Name) {
+		return &structField{name: ""}, nil
+	}
+
 	structField := &structField{
 		name:       field.Names[0].Name,
 		schemaType: prop.SchemaType,
