@@ -345,3 +345,29 @@ func TestGen_GeneratedDoc(t *testing.T) {
 		os.Remove(expectedFile)
 	}
 }
+
+func TestGen_cgoImports(t *testing.T) {
+	searchDir := "../testdata/simple_cgo"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple_cgo/docs",
+		PropNamingStrategy: "",
+		ParseDependency:    true,
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
+	}
+}
