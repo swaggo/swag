@@ -1946,7 +1946,7 @@ func TestParseNonExportedJSONFields(t *testing.T) {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/main.MyStruct"
                         }
                     }
                 }

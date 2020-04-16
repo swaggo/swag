@@ -530,6 +530,68 @@ func TestParseResponseCommentWithDeepNestedFields(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseResponseCommentWithNestedArrayMapFields(t *testing.T) {
+	comment := `@Success 200 {object} []map[string]model.CommonHeader{data1=[]map[string]model.Payload,data2=map[string][]int} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/model.CommonHeader"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "data1": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "$ref": "#/definitions/model.Payload"
+                                            }
+                                        }
+                                    },
+                                    "data2": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseResponseCommentWithObjectTypeInSameFile(t *testing.T) {
 	comment := `@Success 200 {object} testOwner "Error message, if code != 200"`
 	operation := NewOperation()

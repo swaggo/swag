@@ -26,7 +26,7 @@ type MyStruct struct {
 // @Description Does something, but internal (non-exported) fields inside a struct won't be marshaled into JSON
 // @Accept  json
 // @Produce  json
-// @Success 200 {string} MyStruct
+// @Success 200 {object} MyStruct
 // @Router /so-something [get]
 func DoSomething(c *gin.Context) {
 	//write your code
@@ -39,6 +39,6 @@ func DoSomething(c *gin.Context) {
 // @basePath /api
 func main() {
 	r := gin.New()
-	r.GET("/do-something", api.DoSomething)
+	r.GET("/do-something", DoSomething)
 	r.Run()
 }
