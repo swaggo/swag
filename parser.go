@@ -1165,6 +1165,11 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 		return &structField{name: ""}, nil
 	}
 
+	// Skip non-exported fields.
+	if !ast.IsExported(field.Names[0].Name) {
+		return &structField{name: ""}, nil
+	}
+
 	structField := &structField{
 		name:       field.Names[0].Name,
 		schemaType: prop.SchemaType,
@@ -1449,6 +1454,10 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 
+	// Skip cgo
+	if pkg.Raw == nil && pkg.Name == "C" {
+		return nil
+	}
 	srcDir := pkg.Raw.Dir
 	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contains sub dir files)
 	if err != nil {
