@@ -636,10 +636,7 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 		if err != nil {
 			return nil, err
 		}
-		return &spec.Schema{SchemaProps: spec.SchemaProps{
-			Type:  []string{"array"},
-			Items: &spec.SchemaOrArray{Schema: schema}},
-		}, nil
+		return spec.ArrayProperty(schema), nil
 	case strings.HasPrefix(refType, "map["):
 		//ignore key type
 		idx := strings.Index(refType, "]")
@@ -647,22 +644,15 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 			return nil, fmt.Errorf("invalid type: %s", refType)
 		}
 		refType = refType[idx+1:]
-		var valueSchema spec.SchemaOrBool
 		if refType == "interface{}" {
-			valueSchema.Allows = true
+			return spec.MapProperty(nil), nil
 		} else {
 			schema, err := operation.parseResponseObjectSchema(refType, astFile)
 			if err != nil {
 				return &spec.Schema{}, err
 			}
-			valueSchema.Schema = schema
+			return spec.MapProperty(schema), nil
 		}
-		return &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:                 []string{"object"},
-				AdditionalProperties: &valueSchema,
-			},
-		}, nil
 	case strings.Contains(refType, "{"):
 		return operation.parseResponseCombinedObjectSchema(refType, astFile)
 	default:
