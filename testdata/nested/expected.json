@@ -66,11 +66,9 @@
                     "type": "string"
                 },
                 "insideData": {
-                    "type": "object",
                     "$ref": "#/definitions/api.Bar"
                 },
                 "outsideData": {
-                    "type": "object",
                     "$ref": "#/definitions/nested2.Body"
                 }
             }

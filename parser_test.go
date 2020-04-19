@@ -797,7 +797,6 @@ func TestParseSimpleApi1(t *testing.T) {
                     "type": "boolean"
                 },
                 "cross": {
-                    "type": "object",
                     "$ref": "#/definitions/cross.Cross"
                 },
                 "crosses": {
@@ -1907,34 +1906,6 @@ func TestParseStructComment(t *testing.T) {
                     "type": "integer"
                 }
             }
-        },
-        "web.Post": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "description": "Post data",
-                    "type": "object",
-                    "properties": {
-                        "name": {
-                            "description": "Post tag",
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                },
-                "id": {
-                    "type": "integer",
-                    "format": "int64",
-                    "example": 1
-                },
-                "name": {
-                    "description": "Post name",
-                    "type": "string",
-                    "example": "poti"
-                }
-            }
         }
     }
 }`
@@ -1974,7 +1945,7 @@ func TestParseNonExportedJSONFields(t *testing.T) {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/main.MyStruct"
                         }
                     }
                 }
@@ -2383,7 +2354,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	typeSpec := p.TypeDefinitions["api"]["Response"]
-	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	_, err = p.ParseDefinition("api", typeSpec, true)
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
@@ -2452,7 +2423,7 @@ type ResponseWrapper struct {
 	assert.NoError(t, err)
 
 	typeSpec := parser.TypeDefinitions["api"]["Response"]
-	err = parser.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	_, err = parser.ParseDefinition("api", typeSpec, true)
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(parser.swagger.Definitions, "", "   ")
@@ -2498,7 +2469,6 @@ func Test(){
          },
          "test2": {
             "description": "test2",
-            "type": "object",
             "$ref": "#/definitions/api.Child"
          }
       }
@@ -2514,7 +2484,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	typeSpec := p.TypeDefinitions["api"]["Parent"]
-	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	_, err = p.ParseDefinition("api", typeSpec, true)
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
@@ -2602,7 +2572,6 @@ func Test(){
          },
          "test6": {
             "description": "test6",
-            "type": "object",
             "$ref": "#/definitions/api.MyMapType"
          },
          "test7": {
@@ -2641,7 +2610,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	typeSpec := p.TypeDefinitions["api"]["Parent"]
-	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	_, err = p.ParseDefinition("api", typeSpec, true)
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
@@ -3004,7 +2973,7 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 	}
 
 	if p.swagger.Info.Description == "" {
-		t.Error("Failed to parse api description: " + err.Error())
+		t.Error("Failed to parse api description")
 	}
 }
 

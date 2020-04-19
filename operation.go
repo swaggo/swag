@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
 	"golang.org/x/tools/go/loader"
 )
@@ -253,33 +252,22 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		case "primitive":
 			param.Schema.Type = spec.StringOrArray{refType}
 		case "array":
-			param.Schema.Type = spec.StringOrArray{objectType}
-			param.Schema.Items = &spec.SchemaOrArray{
-				Schema: &spec.Schema{
-					SchemaProps: spec.SchemaProps{},
-				},
-			}
 			// Array of Primitive or Object
 			if IsPrimitiveType(refType) {
-				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
+				param.Schema = spec.ArrayProperty(PrimitiveSchema(refType))
 			} else {
 				refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
 				if err != nil {
 					return err
 				}
-				param.Schema.Items.Schema.Ref = spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
-				}
+				param.Schema = spec.ArrayProperty(RefSchema(TypeDocName(refType, typeSpec)))
 			}
 		case "object":
 			refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
 			if err != nil {
 				return err
 			}
-			param.Schema.Type = []string{}
-			param.Schema.Ref = spec.Ref{
-				Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
-			}
+			param.Schema = RefSchema(TypeDocName(refType, typeSpec))
 		}
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
@@ -632,54 +620,143 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 
 var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
-type nestedField struct {
-	Name    string
-	Type    string
-	IsArray bool
-	Ref     spec.Ref
-}
-
-func (nested *nestedField) getSchema() *spec.Schema {
-	if IsPrimitiveType(nested.Type) {
-		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{nested.Type}}}
-	}
-
-	return &spec.Schema{SchemaProps: spec.SchemaProps{Ref: nested.Ref}}
-}
-
 //RepsonseType{data1=Type1,data2=Type2}
-var nestedPattern = regexp.MustCompile(`^([\w\-\.\/]+)\{(.*)\}$`)
+var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 
-func (operation *Operation) tryExtractNestedFields(specStr string, astFile *ast.File) (refType string, nestedFields []*nestedField, err error) {
-	matches := nestedPattern.FindStringSubmatch(specStr)
+func (operation *Operation) parseResponseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+	switch {
+	case refType == "interface{}":
+		return PrimitiveSchema("object"), nil
+	case IsGolangPrimitiveType(refType):
+		return PrimitiveSchema(TransToValidSchemeType(refType)), nil
+	case IsPrimitiveType(refType):
+		return PrimitiveSchema(refType), nil
+	case strings.HasPrefix(refType, "[]"):
+		schema, err := operation.parseResponseObjectSchema(refType[2:], astFile)
+		if err != nil {
+			return nil, err
+		}
+		return &spec.Schema{SchemaProps: spec.SchemaProps{
+			Type:  []string{"array"},
+			Items: &spec.SchemaOrArray{Schema: schema}},
+		}, nil
+	case strings.HasPrefix(refType, "map["):
+		//ignore key type
+		idx := strings.Index(refType, "]")
+		if idx < 0 {
+			return nil, fmt.Errorf("invalid type: %s", refType)
+		}
+		refType = refType[idx+1:]
+		var valueSchema spec.SchemaOrBool
+		if refType == "interface{}" {
+			valueSchema.Allows = true
+		} else {
+			schema, err := operation.parseResponseObjectSchema(refType, astFile)
+			if err != nil {
+				return &spec.Schema{}, err
+			}
+			valueSchema.Schema = schema
+		}
+		return &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type:                 []string{"object"},
+				AdditionalProperties: &valueSchema,
+			},
+		}, nil
+	case strings.Contains(refType, "{"):
+		return operation.parseResponseCombinedObjectSchema(refType, astFile)
+	default:
+		if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
+			refNewType, typeSpec, err := operation.registerSchemaType(refType, astFile)
+			if err != nil {
+				return nil, err
+			}
+			refType = TypeDocName(refNewType, typeSpec)
+		}
+		return RefSchema(refType), nil
+	}
+}
+
+func (operation *Operation) parseResponseCombinedObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+	matches := combinedPattern.FindStringSubmatch(refType)
 	if len(matches) != 3 {
-		return specStr, nil, nil
+		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 	refType = matches[1]
-	fields := strings.Split(matches[2], ",")
-	for _, field := range fields {
-		if matches := strings.Split(field, "="); len(matches) == 2 {
-			nested := &nestedField{Name: matches[0], Type: matches[1], IsArray: strings.HasPrefix(matches[1], "[]")}
-			if nested.IsArray {
-				nested.Type = nested.Type[2:]
-			}
-			nested.Type = TransToValidSchemeType(nested.Type)
-			if !IsPrimitiveType(nested.Type) {
-				if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
-					refType, typeSpec, err := operation.registerSchemaType(nested.Type, astFile)
-					if err != nil {
-						return specStr, nil, err
-					}
+	schema, err := operation.parseResponseObjectSchema(refType, astFile)
+	if err != nil {
+		return nil, err
+	}
 
-					nested.Ref = spec.Ref{
-						Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
-					}
-				}
+	parseFields := func(s string) []string {
+		n := 0
+		return strings.FieldsFunc(s, func(r rune) bool {
+			if r == '{' {
+				n++
+				return false
+			} else if r == '}' {
+				n--
+				return false
 			}
-			nestedFields = append(nestedFields, nested)
+			return r == ',' && n == 0
+		})
+	}
+
+	fields := parseFields(matches[2])
+	props := map[string]spec.Schema{}
+	for _, field := range fields {
+		if matches := strings.SplitN(field, "=", 2); len(matches) == 2 {
+			if strings.HasPrefix(matches[1], "[]") {
+				itemSchema, err := operation.parseResponseObjectSchema(matches[1][2:], astFile)
+				if err != nil {
+					return nil, err
+				}
+				props[matches[0]] = spec.Schema{SchemaProps: spec.SchemaProps{
+					Type:  []string{"array"},
+					Items: &spec.SchemaOrArray{Schema: itemSchema}},
+				}
+			} else {
+				schema, err := operation.parseResponseObjectSchema(matches[1], astFile)
+				if err != nil {
+					return nil, err
+				}
+				props[matches[0]] = *schema
+			}
 		}
 	}
-	return
+
+	if len(props) == 0 {
+		return schema, nil
+	}
+	return spec.ComposedSchema(*schema,
+		spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type:       []string{"object"},
+				Properties: props,
+			},
+		}), nil
+}
+
+func (operation *Operation) parseResponseSchema(schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
+	switch schemaType {
+	case "object":
+		if !strings.HasPrefix(refType, "[]") {
+			return operation.parseResponseObjectSchema(refType, astFile)
+		}
+		refType = refType[2:]
+		fallthrough
+	case "array":
+		schema, err := operation.parseResponseObjectSchema(refType, astFile)
+		if err != nil {
+			return nil, err
+		}
+		return &spec.Schema{SchemaProps: spec.SchemaProps{
+			Type:  []string{"array"},
+			Items: &spec.SchemaOrArray{Schema: schema}},
+		}, nil
+	default:
+		return PrimitiveSchema(schemaType), nil
+	}
 }
 
 // ParseResponseComment parses comment for given `response` comment string.
@@ -694,85 +771,18 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 
-	response := spec.Response{}
-
 	code, _ := strconv.Atoi(matches[1])
 
 	responseDescription := strings.Trim(matches[4], "\"")
 	if responseDescription == "" {
 		responseDescription = http.StatusText(code)
 	}
-	response.Description = responseDescription
 
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
-
-	refType, nestedFields, err := operation.tryExtractNestedFields(refType, astFile)
+	schema, err := operation.parseResponseSchema(schemaType, refType, astFile)
 	if err != nil {
 		return err
-	}
-
-	var typeSpec *ast.TypeSpec
-	if !IsGolangPrimitiveType(refType) {
-		if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
-			var err error
-			if refType, typeSpec, err = operation.registerSchemaType(refType, astFile); err != nil {
-				return err
-			}
-		}
-	}
-
-	// so we have to know all type in app
-	response.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{schemaType}}}
-
-	if schemaType == "object" {
-		response.Schema.SchemaProps = spec.SchemaProps{}
-		ref := spec.Ref{
-			Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
-		}
-
-		if nestedFields == nil {
-			response.Schema.Ref = ref
-		} else {
-			props := make(map[string]spec.Schema)
-			for _, nested := range nestedFields {
-				if nested.IsArray {
-					props[nested.Name] = spec.Schema{SchemaProps: spec.SchemaProps{
-						Type:  []string{"array"},
-						Items: &spec.SchemaOrArray{Schema: nested.getSchema()},
-					}}
-				} else {
-					props[nested.Name] = *nested.getSchema()
-				}
-			}
-			nestedSpec := spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type:       []string{"object"},
-					Properties: props,
-				},
-			}
-			response.Schema.AllOf = []spec.Schema{{SchemaProps: spec.SchemaProps{Ref: ref}}, nestedSpec}
-		}
-
-	} else if schemaType == "array" {
-		refType = TransToValidSchemeType(refType)
-		if IsPrimitiveType(refType) {
-			response.Schema.Items = &spec.SchemaOrArray{
-				Schema: &spec.Schema{
-					SchemaProps: spec.SchemaProps{
-						Type: spec.StringOrArray{refType},
-					},
-				},
-			}
-		} else {
-			response.Schema.Items = &spec.SchemaOrArray{
-				Schema: &spec.Schema{
-					SchemaProps: spec.SchemaProps{
-						Ref: spec.Ref{Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec))},
-					},
-				},
-			}
-		}
 	}
 
 	if operation.Responses == nil {
@@ -783,8 +793,9 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		}
 	}
 
-	operation.Responses.StatusCodeResponses[code] = response
-
+	operation.Responses.StatusCodeResponses[code] = spec.Response{
+		ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
+	}
 	return nil
 }
 

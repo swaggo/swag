@@ -1,10 +1,26 @@
 package swag
 
 import (
+	"errors"
 	"fmt"
+	"github.com/go-openapi/spec"
 	"go/ast"
 	"strings"
 )
+
+// ErrFailedConvertPrimitiveType Failed to convert for swag to interpretable type
+var ErrFailedConvertPrimitiveType = errors.New("swag property: failed convert primitive type")
+
+// convertFromSpecificToPrimitive convert specific type to primitive
+func convertFromSpecificToPrimitive(typeName string) (string, error) {
+	switch strings.ToUpper(typeName) {
+	case "TIME", "OBJECTID", "UUID":
+		return "string", nil
+	case "DECIMAL":
+		return "number", nil
+	}
+	return typeName, ErrFailedConvertPrimitiveType
+}
 
 // CheckSchemaType checks if typeName is not a name of primitive type
 func CheckSchemaType(typeName string) error {
@@ -114,4 +130,44 @@ func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
 	}
 
 	return pkgName
+}
+
+func PrimitiveSchema(typeName string) *spec.Schema {
+	return &spec.Schema{
+		SchemaProps: spec.SchemaProps{Type: spec.StringOrArray{typeName}},
+	}
+}
+
+func RefSchema(typeName string) *spec.Schema {
+	return spec.RefSchema("#/definitions/" + typeName)
+}
+
+// BuildCustomSchema build custom schema specified by tag swaggertype
+func BuildCustomSchema(types []string) (*spec.Schema, error) {
+	if len(types) == 0 {
+		return nil, nil
+	}
+
+	switch types[0] {
+	case "primitive":
+		if len(types) == 1 {
+			return nil, errors.New("need primitive type after primitive")
+		}
+		return BuildCustomSchema(types[1:])
+	case "array":
+		if len(types) == 1 {
+			return nil, errors.New("need array item type after array")
+		}
+		schema, err := BuildCustomSchema(types[1:])
+		if err != nil {
+			return nil, err
+		}
+		return spec.ArrayProperty(schema), nil
+	default:
+		err := CheckSchemaType(types[0])
+		if err != nil {
+			return nil, err
+		}
+		return PrimitiveSchema(types[0]), nil
+	}
 }
