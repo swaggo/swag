@@ -690,7 +690,7 @@ func (parser *Parser) getRefTypeSchema(typeName string, schema *spec.Schema) *sp
 	return RefSchema(typeName)
 }
 
-func (parser *Parser) getTypeSchema(pkgName, typeName string, ref bool, typeSpec *ast.TypeSpec) (schema *spec.Schema, retTypeSpec *ast.TypeSpec, err error) {
+func (parser *Parser) getTypeSchema(pkgName, typeName string, ref bool) (schema *spec.Schema, err error) {
 	var fullName string
 	var ok bool
 	if pos := strings.IndexRune(typeName, '.'); pos >= 0 {
@@ -699,72 +699,70 @@ func (parser *Parser) getTypeSchema(pkgName, typeName string, ref bool, typeSpec
 	}
 	if typeName != "" {
 		if typeName, err := convertFromSpecificToPrimitive(typeName); err == nil {
-			return PrimitiveSchema(typeName), typeSpec, nil
+			return PrimitiveSchema(typeName), nil
 		}
 
 		if IsGolangPrimitiveType(typeName) {
-			return PrimitiveSchema(TransToValidSchemeType(typeName)), typeSpec, nil
+			return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
 		}
 
 		fullName = fullTypeName(pkgName, typeName)
 
 		if primitiveType, ok := parser.CustomPrimitiveTypes[fullName]; ok {
-			return PrimitiveSchema(primitiveType), typeSpec, nil
+			return PrimitiveSchema(primitiveType), nil
 		}
 
 		if schema, ok = parser.ParsedSchemas[fullName]; ok {
 			if ref {
-				return parser.getRefTypeSchema(fullName, schema), typeSpec, nil
+				return parser.getRefTypeSchema(fullName, schema), nil
 			} else {
-				return schema, typeSpec, nil
+				return schema, nil
 			}
 		}
 	}
 
+	var typeSpec *ast.TypeSpec
+	if typeSpec, ok = parser.TypeDefinitions[pkgName][typeName]; !ok {
+		if pkgNames, ok := parser.ImportAliases[pkgName]; ok {
+			for name := range pkgNames {
+				if typeSpec, ok = parser.TypeDefinitions[name][typeName]; ok {
+					pkgName = name
+					break
+				}
+			}
+		}
+	}
 	if typeSpec == nil {
-		if typeSpec, ok = parser.TypeDefinitions[pkgName][typeName]; !ok {
-			if pkgNames, ok := parser.ImportAliases[pkgName]; ok {
-				for name := range pkgNames {
-					if typeSpec, ok = parser.TypeDefinitions[name][typeName]; ok {
-						pkgName = name
-						break
-					}
-				}
-			}
-		}
+		return nil, fmt.Errorf("cannot parse type: %s", fullName)
 	}
 
-	if typeSpec != nil {
-		if expr, ok := typeSpec.Type.(*ast.SelectorExpr); ok {
-			if ident, ok := expr.X.(*ast.Ident); ok && (ident.Name != pkgName || expr.Sel.Name != typeName) {
-				if expr.Sel.Obj != nil {
-					typeSpec, _ = expr.Sel.Obj.Decl.(*ast.TypeSpec)
-				} else {
-					typeSpec = nil
-				}
-				return parser.getTypeSchema(ident.Name, expr.Sel.Name, ref, typeSpec)
-			}
-		}
-		if fullName, err = parser.ParseDefinition(pkgName, typeSpec, ref); err != nil {
-			return nil, typeSpec, err
-		} else if schema, ok := parser.ParsedSchemas[fullName]; ok {
-			if ref {
-				return parser.getRefTypeSchema(fullName, schema), typeSpec, nil
+	if expr, ok := typeSpec.Type.(*ast.SelectorExpr); ok {
+		if ident, ok := expr.X.(*ast.Ident); ok && (ident.Name != pkgName || expr.Sel.Name != typeName) {
+			if expr.Sel.Obj != nil {
+				typeSpec, _ = expr.Sel.Obj.Decl.(*ast.TypeSpec)
 			} else {
-				return schema, typeSpec, nil
+				typeSpec = nil
 			}
-		} else if ref {
-			//recursive
-			oldFullName := fullTypeName(pkgName, typeName)
-			if _, ok = parser.registerTypes[oldFullName]; !ok {
-				parser.registerTypes[oldFullName] = typeSpec
-			}
-			return parser.getRefTypeSchema(fullName, nil), typeSpec, nil
+			return parser.getTypeSchema(ident.Name, expr.Sel.Name, ref)
 		}
-		return nil, typeSpec, fmt.Errorf("unknown error for type: %s", fullName)
 	}
-
-	return nil, typeSpec, fmt.Errorf("unknown type: %s", fullName)
+	if fullName, err = parser.ParseDefinition(pkgName, typeSpec, ref); err != nil {
+		return nil, err
+	} else if schema, ok := parser.ParsedSchemas[fullName]; ok {
+		if ref {
+			return parser.getRefTypeSchema(fullName, schema), nil
+		} else {
+			return schema, nil
+		}
+	} else if ref {
+		//recursive
+		oldFullName := fullTypeName(pkgName, typeName)
+		if _, ok = parser.registerTypes[oldFullName]; !ok {
+			parser.registerTypes[oldFullName] = typeSpec
+		}
+		return parser.getRefTypeSchema(fullName, nil), nil
+	}
+	return nil, fmt.Errorf("unknown error for type: %s", fullName)
 }
 
 // parseTypeExpr parses given type expression that corresponds to the type under
@@ -777,12 +775,7 @@ func (parser *Parser) parseTypeExpr(pkgName string, typeExpr ast.Expr, ref bool)
 
 	// type Foo Baz
 	case *ast.Ident:
-		var typeSpec *ast.TypeSpec
-		if expr.Obj != nil {
-			typeSpec, _ = expr.Obj.Decl.(*ast.TypeSpec)
-		}
-		schema, _, err := parser.getTypeSchema(pkgName, expr.Name, ref, typeSpec)
-		return schema, err
+		return parser.getTypeSchema(pkgName, expr.Name, ref)
 
 	// type Foo *Baz
 	case *ast.StarExpr:
@@ -900,30 +893,25 @@ type structField struct {
 	extensions   map[string]interface{}
 }
 
-func getFieldTypeName(field ast.Expr) (string, *ast.TypeSpec, error) {
+func getFieldTypeName(field ast.Expr) (string, error) {
 	switch ftype := field.(type) {
 	case *ast.Ident:
-		if ftype.Obj != nil {
-			if typeSpec, ok := ftype.Obj.Decl.(*ast.TypeSpec); ok {
-				return ftype.Name, typeSpec, nil
-			}
-		}
-		return ftype.Name, nil, nil
+		return ftype.Name, nil
 	case *ast.SelectorExpr:
-		packageName, typeSpec, err := getFieldTypeName(ftype.X)
+		packageName, err := getFieldTypeName(ftype.X)
 		if err != nil {
-			return "", nil, err
+			return "", err
 		}
-		return fullTypeName(packageName, ftype.Sel.Name), typeSpec, nil
+		return fullTypeName(packageName, ftype.Sel.Name), nil
 
 	case *ast.StarExpr:
-		fullName, typeSpec, err := getFieldTypeName(ftype.X)
+		fullName, err := getFieldTypeName(ftype.X)
 		if err != nil {
-			return "", nil, err
+			return "", err
 		}
-		return fullName, typeSpec, nil
+		return fullName, nil
 	}
-	return "", nil, fmt.Errorf("unknown field type %#v", field)
+	return "", fmt.Errorf("unknown field type %#v", field)
 }
 
 func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.Schema, err error) {
@@ -971,22 +959,20 @@ func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.
 
 func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[string]spec.Schema, []string, error) {
 	if field.Names == nil {
-		typeName, typeSpec, err := getFieldTypeName(field.Type)
+		typeName, err := getFieldTypeName(field.Type)
 		if err != nil {
 			return nil, nil, err
 		}
-		schema, typeSpec, err := parser.getTypeSchema(pkgName, typeName, false, typeSpec)
+		schema, err := parser.getTypeSchema(pkgName, typeName, false)
 		if err != nil {
 			return nil, nil, err
 		}
-		if typeSpec != nil {
-			if _, ok := typeSpec.Type.(*ast.StructType); ok {
-				properties := map[string]spec.Schema{}
-				for k, v := range schema.SchemaProps.Properties {
-					properties[k] = v
-				}
-				return properties, schema.SchemaProps.Required, nil
+		if len(schema.Type) > 0 && schema.Type[0] == "object" && len(schema.Properties) > 0 {
+			properties := map[string]spec.Schema{}
+			for k, v := range schema.Properties {
+				properties[k] = v
 			}
+			return properties, schema.SchemaProps.Required, nil
 		}
 		//for alias type of non-struct types ,such as array,map, etc. ignore field tag.
 		return map[string]spec.Schema{typeName: *schema}, nil, nil
@@ -998,10 +984,10 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 	} else if fieldName == "" {
 		return nil, nil, nil
 	} else if schema == nil {
-		typeName, typeSpec, err := getFieldTypeName(field.Type)
+		typeName, err := getFieldTypeName(field.Type)
 		if err == nil {
 			//named type
-			schema, _, err = parser.getTypeSchema(pkgName, typeName, true, typeSpec)
+			schema, err = parser.getTypeSchema(pkgName, typeName, true)
 		} else {
 			//unnamed type
 			schema, err = parser.parseTypeExpr(pkgName, field.Type, false)
