@@ -3056,6 +3056,42 @@ func Fun()  {
 
 }
 `
+	expected := `{
+    "info": {
+        "contact": {},
+        "license": {}
+    },
+    "paths": {
+        "/test": {
+            "get": {
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "name": "age",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "name": "teachers",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {}
+                }
+            }
+        }
+    }
+}`
+
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
@@ -3064,7 +3100,8 @@ func Fun()  {
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 3, len(p.swagger.Paths.Paths["/test"].Get.Parameters))
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
 }
 
 func TestParseRenamedStructDefinition(t *testing.T) {

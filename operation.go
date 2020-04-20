@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -208,7 +209,13 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				}
 				return false
 			}
-			for name, prop := range schema.Properties {
+			orderedNames := make([]string, 0, len(schema.Properties))
+			for k, _ := range schema.Properties {
+				orderedNames = append(orderedNames, k)
+			}
+			sort.Strings(orderedNames)
+			for _, name := range orderedNames {
+				prop := schema.Properties[name]
 				if len(prop.Type) == 0 {
 					continue
 				}
