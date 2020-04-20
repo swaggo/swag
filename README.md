@@ -510,13 +510,14 @@ type Account struct {
 
 ```go
 type JSONResult struct {
-	Code    int          `json:"code" `
-	Message string       `json:"message"`
-	Data    interface{}  `json:"data"`
+    Code    int          `json:"code" `
+    Message string       `json:"message"`
+    Data    interface{}  `json:"data"`
 }
 
 type Order struct { //in `proto` package
-	...
+    Id  uint            `json:"id"`
+    Data  interface{}   `json:"data"`
 }
 ```
 
@@ -531,7 +532,13 @@ type Order struct { //in `proto` package
 ```go
 @success 200 {object} jsonresult.JSONResult{data1=string,data2=[]string,data3=proto.Order,data4=[]proto.Order} "desc"
 ```
-
+- overriding deep-level fields
+```go
+type DeepObject struct { //in `proto` package
+	...
+}
+@success 200 {object} jsonresult.JSONResult{data1=proto.Order{data=proto.DeepObject},data2=[]proto.Order{data=[]proto.DeepObject}} "desc"
+```
 ### Add a headers in response
 
 ```go
