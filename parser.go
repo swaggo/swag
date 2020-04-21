@@ -158,19 +158,26 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 }
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile
-func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) error {
-	Printf("Generate general API Info, search dir:%s", searchDir)
+func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth int) error {
+	return parser.ParseAPIMultiSearchDir([]string{searchDir}, mainAPIFile, parseDepth)
+}
 
-	packageDir, err := getPkgName(searchDir)
-	if err != nil {
-		Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
+// ParseAPIMultiSearchDir is like ParseAPI but for multiple search dirs.
+func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile string, parseDepth int) error {
+	for _, searchDir := range searchDirs {
+		Printf("Generate general API Info, search dir:%s", searchDir)
+
+		packageDir, err := getPkgName(searchDir)
+		if err != nil {
+			Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
+		}
+
+		if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
+			return err
+		}
 	}
 
-	if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
-		return err
-	}
-
-	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDir, mainAPIFile))
+	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDirs[0], mainAPIFile))
 	if err != nil {
 		return err
 	}
