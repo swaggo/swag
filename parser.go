@@ -734,7 +734,7 @@ func (parser *Parser) getTypeSchema(pkgName, typeName string, ref bool) (schema 
 		}
 	}
 	if typeSpec == nil {
-		return nil, fmt.Errorf("cannot parse type: %s", fullName)
+		return nil, fmt.Errorf("failed to parse type: %s, for its type definiton not found", fullName)
 	}
 
 	if expr, ok := typeSpec.Type.(*ast.SelectorExpr); ok {
@@ -824,10 +824,12 @@ func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (*spec.
 	properties := make(map[string]spec.Schema)
 	for _, field := range fields.List {
 		fieldProps, requiredFromAnon, err := parser.parseStructField(pkgName, field)
-		if err == ErrFuncTypeField || len(fieldProps) == 0 {
+		if err == ErrFuncTypeField {
 			continue
 		} else if err != nil {
 			return nil, err
+		} else if len(fieldProps) == 0 {
+			continue
 		}
 		required = append(required, requiredFromAnon...)
 		for k, v := range fieldProps {
