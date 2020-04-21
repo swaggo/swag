@@ -36,7 +36,7 @@ func New() *Gen {
 
 // Config presents Gen configurations.
 type Config struct {
-	// SearchDir the swag would be parse
+	// SearchDir the swag would be parse,comma separated if multiple
 	SearchDir string
 
 	// excludes dirs and files in SearchDir,comma separated
@@ -66,8 +66,14 @@ type Config struct {
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
-	if _, err := os.Stat(config.SearchDir); os.IsNotExist(err) {
-		return fmt.Errorf("dir: %s is not exist", config.SearchDir)
+	searchDirs := strings.Split(config.SearchDir, ",")
+	if len(searchDirs) == 0 {
+		return fmt.Errorf("empty searching dir: %s", config.SearchDir)
+	}
+	for _, searchDir := range searchDirs {
+		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
+			return fmt.Errorf("dir: %s is not exist", searchDir)
+		}
 	}
 
 	log.Println("Generate swagger docs....")
@@ -77,7 +83,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 
-	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
+	if err := p.ParseAPI(searchDirs, config.MainAPIFile); err != nil {
 		return err
 	}
 	swagger := p.GetSwagger()

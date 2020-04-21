@@ -135,16 +135,17 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 }
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile
-func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
-	Printf("Generate general API Info, search dir:%s", searchDir)
-
-	if err := parser.getAllGoFileInfo(searchDir); err != nil {
-		return err
+func (parser *Parser) ParseAPI(searchDirs []string, mainAPIFile string) error {
+	for _, searchDir := range searchDirs {
+		Printf("Generate general API Info, search dir: %s", searchDir)
+		if err := parser.getAllGoFileInfo(searchDir); err != nil {
+			return err
+		}
 	}
 
 	var t depth.Tree
 
-	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDir, mainAPIFile))
+	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDirs[0], mainAPIFile))
 	if err != nil {
 		return err
 	}
