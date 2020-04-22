@@ -27,7 +27,7 @@ func IsSimplePrimitiveType(typeName string) bool {
 // IsPrimitiveType determine whether the type name is a primitive type
 func IsPrimitiveType(typeName string) bool {
 	switch typeName {
-	case "string", "number", "integer", "boolean", "array", "object", "func":
+	case "string", "number", "integer", "boolean", "array", "object", "map", "func":
 		return true
 	default:
 		return false

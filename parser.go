@@ -1235,7 +1235,7 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 			newSchemaType := parts[0]
 			newArrayType := structField.arrayType
 			if len(parts) >= 2 {
-				if newSchemaType == "array" {
+				if newSchemaType == "array" || newSchemaType == "map" {
 					newArrayType = parts[1]
 					if err := CheckSchemaType(newArrayType); err != nil {
 						return nil, err
@@ -1472,6 +1472,23 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 				return nil, err
 			}
 			result = append(result, v)
+		}
+		return result, nil
+	case "map":
+		values := strings.Split(exampleValue, ",")
+		result := map[string]interface{}{}
+		for _, value := range values {
+			mapData := strings.Split(value, ":")
+
+			if len(mapData) == 2 {
+				v, err := defineTypeOfExample(arrayType, "", mapData[1])
+				if err != nil {
+					return nil, err
+				}
+				result[mapData[0]] = v
+			} else {
+				return nil, fmt.Errorf("example value %s should format: key:value", exampleValue)
+			}
 		}
 		return result, nil
 	default:
