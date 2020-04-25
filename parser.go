@@ -1218,8 +1218,14 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 	}
 
 	jsonTag := structTag.Get("json")
+	hasStringTag := false
 	// json:"tag,hoge"
 	if strings.Contains(jsonTag, ",") {
+		// json:"name,string" or json:",string"
+		if strings.Contains(jsonTag, ",string") {
+			hasStringTag = true
+		}
+
 		// json:",hoge"
 		if strings.HasPrefix(jsonTag, ",") {
 			jsonTag = ""
@@ -1260,11 +1266,16 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 		}
 	}
 	if exampleTag := structTag.Get("example"); exampleTag != "" {
-		example, err := defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
-		if err != nil {
-			return nil, err
+		if hasStringTag {
+			// then the example must be in string format
+			structField.exampleValue = exampleTag
+		} else {
+			example, err := defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
+			if err != nil {
+				return nil, err
+			}
+			structField.exampleValue = example
 		}
-		structField.exampleValue = example
 	}
 	if formatTag := structTag.Get("format"); formatTag != "" {
 		structField.formatType = formatTag
@@ -1346,6 +1357,30 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 	}
 	if readOnly := structTag.Get("readonly"); readOnly != "" {
 		structField.readOnly = readOnly == "true"
+	}
+
+	// perform this after setting everything else (min, max, etc...)
+	if hasStringTag {
+
+		// @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
+		defaultValues := map[string]string{
+			// Zero Values as string
+			"string":  "",
+			"integer": "0",
+			"boolean": "false",
+			"number":  "0",
+		}
+
+		if defaultValue, ok := defaultValues[structField.schemaType]; ok {
+			structField.schemaType = "string"
+
+			if structField.exampleValue == nil {
+				// if exampleValue is not defined by the user,
+				// we will force an example with a correct value
+				// (eg: int->"0", bool:"false")
+				structField.exampleValue = defaultValue
+			}
+		}
 	}
 
 	return structField, nil
@@ -1465,6 +1500,10 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 
+	// Skip cgo
+	if pkg.Raw == nil && pkg.Name == "C" {
+		return nil
+	}
 	srcDir := pkg.Raw.Dir
 	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contains sub dir files)
 	if err != nil {
