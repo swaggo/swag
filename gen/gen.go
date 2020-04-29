@@ -83,7 +83,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 
-	if err := p.ParseAPI(searchDirs, config.MainAPIFile); err != nil {
+	if err := p.ParseAPIInMultiDirs(searchDirs, config.MainAPIFile); err != nil {
 		return err
 	}
 	swagger := p.GetSwagger()

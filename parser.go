@@ -46,6 +46,9 @@ type Parser struct {
 	// files is a map that stores map[real_go_file_path][astFile]
 	files map[string]*ast.File
 
+	//packageDirs is map that stores map[dirname][package name] for those package name is not the same as dir name
+	packageDirs map[string]string
+
 	// TypeDefinitions is a map that stores [package name][type name][*ast.TypeSpec]
 	TypeDefinitions map[string]map[string]*ast.TypeSpec
 
@@ -135,10 +138,23 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 }
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile
-func (parser *Parser) ParseAPI(searchDirs []string, mainAPIFile string) error {
+func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
+	return parser.ParseAPIInMultiDirs([]string{searchDir}, mainAPIFile)
+}
+
+// ParseAPIInMultiDirs parses general api info for given searchDirs and mainAPIFile
+func (parser *Parser) ParseAPIInMultiDirs(searchDirs []string, mainAPIFile string) error {
 	for _, searchDir := range searchDirs {
 		Printf("Generate general API Info, search dir: %s", searchDir)
-		if err := parser.getAllGoFileInfo(searchDir); err != nil {
+		absDir, err := filepath.Abs(searchDir)
+		if err != nil {
+			return err
+		}
+		packageDir, err := getPkgName(absDir)
+		if err != nil {
+			return err
+		}
+		if err := parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
 			return err
 		}
 	}
@@ -550,7 +566,6 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 					} else {
 						parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
 					}
-
 				}
 			}
 		}
@@ -567,10 +582,13 @@ func (parser *Parser) ParseType(astFile *ast.File) {
 			parser.ImportAliases[alias] = make(map[string]*ast.ImportSpec)
 		}
 
-		importParts := strings.Split(strings.Trim(importSpec.Path.Value, "\""), "/")
-		importPkgName := importParts[len(importParts)-1]
-
-		parser.ImportAliases[alias][importPkgName] = importSpec
+		packageDir := strings.Trim(importSpec.Path.Value, "\"")
+		if pkg, ok := parser.packageDirs[packageDir]; ok {
+			parser.ImportAliases[alias][pkg] = importSpec
+		} else {
+			importParts := strings.Split(packageDir, "/")
+			parser.ImportAliases[alias][importParts[len(importParts)-1]] = importSpec
+		}
 	}
 }
 
@@ -1289,8 +1307,15 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 }
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
-func (parser *Parser) getAllGoFileInfo(searchDir string) error {
-	return filepath.Walk(searchDir, parser.visit)
+func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
+	return filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
+		if err := parser.Skip(path, f); err != nil {
+			return err
+		} else if f.IsDir() {
+			return nil
+		}
+		return parser.parseFile(packageDir, path)
+	})
 }
 
 func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
@@ -1314,7 +1339,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		}
 
 		path := filepath.Join(srcDir, f.Name())
-		if err := parser.parseFile(path); err != nil {
+		if err := parser.parseFile("", path); err != nil {
 			return err
 		}
 	}
@@ -1328,22 +1353,23 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 	return nil
 }
 
-func (parser *Parser) visit(path string, f os.FileInfo, err error) error {
-	if err := parser.Skip(path, f); err != nil {
-		return err
-	}
-	return parser.parseFile(path)
-}
-
-func (parser *Parser) parseFile(path string) error {
+func (parser *Parser) parseFile(packageDir, path string) error {
 	if ext := filepath.Ext(path); ext == ".go" {
-		fset := token.NewFileSet() // positions are relative to fset
-		astFile, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
+		// positions are relative to FileSet
+		astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
 		if err != nil {
 			return fmt.Errorf("ParseFile error:%+v", err)
 		}
-
 		parser.files[path] = astFile
+
+		if parser.packageDirs == nil {
+			parser.packageDirs = make(map[string]string)
+		}
+		if packageDir != "" {
+			path = filepath.Join(packageDir, path)
+		}
+		path = filepath.ToSlash(filepath.Clean(filepath.Dir(path)))
+		parser.packageDirs[path] = astFile.Name.String()
 	}
 	return nil
 }

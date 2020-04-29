@@ -250,7 +250,7 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "testdata/pet"
 
 	p := New()
-	err := p.getAllGoFileInfo(searchDir)
+	err := p.getAllGoFileInfo("", searchDir)
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, p.files[filepath.Join("testdata", "pet", "main.go")])
@@ -262,7 +262,7 @@ func TestParser_ParseType(t *testing.T) {
 	searchDir := "testdata/simple/"
 
 	p := New()
-	err := p.getAllGoFileInfo(searchDir)
+	err := p.getAllGoFileInfo("", searchDir)
 	assert.NoError(t, err)
 
 	for _, file := range p.files {
@@ -563,9 +563,6 @@ func TestParseSimpleApi1(t *testing.T) {
                     }
                 }
             }
-        },
-        "web.CrossAlias": {
-            "$ref": "#/definitions/cross.Cross"
         },
         "web.IndirectRecursiveTest": {
             "type": "object",
@@ -2172,6 +2169,7 @@ func TestParseModelNotUnderRoot(t *testing.T) {
 	searchDir := "testdata/model_not_under_root/cmd"
 	mainAPIFile := "main.go"
 	p := New()
+	p.ParseDependency = true
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")

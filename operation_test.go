@@ -164,8 +164,7 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.OrderRow"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -193,8 +192,7 @@ func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.CommonHeader"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -237,8 +235,7 @@ func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.CommonHeader"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -287,10 +284,9 @@ func TestParseResponseCommentWithNestedObjectType(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
-	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
-	operation.parser.TypeDefinitions["model"]["Payload2"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.CommonHeader"] = &spec.Schema{}
+	operation.parser.ParsedSchemas["model.Payload"] = &spec.Schema{}
+	operation.parser.ParsedSchemas["model.Payload2"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -333,10 +329,9 @@ func TestParseResponseCommentWithNestedArrayObjectType(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
-	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
-	operation.parser.TypeDefinitions["model"]["Payload2"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.CommonHeader"] = &spec.Schema{}
+	operation.parser.ParsedSchemas["model.Payload"] = &spec.Schema{}
+	operation.parser.ParsedSchemas["model.Payload2"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -385,9 +380,8 @@ func TestParseResponseCommentWithNestedFields(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
-	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.CommonHeader"] = &spec.Schema{}
+	operation.parser.ParsedSchemas["model.Payload"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -442,10 +436,9 @@ func TestParseResponseCommentWithDeepNestedFields(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
-	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
-	operation.parser.TypeDefinitions["model"]["DeepPayload"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.CommonHeader"] = &spec.Schema{}
+	operation.parser.ParsedSchemas["model.Payload"] = &spec.Schema{}
+	operation.parser.ParsedSchemas["model.DeepPayload"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -535,9 +528,8 @@ func TestParseResponseCommentWithNestedArrayMapFields(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
-	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.CommonHeader"] = &spec.Schema{}
+	operation.parser.ParsedSchemas["model.Payload"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -597,8 +589,7 @@ func TestParseResponseCommentWithObjectTypeInSameFile(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["swag"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["swag"]["testOwner"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["swag.testOwner"] = &spec.Schema{}
 
 	fset := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fset, "operation_test.go", `package swag
@@ -638,8 +629,7 @@ func TestParseResponseCommentWithObjectTypeErr(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["notexist"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.notexist"] = &spec.Schema{}
 
 	err := operation.ParseComment(comment, nil)
 	assert.Error(t, err)
@@ -916,8 +906,7 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 	operation := NewOperation()
 	operation.parser = New()
 
-	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
-	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
+	operation.parser.ParsedSchemas["model.OrderRow"] = &spec.Schema{}
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
@@ -1144,9 +1133,6 @@ func TestParseParamCommentByEnums(t *testing.T) {
 	assert.Error(t, operation.ParseComment(comment, nil))
 
 	comment = `@Param some_id query boolean true "Some ID" Enums(A, B, C)`
-	assert.Error(t, operation.ParseComment(comment, nil))
-
-	comment = `@Param some_id query Document true "Some ID" Enums(A, B, C)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 }
 
@@ -1379,21 +1365,6 @@ func TestParseDeprecationDescription(t *testing.T) {
 	if !operation.Deprecated {
 		t.Error("Failed to parse @deprecated comment")
 	}
-}
-
-func TestRegisterSchemaType(t *testing.T) {
-	operation := NewOperation()
-
-	fset := token.NewFileSet()
-	astFile, err := goparser.ParseFile(fset, "main.go", `package main
-	import "timer"
-`, goparser.ParseComments)
-
-	assert.NoError(t, err)
-
-	operation.parser = New()
-	_, _, err = operation.registerSchemaType("timer.Location", astFile)
-	assert.Error(t, err)
 }
 
 func TestParseExtentions(t *testing.T) {

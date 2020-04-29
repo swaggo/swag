@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/swaggo/swag/testdata/model_not_under_root/cmd/api"
+	_ "github.com/swaggo/swag/testdata/model_not_under_root/data"
 )
 
 // @title Swagger Example API
