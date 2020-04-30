@@ -718,9 +718,7 @@ func (parser *Parser) parseTypeExpr(pkgPath string, file *ast.File, typeExpr ast
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			pkgPath := parser.FindPackagePathFromImports(xIdent.Name, file)
-			typeSpecDef := parser.FindTypeSpec(pkgPath, expr.Sel.Name)
-			return parser.parseTypeExpr(typeSpecDef.PkgPath, typeSpecDef.File, typeSpecDef.TypeSpec.Type, ref)
+			return parser.GetTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, pkgPath, ref)
 		}
 	// type Foo []Baz
 	case *ast.ArrayType:
