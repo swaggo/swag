@@ -1229,7 +1229,7 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 		} else if f.IsDir() {
 			return nil
 		}
-		return parser.parseFile(packageDir, path)
+		return parser.parseFile(filepath.ToSlash(filepath.Clean(filepath.Dir(filepath.Join(packageDir, path)))), path)
 	})
 }
 
@@ -1254,7 +1254,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		}
 
 		path := filepath.Join(srcDir, f.Name())
-		if err := parser.parseFile("", path); err != nil {
+		if err := parser.parseFile(pkg.Name, path); err != nil {
 			return err
 		}
 	}
@@ -1275,12 +1275,6 @@ func (parser *Parser) parseFile(packageDir, path string) error {
 		if err != nil {
 			return fmt.Errorf("ParseFile error:%+v", err)
 		}
-		if packageDir != "" {
-			packageDir = filepath.Join(packageDir, path)
-		} else {
-			packageDir = path
-		}
-		packageDir = filepath.ToSlash(filepath.Clean(filepath.Dir(packageDir)))
 		if pd, ok := parser.PackagesDefinitions[packageDir]; ok {
 			pd.Files[path] = astFile
 		} else {
