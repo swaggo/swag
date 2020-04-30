@@ -36,33 +36,27 @@ const (
 
 var ErrFuncTypeField = errors.New("func type field")
 
-//var ErrRecursiveParseStruct = errors.New("recursively parsing struct")
+var ErrRecursiveParseStruct = errors.New("recursively parsing struct")
+
+type Schema struct {
+	PkgPath      string //package import path used to rename Name of a definition int case of conflict
+	Name         string //Name in definitions
+	*spec.Schema        //
+}
 
 // Parser implements a parser for Go source files.
 type Parser struct {
 	// swagger represents the root document object for the API specification
 	swagger *spec.Swagger
 
-	// files is a map that stores map[real_go_file_path][astFile]
-	files map[string]*ast.File
+	//PackagesDefinitions store entities of APIs, definitions, file, package path etc.  and their relations
+	PackagesDefinitions
 
-	//packageDirs is map that stores map[dirname][package name] for those package name is not the same as dir name
-	packageDirs map[string]string
+	//ParsedSchemas store schemas which have been parsed from ast.TypeSpec
+	ParsedSchemas map[*TypeSpecDef]*Schema
 
-	// TypeDefinitions is a map that stores [package name][type name][*ast.TypeSpec]
-	TypeDefinitions map[string]map[string]*ast.TypeSpec
-
-	// ImportAliases is map that stores [import name][import package name][*ast.ImportSpec]
-	ImportAliases map[string]map[string]*ast.ImportSpec
-
-	// CustomPrimitiveTypes is a map that stores custom primitive types to actual golang types [type name][string]
-	CustomPrimitiveTypes map[string]string
-
-	// registerTypes is a map that stores [refTypeName][*ast.TypeSpec]
-	registerTypes map[string]*ast.TypeSpec
-
-	// ParsedSchemas parsed schemas
-	ParsedSchemas map[string]*spec.Schema
+	//OutputSchemas store schemas which will be export to swagger
+	OutputSchemas map[*Schema]*Schema
 
 	PropNamingStrategy string
 
@@ -72,7 +66,7 @@ type Parser struct {
 	ParseDependency bool
 
 	// structStack stores full names of the structures that were already parsed or are being parsed now
-	structStack []string
+	structStack []*TypeSpecDef
 
 	// markdownFileDir holds the path to the folder, where markdown files are stored
 	markdownFileDir string
@@ -101,13 +95,10 @@ func New(options ...func(*Parser)) *Parser {
 				Definitions: make(map[string]spec.Schema),
 			},
 		},
-		files:                make(map[string]*ast.File),
-		TypeDefinitions:      make(map[string]map[string]*ast.TypeSpec),
-		ImportAliases:        make(map[string]map[string]*ast.ImportSpec),
-		CustomPrimitiveTypes: make(map[string]string),
-		registerTypes:        make(map[string]*ast.TypeSpec),
-		ParsedSchemas:        make(map[string]*spec.Schema),
-		excludes:             make(map[string]bool),
+		PackagesDefinitions: make(PackagesDefinitions),
+		ParsedSchemas:       make(map[*TypeSpecDef]*Schema),
+		OutputSchemas:       make(map[*Schema]*Schema),
+		excludes:            make(map[string]bool),
 	}
 
 	for _, option := range options {
@@ -142,30 +133,70 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	return parser.ParseAPIInMultiDirs([]string{searchDir}, mainAPIFile)
 }
 
+func (parser *Parser) ParseTypes() {
+	for pkgPath, pd := range parser.PackagesDefinitions {
+		for _, astFile := range pd.Files {
+			for _, astDeclaration := range astFile.Decls {
+				if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
+					for _, astSpec := range generalDeclaration.Specs {
+						if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
+							if pd.TypeDefinitions == nil {
+								pd.TypeDefinitions = make(map[string]*TypeSpecDef)
+							}
+							typeSpecDef := &TypeSpecDef{
+								PkgPath:  pkgPath,
+								File:     astFile,
+								TypeSpec: typeSpec,
+							}
+							pd.TypeDefinitions[typeSpec.Name.String()] = typeSpecDef
+
+							if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) {
+								parser.ParsedSchemas[typeSpecDef] = &Schema{
+									PkgPath: pkgPath,
+									Name:    astFile.Name.Name,
+									Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 // ParseAPIInMultiDirs parses general api info for given searchDirs and mainAPIFile
 func (parser *Parser) ParseAPIInMultiDirs(searchDirs []string, mainAPIFile string) error {
+	var absMainAPIFilePath string
+	var err error
 	for _, searchDir := range searchDirs {
 		Printf("Generate general API Info, search dir: %s", searchDir)
-		absDir, err := filepath.Abs(searchDir)
+		packageDir, err := filepath.Abs(searchDir)
 		if err != nil {
 			return err
 		}
-		packageDir, err := getPkgName(absDir)
+		packageDir, err = getPkgName(packageDir)
 		if err != nil {
 			return err
 		}
-		if err := parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
+		if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
 			return err
+		}
+
+		if absMainAPIFilePath == "" {
+			absMainAPIFilePath = filepath.Join(searchDir, mainAPIFile)
+			if _, err = os.Stat(absMainAPIFilePath); err != nil {
+				absMainAPIFilePath = ""
+			}
 		}
 	}
 
-	var t depth.Tree
-
-	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDirs[0], mainAPIFile))
+	absMainAPIFilePath, err = filepath.Abs(absMainAPIFilePath)
 	if err != nil {
 		return err
 	}
 
+	var t depth.Tree
 	if parser.ParseDependency {
 		pkgName, err := getPkgName(filepath.Dir(absMainAPIFilePath))
 		if err != nil {
@@ -181,21 +212,13 @@ func (parser *Parser) ParseAPIInMultiDirs(searchDirs []string, mainAPIFile strin
 		}
 	}
 
-	if err := parser.ParseGeneralAPIInfo(absMainAPIFilePath); err != nil {
+	if err = parser.ParseGeneralAPIInfo(absMainAPIFilePath); err != nil {
 		return err
 	}
 
-	for _, astFile := range parser.files {
-		parser.ParseType(astFile)
-	}
+	parser.ParseTypes()
 
-	for fileName, astFile := range parser.files {
-		if err := parser.ParseRouterAPIInfo(fileName, astFile); err != nil {
-			return err
-		}
-	}
-
-	return parser.parseDefinitions()
+	return parser.ParseApis()
 }
 
 func getPkgName(searchDir string) (string, error) {
@@ -504,167 +527,88 @@ func getSchemes(commentLine string) []string {
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
-// ParseRouterAPIInfo parses router api info for given astFile
-func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) error {
-	for _, astDescription := range astFile.Decls {
-		switch astDeclaration := astDescription.(type) {
-		case *ast.FuncDecl:
-			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-				operation := NewOperation() //for per 'function' comment, create a new 'Operation' object
-				operation.parser = parser
-				for _, comment := range astDeclaration.Doc.List {
-					if err := operation.ParseComment(comment.Text, astFile); err != nil {
-						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+func (parser *Parser) ParseApis() error {
+	for pkg, pd := range parser.PackagesDefinitions {
+		for fileName, astFile := range pd.Files {
+			for _, astDescription := range astFile.Decls {
+				switch astDeclaration := astDescription.(type) {
+				case *ast.FuncDecl:
+					if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
+						operation := NewOperation() //for per 'function' comment, create a new 'Operation' object
+						operation.parser = parser
+						for _, comment := range astDeclaration.Doc.List {
+							if err := operation.ParseComment(comment.Text, astFile, pkg); err != nil {
+								return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+							}
+						}
+						var pathItem spec.PathItem
+						var ok bool
+
+						if pathItem, ok = parser.swagger.Paths.Paths[operation.Path]; !ok {
+							pathItem = spec.PathItem{}
+						}
+						switch strings.ToUpper(operation.HTTPMethod) {
+						case http.MethodGet:
+							pathItem.Get = &operation.Operation
+						case http.MethodPost:
+							pathItem.Post = &operation.Operation
+						case http.MethodDelete:
+							pathItem.Delete = &operation.Operation
+						case http.MethodPut:
+							pathItem.Put = &operation.Operation
+						case http.MethodPatch:
+							pathItem.Patch = &operation.Operation
+						case http.MethodHead:
+							pathItem.Head = &operation.Operation
+						case http.MethodOptions:
+							pathItem.Options = &operation.Operation
+						}
+
+						parser.swagger.Paths.Paths[operation.Path] = pathItem
 					}
 				}
-				var pathItem spec.PathItem
-				var ok bool
-
-				if pathItem, ok = parser.swagger.Paths.Paths[operation.Path]; !ok {
-					pathItem = spec.PathItem{}
-				}
-				switch strings.ToUpper(operation.HTTPMethod) {
-				case http.MethodGet:
-					pathItem.Get = &operation.Operation
-				case http.MethodPost:
-					pathItem.Post = &operation.Operation
-				case http.MethodDelete:
-					pathItem.Delete = &operation.Operation
-				case http.MethodPut:
-					pathItem.Put = &operation.Operation
-				case http.MethodPatch:
-					pathItem.Patch = &operation.Operation
-				case http.MethodHead:
-					pathItem.Head = &operation.Operation
-				case http.MethodOptions:
-					pathItem.Options = &operation.Operation
-				}
-
-				parser.swagger.Paths.Paths[operation.Path] = pathItem
 			}
 		}
 	}
-
 	return nil
 }
 
-// ParseType parses type info for given astFile.
-func (parser *Parser) ParseType(astFile *ast.File) {
-	if _, ok := parser.TypeDefinitions[astFile.Name.String()]; !ok {
-		parser.TypeDefinitions[astFile.Name.String()] = make(map[string]*ast.TypeSpec)
-	}
-
-	for _, astDeclaration := range astFile.Decls {
-		if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
-			for _, astSpec := range generalDeclaration.Specs {
-				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
-					typeName := fmt.Sprintf("%v", typeSpec.Type)
-					// check if its a custom primitive type
-					if IsGolangPrimitiveType(typeName) {
-						var typeSpecFullName = fmt.Sprintf("%s.%s", astFile.Name.String(), typeSpec.Name.String())
-						parser.CustomPrimitiveTypes[typeSpecFullName] = TransToValidSchemeType(typeName)
-					} else {
-						parser.TypeDefinitions[astFile.Name.String()][typeSpec.Name.String()] = typeSpec
-					}
-				}
-			}
-		}
-	}
-
-	for _, importSpec := range astFile.Imports {
-		if importSpec.Name == nil {
-			continue
-		}
-
-		alias := importSpec.Name.Name
-
-		if _, ok := parser.ImportAliases[alias]; !ok {
-			parser.ImportAliases[alias] = make(map[string]*ast.ImportSpec)
-		}
-
-		packageDir := strings.Trim(importSpec.Path.Value, "\"")
-		if pkg, ok := parser.packageDirs[packageDir]; ok {
-			parser.ImportAliases[alias][pkg] = importSpec
-		} else {
-			importParts := strings.Split(packageDir, "/")
-			parser.ImportAliases[alias][importParts[len(importParts)-1]] = importSpec
-		}
-	}
-}
-
-func (parser *Parser) isInStructStack(refTypeName string) bool {
+func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
 	for _, structName := range parser.structStack {
-		if refTypeName == structName {
+		if typeSpecDef == structName {
 			return true
 		}
 	}
 	return false
 }
 
-// parseDefinitions parses Swagger Api definitions.
-func (parser *Parser) parseDefinitions() error {
-	// sort the typeNames so that parsing definitions is deterministic
-	typeNames := make([]string, 0, len(parser.registerTypes))
-	for refTypeName := range parser.registerTypes {
-		typeNames = append(typeNames, refTypeName)
-	}
-	sort.Strings(typeNames)
-
-	for _, refTypeName := range typeNames {
-		typeSpec := parser.registerTypes[refTypeName]
-		ss := strings.Split(refTypeName, ".")
-		pkgName := ss[0]
-		parser.structStack = nil
-		if _, err := parser.ParseDefinition(pkgName, typeSpec, true); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package, and populates swagger schema definitions registry
 // with a schema for the given type
-func (parser *Parser) ParseDefinition(pkgName string, typeSpec *ast.TypeSpec, register bool) (string, error) {
-	refTypeName := TypeDocName(pkgName, typeSpec)
+func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error) {
+	typeName := typeSpecDef.FullName()
+	refTypeName := TypeDocName(typeName, typeSpecDef.TypeSpec)
 
-	if typeSpec == nil {
-		Println("Skipping '" + refTypeName + "', pkg '" + pkgName + "' not found, try add flag --parseDependency or --parseVendor.")
-		return refTypeName, nil
+	if schema, ok := parser.ParsedSchemas[typeSpecDef]; ok {
+		Println("Skipping '" + typeName + "', already parsed.")
+		return schema, nil
 	}
 
-	if _, ok := typeSpec.Type.(*ast.FuncType); ok {
-		Println("Skipping func type: " + refTypeName)
-		return refTypeName, ErrFuncTypeField
+	if parser.isInStructStack(typeSpecDef) {
+		Println("Skipping '" + typeName + "', recursion detected.")
+		return nil, ErrRecursiveParseStruct
 	}
+	parser.structStack = append(parser.structStack, typeSpecDef)
 
-	if schema, ok := parser.ParsedSchemas[refTypeName]; ok {
-		Println("Skipping '" + refTypeName + "', already parsed.")
-		if register {
-			if _, ok = parser.swagger.Definitions[refTypeName]; !ok {
-				parser.swagger.Definitions[refTypeName] = *schema
-			}
-		}
-		return refTypeName, nil
-	}
+	Println("Generating " + typeName)
 
-	if parser.isInStructStack(refTypeName) {
-		Println("Skipping '" + refTypeName + "', recursion detected.")
-		return refTypeName, nil
-	}
-	parser.structStack = append(parser.structStack, refTypeName)
-
-	Println("Generating " + refTypeName)
-
-	schema, err := parser.parseTypeExpr(pkgName, typeSpec.Type, register)
+	schema, err := parser.parseTypeExpr(typeSpecDef.PkgPath, typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
 	if err != nil {
-		return refTypeName, err
+		return nil, err
 	}
-	parser.ParsedSchemas[refTypeName] = schema
-	if register {
-		parser.swagger.Definitions[refTypeName] = *schema
-	}
-	return refTypeName, nil
+	s := &Schema{Name: refTypeName, PkgPath: typeSpecDef.PkgPath, Schema: schema}
+	parser.ParsedSchemas[typeSpecDef] = s
+	return s, nil
 }
 
 func (parser *Parser) collectRequiredFields(properties map[string]spec.Schema, extraRequired []string) (requiredFields []string) {
@@ -700,114 +644,87 @@ func fullTypeName(pkgName, typeName string) string {
 	return typeName
 }
 
-func (parser *Parser) getRefTypeSchema(typeName string, schema *spec.Schema) *spec.Schema {
-	if schema != nil {
-		if _, ok := parser.swagger.Definitions[typeName]; !ok {
-			parser.swagger.Definitions[typeName] = *schema
+func (parser *Parser) GetTypeSchema(typeName string, file *ast.File, pkgPath string, ref bool) (*spec.Schema, error) {
+	if IsGolangPrimitiveType(typeName) {
+		return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
+	}
+	if strings.ContainsRune(typeName, '.') {
+		if schemaType, err := convertFromSpecificToPrimitive(strings.Split(typeName, ".")[1]); err == nil {
+			return PrimitiveSchema(schemaType), nil
+		}
+		pkgPath, typeName = parser.FindTypePackage(typeName, file, pkgPath)
+		if pkgPath == "" {
+			return nil, fmt.Errorf("cannot find package path of type: %s", typeName)
+		}
+	} else {
+		if schemaType, err := convertFromSpecificToPrimitive(typeName); err == nil {
+			return PrimitiveSchema(schemaType), nil
 		}
 	}
-	return RefSchema(typeName)
+
+	typeSpecDef := parser.FindTypeSpec(pkgPath, typeName)
+	if typeSpecDef == nil {
+		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
+	}
+
+	schema, ok := parser.ParsedSchemas[typeSpecDef]
+	if !ok {
+		var err error
+		schema, err = parser.ParseDefinition(typeSpecDef)
+		if err == ErrRecursiveParseStruct {
+			if !ref {
+				return nil, err
+			}
+		} else if err != nil {
+			return nil, err
+		}
+	}
+
+	if ref && len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == "object" {
+		return parser.getRefTypeSchema(schema), nil
+	}
+	return schema.Schema, nil
 }
 
-func (parser *Parser) getTypeSchema(pkgName, typeName string, ref bool) (schema *spec.Schema, err error) {
-	var fullName string
-	var ok bool
-	if pos := strings.IndexRune(typeName, '.'); pos >= 0 {
-		pkgName = typeName[:pos]
-		typeName = typeName[pos+1:]
-	}
-	if typeName != "" {
-		if typeName, err := convertFromSpecificToPrimitive(typeName); err == nil {
-			return PrimitiveSchema(typeName), nil
+func (parser *Parser) getRefTypeSchema(schema *Schema) *spec.Schema {
+	if _, ok := parser.OutputSchemas[schema]; !ok {
+		if _, ok := parser.swagger.Definitions[schema.Name]; ok {
+			schema.Name = fullTypeName(schema.PkgPath, strings.Split(schema.Name, ".")[1])
+			schema.Name = strings.ReplaceAll(schema.Name, "/", "_")
 		}
-
-		if IsGolangPrimitiveType(typeName) {
-			return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
-		}
-
-		fullName = fullTypeName(pkgName, typeName)
-
-		if primitiveType, ok := parser.CustomPrimitiveTypes[fullName]; ok {
-			return PrimitiveSchema(primitiveType), nil
-		}
-
-		if schema, ok = parser.ParsedSchemas[fullName]; ok {
-			if ref {
-				return parser.getRefTypeSchema(fullName, schema), nil
-			} else {
-				return schema, nil
-			}
-		}
+		parser.swagger.Definitions[schema.Name] = *schema.Schema
+		parser.OutputSchemas[schema] = schema
 	}
 
-	var typeSpec *ast.TypeSpec
-	if typeSpec, ok = parser.TypeDefinitions[pkgName][typeName]; !ok {
-		if pkgNames, ok := parser.ImportAliases[pkgName]; ok {
-			for name := range pkgNames {
-				if typeSpec, ok = parser.TypeDefinitions[name][typeName]; ok {
-					pkgName = name
-					break
-				}
-			}
-		}
-	}
-	if typeSpec == nil {
-		return nil, fmt.Errorf("failed to parse type: %s, for its type definiton not found", fullName)
-	}
-
-	if expr, ok := typeSpec.Type.(*ast.SelectorExpr); ok {
-		if ident, ok := expr.X.(*ast.Ident); ok && (ident.Name != pkgName || expr.Sel.Name != typeName) {
-			if expr.Sel.Obj != nil {
-				typeSpec, _ = expr.Sel.Obj.Decl.(*ast.TypeSpec)
-			} else {
-				typeSpec = nil
-			}
-			return parser.getTypeSchema(ident.Name, expr.Sel.Name, ref)
-		}
-	}
-	if fullName, err = parser.ParseDefinition(pkgName, typeSpec, ref); err != nil {
-		return nil, err
-	} else if schema, ok := parser.ParsedSchemas[fullName]; ok {
-		if ref {
-			return parser.getRefTypeSchema(fullName, schema), nil
-		} else {
-			return schema, nil
-		}
-	} else if ref {
-		//recursive
-		oldFullName := fullTypeName(pkgName, typeName)
-		if _, ok = parser.registerTypes[oldFullName]; !ok {
-			parser.registerTypes[oldFullName] = typeSpec
-		}
-		return parser.getRefTypeSchema(fullName, nil), nil
-	}
-	return nil, fmt.Errorf("unknown error for type: %s", fullName)
+	return RefSchema(schema.Name)
 }
 
 // parseTypeExpr parses given type expression that corresponds to the type under
 // given name and package, and returns swagger schema for it.
-func (parser *Parser) parseTypeExpr(pkgName string, typeExpr ast.Expr, ref bool) (*spec.Schema, error) {
+func (parser *Parser) parseTypeExpr(pkgPath string, file *ast.File, typeExpr ast.Expr, ref bool) (*spec.Schema, error) {
 	switch expr := typeExpr.(type) {
 	// type Foo struct {...}
 	case *ast.StructType:
-		return parser.parseStruct(pkgName, expr.Fields)
+		return parser.parseStruct(pkgPath, file, expr.Fields)
 
 	// type Foo Baz
 	case *ast.Ident:
-		return parser.getTypeSchema(pkgName, expr.Name, ref)
+		return parser.GetTypeSchema(expr.Name, file, pkgPath, ref)
 
 	// type Foo *Baz
 	case *ast.StarExpr:
-		return parser.parseTypeExpr(pkgName, expr.X, ref)
+		return parser.parseTypeExpr(pkgPath, file, expr.X, ref)
 
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			return parser.parseTypeExpr(xIdent.Name, expr.Sel, ref)
+			pkgPath := parser.FindPackagePathFromImports(xIdent.Name, file)
+			typeSpecDef := parser.FindTypeSpec(pkgPath, expr.Sel.Name)
+			return parser.parseTypeExpr(typeSpecDef.PkgPath, typeSpecDef.File, typeSpecDef.TypeSpec.Type, ref)
 		}
 	// type Foo []Baz
 	case *ast.ArrayType:
-		itemSchema, err := parser.parseTypeExpr(pkgName, expr.Elt, true)
+		itemSchema, err := parser.parseTypeExpr(pkgPath, file, expr.Elt, true)
 		if err != nil {
 			return nil, err
 		}
@@ -817,7 +734,7 @@ func (parser *Parser) parseTypeExpr(pkgName string, typeExpr ast.Expr, ref bool)
 		if _, ok := expr.Value.(*ast.InterfaceType); ok {
 			return spec.MapProperty(nil), nil
 		} else {
-			schema, err := parser.parseTypeExpr(pkgName, expr.Value, true)
+			schema, err := parser.parseTypeExpr(pkgPath, file, expr.Value, true)
 			if err != nil {
 				return &spec.Schema{}, err
 			}
@@ -836,12 +753,12 @@ func (parser *Parser) parseTypeExpr(pkgName string, typeExpr ast.Expr, ref bool)
 	}, nil
 }
 
-func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (*spec.Schema, error) {
+func (parser *Parser) parseStruct(pkgPath string, file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
 
 	required := make([]string, 0)
 	properties := make(map[string]spec.Schema)
 	for _, field := range fields.List {
-		fieldProps, requiredFromAnon, err := parser.parseStructField(pkgName, field)
+		fieldProps, requiredFromAnon, err := parser.parseStructField(pkgPath, file, field)
 		if err == ErrFuncTypeField {
 			continue
 		} else if err != nil {
@@ -873,8 +790,8 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 	if name := schema.Ref.String(); name != "" {
 		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
 			name = name[pos+1:]
-			if schema, ok := parser.ParsedSchemas[name]; ok {
-				return parser.GetSchemaTypePath(schema, depth)
+			if schema, ok := parser.swagger.Definitions[name]; ok {
+				return parser.GetSchemaTypePath(&schema, depth)
 			}
 		}
 	} else if len(schema.Type) > 0 {
@@ -978,13 +895,13 @@ func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.
 	return name, schema, err
 }
 
-func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[string]spec.Schema, []string, error) {
+func (parser *Parser) parseStructField(pkgPath string, file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {
 	if field.Names == nil {
 		typeName, err := getFieldTypeName(field.Type)
 		if err != nil {
 			return nil, nil, err
 		}
-		schema, err := parser.getTypeSchema(pkgName, typeName, false)
+		schema, err := parser.GetTypeSchema(typeName, file, pkgPath, false)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1008,10 +925,10 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		typeName, err := getFieldTypeName(field.Type)
 		if err == nil {
 			//named type
-			schema, err = parser.getTypeSchema(pkgName, typeName, true)
+			schema, err = parser.GetTypeSchema(typeName, file, pkgPath, true)
 		} else {
 			//unnamed type
-			schema, err = parser.parseTypeExpr(pkgName, field.Type, false)
+			schema, err = parser.parseTypeExpr(pkgPath, file, field.Type, false)
 		}
 		if err != nil {
 			return nil, nil, err
@@ -1360,16 +1277,20 @@ func (parser *Parser) parseFile(packageDir, path string) error {
 		if err != nil {
 			return fmt.Errorf("ParseFile error:%+v", err)
 		}
-		parser.files[path] = astFile
-
-		if parser.packageDirs == nil {
-			parser.packageDirs = make(map[string]string)
-		}
 		if packageDir != "" {
-			path = filepath.Join(packageDir, path)
+			packageDir = filepath.Join(packageDir, path)
+		} else {
+			packageDir = path
 		}
-		path = filepath.ToSlash(filepath.Clean(filepath.Dir(path)))
-		parser.packageDirs[path] = astFile.Name.String()
+		packageDir = filepath.ToSlash(filepath.Clean(filepath.Dir(packageDir)))
+		if pd, ok := parser.PackagesDefinitions[packageDir]; ok {
+			pd.Files[path] = astFile
+		} else {
+			parser.PackagesDefinitions[packageDir] = &PackageDefinitions{
+				Name:  astFile.Name.Name,
+				Files: map[string]*ast.File{path: astFile},
+			}
+		}
 	}
 	return nil
 }

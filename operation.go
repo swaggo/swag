@@ -56,7 +56,7 @@ func NewOperation() *Operation {
 }
 
 // ParseComment parses comment for given comment string and returns error if error occurs.
-func (operation *Operation) ParseComment(comment string, astFile *ast.File) error {
+func (operation *Operation) ParseComment(comment string, astFile *ast.File, pkgPath string) error {
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "//"))
 	if len(commentLine) == 0 {
 		return nil
@@ -86,9 +86,9 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	case "@produce":
 		err = operation.ParseProduceComment(lineRemainder)
 	case "@param":
-		err = operation.ParseParamComment(lineRemainder, astFile)
+		err = operation.ParseParamComment(lineRemainder, astFile, pkgPath)
 	case "@success", "@failure":
-		err = operation.ParseResponseComment(lineRemainder, astFile)
+		err = operation.ParseResponseComment(lineRemainder, astFile, pkgPath)
 	case "@header":
 		err = operation.ParseResponseHeaderComment(lineRemainder, astFile)
 	case "@router":
@@ -136,7 +136,7 @@ var paramPattern = regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
 //              [param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // E.g. @Param   some_id     path    int     true        "Some ID"
-func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
+func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File, pkgPath string) error {
 	matches := paramPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
 		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
@@ -184,11 +184,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				},
 			}
 		case "object":
-			var pkgName string
-			if astFile != nil {
-				pkgName = astFile.Name.String()
-			}
-			schema, err := operation.parser.getTypeSchema(pkgName, refType, false)
+			schema, err := operation.parser.GetTypeSchema(refType, astFile, pkgPath, false)
 			if err != nil {
 				return err
 			}
@@ -258,22 +254,14 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if IsPrimitiveType(refType) {
 				param.Schema = spec.ArrayProperty(PrimitiveSchema(refType))
 			} else {
-				var pkgName string
-				if astFile != nil {
-					pkgName = astFile.Name.String()
-				}
-				schema, err := operation.parser.getTypeSchema(pkgName, refType, true)
+				schema, err := operation.parser.GetTypeSchema(refType, astFile, pkgPath, true)
 				if err != nil {
 					return err
 				}
 				param.Schema = spec.ArrayProperty(schema)
 			}
 		case "object":
-			var pkgName string
-			if astFile != nil {
-				pkgName = astFile.Name.String()
-			}
-			schema, err := operation.parser.getTypeSchema(pkgName, refType, true)
+			schema, err := operation.parser.GetTypeSchema(refType, astFile, pkgPath, true)
 			if err != nil {
 				return err
 			}
@@ -587,7 +575,7 @@ var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/
 //RepsonseType{data1=Type1,data2=Type2}
 var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 
-func (operation *Operation) parseResponseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+func (operation *Operation) parseResponseObjectSchema(refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
 	switch {
 	case refType == "interface{}":
 		return PrimitiveSchema("object"), nil
@@ -596,7 +584,7 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 	case IsPrimitiveType(refType):
 		return PrimitiveSchema(refType), nil
 	case strings.HasPrefix(refType, "[]"):
-		schema, err := operation.parseResponseObjectSchema(refType[2:], astFile)
+		schema, err := operation.parseResponseObjectSchema(refType[2:], astFile, pkgPath)
 		if err != nil {
 			return nil, err
 		}
@@ -611,33 +599,29 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 		if refType == "interface{}" {
 			return spec.MapProperty(nil), nil
 		} else {
-			schema, err := operation.parseResponseObjectSchema(refType, astFile)
+			schema, err := operation.parseResponseObjectSchema(refType, astFile, pkgPath)
 			if err != nil {
 				return &spec.Schema{}, err
 			}
 			return spec.MapProperty(schema), nil
 		}
 	case strings.Contains(refType, "{"):
-		return operation.parseResponseCombinedObjectSchema(refType, astFile)
+		return operation.parseResponseCombinedObjectSchema(refType, astFile, pkgPath)
 	default:
 		if operation.parser != nil {
-			var pkgName string
-			if astFile != nil {
-				pkgName = astFile.Name.String()
-			}
-			return operation.parser.getTypeSchema(pkgName, refType, true)
+			return operation.parser.GetTypeSchema(refType, astFile, pkgPath, true)
 		}
 		return RefSchema(refType), nil
 	}
 }
 
-func (operation *Operation) parseResponseCombinedObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+func (operation *Operation) parseResponseCombinedObjectSchema(refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
 	matches := combinedPattern.FindStringSubmatch(refType)
 	if len(matches) != 3 {
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 	refType = matches[1]
-	schema, err := operation.parseResponseObjectSchema(refType, astFile)
+	schema, err := operation.parseResponseObjectSchema(refType, astFile, pkgPath)
 	if err != nil {
 		return nil, err
 	}
@@ -661,7 +645,7 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 	for _, field := range fields {
 		if matches := strings.SplitN(field, "=", 2); len(matches) == 2 {
 			if strings.HasPrefix(matches[1], "[]") {
-				itemSchema, err := operation.parseResponseObjectSchema(matches[1][2:], astFile)
+				itemSchema, err := operation.parseResponseObjectSchema(matches[1][2:], astFile, pkgPath)
 				if err != nil {
 					return nil, err
 				}
@@ -670,7 +654,7 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 					Items: &spec.SchemaOrArray{Schema: itemSchema}},
 				}
 			} else {
-				schema, err := operation.parseResponseObjectSchema(matches[1], astFile)
+				schema, err := operation.parseResponseObjectSchema(matches[1], astFile, pkgPath)
 				if err != nil {
 					return nil, err
 				}
@@ -691,16 +675,16 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 		}), nil
 }
 
-func (operation *Operation) parseResponseSchema(schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
+func (operation *Operation) parseResponseSchema(schemaType, refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
 	switch schemaType {
 	case "object":
 		if !strings.HasPrefix(refType, "[]") {
-			return operation.parseResponseObjectSchema(refType, astFile)
+			return operation.parseResponseObjectSchema(refType, astFile, pkgPath)
 		}
 		refType = refType[2:]
 		fallthrough
 	case "array":
-		schema, err := operation.parseResponseObjectSchema(refType, astFile)
+		schema, err := operation.parseResponseObjectSchema(refType, astFile, pkgPath)
 		if err != nil {
 			return nil, err
 		}
@@ -714,7 +698,7 @@ func (operation *Operation) parseResponseSchema(schemaType, refType string, astF
 }
 
 // ParseResponseComment parses comment for given `response` comment string.
-func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
+func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File, pkgPath string) error {
 	var matches []string
 
 	if matches = responsePattern.FindStringSubmatch(commentLine); len(matches) != 5 {
@@ -734,7 +718,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
-	schema, err := operation.parseResponseSchema(schemaType, refType, astFile)
+	schema, err := operation.parseResponseSchema(schemaType, refType, astFile, pkgPath)
 	if err != nil {
 		return err
 	}
