@@ -184,7 +184,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				},
 			}
 		case "object":
-			schema, err := operation.parser.GetTypeSchema(refType, astFile, pkgPath, false)
+			schema, err := operation.parser.getTypeSchema(refType, astFile, pkgPath, false)
 			if err != nil {
 				return err
 			}
@@ -254,14 +254,14 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if IsPrimitiveType(refType) {
 				param.Schema = spec.ArrayProperty(PrimitiveSchema(refType))
 			} else {
-				schema, err := operation.parser.GetTypeSchema(refType, astFile, pkgPath, true)
+				schema, err := operation.parser.getTypeSchema(refType, astFile, pkgPath, true)
 				if err != nil {
 					return err
 				}
 				param.Schema = spec.ArrayProperty(schema)
 			}
 		case "object":
-			schema, err := operation.parser.GetTypeSchema(refType, astFile, pkgPath, true)
+			schema, err := operation.parser.getTypeSchema(refType, astFile, pkgPath, true)
 			if err != nil {
 				return err
 			}
@@ -609,7 +609,7 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 		return operation.parseResponseCombinedObjectSchema(refType, astFile, pkgPath)
 	default:
 		if operation.parser != nil {
-			return operation.parser.GetTypeSchema(refType, astFile, pkgPath, true)
+			return operation.parser.getTypeSchema(refType, astFile, pkgPath, true)
 		}
 		return RefSchema(refType), nil
 	}

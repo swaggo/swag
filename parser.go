@@ -133,7 +133,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	return parser.ParseAPIInMultiDirs([]string{searchDir}, mainAPIFile)
 }
 
-func (parser *Parser) ParseTypes() {
+func (parser *Parser) parseTypes() {
 	for pkgPath, pd := range parser.PackagesDefinitions {
 		for _, astFile := range pd.Files {
 			for _, astDeclaration := range astFile.Decls {
@@ -216,9 +216,9 @@ func (parser *Parser) ParseAPIInMultiDirs(searchDirs []string, mainAPIFile strin
 		return err
 	}
 
-	parser.ParseTypes()
+	parser.parseTypes()
 
-	return parser.ParseApis()
+	return parser.parseApis()
 }
 
 func getPkgName(searchDir string) (string, error) {
@@ -527,7 +527,7 @@ func getSchemes(commentLine string) []string {
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
-func (parser *Parser) ParseApis() error {
+func (parser *Parser) parseApis() error {
 	for pkg, pd := range parser.PackagesDefinitions {
 		for fileName, astFile := range pd.Files {
 			for _, astDescription := range astFile.Decls {
@@ -644,7 +644,7 @@ func fullTypeName(pkgName, typeName string) string {
 	return typeName
 }
 
-func (parser *Parser) GetTypeSchema(typeName string, file *ast.File, pkgPath string, ref bool) (*spec.Schema, error) {
+func (parser *Parser) getTypeSchema(typeName string, file *ast.File, pkgPath string, ref bool) (*spec.Schema, error) {
 	if IsGolangPrimitiveType(typeName) {
 		return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
 	}
@@ -709,7 +709,7 @@ func (parser *Parser) parseTypeExpr(pkgPath string, file *ast.File, typeExpr ast
 
 	// type Foo Baz
 	case *ast.Ident:
-		return parser.GetTypeSchema(expr.Name, file, pkgPath, ref)
+		return parser.getTypeSchema(expr.Name, file, pkgPath, ref)
 
 	// type Foo *Baz
 	case *ast.StarExpr:
@@ -718,7 +718,7 @@ func (parser *Parser) parseTypeExpr(pkgPath string, file *ast.File, typeExpr ast
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			return parser.GetTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, pkgPath, ref)
+			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, pkgPath, ref)
 		}
 	// type Foo []Baz
 	case *ast.ArrayType:
@@ -899,7 +899,7 @@ func (parser *Parser) parseStructField(pkgPath string, file *ast.File, field *as
 		if err != nil {
 			return nil, nil, err
 		}
-		schema, err := parser.GetTypeSchema(typeName, file, pkgPath, false)
+		schema, err := parser.getTypeSchema(typeName, file, pkgPath, false)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -923,7 +923,7 @@ func (parser *Parser) parseStructField(pkgPath string, file *ast.File, field *as
 		typeName, err := getFieldTypeName(field.Type)
 		if err == nil {
 			//named type
-			schema, err = parser.GetTypeSchema(typeName, file, pkgPath, true)
+			schema, err = parser.getTypeSchema(typeName, file, pkgPath, true)
 		} else {
 			//unnamed type
 			schema, err = parser.parseTypeExpr(pkgPath, file, field.Type, false)
