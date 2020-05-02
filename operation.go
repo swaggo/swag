@@ -693,13 +693,6 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 
-	code, _ := strconv.Atoi(matches[1])
-
-	responseDescription := strings.Trim(matches[4], "\"")
-	if responseDescription == "" {
-		responseDescription = http.StatusText(code)
-	}
-
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 	schema, err := operation.parseCombinedSchema(schemaType, refType, astFile, pkgPath)
@@ -708,16 +701,26 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{
-			ResponsesProps: spec.ResponsesProps{
-				StatusCodeResponses: make(map[int]spec.Response),
-			},
+		operation.Responses = &spec.Responses{}
+	}
+
+	responseDescription := strings.Trim(matches[4], "\"")
+	if code, err := strconv.Atoi(matches[1]); err == nil {
+		if responseDescription == "" {
+			responseDescription = http.StatusText(code)
+		}
+		if operation.Responses.StatusCodeResponses == nil {
+			operation.Responses.StatusCodeResponses = make(map[int]spec.Response)
+		}
+		operation.Responses.StatusCodeResponses[code] = spec.Response{
+			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
+		}
+	} else if strings.ToLower(matches[4]) == "default" {
+		operation.Responses.Default = &spec.Response{
+			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
 		}
 	}
 
-	operation.Responses.StatusCodeResponses[code] = spec.Response{
-		ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
-	}
 	return nil
 }
 
