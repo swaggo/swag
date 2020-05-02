@@ -769,6 +769,100 @@ func TestParseResponseCommentParamMissing(t *testing.T) {
 	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode {string}"`)
 }
 
+func TestParseResponseDefaultCommentWithObjectType(t *testing.T) {
+	comment := `@default {object} model.OrderRow "Error message`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Default
+	assert.Equal(t, `Error message`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "default": {
+            "description": "Error message",
+            "schema": {
+                "$ref": "#/definitions/model.OrderRow"
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseDefaultCommentWithBasicType(t *testing.T) {
+	comment := `@Default {string} string "Error message"`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Default
+	assert.Equal(t, `Error message`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "default": {
+            "description": "Error message",
+            "schema": {
+                "type": "string"
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseDefaultCommentWithoutDescription(t *testing.T) {
+	comment := `@default {object} model.OrderRow`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["OrderRow"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Default
+	assert.Equal(t, ``, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "default": {
+            "schema": {
+                "$ref": "#/definitions/model.OrderRow"
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseDefaultCommentParamMissing(t *testing.T) {
+	operation := NewOperation()
+
+	paramLenErrComment := `@Default {string}`
+	paramLenErr := operation.ParseComment(paramLenErrComment, nil)
+	assert.EqualError(t, paramLenErr, `can not parse @default comment "{string}"`)
+}
+
 // Test ParseParamComment
 func TestParseParamCommentByPathType(t *testing.T) {
 	comment := `@Param some_id path int true "Some ID"`

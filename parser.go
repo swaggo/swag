@@ -352,8 +352,8 @@ func isGeneralAPIComment(comment *ast.CommentGroup) bool {
 	for _, commentLine := range strings.Split(comment.Text(), "\n") {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
-		// The @summary, @router, @success,@failure  annotation belongs to Operation
-		case "@summary", "@router", "@success", "@failure":
+		// The @summary, @router, @success, @failure, @default  annotation belongs to Operation
+		case "@summary", "@router", "@success", "@failure", "@default":
 			return false
 		}
 	}

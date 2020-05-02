@@ -89,6 +89,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		err = operation.ParseParamComment(lineRemainder, astFile)
 	case "@success", "@failure":
 		err = operation.ParseResponseComment(lineRemainder, astFile)
+	case "@default":
+		err = operation.ParseResponseDefaultComment(lineRemainder, astFile)
 	case "@header":
 		err = operation.ParseResponseHeaderComment(lineRemainder, astFile)
 	case "@router":
@@ -632,8 +634,10 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 
 var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
-//RepsonseType{data1=Type1,data2=Type2}
+//ResponseType{data1=Type1,data2=Type2}
 var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
+
+var defaultPattern = regexp.MustCompile(`([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
 func (operation *Operation) parseResponseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
@@ -815,6 +819,37 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	operation.Responses.StatusCodeResponses[code] = spec.Response{
+		ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
+	}
+	return nil
+}
+
+// ParseResponseDefaultComment parses comment for a default `response`.
+func (operation *Operation) ParseResponseDefaultComment(commentLine string, astFile *ast.File) error {
+	var matches []string
+	if matches = defaultPattern.FindStringSubmatch(commentLine); len(matches) < 3 {
+		return fmt.Errorf("can not parse @default comment \"%s\"", commentLine)
+	}
+	var responseDescription string
+	if len(matches) == 4 {
+		responseDescription = strings.Trim(matches[3], "\"")
+	}
+	schemaType := strings.Trim(matches[1], "{}")
+	refType := matches[2]
+	schema, err := operation.parseResponseSchema(schemaType, refType, astFile)
+	if err != nil {
+		return err
+	}
+
+	if operation.Responses == nil {
+		operation.Responses = &spec.Responses{
+			ResponsesProps: spec.ResponsesProps{
+				StatusCodeResponses: make(map[int]spec.Response),
+			},
+		}
+	}
+
+	operation.Responses.Default = &spec.Response{
 		ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
 	}
 	return nil

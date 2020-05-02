@@ -16,6 +16,7 @@ import (
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
+// @Default {object} web.APIError "Other error"
 // @Router /testapi/get-string-by-int/{some_id} [get]
 func GetStringByInt(c *gin.Context) {
 	var pet web.Pet
@@ -38,6 +39,7 @@ func GetStringByInt(c *gin.Context) {
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
+// @Default {object} web.APIError "Other error"
 // @Router /testapi/get-struct-array-by-string/{some_id} [get]
 func GetStructArrayByString(c *gin.Context) {
 	// write your code
@@ -53,6 +55,7 @@ func GetStructArrayByString(c *gin.Context) {
 // @Success 200 {string} string "ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
+// @Default {object} web.APIError "Other error"
 // @Router /file/upload [post]
 func Upload(ctx *gin.Context) {
 	// write your code

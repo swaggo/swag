@@ -237,6 +237,7 @@ import (
 // @Failure 400 {object} httputil.HTTPError
 // @Failure 404 {object} httputil.HTTPError
 // @Failure 500 {object} httputil.HTTPError
+// @Default {object} httputil.HTTPError
 // @Router /accounts/{id} [get]
 func (c *Controller) ShowAccount(ctx *gin.Context) {
 	id := ctx.Param("id")
@@ -264,6 +265,7 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 // @Failure 400 {object} httputil.HTTPError
 // @Failure 404 {object} httputil.HTTPError
 // @Failure 500 {object} httputil.HTTPError
+// @Default {object} httputil.HTTPError
 // @Router /accounts [get]
 func (c *Controller) ListAccounts(ctx *gin.Context) {
 	q := ctx.Request.URL.Query().Get("q")
@@ -545,6 +547,13 @@ type DeepObject struct { //in `proto` package
 // @Success 200 {string} string	"ok"
 // @Header 200 {string} Location "/entity/1"
 // @Header 200 {string} Token "qwerty"
+```
+
+### Add a default response type
+
+```go
+// @Success 200 {string} string	"ok"
+// @Default {string} string "An error"
 ```
 
 ### Use multiple path params
