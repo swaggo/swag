@@ -880,12 +880,8 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 
 			switch schemaType {
 			case "object":
-				if len(schema.SchemaProps.Properties) > 0 {
-					for k, v := range schema.SchemaProps.Properties {
-						properties[k] = v
-					}
-				} else if schema.AdditionalProperties != nil {
-					properties[typeName] = *schema
+				for k, v := range schema.SchemaProps.Properties {
+					properties[k] = v
 				}
 			case "array":
 				properties[typeName] = *schema
