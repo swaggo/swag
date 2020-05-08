@@ -846,17 +846,15 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 	properties := map[string]spec.Schema{}
 
 	if field.Names == nil {
-		fullTypeName, err := getFieldType(field.Type)
+		propertyName, err := getPropertyName(pkgName, field.Type, parser)
 		if err != nil {
 			return properties, []string{}, nil
 		}
 
-		typeName := fullTypeName
-
-		if splits := strings.Split(fullTypeName, "."); len(splits) > 1 {
-			pkgName = splits[0]
-			typeName = splits[1]
+		if propertyName.CrossPkg != "" {
+			pkgName = propertyName.CrossPkg
 		}
+		typeName := propertyName.SchemaType
 
 		typeSpec := parser.TypeDefinitions[pkgName][typeName]
 		if typeSpec == nil {
@@ -882,8 +880,12 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 
 			switch schemaType {
 			case "object":
-				for k, v := range schema.SchemaProps.Properties {
-					properties[k] = v
+				if len(schema.SchemaProps.Properties) > 0 {
+					for k, v := range schema.SchemaProps.Properties {
+						properties[k] = v
+					}
+				} else if schema.AdditionalProperties != nil {
+					properties[typeName] = *schema
 				}
 			case "array":
 				properties[typeName] = *schema
@@ -1129,30 +1131,6 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		}
 	}
 	return properties, nil, nil
-}
-
-func getFieldType(field interface{}) (string, error) {
-
-	switch ftype := field.(type) {
-	case *ast.Ident:
-		return ftype.Name, nil
-
-	case *ast.SelectorExpr:
-		packageName, err := getFieldType(ftype.X)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("%s.%s", packageName, ftype.Sel.Name), nil
-
-	case *ast.StarExpr:
-		fullName, err := getFieldType(ftype.X)
-		if err != nil {
-			return "", err
-		}
-		return fullName, nil
-
-	}
-	return "", fmt.Errorf("unknown field type %#v", field)
 }
 
 func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField, error) {
