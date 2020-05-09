@@ -1,5 +1,7 @@
 # swag
 
+🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md)*
+
 <img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
 [![Travis Status](https://img.shields.io/travis/swaggo/swag/master.svg)](https://travis-ci.org/swaggo/swag)
