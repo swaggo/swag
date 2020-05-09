@@ -644,14 +644,9 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 	props := map[string]spec.Schema{}
 	for _, field := range fields {
 		if matches := strings.SplitN(field, "=", 2); len(matches) == 2 {
-			if strings.HasPrefix(matches[1], "[]") {
-				itemSchema, err := operation.parseResponseObjectSchema(matches[1][2:], astFile, pkgPath)
-				if err != nil {
-					return nil, err
-				}
-				props[matches[0]] = spec.Schema{SchemaProps: spec.SchemaProps{
-					Type:  []string{"array"},
-					Items: &spec.SchemaOrArray{Schema: itemSchema}},
+			if matches[1] == "" || matches[1] == "nil" {
+				if schema.Properties != nil {
+					delete(schema.Properties, matches[0])
 				}
 			} else {
 				schema, err := operation.parseResponseObjectSchema(matches[1], astFile, pkgPath)
