@@ -28,12 +28,12 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 - [样例](#样例)
     - [多行的描述](#多行的描述)
     - [用户自定义的具有数组类型的结构](#用户自定义的具有数组类型的结构)
-    - [响应中的模型组成](#响应中的模型组成)
+    - [响应对象中的模型组合](#响应对象中的模型组合)
     - [在响应中增加头字段](#在响应中增加头字段)
     - [使用多路径参数](#使用多路径参数)
     - [结构体的示例值](#结构体的示例值)
     - [结构体描述](#结构体描述)
-    - [在被支持的自定义类型中使用`swaggertype`标签](#在被支持的自定义类型中使用swaggertype标签)
+    - [使用`swaggertype`标签更改字段类型](#使用`swaggertype`标签更改字段类型)
     - [使用`swaggerignore`标签排除字段](#使用swaggerignore标签排除字段)
     - [将扩展信息添加到结构字段](#将扩展信息添加到结构字段)
     - [对展示的模型重命名](#对展示的模型重命名)
@@ -76,14 +76,14 @@ USAGE:
    swag init [command options] [arguments...]
 
 OPTIONS:
-   --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
-   --dir value, -d value               Directory you want to parse (default: "./")
-   --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
-   --output value, -o value            Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
-   --parseVendor                       Parse go files in 'vendor' folder, disabled by default
-   --parseDependency                   Parse go files in outside dependency folder, disabled by default
-   --markdownFiles value, --md value   Parse folder containing markdown files to use as description, disabled by default
-   --generatedTime                     Generate timestamp at the top of docs.go, true by default
+   --generalInfo value, -g value       API通用信息所在的go源文件路径，如果是相对路径则基于API解析目录 (默认: "main.go")
+   --dir value, -d value               API解析目录 (默认: "./")
+   --propertyStrategy value, -p value  结构体字段命名规则，三种：snakecase,camelcase,pascalcase (默认: "camelcase")
+   --output value, -o value            文件(swagger.json, swagger.yaml and doc.go)输出目录 (默认: "./docs")
+   --parseVendor                       是否解析vendor目录里的go源文件，默认不
+   --parseDependency                   是否解析依赖目录中的go源文件，默认不
+   --markdownFiles value, --md value   指定API的描述信息所使用的markdown文件所在的目录
+   --generatedTime                     是否输出时间到输出文件docs.go的顶部，默认是
 ```
 
 ## 支持的Web框架
@@ -336,7 +336,7 @@ swag init
 | license.url             | 用于API的许可证的URL。 必须采用网址格式。                                                       | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
 | host                    | 运行API的主机（主机名或IP地址）。                                                               | // @host localhost:8080                                         |
 | BasePath                | 运行API的基本路径。                                                                             | // @BasePath /api/v1                                            |
-| query.collection.format | 查询或枚举中的默认集合（数组）参数格式：csv，multi，pipes，tsv，ssv。 如果未设置，则默认为csv。 | // @query.collection.format multi                               |
+| query.collection.format | 请求URI query里数组参数的默认格式：csv，multi，pipes，tsv，ssv。 如果未设置，则默认为csv。 | // @query.collection.format multi                               |
 | schemes                 | 用空格分隔的请求的传输协议。                                                                    | // @schemes http https                                          |
 | x-name                  | 扩展的键必须以x-开头，并且只能使用json值                                                        | // @x-example-key {"key": "value"}                              |
 
@@ -460,7 +460,7 @@ type Foo struct {
 | minLength        | `integer` | 参看 https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.2.2.                                                                                                                                                                                                                                                                                   |
 | enums            | [\*]      | 参看 https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.1.                                                                                                                                                                                                                                                                                   |
 | format           | `string`  | 上面提到的[类型](#parameterType)的扩展格式。有关更多详细信息，请参见[数据类型格式](https://swagger.io/specification/v2/#dataTypeFormat)。                                                                                                                                                                                                                             |
-| collectionFormat | `string`  | 如果使用类型数组，则确定数组的格式。 可能的值为： <ul><li>`csv` - 逗号分隔值 `foo,bar`. <li>`ssv` - 空格分隔值 `foo bar`. <li>`tsv` - 制表符分隔值 `foo\tbar`. <li>`pipes` - 管道符分隔值 <code>foo&#124;bar</code>. <li>`multi` - 对应于多个参数实例，而不是单个实例 `foo=bar＆foo=baz` 的多个值。这仅对“`query`”或“`formData`”中的参数有效。 </ul> 默认值是 `csv`。 |
+| collectionFormat | `string`  | 指定query数组参数的格式。 可能的值为： <ul><li>`csv` - 逗号分隔值 `foo,bar`. <li>`ssv` - 空格分隔值 `foo bar`. <li>`tsv` - 制表符分隔值 `foo\tbar`. <li>`pipes` - 管道符分隔值 <code>foo&#124;bar</code>. <li>`multi` - 对应于多个参数实例，而不是单个实例 `foo=bar＆foo=baz` 的多个值。这仅对“`query`”或“`formData`”中的参数有效。 </ul> 默认值是 `csv`。 |
 
 ### 进一步的
 
@@ -499,10 +499,10 @@ type Account struct {
 }
 ```
 
-### 响应中的模型组成
+### 响应对象中的模型组合
 
 ```go
-// JSONResult's data field will be overridden by the specific type proto.Order
+// JSONResult的data字段类型将被proto.Order类型替换
 @success 200 {object} jsonresult.JSONResult{data=proto.Order} "desc"
 ```
 
@@ -526,7 +526,7 @@ type Order struct { //in `proto` package
 @success 200 {object} jsonresult.JSONResult{data=[]string} "desc"
 ```
 
-- 覆盖多个字段。如果不存在，将添加字段。
+- 替换多个字段的类型。如果某字段不存在，将添加该字段。
 
 ```go
 @success 200 {object} jsonresult.JSONResult{data1=string,data2=[]string,data3=proto.Order,data4=[]proto.Order} "desc"
@@ -570,7 +570,7 @@ type Account struct {
 }
 ```
 
-### 在被支持的自定义类型中使用`swaggertype`标签
+### 使用`swaggertype`标签更改字段类型
 
 [#201](https://github.com/swaggo/swag/issues/201#issuecomment-475479409)
 
@@ -579,13 +579,14 @@ type TimestampTime struct {
     time.Time
 }
 
-///implement encoding.JSON.Marshaler interface
+///实现encoding.JSON.Marshaler接口
 func (t *TimestampTime) MarshalJSON() ([]byte, error) {
     bin := make([]byte, 16)
     bin = strconv.AppendInt(bin[:0], t.Time.Unix(), 10)
     return bin, nil
 }
 
+///实现encoding.JSON.Unmarshaler接口
 func (t *TimestampTime) UnmarshalJSON(bin []byte) error {
     v, err := strconv.ParseInt(string(bin), 10, 64)
     if err != nil {
@@ -597,10 +598,10 @@ func (t *TimestampTime) UnmarshalJSON(bin []byte) error {
 ///
 
 type Account struct {
-    // Override primitive type by simply specifying it via `swaggertype` tag
+    // 使用`swaggertype`标签将别名类型更改为内置类型integer
     ID     sql.NullInt64 `json:"id" swaggertype:"integer"`
 
-    // Override struct type to a primitive type 'integer' by specifying it via `swaggertype` tag
+    // 使用`swaggertype`标签更改struct类型为内置类型integer
     RegisterTime TimestampTime `json:"register_time" swaggertype:"primitive,integer"`
 
     // Array types can be overridden using "array,<prim_type>" format
@@ -651,7 +652,7 @@ type Account struct {
 
 ```go
 type Account struct {
-    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
+    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def"` // 扩展字段必须以"x-"开头
 }
 ```
 
