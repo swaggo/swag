@@ -1229,7 +1229,12 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 		} else if f.IsDir() {
 			return nil
 		}
-		return parser.parseFile(packageDir, path)
+
+		relPath, err := filepath.Rel(searchDir, path)
+		if err != nil {
+			return err
+		}
+		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path)
 	})
 }
 
@@ -1254,7 +1259,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		}
 
 		path := filepath.Join(srcDir, f.Name())
-		if err := parser.parseFile("", path); err != nil {
+		if err := parser.parseFile(pkg.Name, path); err != nil {
 			return err
 		}
 	}
@@ -1269,25 +1274,21 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 }
 
 func (parser *Parser) parseFile(packageDir, path string) error {
-	if ext := filepath.Ext(path); ext == ".go" {
-		// positions are relative to FileSet
-		astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
-		if err != nil {
-			return fmt.Errorf("ParseFile error:%+v", err)
-		}
-		if packageDir != "" {
-			packageDir = filepath.Join(packageDir, path)
-		} else {
-			packageDir = path
-		}
-		packageDir = filepath.ToSlash(filepath.Clean(filepath.Dir(packageDir)))
-		if pd, ok := parser.PackagesDefinitions[packageDir]; ok {
-			pd.Files[path] = astFile
-		} else {
-			parser.PackagesDefinitions[packageDir] = &PackageDefinitions{
-				Name:  astFile.Name.Name,
-				Files: map[string]*ast.File{path: astFile},
-			}
+	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
+		return nil
+	}
+
+	// positions are relative to FileSet
+	astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("ParseFile error:%+v", err)
+	}
+	if pd, ok := parser.PackagesDefinitions[packageDir]; ok {
+		pd.Files[path] = astFile
+	} else {
+		parser.PackagesDefinitions[packageDir] = &PackageDefinitions{
+			Name:  astFile.Name.Name,
+			Files: map[string]*ast.File{path: astFile},
 		}
 	}
 	return nil

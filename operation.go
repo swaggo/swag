@@ -246,27 +246,11 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			return nil
 		}
 	case "body":
-		switch objectType {
-		case "primitive":
-			param.Schema.Type = spec.StringOrArray{refType}
-		case "array":
-			// Array of Primitive or Object
-			if IsPrimitiveType(refType) {
-				param.Schema = spec.ArrayProperty(PrimitiveSchema(refType))
-			} else {
-				schema, err := operation.parser.getTypeSchema(refType, astFile, pkgPath, true)
-				if err != nil {
-					return err
-				}
-				param.Schema = spec.ArrayProperty(schema)
-			}
-		case "object":
-			schema, err := operation.parser.getTypeSchema(refType, astFile, pkgPath, true)
-			if err != nil {
-				return err
-			}
-			param.Schema = schema
+		schema, err := operation.parseCombinedSchema(objectType, refType, astFile, pkgPath)
+		if err != nil {
+			return err
 		}
+		param.Schema = schema
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
@@ -575,7 +559,7 @@ var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/
 //RepsonseType{data1=Type1,data2=Type2}
 var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 
-func (operation *Operation) parseResponseObjectSchema(refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
+func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
 	switch {
 	case refType == "interface{}":
 		return PrimitiveSchema("object"), nil
@@ -584,7 +568,7 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 	case IsPrimitiveType(refType):
 		return PrimitiveSchema(refType), nil
 	case strings.HasPrefix(refType, "[]"):
-		schema, err := operation.parseResponseObjectSchema(refType[2:], astFile, pkgPath)
+		schema, err := operation.parseObjectSchema(refType[2:], astFile, pkgPath)
 		if err != nil {
 			return nil, err
 		}
@@ -599,14 +583,14 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 		if refType == "interface{}" {
 			return spec.MapProperty(nil), nil
 		} else {
-			schema, err := operation.parseResponseObjectSchema(refType, astFile, pkgPath)
+			schema, err := operation.parseObjectSchema(refType, astFile, pkgPath)
 			if err != nil {
 				return &spec.Schema{}, err
 			}
 			return spec.MapProperty(schema), nil
 		}
 	case strings.Contains(refType, "{"):
-		return operation.parseResponseCombinedObjectSchema(refType, astFile, pkgPath)
+		return operation.parseCombinedObjectSchema(refType, astFile, pkgPath)
 	default:
 		if operation.parser != nil {
 			return operation.parser.getTypeSchema(refType, astFile, pkgPath, true)
@@ -615,13 +599,13 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 	}
 }
 
-func (operation *Operation) parseResponseCombinedObjectSchema(refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
+func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
 	matches := combinedPattern.FindStringSubmatch(refType)
 	if len(matches) != 3 {
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 	refType = matches[1]
-	schema, err := operation.parseResponseObjectSchema(refType, astFile, pkgPath)
+	schema, err := operation.parseObjectSchema(refType, astFile, pkgPath)
 	if err != nil {
 		return nil, err
 	}
@@ -649,7 +633,7 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 					delete(schema.Properties, matches[0])
 				}
 			} else {
-				schema, err := operation.parseResponseObjectSchema(matches[1], astFile, pkgPath)
+				schema, err := operation.parseObjectSchema(matches[1], astFile, pkgPath)
 				if err != nil {
 					return nil, err
 				}
@@ -670,16 +654,16 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 		}), nil
 }
 
-func (operation *Operation) parseResponseSchema(schemaType, refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
+func (operation *Operation) parseCombinedSchema(schemaType, refType string, astFile *ast.File, pkgPath string) (*spec.Schema, error) {
 	switch schemaType {
 	case "object":
 		if !strings.HasPrefix(refType, "[]") {
-			return operation.parseResponseObjectSchema(refType, astFile, pkgPath)
+			return operation.parseObjectSchema(refType, astFile, pkgPath)
 		}
 		refType = refType[2:]
 		fallthrough
 	case "array":
-		schema, err := operation.parseResponseObjectSchema(refType, astFile, pkgPath)
+		schema, err := operation.parseObjectSchema(refType, astFile, pkgPath)
 		if err != nil {
 			return nil, err
 		}
@@ -704,31 +688,34 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 
-	code, _ := strconv.Atoi(matches[1])
-
-	responseDescription := strings.Trim(matches[4], "\"")
-	if responseDescription == "" {
-		responseDescription = http.StatusText(code)
-	}
-
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
-	schema, err := operation.parseResponseSchema(schemaType, refType, astFile, pkgPath)
+	schema, err := operation.parseCombinedSchema(schemaType, refType, astFile, pkgPath)
 	if err != nil {
 		return err
 	}
 
 	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{
-			ResponsesProps: spec.ResponsesProps{
-				StatusCodeResponses: make(map[int]spec.Response),
-			},
+		operation.Responses = &spec.Responses{}
+	}
+
+	responseDescription := strings.Trim(matches[4], "\"")
+	if code, err := strconv.Atoi(matches[1]); err == nil {
+		if responseDescription == "" {
+			responseDescription = http.StatusText(code)
+		}
+		if operation.Responses.StatusCodeResponses == nil {
+			operation.Responses.StatusCodeResponses = make(map[int]spec.Response)
+		}
+		operation.Responses.StatusCodeResponses[code] = spec.Response{
+			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
+		}
+	} else if strings.ToLower(matches[4]) == "default" {
+		operation.Responses.Default = &spec.Response{
+			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
 		}
 	}
 
-	operation.Responses.StatusCodeResponses[code] = spec.Response{
-		ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
-	}
 	return nil
 }
 
