@@ -59,7 +59,7 @@ $ swag init
 
   Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
   ```sh
-  swag init -g http/api.go
+  swag init --generalInfo=http/api.go
   ```
 
 ## swag cli
@@ -88,6 +88,7 @@ OPTIONS:
 - [echo](http://github.com/swaggo/echo-swagger)
 - [buffalo](https://github.com/swaggo/buffalo-swagger)
 - [net/http](https://github.com/swaggo/http-swagger)
+- [flamingo](https://github.com/i-love-flamingo/swagger)
 
 ## How to use it with Gin
 
