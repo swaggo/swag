@@ -6,8 +6,13 @@ import (
 )
 
 type TypeSpecDef struct {
-	PkgPath  string
-	File     *ast.File
+	//path of package starting from under ${GOPATH}/src or from module path in go.mod
+	PkgPath string
+
+	//ast file where TypeSpec is
+	File *ast.File
+
+	//the TypeSpec of this type definition
 	TypeSpec *ast.TypeSpec
 }
 
@@ -23,16 +28,17 @@ type PackageDefinitions struct {
 	//package name
 	Name string
 
+	//files in this package, map key is file's relative path starting package path
 	Files map[string]*ast.File
 
-	//definitions in this package
+	//definitions in this package, map key is typeName
 	TypeDefinitions map[string]*TypeSpecDef
 }
 
 //PackagesDefinitions map[package import path]*PackageDefinitions
 type PackagesDefinitions map[string]*PackageDefinitions
 
-func (pkgs *PackagesDefinitions) FindTypeSpec(pkgPath string, typeName string) *TypeSpecDef {
+func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *TypeSpecDef {
 	if pd, ok := (*pkgs)[pkgPath]; ok {
 		if typeSpec, ok := pd.TypeDefinitions[typeName]; ok {
 			return typeSpec
@@ -41,7 +47,11 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(pkgPath string, typeName string) *
 	return nil
 }
 
-func (pkgs *PackagesDefinitions) FindPackagePathFromImports(pkg string, file *ast.File) string {
+// findPackagePathFromImports finds out the package path of a package via ranging imports of a ast.File
+// @pkg the name of the target package
+// @file current ast.File in which to search imports
+// @return the package path of a package of @pkg
+func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File) string {
 	if file == nil {
 		return ""
 	}
@@ -51,6 +61,8 @@ func (pkgs *PackagesDefinitions) FindPackagePathFromImports(pkg string, file *as
 	}
 
 	hasAnonymousPkg := false
+
+	// prior to match named package
 	for _, imp := range file.Imports {
 		if imp.Name != nil {
 			if imp.Name.Name == pkg {
@@ -68,6 +80,7 @@ func (pkgs *PackagesDefinitions) FindPackagePathFromImports(pkg string, file *as
 		}
 	}
 
+	//match unnamed package
 	if hasAnonymousPkg {
 		for _, imp := range file.Imports {
 			if imp.Name == nil {
@@ -86,14 +99,32 @@ func (pkgs *PackagesDefinitions) FindPackagePathFromImports(pkg string, file *as
 	return ""
 }
 
-func (pkgs *PackagesDefinitions) FindTypePackage(typeName string, file *ast.File, pkgPath string) (string, string) {
+// FindTypeSpec finds out TypeSpecDef of a type by typeName
+// @typeName the name of the target type, if it starts with a package name, find its own package path from imports on top of @file
+// @file the ast.file in which @typeName is used
+// @pkgPath the package path of @file
+func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File, pkgPath string) *TypeSpecDef {
 	if IsGolangPrimitiveType(typeName) {
-		return "", typeName
+		return nil
 	}
+
 	if strings.ContainsRune(typeName, '.') {
 		parts := strings.Split(typeName, ".")
-		pkgPath = pkgs.FindPackagePathFromImports(parts[0], file)
+		pkgPath = pkgs.findPackagePathFromImports(parts[0], file)
 		typeName = parts[1]
+		return pkgs.findTypeSpec(pkgPath, typeName)
+	} else if typeDef := pkgs.findTypeSpec(pkgPath, typeName); typeDef != nil {
+		return typeDef
 	}
-	return pkgPath, typeName
+
+	for _, imp := range file.Imports {
+		if imp.Name != nil && imp.Name.Name == "." {
+			pkgPath = strings.Trim(imp.Path.Value, `"`)
+			if typeDef := pkgs.findTypeSpec(pkgPath, typeName); typeDef != nil {
+				return typeDef
+			}
+		}
+	}
+
+	return nil
 }

@@ -648,21 +648,12 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, pkgPath str
 	if IsGolangPrimitiveType(typeName) {
 		return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
 	}
-	if strings.ContainsRune(typeName, '.') {
-		if schemaType, err := convertFromSpecificToPrimitive(strings.Split(typeName, ".")[1]); err == nil {
-			return PrimitiveSchema(schemaType), nil
-		}
-		pkgPath, typeName = parser.FindTypePackage(typeName, file, pkgPath)
-		if pkgPath == "" {
-			return nil, fmt.Errorf("cannot find package path of type: %s", typeName)
-		}
-	} else {
-		if schemaType, err := convertFromSpecificToPrimitive(typeName); err == nil {
-			return PrimitiveSchema(schemaType), nil
-		}
+
+	if schemaType, err := convertFromSpecificToPrimitive(typeName); err == nil {
+		return PrimitiveSchema(schemaType), nil
 	}
 
-	typeSpecDef := parser.FindTypeSpec(pkgPath, typeName)
+	typeSpecDef := parser.FindTypeSpec(typeName, file, pkgPath)
 	if typeSpecDef == nil {
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}

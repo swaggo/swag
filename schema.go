@@ -13,7 +13,11 @@ var ErrFailedConvertPrimitiveType = errors.New("swag property: failed convert pr
 
 // convertFromSpecificToPrimitive convert specific type to primitive
 func convertFromSpecificToPrimitive(typeName string) (string, error) {
-	switch strings.ToUpper(typeName) {
+	name := typeName
+	if strings.ContainsRune(name, '.') {
+		name = strings.Split(name, ".")[1]
+	}
+	switch strings.ToUpper(name) {
 	case "TIME", "OBJECTID", "UUID":
 		return "string", nil
 	case "DECIMAL":
