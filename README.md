@@ -59,7 +59,7 @@ $ swag init
 
   Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
   ```sh
-  swag init --generalInfo=http/api.go
+  swag init -g http/api.go
   ```
 
 ## swag cli
