@@ -1,13 +1,14 @@
 package gen
 
 import (
-	"github.com/go-openapi/spec"
+	"errors"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"testing"
 
+	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,17 +23,17 @@ func TestGen_Build(t *testing.T) {
 	}
 	assert.NoError(t, New().Build(config))
 
-	if _, err := os.Stat(path.Join("../testdata/simple/docs", "docs.go")); os.IsNotExist(err) {
-		t.Fatal(err)
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple/docs", "swagger.json")); os.IsNotExist(err) {
-		t.Fatal(err)
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple/docs", "swagger.yaml")); os.IsNotExist(err) {
-		t.Fatal(err)
-	}
-
-	//TODO: remove gen files
 }
 
 func TestGen_BuildSnakecase(t *testing.T) {
@@ -46,17 +47,17 @@ func TestGen_BuildSnakecase(t *testing.T) {
 
 	assert.NoError(t, New().Build(config))
 
-	if _, err := os.Stat(path.Join("../testdata/simple2/docs", "docs.go")); os.IsNotExist(err) {
-		t.Fatal(err)
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple2/docs", "swagger.json")); os.IsNotExist(err) {
-		t.Fatal(err)
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple2/docs", "swagger.yaml")); os.IsNotExist(err) {
-		t.Fatal(err)
-	}
-
-	//TODO: remove gen files
 }
 
 func TestGen_BuildLowerCamelcase(t *testing.T) {
@@ -70,17 +71,60 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 
 	assert.NoError(t, New().Build(config))
 
-	if _, err := os.Stat(path.Join("../testdata/simple3/docs", "docs.go")); os.IsNotExist(err) {
-		t.Fatal(err)
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple3/docs", "swagger.json")); os.IsNotExist(err) {
-		t.Fatal(err)
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple3/docs", "swagger.yaml")); os.IsNotExist(err) {
-		t.Fatal(err)
-	}
+}
 
-	//TODO: remove gen files
+func TestGen_jsonIndent(t *testing.T) {
+	searchDir := "../testdata/simple"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		PropNamingStrategy: "",
+	}
+	gen := New()
+	gen.jsonIndent = func(data interface{}) ([]byte, error) {
+		return nil, errors.New("fail")
+	}
+	assert.Error(t, gen.Build(config))
+}
+
+func TestGen_jsonToYAML(t *testing.T) {
+	searchDir := "../testdata/simple"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		PropNamingStrategy: "",
+	}
+	gen := New()
+	gen.jsonToYAML = func(data []byte) ([]byte, error) {
+		return nil, errors.New("fail")
+	}
+	assert.Error(t, gen.Build(config))
+
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
+	}
 }
 
 func TestGen_SearchDirIsNotExist(t *testing.T) {
@@ -181,17 +225,17 @@ func TestGen_configWithOutputDir(t *testing.T) {
 
 	assert.NoError(t, New().Build(config))
 
-	if _, err := os.Stat(path.Join("../testdata/simple/docs", "docs.go")); os.IsNotExist(err) {
-		t.Fatal(err)
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple/docs", "swagger.json")); os.IsNotExist(err) {
-		t.Fatal(err)
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
 	}
-	if _, err := os.Stat(path.Join("../testdata/simple/docs", "swagger.yaml")); os.IsNotExist(err) {
-		t.Fatal(err)
-	}
-
-	//TODO: remove gen files
 }
 
 func TestGen_formatSource(t *testing.T) {
@@ -218,9 +262,14 @@ fmt.Print("Helo world")
 	assert.NotEqual(t, []byte(src2), res, "Should return fmt code")
 }
 
-type mocWriter struct{}
+type mockWriter struct {
+	hook func([]byte)
+}
 
-func (w *mocWriter) Write(data []byte) (int, error) {
+func (w *mockWriter) Write(data []byte) (int, error) {
+	if w.hook != nil {
+		w.hook(data)
+	}
 	return len(data), nil
 }
 
@@ -230,7 +279,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 	swapTemplate := packageTemplate
 
 	packageTemplate = `{{{`
-	err := gen.writeGoDoc(nil, nil)
+	err := gen.writeGoDoc("docs", nil, nil, &Config{})
 	assert.Error(t, err)
 
 	packageTemplate = `{{.Data}}`
@@ -240,8 +289,24 @@ func TestGen_writeGoDoc(t *testing.T) {
 			Info: &spec.Info{},
 		},
 	}
-	err = gen.writeGoDoc(&mocWriter{}, swagger)
+	err = gen.writeGoDoc("docs", &mockWriter{}, swagger, &Config{})
 	assert.Error(t, err)
+
+	packageTemplate = `{{ if .GeneratedTime }}Fake Time{{ end }}`
+	err = gen.writeGoDoc("docs",
+		&mockWriter{
+			hook: func(data []byte) {
+				assert.Equal(t, "Fake Time", string(data))
+			},
+		}, swagger, &Config{GeneratedTime: true})
+	assert.NoError(t, err)
+	err = gen.writeGoDoc("docs",
+		&mockWriter{
+			hook: func(data []byte) {
+				assert.Equal(t, "", string(data))
+			},
+		}, swagger, &Config{GeneratedTime: false})
+	assert.NoError(t, err)
 
 	packageTemplate = swapTemplate
 
@@ -267,4 +332,42 @@ func TestGen_GeneratedDoc(t *testing.T) {
 	cmd.Stderr = os.Stderr
 
 	assert.NoError(t, cmd.Run())
+
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
+	}
+}
+
+func TestGen_cgoImports(t *testing.T) {
+	searchDir := "../testdata/simple_cgo"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple_cgo/docs",
+		PropNamingStrategy: "",
+		ParseDependency:    true,
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
+	}
 }

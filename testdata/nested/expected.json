@@ -33,11 +33,41 @@
         }
     },
     "definitions": {
-        "api.Foo": {
+        "api.Bar": {
             "type": "object",
             "properties": {
+                "field": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Foo": {
+            "type": "object",
+            "required": [
+                "arrayField1",
+                "arrayField2",
+                "field1",
+                "insideData"
+            ],
+            "properties": {
+                "arrayField1": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "arrayField2": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Bar"
+                    }
+                },
                 "field1": {
                     "type": "string"
+                },
+                "insideData": {
+                    "type": "object",
+                    "$ref": "#/definitions/api.Bar"
                 },
                 "outsideData": {
                     "type": "object",

@@ -1,5 +1,7 @@
 # swag
 
+🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md)*
+
 <img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
 [![Travis Status](https://img.shields.io/travis/swaggo/swag/master.svg)](https://travis-ci.org/swaggo/swag)
@@ -26,12 +28,15 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
  - [Examples](#examples)
 	- [Descriptions over multiple lines](#descriptions-over-multiple-lines)
 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
+	- [Model composition in response](#model-composition-in-response)
 	- [Add a headers in response](#add-a-headers-in-response) 
 	- [Use multiple path params](#use-multiple-path-params)
 	- [Example value of struct](#example-value-of-struct)
 	- [Description of struct](#description-of-struct)
 	- [Use swaggertype tag to supported custom type](#use-swaggertype-tag-to-supported-custom-type)
+	- [Use swaggerignore tag to exclude a field](#use-swaggerignore-tag-to-exclude-a-field)
 	- [Add extension info to struct field](#add-extension-info-to-struct-field)
+	- [Rename model to display](#rename-model-to-display)
 	- [How to using security annotations](#how-to-using-security-annotations)
 - [About the Project](#about-the-project)
 
@@ -45,7 +50,7 @@ $ go get -u github.com/swaggo/swag/cmd/swag
 ```
 To build from source you need [Go](https://golang.org/dl/) (1.9 or newer).
 
-Or download the pre-compiled binaries binray form [release page](https://github.com/swaggo/swag/releases).
+Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
 3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
 ```sh
@@ -70,8 +75,9 @@ USAGE:
 OPTIONS:
    --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
    --dir value, -d value               Directory you want to parse (default: "./")
+   --exclude value                     Exclude directoies and files, comma separated
    --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
-   --output value, -o value            Output directory for al the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
+   --output value, -o value            Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
    --parseVendor                       Parse go files in 'vendor' folder, disabled by default
    --parseDependency                   Parse go files in outside dependency folder, disabled by default
    --parseInternal                     Parse go files in internal packages, disabled by default
@@ -111,6 +117,7 @@ import "github.com/swaggo/files" // swagger embed files
 
 // @host localhost:8080
 // @BasePath /api/v1
+// @query.collection.format multi
 
 // @securityDefinitions.basic BasicAuth
 
@@ -278,7 +285,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 $ swag init
 ```
 
-4.Run your app, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
+4. Run your app, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
 
 ![swagger_index.html](https://raw.githubusercontent.com/swaggo/swag/master/assets/swagger-image.png)
 
@@ -326,6 +333,7 @@ $ swag init
 | license.url  | A URL to the license used for the API. MUST be in the format of a URL.                       | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
 | host        | The host (name or ip) serving the API.     | // @host localhost:8080         |
 | BasePath    | The base path on which the API is served. | // @BasePath /api/v1             |
+| query.collection.format | The default collection(array) param format in query,enums:csv,multi,pipes,tsv,ssv. If not set, csv is the default.| // @query.collection.format multi
 | schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
 | x-name      | The extension key, must be start by x- and take only json value | // @x-example-key {"key": "value"} |
 
@@ -342,7 +350,6 @@ When a short string in your documentation is insufficient, or you need images, c
 | tag.description.markdown   | Description of the tag this is an alternative to tag.description. The description will be read from a file named like tagname.md  | // @tag.description.markdown         |
 
 
-
 ## API Operation
 
 **Example**
@@ -352,6 +359,7 @@ When a short string in your documentation is insufficient, or you need images, c
 | annotation  | description                                                                                                                |
 |-------------|----------------------------------------------------------------------------------------------------------------------------|
 | description | A verbose explanation of the operation behavior.                                                                           |
+| description.markdown     |  A short description of the application. The description will be read from a file named like endpointname.md| // @description.file endpoint.description.markdown  |
 | id          | A unique string used to identify the operation. Must be unique among all API operations.                                   |
 | tags        | A list of tags to each API operation that separated by commas.                                                             |
 | summary     | A short summary of what the operation does.                                                                                |
@@ -364,6 +372,8 @@ When a short string in your documentation is insufficient, or you need images, c
 | header      | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                            |
 | router      | Path definition that separated by spaces. `path`,`[httpMethod]`                                                            |
 | x-name      | The extension key, must be start by x- and take only json value.                                                           |
+
+
 
 ## Mime Types
 
@@ -432,6 +442,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 // @Param string query string false "string valid" minlength(5) maxlength(10)
 // @Param int query int false "int valid" mininum(1) maxinum(10)
 // @Param default query string false "string default" default(A)
+// @Param collection query []string false "string collection" collectionFormat(multi)
 ```
 
 It also works for the struct fields:
@@ -448,13 +459,15 @@ type Foo struct {
 
 Field Name | Type | Description
 ---|:---:|---
+<a name="validate"></a>validate | `string` | 	Determines the validation for the parameter. Possible values are: `required`. 
 <a name="parameterDefault"></a>default | * | Declares the value of the parameter that the server will use if none is provided, for example a "count" to control the number of results per page might default to 100 if not supplied by the client in the request. (Note: "default" has no meaning for required parameters.)  See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-6.2. Unlike JSON Schema this value MUST conform to the defined [`type`](#parameterType) for this parameter.
 <a name="parameterMaximum"></a>maximum | `number` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.1.2.
 <a name="parameterMinimum"></a>minimum | `number` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.1.3.
 <a name="parameterMaxLength"></a>maxLength | `integer` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.2.1.
 <a name="parameterMinLength"></a>minLength | `integer` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.2.2.
 <a name="parameterEnums"></a>enums | [\*] | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.1.
-<a name="parameterFormat"></a>format | `string` | The extending format for the previously mentioned [`type`](#parameterType). See [Data Type Formats](#dataTypeFormat) for further details.
+<a name="parameterFormat"></a>format | `string` | The extending format for the previously mentioned [`type`](#parameterType). See [Data Type Formats](https://swagger.io/specification/v2/#dataTypeFormat) for further details.
+<a name="parameterCollectionFormat"></a>collectionFormat | `string` |Determines the format of the array if type array is used. Possible values are: <ul><li>`csv` - comma separated values `foo,bar`. <li>`ssv` - space separated values `foo bar`. <li>`tsv` - tab separated values `foo\tbar`. <li>`pipes` - pipe separated values <code>foo&#124;bar</code>. <li>`multi` - corresponds to multiple parameter instances instead of multiple values for a single instance `foo=bar&foo=baz`. This is valid only for parameters [`in`](#parameterIn) "query" or "formData". </ul> Default value is `csv`.
 
 ### Future
 
@@ -465,7 +478,6 @@ Field Name | Type | Description
 <a name="parameterMaxItems"></a>maxItems | `integer` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.3.2.
 <a name="parameterMinItems"></a>minItems | `integer` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.3.3.
 <a name="parameterUniqueItems"></a>uniqueItems | `boolean` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.3.4.
-<a name="parameterCollectionFormat"></a>collectionFormat | `string` | Determines the format of the array if type array is used. Possible values are: <ul><li>`csv` - comma separated values `foo,bar`. <li>`ssv` - space separated values `foo bar`. <li>`tsv` - tab separated values `foo\tbar`. <li>`pipes` - pipe separated values <code>foo&#124;bar</code>. <li>`multi` - corresponds to multiple parameter instances instead of multiple values for a single instance `foo=bar&foo=baz`. This is valid only for parameters [`in`](#parameterIn) "query" or "formData". </ul> Default value is `csv`.
 
 ## Examples
 
@@ -492,6 +504,44 @@ type Account struct {
     ID   int    `json:"id" example:"1"`
     Name string `json:"name" example:"account name"`
 }
+```
+
+### Model composition in response
+```go
+// JSONResult's data field will be overridden by the specific type proto.Order
+@success 200 {object} jsonresult.JSONResult{data=proto.Order} "desc"
+```
+
+```go
+type JSONResult struct {
+    Code    int          `json:"code" `
+    Message string       `json:"message"`
+    Data    interface{}  `json:"data"`
+}
+
+type Order struct { //in `proto` package
+    Id  uint            `json:"id"`
+    Data  interface{}   `json:"data"`
+}
+```
+
+- also support array of objects and primitive types as nested response
+```go
+@success 200 {object} jsonresult.JSONResult{data=[]proto.Order} "desc"
+@success 200 {object} jsonresult.JSONResult{data=string} "desc"
+@success 200 {object} jsonresult.JSONResult{data=[]string} "desc"
+```
+
+- overriding multiple fields. field will be added if not exists 
+```go
+@success 200 {object} jsonresult.JSONResult{data1=string,data2=[]string,data3=proto.Order,data4=[]proto.Order} "desc"
+```
+- overriding deep-level fields
+```go
+type DeepObject struct { //in `proto` package
+	...
+}
+@success 200 {object} jsonresult.JSONResult{data1=proto.Order{data=proto.DeepObject},data2=[]proto.Order{data=[]proto.DeepObject}} "desc"
 ```
 ### Add a headers in response
 
@@ -595,11 +645,22 @@ generated swagger doc as follows:
 
 ```
 
+
+### Use swaggerignore tag to exclude a field
+
+```go
+type Account struct {
+    ID   string    `json:"id"`
+    Name string     `json:"name"`
+    Ignored int     `swaggerignore:"true"`
+}
+```
+
 ### Add extension info to struct field
 
 ```go
 type Account struct {
-    ID   int    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
+    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
 }
 ```
 
@@ -616,6 +677,13 @@ generate swagger doc as follows:
         }
     }
 }
+```
+### Rename model to display
+
+```golang
+type Resp struct {
+	Code int
+}//@name Response
 ```
 
 ### How to using security annotations

@@ -111,6 +111,15 @@ func TestParseRouterComment(t *testing.T) {
 	assert.Equal(t, "GET", operation.HTTPMethod)
 }
 
+func TestParseRouterOnlySlash(t *testing.T) {
+	comment := `// @Router / [get]`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "/", operation.Path)
+	assert.Equal(t, "GET", operation.HTTPMethod)
+}
+
 func TestParseRouterCommentWithPlusSign(t *testing.T) {
 	comment := `/@Router /customer/get-wishlist/{proxy+} [post]`
 	operation := NewOperation()
@@ -120,7 +129,30 @@ func TestParseRouterCommentWithPlusSign(t *testing.T) {
 	assert.Equal(t, "POST", operation.HTTPMethod)
 }
 
-func TestParseRouterCommentOccursErr(t *testing.T) {
+func TestParseRouterCommentWithColonSign(t *testing.T) {
+	comment := `/@Router /customer/get-wishlist/{wishlist_id}:move [post]`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}:move", operation.Path)
+	assert.Equal(t, "POST", operation.HTTPMethod)
+}
+
+func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {
+	comment := `/@Router :customer/get-wishlist/{wishlist_id}:move [post]`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+}
+
+func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
+	comment := `/@Router /api/{id}|,*[get`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+}
+
+func TestParseRouterCommentMethodMissingErr(t *testing.T) {
 	comment := `/@Router /customer/get-wishlist/{wishlist_id}`
 	operation := NewOperation()
 	err := operation.ParseComment(comment, nil)
@@ -149,6 +181,410 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
             "description": "Error message, if code != 200",
             "schema": {
                 "$ref": "#/definitions/model.OrderRow"
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
+	comment := `@Success 200 {object} model.CommonHeader{data=string,data2=int} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "string"
+                            },
+                            "data2": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
+	comment := `@Success 200 {object} model.CommonHeader{data=[]string,data2=[]int} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            "data2": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithNestedObjectType(t *testing.T) {
+	comment := `@Success 200 {object} model.CommonHeader{data=model.Payload,data2=model.Payload2} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload2"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "$ref": "#/definitions/model.Payload"
+                            },
+                            "data2": {
+                                "$ref": "#/definitions/model.Payload2"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithNestedArrayObjectType(t *testing.T) {
+	comment := `@Success 200 {object} model.CommonHeader{data=[]model.Payload,data2=[]model.Payload2} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload2"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/model.Payload"
+                                }
+                            },
+                            "data2": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/model.Payload2"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithNestedFields(t *testing.T) {
+	comment := `@Success 200 {object} model.CommonHeader{data1=int,data2=[]int,data3=model.Payload,data4=[]model.Payload} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data1": {
+                                "type": "integer"
+                            },
+                            "data2": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            "data3": {
+                                "$ref": "#/definitions/model.Payload"
+                            },
+                            "data4": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/model.Payload"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithDeepNestedFields(t *testing.T) {
+	comment := `@Success 200 {object} model.CommonHeader{data1=int,data2=[]int,data3=model.Payload{data1=int,data2=model.DeepPayload},data4=[]model.Payload{data1=[]int,data2=[]model.DeepPayload}} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["DeepPayload"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data1": {
+                                "type": "integer"
+                            },
+                            "data2": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            },
+                            "data3": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/definitions/model.Payload"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "data1": {
+                                                "type": "integer"
+                                            },
+                                            "data2": {
+                                                "$ref": "#/definitions/model.DeepPayload"
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            "data4": {
+                                "type": "array",
+                                "items": {
+                                    "allOf": [
+                                        {
+                                            "$ref": "#/definitions/model.Payload"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data1": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "data2": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/definitions/model.DeepPayload"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseResponseCommentWithNestedArrayMapFields(t *testing.T) {
+	comment := `@Success 200 {object} []map[string]model.CommonHeader{data1=[]map[string]model.Payload,data2=map[string][]int} "Error message, if code != 200`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+	operation.parser.TypeDefinitions["model"]["Payload"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `Error message, if code != 200`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "Error message, if code != 200",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "allOf": [
+                            {
+                                "$ref": "#/definitions/model.CommonHeader"
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "data1": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "$ref": "#/definitions/model.Payload"
+                                            }
+                                        }
+                                    },
+                                    "data2": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "integer"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
             }
         }
     }
@@ -371,7 +807,7 @@ func TestParseParamCommentBodyArray(t *testing.T) {
             "in": "body",
             "required": true,
             "schema": {
-                "type": "string",
+                "type": "array",
                 "items": {
                     "type": "string"
                 }
@@ -397,6 +833,32 @@ func TestParseParamCommentQueryArray(t *testing.T) {
             "items": {
                 "type": "string"
             },
+            "description": "Users List",
+            "name": "names",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+// Test ParseParamComment Query Params
+func TestParseParamCommentQueryArrayFormat(t *testing.T) {
+	comment := `@Param names query []string true "Users List" collectionFormat(multi)`
+	operation := NewOperation()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "collectionFormat": "multi",
             "description": "Users List",
             "name": "names",
             "in": "query",
@@ -468,8 +930,131 @@ func TestParseParamCommentByBodyType(t *testing.T) {
             "in": "body",
             "required": true,
             "schema": {
-                "type": "object",
                 "$ref": "#/definitions/model.OrderRow"
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByBodyTypeWithDeepNestedFields(t *testing.T) {
+	comment := `@Param body body model.CommonHeader{data=string,data2=int} true "test deep"`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Len(t, operation.Parameters, 1)
+	assert.Equal(t, "test deep", operation.Parameters[0].Description)
+	assert.True(t, operation.Parameters[0].Required)
+
+	b, err := json.MarshalIndent(operation, "", "    ")
+	assert.NoError(t, err)
+	expected := `{
+    "parameters": [
+        {
+            "description": "test deep",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "string"
+                            },
+                            "data2": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
+	comment := `@Param some_id body []int true "Some ID"`
+	operation := NewOperation()
+	operation.parser = New()
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "integer"
+                }
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFields(t *testing.T) {
+	comment := `@Param body body []model.CommonHeader{data=string,data2=int} true "test deep"`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Len(t, operation.Parameters, 1)
+	assert.Equal(t, "test deep", operation.Parameters[0].Description)
+	assert.True(t, operation.Parameters[0].Required)
+
+	b, err := json.MarshalIndent(operation, "", "    ")
+	assert.NoError(t, err)
+	expected := `{
+    "parameters": [
+        {
+            "description": "test deep",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "type": "array",
+                "items": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CommonHeader"
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                },
+                                "data2": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    ]
+                }
             }
         }
     ]
@@ -813,7 +1398,7 @@ func TestFindTypeDefCoreLib(t *testing.T) {
 }
 
 func TestFindTypeDefExternalPkg(t *testing.T) {
-	spec, err := findTypeDef("github.com/stretchr/testify/assert", "Assertions")
+	spec, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
 	assert.NoError(t, err)
 	assert.NotNil(t, spec)
 }
@@ -895,7 +1480,6 @@ func TestParseDeprecationDescription(t *testing.T) {
 
 func TestRegisterSchemaType(t *testing.T) {
 	operation := NewOperation()
-	assert.NoError(t, operation.registerSchemaType("string", nil))
 
 	fset := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fset, "main.go", `package main
@@ -905,7 +1489,8 @@ func TestRegisterSchemaType(t *testing.T) {
 	assert.NoError(t, err)
 
 	operation.parser = New()
-	assert.Error(t, operation.registerSchemaType("timer.Location", astFile))
+	_, _, err = operation.registerSchemaType("timer.Location", astFile)
+	assert.Error(t, err)
 }
 
 func TestParseExtentions(t *testing.T) {
