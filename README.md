@@ -80,6 +80,7 @@ OPTIONS:
    --output value, -o value            Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
    --parseVendor                       Parse go files in 'vendor' folder, disabled by default
    --parseDependency                   Parse go files in outside dependency folder, disabled by default
+   --parseInternal                     Parse go files in internal packages, disabled by default
 ```
 
 ## Supported Web Frameworks
