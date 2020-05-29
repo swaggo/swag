@@ -859,6 +859,17 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		}
 
 		typeSpec := parser.TypeDefinitions[pkgName][typeName]
+		if typeSpec == nil {
+			// Check if the pkg name is an alias and try to define type spec using real package name
+			if aliases, ok := parser.ImportAliases[pkgName]; ok {
+				for alias := range aliases {
+					typeSpec = parser.TypeDefinitions[alias][typeName]
+					if typeSpec != nil {
+						break
+					}
+				}
+			}
+		}
 		if typeSpec != nil {
 			schema, err := parser.parseTypeExpr(pkgName, typeName, typeSpec.Type)
 			if err != nil {

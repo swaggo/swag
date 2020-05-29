@@ -5,6 +5,8 @@ import (
 )
 
 type ApplicationResponse struct {
+	typesapplication.TypeToEmbed
+
 	Application      typesapplication.Application   `json:"application"`
 	ApplicationArray []typesapplication.Application `json:"application_array"`
 	ApplicationTime  typesapplication.DateOnly      `json:"application_time"`
