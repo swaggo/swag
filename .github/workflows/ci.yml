@@ -3,7 +3,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go: [ '1.11.x', '1.12.x' ]
+        go: [ '1.13.x', '1.14.x' ]
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
