@@ -210,7 +210,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				return false
 			}
 			orderedNames := make([]string, 0, len(schema.Properties))
-			for k = range schema.Properties {
+			for k := range schema.Properties {
 				orderedNames = append(orderedNames, k)
 			}
 			sort.Strings(orderedNames)
