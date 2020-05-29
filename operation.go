@@ -229,6 +229,11 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					Println(fmt.Sprintf("skip field [%s] in %s is not supported type for %s", name, refType, paramType))
 					continue
 				}
+				param.Nullable = prop.Nullable
+				param.Format = prop.Format
+				param.Default = prop.Default
+				param.Example = prop.Example
+				param.Extensions = prop.Extensions
 				param.CommonValidations.Maximum = prop.Maximum
 				param.CommonValidations.Minimum = prop.Minimum
 				param.CommonValidations.ExclusiveMaximum = prop.ExclusiveMaximum
