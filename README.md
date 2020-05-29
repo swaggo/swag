@@ -80,6 +80,7 @@ OPTIONS:
    --output value, -o value            Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
    --parseVendor                       Parse go files in 'vendor' folder, disabled by default
    --parseDependency                   Parse go files in outside dependency folder, disabled by default
+   --parseInternal                     Parse go files in internal packages, disabled by default
 ```
 
 ## Supported Web Frameworks
@@ -459,6 +460,7 @@ type Foo struct {
 
 Field Name | Type | Description
 ---|:---:|---
+<a name="validate"></a>validate | `string` | 	Determines the validation for the parameter. Possible values are: `required`. 
 <a name="parameterDefault"></a>default | * | Declares the value of the parameter that the server will use if none is provided, for example a "count" to control the number of results per page might default to 100 if not supplied by the client in the request. (Note: "default" has no meaning for required parameters.)  See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-6.2. Unlike JSON Schema this value MUST conform to the defined [`type`](#parameterType) for this parameter.
 <a name="parameterMaximum"></a>maximum | `number` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.1.2.
 <a name="parameterMinimum"></a>minimum | `number` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.1.3.
