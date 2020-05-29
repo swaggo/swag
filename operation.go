@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -208,7 +209,13 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				}
 				return false
 			}
-			for name, prop := range schema.Properties {
+			orderedNames := make([]string, 0, len(schema.Properties))
+			for k := range schema.Properties {
+				orderedNames = append(orderedNames, k)
+			}
+			sort.Strings(orderedNames)
+			for _, name := range orderedNames {
+				prop := schema.Properties[name]
 				if len(prop.Type) == 0 {
 					continue
 				}
@@ -232,6 +239,11 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					Println(fmt.Sprintf("skip field [%s] in %s is not supported type for %s", name, refType, paramType))
 					continue
 				}
+				param.Nullable = prop.Nullable
+				param.Format = prop.Format
+				param.Default = prop.Default
+				param.Example = prop.Example
+				param.Extensions = prop.Extensions
 				param.CommonValidations.Maximum = prop.Maximum
 				param.CommonValidations.Minimum = prop.Minimum
 				param.CommonValidations.ExclusiveMaximum = prop.ExclusiveMaximum
