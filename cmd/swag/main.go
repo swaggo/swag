@@ -24,28 +24,32 @@ const (
 
 var initFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:  generalInfoFlag + ", g",
-		Value: "main.go",
-		Usage: "Go file path in which 'swagger general API Info' is written",
+		Name:    generalInfoFlag,
+		Aliases: []string{"g"},
+		Value:   "main.go",
+		Usage:   "Go file path in which 'swagger general API Info' is written",
 	},
 	&cli.StringFlag{
-		Name:  searchDirFlag + ", d",
-		Value: "./",
-		Usage: "Directories you want to parse,comma separated and general-info file must be in the first one",
+		Name:    searchDirFlag,
+		Aliases: []string{"d"},
+		Value:   "./",
+		Usage:   "Directory you want to parse",
 	},
 	&cli.StringFlag{
 		Name:  excludeFlag,
 		Usage: "exclude directories and files when searching, comma separated",
 	},
 	&cli.StringFlag{
-		Name:  propertyStrategyFlag + ", p",
-		Value: "camelcase",
-		Usage: "Property Naming Strategy like snakecase,camelcase,pascalcase",
+		Name:    propertyStrategyFlag,
+		Aliases: []string{"p"},
+		Value:   "camelcase",
+		Usage:   "Property Naming Strategy like snakecase,camelcase,pascalcase",
 	},
 	&cli.StringFlag{
-		Name:  outputFlag + ", o",
-		Value: "./docs",
-		Usage: "Output directory for all the generated files(swagger.json, swagger.yaml and doc.go)",
+		Name:    outputFlag,
+		Aliases: []string{"o"},
+		Value:   "./docs",
+		Usage:   "Output directory for all the generated files(swagger.json, swagger.yaml and doc.go)",
 	},
 	&cli.BoolFlag{
 		Name:  parseVendorFlag,
@@ -56,9 +60,10 @@ var initFlags = []cli.Flag{
 		Usage: "Parse go files in outside dependency folder, disabled by default",
 	},
 	&cli.StringFlag{
-		Name:  markdownFilesFlag + ", md",
-		Value: "",
-		Usage: "Parse folder containing markdown files to use as description, disabled by default",
+		Name:    markdownFilesFlag,
+		Aliases: []string{"md"},
+		Value:   "",
+		Usage:   "Parse folder containing markdown files to use as description, disabled by default",
 	},
 	&cli.BoolFlag{
 		Name:  "generatedTime",
