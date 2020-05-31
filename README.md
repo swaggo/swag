@@ -259,11 +259,9 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 // @Accept  json
 // @Produce  json
 // @Param q query string false "name search by q"
-// @Success 200 {array} model.Account
+// @Response 200 {array} model.Account
 // @Header 200 {string} Token "qwerty"
-// @Failure 400 {object} httputil.HTTPError
-// @Failure 404 {object} httputil.HTTPError
-// @Failure 500 {object} httputil.HTTPError
+// @Response default {object} httputil.HTTPError
 // @Router /accounts [get]
 func (c *Controller) ListAccounts(ctx *gin.Context) {
 	q := ctx.Request.URL.Query().Get("q")
@@ -366,6 +364,7 @@ When a short string in your documentation is insufficient, or you need images, c
 | security    | [Security](#security) to each API operation.                                                                               |
 | success     | Success response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                              |
 | failure     | Failure response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                              |
+| response    | same as success and failure, common response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`   
 | header      | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                            |
 | router      | Path definition that separated by spaces. `path`,`[httpMethod]`                                                            |
 | x-name      | The extension key, must be start by x- and take only json value.                                                           |
