@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -210,7 +211,13 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				}
 				return false
 			}
-			for name, prop := range schema.Properties {
+			orderedNames := make([]string, 0, len(schema.Properties))
+			for k := range schema.Properties {
+				orderedNames = append(orderedNames, k)
+			}
+			sort.Strings(orderedNames)
+			for _, name := range orderedNames {
+				prop := schema.Properties[name]
 				if len(prop.Type) == 0 {
 					continue
 				}
@@ -234,6 +241,11 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					Println(fmt.Sprintf("skip field [%s] in %s is not supported type for %s", name, refType, paramType))
 					continue
 				}
+				param.Nullable = prop.Nullable
+				param.Format = prop.Format
+				param.Default = prop.Default
+				param.Example = prop.Example
+				param.Extensions = prop.Extensions
 				param.CommonValidations.Maximum = prop.Maximum
 				param.CommonValidations.Minimum = prop.Minimum
 				param.CommonValidations.ExclusiveMaximum = prop.ExclusiveMaximum
@@ -255,33 +267,14 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		case "primitive":
 			param.Schema.Type = spec.StringOrArray{refType}
 		case "array":
-			param.Schema.Type = spec.StringOrArray{objectType}
-			param.Schema.Items = &spec.SchemaOrArray{
-				Schema: &spec.Schema{
-					SchemaProps: spec.SchemaProps{},
-				},
-			}
-			// Array of Primitive or Object
-			if IsPrimitiveType(refType) {
-				param.Schema.Items.Schema.Type = spec.StringOrArray{refType}
-			} else {
-				refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
-				if err != nil {
-					return err
-				}
-				param.Schema.Items.Schema.Ref = spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
-				}
-			}
+			refType = "[]" + refType
+			fallthrough
 		case "object":
-			refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
+			schema, err := operation.parseObjectSchema(refType, astFile)
 			if err != nil {
 				return err
 			}
-			param.Schema.Type = []string{}
-			param.Schema.Ref = spec.Ref{
-				Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(refType, typeSpec)),
-			}
+			param.Schema = schema
 		}
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
@@ -639,7 +632,7 @@ var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 
 var defaultPattern = regexp.MustCompile(`([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
-func (operation *Operation) parseResponseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
 	case refType == "interface{}":
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}, nil
@@ -649,7 +642,7 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 	case IsPrimitiveType(refType):
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{refType}}}, nil
 	case strings.HasPrefix(refType, "[]"):
-		schema, err := operation.parseResponseObjectSchema(refType[2:], astFile)
+		schema, err := operation.parseObjectSchema(refType[2:], astFile)
 		if err != nil {
 			return nil, err
 		}
@@ -668,7 +661,7 @@ func (operation *Operation) parseResponseObjectSchema(refType string, astFile *a
 		if refType == "interface{}" {
 			valueSchema.Allows = true
 		} else {
-			schema, err := operation.parseResponseObjectSchema(refType, astFile)
+			schema, err := operation.parseObjectSchema(refType, astFile)
 			if err != nil {
 				return &spec.Schema{}, err
 			}
@@ -702,7 +695,7 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 	refType = matches[1]
-	schema, err := operation.parseResponseObjectSchema(refType, astFile)
+	schema, err := operation.parseObjectSchema(refType, astFile)
 	if err != nil {
 		return nil, err
 	}
@@ -726,7 +719,7 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 	for _, field := range fields {
 		if matches := strings.SplitN(field, "=", 2); len(matches) == 2 {
 			if strings.HasPrefix(matches[1], "[]") {
-				itemSchema, err := operation.parseResponseObjectSchema(matches[1][2:], astFile)
+				itemSchema, err := operation.parseObjectSchema(matches[1][2:], astFile)
 				if err != nil {
 					return nil, err
 				}
@@ -735,7 +728,7 @@ func (operation *Operation) parseResponseCombinedObjectSchema(refType string, as
 					Items: &spec.SchemaOrArray{Schema: itemSchema}},
 				}
 			} else {
-				schema, err := operation.parseResponseObjectSchema(matches[1], astFile)
+				schema, err := operation.parseObjectSchema(matches[1], astFile)
 				if err != nil {
 					return nil, err
 				}
@@ -766,12 +759,12 @@ func (operation *Operation) parseResponseSchema(schemaType, refType string, astF
 	switch schemaType {
 	case "object":
 		if !strings.HasPrefix(refType, "[]") {
-			return operation.parseResponseObjectSchema(refType, astFile)
+			return operation.parseObjectSchema(refType, astFile)
 		}
 		refType = refType[2:]
 		fallthrough
 	case "array":
-		schema, err := operation.parseResponseObjectSchema(refType, astFile)
+		schema, err := operation.parseObjectSchema(refType, astFile)
 		if err != nil {
 			return nil, err
 		}

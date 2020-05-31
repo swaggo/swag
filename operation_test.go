@@ -1032,6 +1032,53 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentByBodyTypeWithDeepNestedFields(t *testing.T) {
+	comment := `@Param body body model.CommonHeader{data=string,data2=int} true "test deep"`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Len(t, operation.Parameters, 1)
+	assert.Equal(t, "test deep", operation.Parameters[0].Description)
+	assert.True(t, operation.Parameters[0].Required)
+
+	b, err := json.MarshalIndent(operation, "", "    ")
+	assert.NoError(t, err)
+	expected := `{
+    "parameters": [
+        {
+            "description": "test deep",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "allOf": [
+                    {
+                        "$ref": "#/definitions/model.CommonHeader"
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "type": "string"
+                            },
+                            "data2": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
 	comment := `@Param some_id body []int true "Some ID"`
 	operation := NewOperation()
@@ -1051,6 +1098,56 @@ func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
                 "type": "array",
                 "items": {
                     "type": "integer"
+                }
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFields(t *testing.T) {
+	comment := `@Param body body []model.CommonHeader{data=string,data2=int} true "test deep"`
+	operation := NewOperation()
+	operation.parser = New()
+
+	operation.parser.TypeDefinitions["model"] = make(map[string]*ast.TypeSpec)
+	operation.parser.TypeDefinitions["model"]["CommonHeader"] = &ast.TypeSpec{}
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Len(t, operation.Parameters, 1)
+	assert.Equal(t, "test deep", operation.Parameters[0].Description)
+	assert.True(t, operation.Parameters[0].Required)
+
+	b, err := json.MarshalIndent(operation, "", "    ")
+	assert.NoError(t, err)
+	expected := `{
+    "parameters": [
+        {
+            "description": "test deep",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "type": "array",
+                "items": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CommonHeader"
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "type": "string"
+                                },
+                                "data2": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    ]
                 }
             }
         }
