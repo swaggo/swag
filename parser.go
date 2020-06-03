@@ -56,7 +56,7 @@ type Parser struct {
 	ParsedSchemas map[*TypeSpecDef]*Schema
 
 	//OutputSchemas store schemas which will be export to swagger
-	OutputSchemas map[*Schema]*Schema
+	OutputSchemas map[*TypeSpecDef]*Schema
 
 	PropNamingStrategy string
 
@@ -97,7 +97,7 @@ func New(options ...func(*Parser)) *Parser {
 		},
 		PackagesDefinitions: make(PackagesDefinitions),
 		ParsedSchemas:       make(map[*TypeSpecDef]*Schema),
-		OutputSchemas:       make(map[*Schema]*Schema),
+		OutputSchemas:       make(map[*TypeSpecDef]*Schema),
 		excludes:            make(map[string]bool),
 	}
 
@@ -608,6 +608,12 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	}
 	s := &Schema{Name: refTypeName, PkgPath: typeSpecDef.PkgPath, Schema: schema}
 	parser.ParsedSchemas[typeSpecDef] = s
+
+	//update an empty schema as a result of recursion
+	if s2, ok := parser.OutputSchemas[typeSpecDef]; ok {
+		parser.swagger.Definitions[s2.Name] = *schema
+	}
+
 	return s, nil
 }
 
@@ -663,7 +669,9 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, pkgPath str
 		var err error
 		schema, err = parser.ParseDefinition(typeSpecDef)
 		if err == ErrRecursiveParseStruct {
-			if !ref {
+			if ref {
+				return parser.getRefTypeSchema(typeSpecDef, schema), nil
+			} else {
 				return nil, err
 			}
 		} else if err != nil {
@@ -672,19 +680,23 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, pkgPath str
 	}
 
 	if ref && len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == "object" {
-		return parser.getRefTypeSchema(schema), nil
+		return parser.getRefTypeSchema(typeSpecDef, schema), nil
 	}
 	return schema.Schema, nil
 }
 
-func (parser *Parser) getRefTypeSchema(schema *Schema) *spec.Schema {
-	if _, ok := parser.OutputSchemas[schema]; !ok {
+func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema) *spec.Schema {
+	if _, ok := parser.OutputSchemas[typeSpecDef]; !ok {
 		if _, ok := parser.swagger.Definitions[schema.Name]; ok {
 			schema.Name = fullTypeName(schema.PkgPath, strings.Split(schema.Name, ".")[1])
 			schema.Name = strings.ReplaceAll(schema.Name, "/", "_")
 		}
-		parser.swagger.Definitions[schema.Name] = *schema.Schema
-		parser.OutputSchemas[schema] = schema
+		if schema.Schema != nil {
+			parser.swagger.Definitions[schema.Name] = *schema.Schema
+		} else {
+			parser.swagger.Definitions[schema.Name] = spec.Schema{}
+		}
+		parser.OutputSchemas[typeSpecDef] = schema
 	}
 
 	return RefSchema(schema.Name)
