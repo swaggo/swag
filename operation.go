@@ -87,7 +87,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File, pkgP
 		err = operation.ParseProduceComment(lineRemainder)
 	case "@param":
 		err = operation.ParseParamComment(lineRemainder, astFile, pkgPath)
-	case "@success", "@failure":
+	case "@response", "@success", "@failure":
 		err = operation.ParseResponseComment(lineRemainder, astFile, pkgPath)
 	case "@header":
 		err = operation.ParseResponseHeaderComment(lineRemainder, astFile)
@@ -559,7 +559,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type spec not found")
 }
 
-var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
+var responsePattern = regexp.MustCompile(`([\w]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
 //RepsonseType{data1=Type1,data2=Type2}
 var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
@@ -705,7 +705,11 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	responseDescription := strings.Trim(matches[4], "\"")
-	if code, err := strconv.Atoi(matches[1]); err == nil {
+	if strings.ToLower(matches[1]) == "default" {
+		operation.Responses.Default = &spec.Response{
+			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
+		}
+	} else if code, err := strconv.Atoi(matches[1]); err == nil {
 		if responseDescription == "" {
 			responseDescription = http.StatusText(code)
 		}
@@ -715,10 +719,8 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		operation.Responses.StatusCodeResponses[code] = spec.Response{
 			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
 		}
-	} else if strings.ToLower(matches[4]) == "default" {
-		operation.Responses.Default = &spec.Response{
-			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
-		}
+	} else {
+		return err
 	}
 
 	return nil
@@ -770,7 +772,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 	return nil
 }
 
-var emptyResponsePattern = regexp.MustCompile(`([\d]+)[\s]+"(.*)"`)
+var emptyResponsePattern = regexp.MustCompile(`([\w]+)[\s]+"(.*)"`)
 
 // ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok"
 func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
@@ -780,42 +782,46 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
-	response := spec.Response{}
-
-	code, _ := strconv.Atoi(matches[1])
-
-	response.Description = strings.Trim(matches[2], "")
-
 	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{
-			ResponsesProps: spec.ResponsesProps{
-				StatusCodeResponses: make(map[int]spec.Response),
-			},
-		}
+		operation.Responses = &spec.Responses{}
 	}
 
-	operation.Responses.StatusCodeResponses[code] = response
+	responseDescription := strings.Trim(matches[2], "\"")
+	if strings.ToLower(matches[1]) == "default" {
+		operation.Responses.Default = &spec.Response{
+			ResponseProps: spec.ResponseProps{Description: responseDescription},
+		}
+	} else if code, err := strconv.Atoi(matches[1]); err == nil {
+		if responseDescription == "" {
+			responseDescription = http.StatusText(code)
+		}
+		if operation.Responses.StatusCodeResponses == nil {
+			operation.Responses.StatusCodeResponses = make(map[int]spec.Response)
+		}
+		operation.Responses.StatusCodeResponses[code] = spec.Response{
+			ResponseProps: spec.ResponseProps{Description: responseDescription},
+		}
+	} else {
+		return err
+	}
 
 	return nil
 }
 
 //ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200
 func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
-	response := spec.Response{}
-
-	code, err := strconv.Atoi(commentLine)
-	if err != nil {
-		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
-	}
-	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{
-			ResponsesProps: spec.ResponsesProps{
-				StatusCodeResponses: make(map[int]spec.Response),
-			},
+	if strings.ToLower(commentLine) == "default" {
+		operation.Responses.Default = &spec.Response{}
+	} else if code, err := strconv.Atoi(commentLine); err == nil {
+		if operation.Responses.StatusCodeResponses == nil {
+			operation.Responses.StatusCodeResponses = make(map[int]spec.Response)
 		}
+		operation.Responses.StatusCodeResponses[code] = spec.Response{
+			ResponseProps: spec.ResponseProps{Description: http.StatusText(code)},
+		}
+	} else {
+		return err
 	}
-
-	operation.Responses.StatusCodeResponses[code] = response
 
 	return nil
 }
