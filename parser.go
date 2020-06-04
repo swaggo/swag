@@ -596,7 +596,15 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	if parser.isInStructStack(typeSpecDef) {
 		Println("Skipping '" + typeName + "', recursion detected.")
-		return &Schema{Name: refTypeName, PkgPath: typeSpecDef.PkgPath}, ErrRecursiveParseStruct
+		return &Schema{
+				Name:    refTypeName,
+				PkgPath: typeSpecDef.PkgPath,
+				Schema: &spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Type: spec.StringOrArray{"object"},
+					},
+				}},
+			ErrRecursiveParseStruct
 	}
 	parser.structStack = append(parser.structStack, typeSpecDef)
 
