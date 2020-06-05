@@ -110,9 +110,12 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File, p
 
 	if strings.ContainsRune(typeName, '.') {
 		parts := strings.Split(typeName, ".")
-		pkgPath = pkgs.findPackagePathFromImports(parts[0], file)
 		typeName = parts[1]
-		return pkgs.findTypeSpec(pkgPath, typeName)
+		newPkgPath := pkgs.findPackagePathFromImports(parts[0], file)
+		if len(newPkgPath) == 0 && parts[0] == file.Name.Name {
+			newPkgPath = pkgPath
+		}
+		return pkgs.findTypeSpec(newPkgPath, typeName)
 	} else if typeDef := pkgs.findTypeSpec(pkgPath, typeName); typeDef != nil {
 		return typeDef
 	}

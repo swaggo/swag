@@ -170,25 +170,22 @@ func (parser *Parser) ParseAPIInMultiDirs(searchDirs []string, mainAPIFile strin
 	var absMainAPIFilePath string
 	var err error
 	for _, searchDir := range searchDirs {
-		Printf("Generate general API Info, search dir: %s", searchDir)
-		packageDir, err := filepath.Abs(searchDir)
-		if err != nil {
-			return err
-		}
-		packageDir, err = getPkgName(packageDir)
-		if err != nil {
-			return err
-		}
-		if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
+		Printf("Generate API Info, search dir: %s", searchDir)
+
+		if err = parser.getAllGoFileInfo(searchDir); err != nil {
 			return err
 		}
 
-		if absMainAPIFilePath == "" {
+		if len(absMainAPIFilePath) == 0 {
 			absMainAPIFilePath = filepath.Join(searchDir, mainAPIFile)
 			if _, err = os.Stat(absMainAPIFilePath); err != nil {
 				absMainAPIFilePath = ""
 			}
 		}
+	}
+
+	if len(absMainAPIFilePath) == 0 {
+		return fmt.Errorf("general API info file [%s] is not found", mainAPIFile)
 	}
 
 	absMainAPIFilePath, err = filepath.Abs(absMainAPIFilePath)
@@ -212,6 +209,7 @@ func (parser *Parser) ParseAPIInMultiDirs(searchDirs []string, mainAPIFile strin
 		}
 	}
 
+	Printf("Generate general API Info from file: %s", absMainAPIFilePath)
 	if err = parser.ParseGeneralAPIInfo(absMainAPIFilePath); err != nil {
 		return err
 	}
@@ -248,7 +246,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("cannot parse source files %s: %s", mainAPIFile, err)
+		return fmt.Errorf("cannot parse general info file %s: %s", mainAPIFile, err)
 	}
 
 	parser.swagger.Swagger = "2.0"
@@ -534,7 +532,7 @@ func (parser *Parser) parseApis() error {
 				switch astDeclaration := astDescription.(type) {
 				case *ast.FuncDecl:
 					if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-						operation := NewOperation() //for per 'function' comment, create a new 'Operation' object
+						operation := NewOperation(parser) //for per 'function' comment, create a new 'Operation' object
 						operation.parser = parser
 						for _, comment := range astDeclaration.Doc.List {
 							if err := operation.ParseComment(comment.Text, astFile, pkg); err != nil {
@@ -870,7 +868,7 @@ func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.
 	if field.Tag != nil {
 		// `json:"tag"` -> json:"tag"
 		structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
-		if ignoreTag := structTag.Get("swaggerignore"); ignoreTag == "true" {
+		if ignoreTag := structTag.Get("swaggerignore"); strings.EqualFold(ignoreTag, "true") {
 			return "", nil, nil
 		}
 
@@ -1233,19 +1231,35 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 }
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
-func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
+func (parser *Parser) getAllGoFileInfo(searchDir string) error {
+	packageDirs := map[string]string{}
+
 	return filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
-		if err := parser.Skip(path, f); err != nil {
+		if err != nil {
+			return nil
+		}
+
+		if err = parser.Skip(path, f); err != nil {
 			return err
 		} else if f.IsDir() {
 			return nil
 		}
 
-		relPath, err := filepath.Rel(searchDir, path)
-		if err != nil {
-			return err
+		if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
+			return nil
 		}
-		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path)
+
+		currentDir := filepath.Dir(path)
+		pkgDir, ok := packageDirs[currentDir]
+		if !ok {
+			pkgDir, err = getPkgName(currentDir)
+			if err != nil {
+				return err
+			}
+			packageDirs[currentDir] = pkgDir
+		}
+
+		return parser.parseFile(filepath.ToSlash(filepath.Clean(pkgDir)), path, nil)
 	})
 }
 
@@ -1270,7 +1284,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		}
 
 		path := filepath.Join(srcDir, f.Name())
-		if err := parser.parseFile(pkg.Name, path); err != nil {
+		if err := parser.parseFile(pkg.Name, path, nil); err != nil {
 			return err
 		}
 	}
@@ -1284,22 +1298,35 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 	return nil
 }
 
-func (parser *Parser) parseFile(packageDir, path string) error {
+func (parser *Parser) parseFile(packageDir, path string, src interface{}) error {
 	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
 		return nil
 	}
 
 	// positions are relative to FileSet
-	astFile, err := goparser.ParseFile(token.NewFileSet(), path, nil, goparser.ParseComments)
+	astFile, err := goparser.ParseFile(token.NewFileSet(), path, src, goparser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("ParseFile error:%+v", err)
 	}
+	parser.collectAstFile(packageDir, path, astFile)
+	return nil
+}
+
+func (parser *Parser) collectAstFile(packageDir, path string, astFile *ast.File) {
 	if pd, ok := parser.PackagesDefinitions[packageDir]; ok {
 		pd.Files[path] = astFile
 	} else {
 		parser.PackagesDefinitions[packageDir] = &PackageDefinitions{
 			Name:  astFile.Name.Name,
 			Files: map[string]*ast.File{path: astFile},
+		}
+	}
+}
+
+func (parser *Parser) getAstFile(packageDir, path string) *ast.File {
+	if pd, ok := parser.PackagesDefinitions[packageDir]; ok {
+		if file, ok := pd.Files[path]; ok {
+			return file
 		}
 	}
 	return nil

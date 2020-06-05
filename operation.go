@@ -46,8 +46,9 @@ var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
 
 // NewOperation creates a new Operation with default properties.
 // map[int]Response
-func NewOperation() *Operation {
+func NewOperation(parser *Parser) *Operation {
 	return &Operation{
+		parser:     parser,
 		HTTPMethod: "get",
 		Operation: spec.Operation{
 			OperationProps: spec.OperationProps{},
@@ -810,6 +811,10 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 
 //ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200
 func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
+	if operation.Responses == nil {
+		operation.Responses = &spec.Responses{}
+	}
+
 	if strings.ToLower(commentLine) == "default" {
 		operation.Responses.Default = &spec.Response{}
 	} else if code, err := strconv.Atoi(commentLine); err == nil {

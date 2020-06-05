@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
+	_ "github.com/swaggo/swag/testdata/simple3/web"
 )
 
 // @Summary Add a new pet to the store

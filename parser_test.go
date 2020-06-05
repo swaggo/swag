@@ -2,8 +2,6 @@ package swag
 
 import (
 	"encoding/json"
-	goparser "go/parser"
-	"go/token"
 	"io/ioutil"
 	"os"
 	"path"
@@ -250,28 +248,14 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "testdata/pet"
 
 	p := New()
-	err := p.getAllGoFileInfo("", searchDir)
+	err := p.getAllGoFileInfo(searchDir)
 
 	assert.NoError(t, err)
-	assert.NotEmpty(t, p.files[filepath.Join("testdata", "pet", "main.go")])
-	assert.NotEmpty(t, p.files[filepath.Join("testdata", "pet", "web", "handler.go")])
-	assert.Equal(t, 2, len(p.files))
-}
-
-func TestParser_ParseType(t *testing.T) {
-	searchDir := "testdata/simple/"
-
-	p := New()
-	err := p.getAllGoFileInfo("", searchDir)
-	assert.NoError(t, err)
-
-	for _, file := range p.files {
-		p.ParseType(file)
-	}
-
-	assert.NotNil(t, p.TypeDefinitions["api"]["Pet3"])
-	assert.NotNil(t, p.TypeDefinitions["web"]["Pet"])
-	assert.NotNil(t, p.TypeDefinitions["web"]["Pet2"])
+	assert.NotEmpty(t, p.PackagesDefinitions[searchDir])
+	assert.Equal(t, 1, len(p.PackagesDefinitions[searchDir].Files))
+	assert.NotEmpty(t, p.PackagesDefinitions[searchDir].Files[filepath.Join("testdata", "pet", "main.go")])
+	assert.Equal(t, 1, len(p.PackagesDefinitions[searchDir+"/web"].Files))
+	assert.NotEmpty(t, p.PackagesDefinitions[searchDir+"/web"].Files[filepath.Join("testdata", "pet", "web", "handler.go")])
 }
 
 func TestGetSchemes(t *testing.T) {
@@ -281,611 +265,17 @@ func TestGetSchemes(t *testing.T) {
 }
 
 func TestParseSimpleApi1(t *testing.T) {
-	expected := `{
-    "swagger": "2.0",
-    "info": {
-        "description": "This is a sample server Petstore server.",
-        "title": "Swagger Example API",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "1.0"
-    },
-    "host": "petstore.swagger.io",
-    "basePath": "/v2",
-    "paths": {
-        "/file/upload": {
-            "post": {
-                "description": "Upload file",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Upload file",
-                "operationId": "file.upload",
-                "parameters": [
-                    {
-                        "type": "file",
-                        "description": "this is a test file",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "We need ID!!",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Can not find ID",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    }
-                }
-            }
-        },
-        "/testapi/get-string-by-int/{some_id}": {
-            "get": {
-                "description": "get string by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Add a new pet to the store",
-                "operationId": "get-string-by-int",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "format": "int64",
-                        "description": "Some ID",
-                        "name": "some_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Some ID",
-                        "name": "some_id",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/web.Pet"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "We need ID!!",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    },
-                    "404": {
-                        "description": "Can not find ID",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    }
-                }
-            }
-        },
-        "/testapi/get-struct-array-by-string/{some_id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    },
-                    {
-                        "BasicAuth": []
-                    },
-                    {
-                        "OAuth2Application": [
-                            "write"
-                        ]
-                    },
-                    {
-                        "OAuth2Implicit": [
-                            "read",
-                            "admin"
-                        ]
-                    },
-                    {
-                        "OAuth2AccessCode": [
-                            "read"
-                        ]
-                    },
-                    {
-                        "OAuth2Password": [
-                            "admin"
-                        ]
-                    }
-                ],
-                "description": "get struct array by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "operationId": "get-struct-array-by-string",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Some ID",
-                        "name": "some_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            1,
-                            2,
-                            3
-                        ],
-                        "type": "integer",
-                        "description": "Category",
-                        "name": "category",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "minimum": 0,
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Offset",
-                        "name": "offset",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "maximum": 50,
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Limit",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "maxLength": 50,
-                        "minLength": 1,
-                        "type": "string",
-                        "default": "\"\"",
-                        "description": "q",
-                        "name": "q",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "We need ID!!",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    },
-                    "404": {
-                        "description": "Can not find ID",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "definitions": {
-        "api.SwagReturn": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": {
-                    "type": "string"
-                }
-            }
-        },
-        "cross.Cross": {
-            "type": "object",
-            "properties": {
-                "Array": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "String": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.APIError": {
-            "type": "object",
-            "properties": {
-                "CreatedAt": {
-                    "type": "string"
-                },
-                "ErrorCode": {
-                    "type": "integer"
-                },
-                "ErrorMessage": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.AnonymousStructArray": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "foo": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "web.IndirectRecursiveTest": {
-            "type": "object",
-            "properties": {
-                "Tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Tag"
-                    }
-                }
-            }
-        },
-        "web.Pet": {
-            "type": "object",
-            "required": [
-                "name",
-                "photo_urls"
-            ],
-            "properties": {
-                "category": {
-                    "type": "object",
-                    "properties": {
-                        "id": {
-                            "type": "integer",
-                            "example": 1
-                        },
-                        "name": {
-                            "type": "string",
-                            "example": "category_name"
-                        },
-                        "photo_urls": {
-                            "type": "array",
-                            "format": "url",
-                            "items": {
-                                "type": "string"
-                            },
-                            "example": [
-                                "http://test/image/1.jpg",
-                                "http://test/image/2.jpg"
-                            ]
-                        },
-                        "small_category": {
-                            "type": "object",
-                            "required": [
-                                "name"
-                            ],
-                            "properties": {
-                                "id": {
-                                    "type": "integer",
-                                    "example": 1
-                                },
-                                "name": {
-                                    "type": "string",
-                                    "maxLength": 16,
-                                    "minLength": 4,
-                                    "example": "detail_category_name"
-                                },
-                                "photo_urls": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    },
-                                    "example": [
-                                        "http://test/image/1.jpg",
-                                        "http://test/image/2.jpg"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "data": {
-                    "type": "object"
-                },
-                "decimal": {
-                    "type": "number"
-                },
-                "enum_array": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer",
-                        "enum": [
-                            1,
-                            2,
-                            3,
-                            5,
-                            7
-                        ]
-                    }
-                },
-                "id": {
-                    "type": "integer",
-                    "format": "int64",
-                    "readOnly": true,
-                    "example": 1
-                },
-                "int_array": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    },
-                    "example": [
-                        1,
-                        2
-                    ]
-                },
-                "is_alive": {
-                    "type": "boolean",
-                    "default": true,
-                    "example": true
-                },
-                "name": {
-                    "type": "string",
-                    "example": "poti"
-                },
-                "pets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Pet2"
-                    }
-                },
-                "pets2": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Pet2"
-                    }
-                },
-                "photo_urls": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "http://test/image/1.jpg",
-                        "http://test/image/2.jpg"
-                    ]
-                },
-                "price": {
-                    "type": "number",
-                    "maximum": 1000,
-                    "minimum": 1,
-                    "example": 3.25
-                },
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "healthy",
-                        "ill"
-                    ]
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Tag"
-                    }
-                },
-                "uuid": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.Pet2": {
-            "type": "object",
-            "properties": {
-                "deleted_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "middlename": {
-                    "type": "string",
-                    "x-abc": "def",
-                    "x-nullable": true
-                }
-            }
-        },
-        "web.Pet5a": {
-            "type": "object",
-            "required": [
-                "name",
-                "odd"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "odd": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "web.Pet5b": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.Pet5c": {
-            "type": "object",
-            "required": [
-                "name",
-                "odd"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "odd": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "web.RevValue": {
-            "type": "object",
-            "properties": {
-                "Data": {
-                    "type": "integer"
-                },
-                "Err": {
-                    "type": "integer"
-                },
-                "Status": {
-                    "type": "boolean"
-                },
-                "cross": {
-                    "$ref": "#/definitions/cross.Cross"
-                },
-                "crosses": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cross.Cross"
-                    }
-                }
-            }
-        },
-        "web.Tag": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer",
-                    "format": "int64"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "pets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Pet"
-                    }
-                }
-            }
-        },
-        "web.Tags": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/web.Tag"
-            }
-        }
-    },
-    "securityDefinitions": {
-        "ApiKeyAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "BasicAuth": {
-            "type": "basic"
-        },
-        "OAuth2AccessCode": {
-            "type": "oauth2",
-            "flow": "accessCode",
-            "authorizationUrl": "https://example.com/oauth/authorize",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information"
-            }
-        },
-        "OAuth2Application": {
-            "type": "oauth2",
-            "flow": "application",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
-            }
-        },
-        "OAuth2Implicit": {
-            "type": "oauth2",
-            "flow": "implicit",
-            "authorizationUrl": "https://example.com/oauth/authorize",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
-            }
-        },
-        "OAuth2Password": {
-            "type": "oauth2",
-            "flow": "password",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "read": " Grants read access",
-                "write": " Grants write access"
-            }
-        }
-    }
-}`
+	expected, err := ioutil.ReadFile("testdata/simple/expected.json")
+	assert.NoError(t, err)
 	searchDir := "testdata/simple"
 	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err = p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	assert.Equal(t, expected, string(b))
+	assert.Equal(t, string(expected), string(b))
 }
 
 func TestParseSimpleApi_ForSnakecase(t *testing.T) {
@@ -2278,14 +1668,13 @@ func TestParseImportAliases(t *testing.T) {
 }
 
 func TestParseNested(t *testing.T) {
-	searchDir := "testdata/nested"
+	searchDirs := []string{"testdata/nested", "testdata/nested2"}
 	mainAPIFile := "main.go"
 	p := New()
-	p.ParseDependency = true
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPIInMultiDirs(searchDirs, mainAPIFile)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(path.Join(searchDirs[0], "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2343,27 +1732,23 @@ func Test(){
       }
    }
 }`
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("package", "api.go", src)
 	assert.NoError(t, err)
-
-	typeSpec := p.TypeDefinitions["api"]["Response"]
-	_, err = p.ParseDefinition("api", typeSpec, true)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(out))
-
 }
 
 func TestParser_ParseEmbededStruct(t *testing.T) {
 	src := `
 package api
+
+import "rest"
 
 type Response struct {
 	rest.ResponseWrapper
@@ -2409,19 +1794,14 @@ type ResponseWrapper struct {
 	parser := New()
 	parser.ParseDependency = true
 
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-	parser.ParseType(f)
-
-	f2, err := goparser.ParseFile(token.NewFileSet(), "", restsrc, goparser.ParseComments)
-	assert.NoError(t, err)
-	parser.ParseType(f2)
-
-	err = parser.ParseRouterAPIInfo("", f)
+	err := parser.parseFile("api", "api.go", src)
 	assert.NoError(t, err)
 
-	typeSpec := parser.TypeDefinitions["api"]["Response"]
-	_, err = parser.ParseDefinition("api", typeSpec, true)
+	err = parser.parseFile("rest", "rest.go", restsrc)
+	assert.NoError(t, err)
+
+	parser.parseTypes()
+	err = parser.parseApis()
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(parser.swagger.Definitions, "", "   ")
@@ -2473,16 +1853,11 @@ func Test(){
    }
 }`
 
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("api", "api.go", src)
 	assert.NoError(t, err)
-
-	typeSpec := p.TypeDefinitions["api"]["Parent"]
-	_, err = p.ParseDefinition("api", typeSpec, true)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
@@ -2599,18 +1974,12 @@ func Test(){
       }
    }
 }`
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
 
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("api", "api.go", src)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
-
-	typeSpec := p.TypeDefinitions["api"]["Parent"]
-	_, err = p.ParseDefinition("api", typeSpec, true)
-	assert.NoError(t, err)
-
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(out))
@@ -2624,12 +1993,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	err = p.ParseRouterAPIInfo("", f)
-	assert.EqualError(t, err, "ParseComment error in file  :unknown accept type can't be accepted")
+	err := p.parseFile("test", "test.go", src)
+	assert.NoError(t, err)
+	err = p.parseApis()
+	assert.EqualError(t, err, "ParseComment error in file test.go :unknown accept type can't be accepted")
 }
 
 func TestParser_ParseRouterApiGet(t *testing.T) {
@@ -2640,11 +2008,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("test", "test.go", src)
+	assert.NoError(t, err)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2663,11 +2031,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("test", "test.go", src)
+	assert.NoError(t, err)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2686,11 +2054,12 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-	p := New()
 
-	err = p.ParseRouterAPIInfo("", f)
+	p := New()
+	err := p.parseFile("test", "test.go", src)
+	assert.NoError(t, err)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2709,11 +2078,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("test", "test.go", src)
+	assert.NoError(t, err)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2732,11 +2101,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("test", "test.go", src)
+	assert.NoError(t, err)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2755,13 +2124,13 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
 	p := New()
-
-	err = p.ParseRouterAPIInfo("", f)
-
+	err := p.parseFile("test", "test.go", src)
 	assert.NoError(t, err)
+	p.parseTypes()
+	err = p.parseApis()
+	assert.NoError(t, err)
+
 	ps := p.swagger.Paths.Paths
 
 	val, ok := ps["/api/{id}"]
@@ -2778,11 +2147,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("test", "test.go", src)
+	assert.NoError(t, err)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2809,11 +2178,11 @@ func Test2(){
 func Test3(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("test", "test.go", src)
+	assert.NoError(t, err)
+	p.parseTypes()
+	err = p.parseApis()
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2829,9 +2198,11 @@ func Test3(){
 func TestSkip(t *testing.T) {
 	folder1 := "/tmp/vendor"
 	err := os.Mkdir(folder1, os.ModePerm)
+	if err != nil {
+		return
+	}
 	assert.NoError(t, err)
 	f1, _ := os.Stat(folder1)
-
 	parser := New()
 
 	assert.True(t, parser.Skip(folder1, f1) == filepath.SkipDir)
@@ -2853,6 +2224,9 @@ func TestSkip(t *testing.T) {
 func TestSkipMustParseVendor(t *testing.T) {
 	folder1 := "/tmp/vendor"
 	err := os.Mkdir(folder1, os.ModePerm)
+	if err != nil {
+		return
+	}
 	assert.NoError(t, err)
 
 	f1, _ := os.Stat(folder1)
@@ -2995,8 +2369,8 @@ func TestFixes432(t *testing.T) {
 }
 
 func TestParseOutsideDependencies(t *testing.T) {
-	searchDir := "testdata/pare_outside_dependencies"
-	mainAPIFile := "cmd/main.go"
+	searchDir := "testdata/pare_outside_dependencies/cmd"
+	mainAPIFile := "main.go"
 
 	p := New()
 	p.ParseDependency = true
@@ -3023,13 +2397,11 @@ func Fun()  {
 
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("main", "main.go", src)
 	assert.NoError(t, err)
+	p.parseTypes()
+	p.parseApis()
 
 	assert.Equal(t, 3, len(p.swagger.Paths.Paths["/test"].Get.Parameters))
 }
@@ -3054,19 +2426,11 @@ func Fun()  {
 
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
-
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	err := p.parseFile("main", "main.go", src)
 	assert.NoError(t, err)
-
-	err = p.ParseRouterAPIInfo("", f)
-	assert.NoError(t, err)
-
-	err = p.parseDefinitions()
-	assert.NoError(t, err)
+	p.parseTypes()
+	p.parseApis()
 	teacher, ok := p.swagger.Definitions["Teacher"]
 	assert.True(t, ok)
 	ref := teacher.Properties["child"].SchemaProps.Ref
@@ -3120,7 +2484,9 @@ func TestParseJSONFieldString(t *testing.T) {
                             "$ref": "#/definitions/main.MyStruct"
                         }
                     },
-                    "500": {}
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
                 }
             }
         }

@@ -21,7 +21,7 @@ type Bar struct {
 // @ID get-foo
 // @Accept json
 // @Produce json
-// @Success 200 {object} api.Foo
+// @Success 200 {object} Foo
 // @Router /testapi/get-foo [get]
 func GetFoo(c *gin.Context) {
 	//write your code
