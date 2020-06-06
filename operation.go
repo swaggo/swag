@@ -588,13 +588,12 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File,
 		refType = refType[idx+1:]
 		if refType == "interface{}" {
 			return spec.MapProperty(nil), nil
-		} else {
-			schema, err := operation.parseObjectSchema(refType, astFile, pkgPath)
-			if err != nil {
-				return &spec.Schema{}, err
-			}
-			return spec.MapProperty(schema), nil
 		}
+		schema, err := operation.parseObjectSchema(refType, astFile, pkgPath)
+		if err != nil {
+			return &spec.Schema{}, err
+		}
+		return spec.MapProperty(schema), nil
 	case strings.Contains(refType, "{"):
 		return operation.parseCombinedObjectSchema(refType, astFile, pkgPath)
 	default:
