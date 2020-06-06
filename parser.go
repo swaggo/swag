@@ -34,10 +34,13 @@ const (
 	SnakeCase = "snakecase"
 )
 
+//ErrFuncTypeField error for function type
 var ErrFuncTypeField = errors.New("func type field")
 
+//ErrRecursiveParseStruct error for recursively parsing struct
 var ErrRecursiveParseStruct = errors.New("recursively parsing struct")
 
+//Schema schema with a Name, if Name conflicts with others', prefix PkgPath to it
 type Schema struct {
 	PkgPath      string //package import path used to rename Name of a definition int case of conflict
 	Name         string //Name in definitions
@@ -686,9 +689,8 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, pkgPath str
 		if err == ErrRecursiveParseStruct {
 			if ref {
 				return parser.getRefTypeSchema(typeSpecDef, schema), nil
-			} else {
-				return nil, err
 			}
+			return nil, err
 		} else if err != nil {
 			return nil, err
 		}
@@ -749,13 +751,12 @@ func (parser *Parser) parseTypeExpr(pkgPath string, file *ast.File, typeExpr ast
 	case *ast.MapType:
 		if _, ok := expr.Value.(*ast.InterfaceType); ok {
 			return spec.MapProperty(nil), nil
-		} else {
-			schema, err := parser.parseTypeExpr(pkgPath, file, expr.Value, true)
-			if err != nil {
-				return &spec.Schema{}, err
-			}
-			return spec.MapProperty(schema), nil
 		}
+		schema, err := parser.parseTypeExpr(pkgPath, file, expr.Value, true)
+		if err != nil {
+			return &spec.Schema{}, err
+		}
+		return spec.MapProperty(schema), nil
 	case *ast.FuncType:
 		return nil, ErrFuncTypeField
 	// ...
