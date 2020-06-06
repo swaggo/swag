@@ -136,12 +136,14 @@ func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
 	return pkgName
 }
 
+//PrimitiveSchema build a primitive schema
 func PrimitiveSchema(typeName string) *spec.Schema {
 	return &spec.Schema{
 		SchemaProps: spec.SchemaProps{Type: spec.StringOrArray{typeName}},
 	}
 }
 
+//RefSchema build a reference schema
 func RefSchema(typeName string) *spec.Schema {
 	return spec.RefSchema("#/definitions/" + typeName)
 }
