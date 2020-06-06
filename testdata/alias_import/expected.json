@@ -55,6 +55,9 @@
                 },
                 "application_time": {
                     "type": "string"
+                },
+                "embedded": {
+                    "type": "string"
                 }
             }
         },
