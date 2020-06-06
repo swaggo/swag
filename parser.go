@@ -704,13 +704,7 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 			}
 		}
 
-		return &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Ref: spec.Ref{
-					Ref: jsonreference.MustCreateRef("#/definitions/" + refTypeName),
-				},
-			},
-		}, nil
+		return RefSchema(refTypeName), nil
 
 	// type Foo *Baz
 	case *ast.StarExpr:
@@ -722,14 +716,7 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 		if err != nil {
 			return &spec.Schema{}, err
 		}
-		return &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"array"},
-				Items: &spec.SchemaOrArray{
-					Schema: itemSchema,
-				},
-			},
-		}, nil
+		return spec.ArrayProperty(itemSchema), nil
 
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
@@ -739,32 +726,20 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 
 	// type Foo map[string]Bar
 	case *ast.MapType:
-		var valueSchema spec.SchemaOrBool
 		if _, ok := expr.Value.(*ast.InterfaceType); ok {
-			valueSchema.Allows = true
-		} else {
-			schema, err := parser.parseTypeExpr(pkgName, "", expr.Value)
-			if err != nil {
-				return &spec.Schema{}, err
-			}
-			valueSchema.Schema = schema
+			return spec.MapProperty(nil), nil
 		}
-		return &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:                 []string{"object"},
-				AdditionalProperties: &valueSchema,
-			},
-		}, nil
+		schema, err := parser.parseTypeExpr(pkgName, "", expr.Value)
+		if err != nil {
+			return &spec.Schema{}, err
+		}
+		return spec.MapProperty(schema), nil
 	// ...
 	default:
 		Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}
 
-	return &spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type: []string{"object"},
-		},
-	}, nil
+	return PrimitiveSchema("object"), nil
 }
 
 func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (*spec.Schema, error) {
@@ -966,25 +941,11 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			if structField.isRequired {
 				required = append(required, structField.name)
 			}
-			properties[structField.name] = spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Type:        []string{structField.schemaType},
-					Description: structField.desc,
-					Required:    required,
-					Items: &spec.SchemaOrArray{
-						Schema: &spec.Schema{
-							SchemaProps: spec.SchemaProps{
-								Ref: spec.Ref{
-									Ref: jsonreference.MustCreateRef("#/definitions/" + TypeDocName(pkgName, typeSpec)),
-								},
-							},
-						},
-					},
-				},
-				SwaggerSchemaProps: spec.SwaggerSchemaProps{
-					ReadOnly: structField.readOnly,
-				},
-			}
+			schema := spec.ArrayProperty(RefSchema(TypeDocName(pkgName, typeSpec)))
+			schema.Description = structField.desc
+			schema.Required = required
+			schema.ReadOnly = structField.readOnly
+			properties[structField.name] = *schema
 		} else if structField.arrayType == "object" {
 			// Anonymous struct
 			if astTypeArray, ok := field.Type.(*ast.ArrayType); ok { // if array
@@ -1019,35 +980,19 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					}
 				} else {
 					schema, _ := parser.parseTypeExpr(pkgName, "", astTypeArray.Elt)
-					properties[structField.name] = spec.Schema{
-						SchemaProps: spec.SchemaProps{
-							Type:        []string{structField.schemaType},
-							Description: structField.desc,
-							Items: &spec.SchemaOrArray{
-								Schema: schema,
-							},
-						},
-						SwaggerSchemaProps: spec.SwaggerSchemaProps{
-							ReadOnly: structField.readOnly,
-						},
-					}
+					schema = spec.ArrayProperty(schema)
+					schema.Description = structField.desc
+					schema.ReadOnly = structField.readOnly
+					properties[structField.name] = *schema
 				}
 			}
 		} else if structField.arrayType == "array" {
 			if astTypeArray, ok := field.Type.(*ast.ArrayType); ok {
 				schema, _ := parser.parseTypeExpr(pkgName, "", astTypeArray.Elt)
-				properties[structField.name] = spec.Schema{
-					SchemaProps: spec.SchemaProps{
-						Type:        []string{structField.schemaType},
-						Description: structField.desc,
-						Items: &spec.SchemaOrArray{
-							Schema: schema,
-						},
-					},
-					SwaggerSchemaProps: spec.SwaggerSchemaProps{
-						ReadOnly: structField.readOnly,
-					},
-				}
+				schema = spec.ArrayProperty(schema)
+				schema.Description = structField.desc
+				schema.ReadOnly = structField.readOnly
+				properties[structField.name] = *schema
 			}
 		} else {
 			// standard type in array
