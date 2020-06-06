@@ -65,6 +65,9 @@ type Parser struct {
 	// ParseDependencies whether swag should be parse outside dependency folder
 	ParseDependency bool
 
+	// ParseInternal whether swag should parse internal packages
+	ParseInternal bool
+
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []*TypeSpecDef
 
@@ -540,7 +543,6 @@ func (parser *Parser) parseApis() error {
 				case *ast.FuncDecl:
 					if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 						operation := NewOperation(parser) //for per 'function' comment, create a new 'Operation' object
-						operation.parser = parser
 						for _, comment := range astDeclaration.Doc.List {
 							if err := operation.ParseComment(comment.Text, astFile, pkg); err != nil {
 								return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
@@ -672,7 +674,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, pkgPath str
 		return PrimitiveSchema(schemaType), nil
 	}
 
-	typeSpecDef := parser.FindTypeSpec(typeName, file, pkgPath)
+	typeSpecDef := parser.Packages.FindTypeSpec(typeName, file, pkgPath)
 	if typeSpecDef == nil {
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
@@ -1255,7 +1257,7 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 }
 
 func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
-	if pkg.Internal || !pkg.Resolved { // ignored internal and not resolved dependencies
+	if pkg.Internal && !parser.ParseInternal || !pkg.Resolved { // ignored internal and not resolved dependencies
 		return nil
 	}
 
