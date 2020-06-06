@@ -92,7 +92,8 @@ OPTIONS:
 - [echo](http://github.com/swaggo/echo-swagger)
 - [buffalo](https://github.com/swaggo/buffalo-swagger)
 - [net/http](https://github.com/swaggo/http-swagger)
-
+ [flamingo](https://github.com/i-love-flamingo/swagger)
+ 
 ## 如何与Gin集成
 
 [点击此处](https://github.com/swaggo/swag/tree/master/example/celler)查看示例源代码。
@@ -268,9 +269,7 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 // @Param q query string false "name search by q"
 // @Success 200 {array} model.Account
 // @Header 200 {string} Token "qwerty"
-// @Failure 400 {object} httputil.HTTPError
-// @Failure 404 {object} httputil.HTTPError
-// @Failure 500 {object} httputil.HTTPError
+// @Response default {object} httputil.HTTPError
 // @Router /accounts [get]
 func (c *Controller) ListAccounts(ctx *gin.Context) {
     q := ctx.Request.URL.Query().Get("q")
