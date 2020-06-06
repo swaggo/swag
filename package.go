@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// typeSpec with its ast.File
 type TypeSpecDef struct {
 	//path of package starting from under ${GOPATH}/src or from module path in go.mod
 	PkgPath string
@@ -16,14 +17,17 @@ type TypeSpecDef struct {
 	TypeSpec *ast.TypeSpec
 }
 
+// Name name of type
 func (t *TypeSpecDef) Name() string {
 	return t.TypeSpec.Name.Name
 }
 
+// FullName name with prefixed package name of type
 func (t *TypeSpecDef) FullName() string {
 	return fullTypeName(t.File.Name.Name, t.TypeSpec.Name.Name)
 }
 
+//Definitions sorted by packages
 type PackageDefinitions struct {
 	//package name
 	Name string
