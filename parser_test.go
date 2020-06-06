@@ -248,14 +248,14 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "testdata/pet"
 
 	p := New()
-	err := p.getAllGoFileInfo(searchDir)
+	err := p.getAllGoFileInfo(searchDir, searchDir)
 
 	assert.NoError(t, err)
-	assert.NotEmpty(t, p.PackagesDefinitions[searchDir])
-	assert.Equal(t, 1, len(p.PackagesDefinitions[searchDir].Files))
-	assert.NotEmpty(t, p.PackagesDefinitions[searchDir].Files[filepath.Join("testdata", "pet", "main.go")])
-	assert.Equal(t, 1, len(p.PackagesDefinitions[searchDir+"/web"].Files))
-	assert.NotEmpty(t, p.PackagesDefinitions[searchDir+"/web"].Files[filepath.Join("testdata", "pet", "web", "handler.go")])
+	assert.NotEmpty(t, p.Packages[searchDir])
+	assert.Equal(t, 1, len(p.Packages[searchDir].Files))
+	assert.NotEmpty(t, p.Packages[searchDir].Files[filepath.Join("testdata", "pet", "main.go")])
+	assert.Equal(t, 1, len(p.Packages[searchDir+"/web"].Files))
+	assert.NotEmpty(t, p.Packages[searchDir+"/web"].Files[filepath.Join("testdata", "pet", "web", "handler.go")])
 }
 
 func TestGetSchemes(t *testing.T) {
@@ -2352,16 +2352,6 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 func TestIgnoreInvalidPkg(t *testing.T) {
 	searchDir := "testdata/deps_having_invalid_pkg"
 	mainAPIFile := "main.go"
-	p := New()
-	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
-		t.Error("Failed to ignore valid pkg: " + err.Error())
-	}
-}
-
-func TestFixes432(t *testing.T) {
-	searchDir := "testdata/fixes-432"
-	mainAPIFile := "cmd/main.go"
-
 	p := New()
 	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
