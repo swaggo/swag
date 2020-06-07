@@ -2256,7 +2256,7 @@ func TestParseComposition(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2272,7 +2272,7 @@ func TestParseImportAliases(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2288,7 +2288,7 @@ func TestParseNested(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -3116,8 +3116,8 @@ func Fun()  {
 	_, ok = p.swagger.Definitions["Student"]
 	assert.True(t, ok)
 	path, ok := p.swagger.Paths.Paths["/test"]
-	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
-	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
+	assert.Equal(t, "#/definitions/Teacher", filepath.Get.Parameters[0].Schema.Ref.String())
+	ref = filepath.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }
 

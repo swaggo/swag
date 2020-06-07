@@ -24,9 +24,9 @@ func TestGen_Build(t *testing.T) {
 	assert.NoError(t, New().Build(config))
 
 	expectedFiles := []string{
-		path.Join(config.OutputDir, "docs.go"),
-		path.Join(config.OutputDir, "swagger.json"),
-		path.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
@@ -48,9 +48,9 @@ func TestGen_BuildSnakecase(t *testing.T) {
 	assert.NoError(t, New().Build(config))
 
 	expectedFiles := []string{
-		path.Join(config.OutputDir, "docs.go"),
-		path.Join(config.OutputDir, "swagger.json"),
-		path.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
@@ -72,9 +72,9 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 	assert.NoError(t, New().Build(config))
 
 	expectedFiles := []string{
-		path.Join(config.OutputDir, "docs.go"),
-		path.Join(config.OutputDir, "swagger.json"),
-		path.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
@@ -116,8 +116,8 @@ func TestGen_jsonToYAML(t *testing.T) {
 	assert.Error(t, gen.Build(config))
 
 	expectedFiles := []string{
-		path.Join(config.OutputDir, "docs.go"),
-		path.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
@@ -226,9 +226,9 @@ func TestGen_configWithOutputDir(t *testing.T) {
 	assert.NoError(t, New().Build(config))
 
 	expectedFiles := []string{
-		path.Join(config.OutputDir, "docs.go"),
-		path.Join(config.OutputDir, "swagger.json"),
-		path.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
@@ -334,9 +334,9 @@ func TestGen_GeneratedDoc(t *testing.T) {
 	assert.NoError(t, cmd.Run())
 
 	expectedFiles := []string{
-		path.Join(config.OutputDir, "docs.go"),
-		path.Join(config.OutputDir, "swagger.json"),
-		path.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
@@ -360,9 +360,9 @@ func TestGen_cgoImports(t *testing.T) {
 	assert.NoError(t, New().Build(config))
 
 	expectedFiles := []string{
-		path.Join(config.OutputDir, "docs.go"),
-		path.Join(config.OutputDir, "swagger.json"),
-		path.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {

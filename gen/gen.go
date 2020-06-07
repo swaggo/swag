@@ -8,7 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -95,10 +95,14 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
-	packageName := path.Base(config.OutputDir)
-	docFileName := path.Join(config.OutputDir, "docs.go")
-	jsonFileName := path.Join(config.OutputDir, "swagger.json")
-	yamlFileName := path.Join(config.OutputDir, "swagger.yaml")
+	absOutputDir, err := filepath.Abs(config.OutputDir)
+	if err != nil {
+		return err
+	}
+	packageName := filepath.Base(absOutputDir)
+	docFileName := filepath.Join(config.OutputDir, "docs.go")
+	jsonFileName := filepath.Join(config.OutputDir, "swagger.json")
+	yamlFileName := filepath.Join(config.OutputDir, "swagger.yaml")
 
 	docs, err := os.Create(docFileName)
 	if err != nil {
