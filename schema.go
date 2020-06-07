@@ -122,7 +122,7 @@ func RefSchema(refType string) *spec.Schema {
 	return spec.RefSchema("#/definitions/" + refType)
 }
 
-//RefSchema build a primitive schema
+//PrimitiveSchema build a primitive schema
 func PrimitiveSchema(refType string) *spec.Schema {
 	return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{refType}}}
 }

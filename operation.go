@@ -694,38 +694,23 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	props := map[string]spec.Schema{}
 	for _, field := range fields {
 		if matches := strings.SplitN(field, "=", 2); len(matches) == 2 {
-			if strings.HasPrefix(matches[1], "[]") {
-				itemSchema, err := operation.parseObjectSchema(matches[1][2:], astFile)
-				if err != nil {
-					return nil, err
-				}
-				props[matches[0]] = *spec.ArrayProperty(itemSchema)
-			} else {
-				schema, err := operation.parseObjectSchema(matches[1], astFile)
-				if err != nil {
-					return nil, err
-				}
-				props[matches[0]] = *schema
+			schema, err := operation.parseObjectSchema(matches[1], astFile)
+			if err != nil {
+				return nil, err
 			}
+			props[matches[0]] = *schema
 		}
 	}
 
 	if len(props) == 0 {
 		return schema, nil
 	}
-	return &spec.Schema{
+	return spec.ComposedSchema(*schema, spec.Schema{
 		SchemaProps: spec.SchemaProps{
-			AllOf: []spec.Schema{
-				*schema,
-				{
-					SchemaProps: spec.SchemaProps{
-						Type:       []string{"object"},
-						Properties: props,
-					},
-				},
-			},
+			Type:       []string{"object"},
+			Properties: props,
 		},
-	}, nil
+	}), nil
 }
 
 func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
