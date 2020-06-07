@@ -17,7 +17,7 @@ import (
 	"golang.org/x/tools/go/loader"
 )
 
-// Operation describes a single API operation on a filepath.
+// Operation describes a single API operation on a path.
 // For more information: https://github.com/swaggo/swag#api-operation
 type Operation struct {
 	HTTPMethod string
