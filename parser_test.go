@@ -3115,8 +3115,8 @@ func Fun()  {
 	_, ok = p.swagger.Definitions["Student"]
 	assert.True(t, ok)
 	path, ok := p.swagger.Paths.Paths["/test"]
-	assert.Equal(t, "#/definitions/Teacher", filepath.Get.Parameters[0].Schema.Ref.String())
-	ref = filepath.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
+	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
+	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }
 
