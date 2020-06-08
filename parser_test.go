@@ -6,7 +6,6 @@ import (
 	"go/token"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
@@ -2256,7 +2255,7 @@ func TestParseComposition(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2272,7 +2271,7 @@ func TestParseImportAliases(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2288,7 +2287,7 @@ func TestParseNested(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")

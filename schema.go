@@ -2,6 +2,7 @@ package swag
 
 import (
 	"fmt"
+	"github.com/go-openapi/spec"
 	"go/ast"
 	"strings"
 )
@@ -114,4 +115,14 @@ func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
 	}
 
 	return pkgName
+}
+
+//RefSchema build a reference schema
+func RefSchema(refType string) *spec.Schema {
+	return spec.RefSchema("#/definitions/" + refType)
+}
+
+//PrimitiveSchema build a primitive schema
+func PrimitiveSchema(refType string) *spec.Schema {
+	return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{refType}}}
 }
