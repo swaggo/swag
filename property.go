@@ -20,7 +20,7 @@ type propertyNewFunc func(schemeType string, crossPkg string) propertyName
 
 func newArrayProperty(schemeType string, crossPkg string) propertyName {
 	return propertyName{
-		SchemaType: "array",
+		SchemaType: ARRAY,
 		ArrayType:  schemeType,
 		CrossPkg:   crossPkg,
 	}
@@ -38,9 +38,9 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 	typeName = strings.ToUpper(typeName)
 	switch typeName {
 	case "TIME", "OBJECTID", "UUID":
-		return "string", nil
+		return STRING, nil
 	case "DECIMAL":
-		return "number", nil
+		return NUMBER, nil
 	}
 	return "", ErrFailedConvertPrimitiveType
 }
@@ -92,9 +92,9 @@ func getPropertyName(pkgName string, expr ast.Expr, parser *Parser) (propertyNam
 	case *ast.ArrayType:
 		return getArrayPropertyName(pkgName, tp.Elt, parser), nil
 	case *ast.MapType, *ast.StructType, *ast.InterfaceType:
-		return propertyName{SchemaType: "object", ArrayType: "object"}, nil
+		return propertyName{SchemaType: OBJECT, ArrayType: OBJECT}, nil
 	case *ast.FuncType:
-		return propertyName{SchemaType: "func", ArrayType: ""}, nil
+		return propertyName{SchemaType: FUNC, ArrayType: ""}, nil
 	case *ast.Ident:
 		name := tp.Name
 		// check if it is a custom type
@@ -112,9 +112,9 @@ func getPropertyName(pkgName string, expr ast.Expr, parser *Parser) (propertyNam
 func getArrayPropertyName(pkgName string, astTypeArrayElt ast.Expr, parser *Parser) propertyName {
 	switch elt := astTypeArrayElt.(type) {
 	case *ast.StructType, *ast.MapType, *ast.InterfaceType:
-		return propertyName{SchemaType: "array", ArrayType: "object"}
+		return propertyName{SchemaType: ARRAY, ArrayType: OBJECT}
 	case *ast.ArrayType:
-		return propertyName{SchemaType: "array", ArrayType: "array"}
+		return propertyName{SchemaType: ARRAY, ArrayType: ARRAY}
 	case *ast.StarExpr:
 		return getArrayPropertyName(pkgName, elt.X, parser)
 	case *ast.SelectorExpr:
@@ -126,7 +126,7 @@ func getArrayPropertyName(pkgName string, astTypeArrayElt ast.Expr, parser *Pars
 		} else {
 			name = TransToValidSchemeType(elt.Name)
 		}
-		return propertyName{SchemaType: "array", ArrayType: name}
+		return propertyName{SchemaType: ARRAY, ArrayType: name}
 	default:
 		name := fmt.Sprintf("%s", astTypeArrayElt)
 		if actualPrimitiveType, isCustomType := parser.CustomPrimitiveTypes[fullTypeName(pkgName, name)]; isCustomType {
@@ -134,6 +134,6 @@ func getArrayPropertyName(pkgName string, astTypeArrayElt ast.Expr, parser *Pars
 		} else {
 			name = TransToValidSchemeType(name)
 		}
-		return propertyName{SchemaType: "array", ArrayType: name}
+		return propertyName{SchemaType: ARRAY, ArrayType: name}
 	}
 }

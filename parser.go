@@ -747,7 +747,7 @@ func (parser *Parser) parseTypeExpr(pkgName, typeName string, typeExpr ast.Expr)
 		Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}
 
-	return PrimitiveSchema("object"), nil
+	return PrimitiveSchema(OBJECT), nil
 }
 
 func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (*spec.Schema, error) {
@@ -776,7 +776,7 @@ func (parser *Parser) parseStruct(pkgName string, fields *ast.FieldList) (*spec.
 
 	return &spec.Schema{
 		SchemaProps: spec.SchemaProps{
-			Type:       []string{"object"},
+			Type:       []string{OBJECT},
 			Properties: properties,
 			Required:   required,
 		}}, nil
@@ -868,11 +868,11 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			}
 
 			switch schemaType {
-			case "object":
+			case OBJECT:
 				for k, v := range schema.SchemaProps.Properties {
 					properties[k] = v
 				}
-			case "array":
+			case ARRAY:
 				properties[typeName] = *schema
 			default:
 				Printf("Can't extract properties from a schema of type '%s'", schemaType)
@@ -929,7 +929,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		}
 		properties[structField.name] = spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type:        []string{"object"}, // to avoid swagger validation error
+				Type:        []string{OBJECT}, // to avoid swagger validation error
 				Description: structField.desc,
 				Required:    required,
 				Ref: spec.Ref{
@@ -940,7 +940,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 				ReadOnly: structField.readOnly,
 			},
 		}
-	} else if structField.schemaType == "array" { // array field type
+	} else if structField.schemaType == ARRAY { // array field type
 		// if defined -- ref it
 		if typeSpec, ok := parser.TypeDefinitions[pkgName][structField.arrayType]; ok { // user type in array
 			parser.ParseDefinition(pkgName, structField.arrayType,
@@ -954,7 +954,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			schema.Required = required
 			schema.ReadOnly = structField.readOnly
 			properties[structField.name] = *schema
-		} else if structField.arrayType == "object" {
+		} else if structField.arrayType == OBJECT {
 			// Anonymous struct
 			if astTypeArray, ok := field.Type.(*ast.ArrayType); ok { // if array
 				props := make(map[string]spec.Schema)
@@ -976,7 +976,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:       []string{"object"},
+										Type:       []string{OBJECT},
 										Properties: props,
 									},
 								},
@@ -994,7 +994,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					properties[structField.name] = *schema
 				}
 			}
-		} else if structField.arrayType == "array" {
+		} else if structField.arrayType == ARRAY {
 			if astTypeArray, ok := field.Type.(*ast.ArrayType); ok {
 				schema, _ := parser.parseTypeExpr(pkgName, "", astTypeArray.Elt)
 				schema = spec.ArrayProperty(schema)
@@ -1073,7 +1073,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 					return properties, nil, err
 				}
 				for k, v := range p {
-					if v.SchemaProps.Type[0] != "object" {
+					if v.SchemaProps.Type[0] != OBJECT {
 						nestRequired = append(nestRequired, v.SchemaProps.Required...)
 						v.SchemaProps.Required = make([]string, 0)
 					}
@@ -1123,13 +1123,13 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 			return nil, err
 		}
 	} else {
-		if err := CheckSchemaType("array"); err != nil {
+		if err := CheckSchemaType(ARRAY); err != nil {
 			return nil, err
 		}
 	}
 
 	// Skip func fields.
-	if prop.SchemaType == "func" {
+	if prop.SchemaType == FUNC {
 		return &structField{name: ""}, nil
 	}
 
@@ -1203,12 +1203,12 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 			newSchemaType := parts[0]
 			newArrayType := structField.arrayType
 			if len(parts) >= 2 {
-				if newSchemaType == "array" {
+				if newSchemaType == ARRAY {
 					newArrayType = parts[1]
 					if err := CheckSchemaType(newArrayType); err != nil {
 						return nil, err
 					}
-				} else if newSchemaType == "primitive" {
+				} else if newSchemaType == PRIMITIVE {
 					newSchemaType = parts[1]
 					newArrayType = parts[1]
 				}
@@ -1266,7 +1266,7 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 	}
 	if enumsTag := structTag.Get("enums"); enumsTag != "" {
 		enumType := structField.schemaType
-		if structField.schemaType == "array" {
+		if structField.schemaType == ARRAY {
 			enumType = structField.arrayType
 		}
 
@@ -1299,7 +1299,7 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 		}
 		structField.minimum = minimum
 	}
-	if structField.schemaType == "string" || structField.arrayType == "string" {
+	if structField.schemaType == STRING || structField.arrayType == STRING {
 		maxLength, err := getIntTag(structTag, "maxLength")
 		if err != nil {
 			return nil, err
@@ -1322,14 +1322,14 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 		// @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
 		defaultValues := map[string]string{
 			// Zero Values as string
-			"string":  "",
-			"integer": "0",
-			"boolean": "false",
-			"number":  "0",
+			STRING:  "",
+			INTEGER: "0",
+			BOOLEAN: "false",
+			NUMBER:  "0",
 		}
 
 		if defaultValue, ok := defaultValues[structField.schemaType]; ok {
-			structField.schemaType = "string"
+			structField.schemaType = STRING
 
 			if structField.exampleValue == nil {
 				// if exampleValue is not defined by the user,
@@ -1411,27 +1411,27 @@ func toLowerCamelCase(in string) string {
 // defineTypeOfExample example value define the type (object and array unsupported)
 func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{}, error) {
 	switch schemaType {
-	case "string":
+	case STRING:
 		return exampleValue, nil
-	case "number":
+	case NUMBER:
 		v, err := strconv.ParseFloat(exampleValue, 64)
 		if err != nil {
 			return nil, fmt.Errorf("example value %s can't convert to %s err: %s", exampleValue, schemaType, err)
 		}
 		return v, nil
-	case "integer":
+	case INTEGER:
 		v, err := strconv.Atoi(exampleValue)
 		if err != nil {
 			return nil, fmt.Errorf("example value %s can't convert to %s err: %s", exampleValue, schemaType, err)
 		}
 		return v, nil
-	case "boolean":
+	case BOOLEAN:
 		v, err := strconv.ParseBool(exampleValue)
 		if err != nil {
 			return nil, fmt.Errorf("example value %s can't convert to %s err: %s", exampleValue, schemaType, err)
 		}
 		return v, nil
-	case "array":
+	case ARRAY:
 		values := strings.Split(exampleValue, ",")
 		result := make([]interface{}, 0)
 		for _, value := range values {
