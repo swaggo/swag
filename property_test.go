@@ -21,8 +21,8 @@ func TestGetPropertyNameSelectorExpr(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 	propertyName, err := getPropertyName("test", input, New())
@@ -44,8 +44,8 @@ func TestGetPropertyNameIdentObjectId(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 
@@ -68,8 +68,8 @@ func TestGetPropertyNameIdentUUID(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 
@@ -92,8 +92,8 @@ func TestGetPropertyNameIdentDecimal(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"number",
-		"string",
+		NUMBER,
+		STRING,
 		"",
 	}
 	propertyName, err := getPropertyName("test", input, New())
@@ -115,8 +115,8 @@ func TestGetPropertyNameIdentTime(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 
@@ -135,8 +135,8 @@ func TestGetPropertyNameStarExprIdent(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 
@@ -163,8 +163,8 @@ func TestGetPropertyNameStarExprMap(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"object",
-		"object",
+		OBJECT,
+		OBJECT,
 		"",
 	}
 
@@ -186,8 +186,8 @@ func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"array",
-		"string",
+		ARRAY,
+		STRING,
 		"",
 	}
 	propertyName, err := getPropertyName("test", input, New())
@@ -215,8 +215,8 @@ func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"array",
-		"string",
+		ARRAY,
+		STRING,
 		"",
 	}
 
@@ -232,8 +232,8 @@ func TestGetPropertyNameArrayStructType(t *testing.T) {
 		Elt:    &ast.StructType{},
 	}
 	expected := propertyName{
-		"array",
-		"object",
+		ARRAY,
+		OBJECT,
 		"",
 	}
 
@@ -252,8 +252,8 @@ func TestGetPropertyNameMap(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"object",
-		"object",
+		OBJECT,
+		OBJECT,
 		"",
 	}
 
@@ -265,8 +265,8 @@ func TestGetPropertyNameMap(t *testing.T) {
 func TestGetPropertyNameStruct(t *testing.T) {
 	input := &ast.StructType{}
 	expected := propertyName{
-		"object",
-		"object",
+		OBJECT,
+		OBJECT,
 		"",
 	}
 
@@ -278,8 +278,8 @@ func TestGetPropertyNameStruct(t *testing.T) {
 func TestGetPropertyNameInterface(t *testing.T) {
 	input := &ast.InterfaceType{}
 	expected := propertyName{
-		"object",
-		"object",
+		OBJECT,
+		OBJECT,
 		"",
 	}
 
