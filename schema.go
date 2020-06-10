@@ -8,21 +8,21 @@ import (
 )
 
 const (
-	//ARRAY
+	//ARRAY array
 	ARRAY = "array"
-	//OBJECT
+	//OBJECT object
 	OBJECT = "object"
-	//PRIMITIVE
+	//PRIMITIVE primitive
 	PRIMITIVE = "primitive"
-	//BOOLEAN
+	//BOOLEAN boolean
 	BOOLEAN = "boolean"
-	//INTEGER
+	//INTEGER integer
 	INTEGER = "integer"
-	//NUMBER
+	//NUMBER number
 	NUMBER = "number"
-	//STRING
+	//STRING string
 	STRING = "string"
-	//FUNC
+	//FUNC func
 	FUNC = "func"
 )
 
