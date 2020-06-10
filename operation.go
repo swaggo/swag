@@ -146,14 +146,14 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	refType := TransToValidSchemeType(matches[3])
 
 	// Detect refType
-	objectType := "object"
+	objectType := OBJECT
 	if strings.HasPrefix(refType, "[]") {
-		objectType = "array"
+		objectType = ARRAY
 		refType = strings.TrimPrefix(refType, "[]")
 		refType = TransToValidSchemeType(refType)
 	} else if IsPrimitiveType(refType) ||
 		paramType == "formData" && refType == "file" {
-		objectType = "primitive"
+		objectType = PRIMITIVE
 	}
 
 	requiredText := strings.ToLower(matches[4])
@@ -165,16 +165,16 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	switch paramType {
 	case "path", "header", "formData":
 		switch objectType {
-		case "array", "object":
+		case ARRAY, OBJECT:
 			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
 		}
 	case "query":
 		switch objectType {
-		case "array":
+		case ARRAY:
 			if !IsPrimitiveType(refType) {
 				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
 			}
-			param.SimpleSchema.Type = "array"
+			param.SimpleSchema.Type = objectType
 			if operation.parser != nil {
 				param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
 			}
@@ -183,7 +183,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					Type: refType,
 				},
 			}
-		case "object":
+		case OBJECT:
 			refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
 			if err != nil {
 				return err
@@ -218,7 +218,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				if len(prop.Type) == 0 {
 					continue
 				}
-				if prop.Type[0] == "array" &&
+				if prop.Type[0] == ARRAY &&
 					prop.Items.Schema != nil &&
 					len(prop.Items.Schema.Type) > 0 &&
 					IsSimplePrimitiveType(prop.Items.Schema.Type[0]) {
@@ -419,7 +419,7 @@ func setStringParam(name, schemaType, attr, commentLine string) (int64, error) {
 }
 
 func setNumberParam(name, schemaType, attr, commentLine string) (float64, error) {
-	if schemaType != "integer" && schemaType != "number" {
+	if schemaType != INTEGER && schemaType != NUMBER {
 		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
 	n, err := strconv.ParseFloat(attr, 64)
@@ -443,7 +443,7 @@ func setEnumParam(attr, schemaType string, param *spec.Parameter) error {
 }
 
 func setCollectionFormatParam(name, schemaType, attr, commentLine string) (string, error) {
-	if schemaType != "array" {
+	if schemaType != ARRAY {
 		return "", fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
 	}
 	return TransToValidCollectionFormat(attr), nil
@@ -453,21 +453,21 @@ func setCollectionFormatParam(name, schemaType, attr, commentLine string) (strin
 func defineType(schemaType string, value string) (interface{}, error) {
 	schemaType = TransToValidSchemeType(schemaType)
 	switch schemaType {
-	case "string":
+	case STRING:
 		return value, nil
-	case "number":
+	case NUMBER:
 		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
 		return v, nil
-	case "integer":
+	case INTEGER:
 		v, err := strconv.Atoi(value)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
 		return v, nil
-	case "boolean":
+	case BOOLEAN:
 		v, err := strconv.ParseBool(value)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
@@ -622,7 +622,7 @@ var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
 	case refType == "interface{}":
-		return PrimitiveSchema("object"), nil
+		return PrimitiveSchema(OBJECT), nil
 	case IsGolangPrimitiveType(refType):
 		refType = TransToValidSchemeType(refType)
 		return PrimitiveSchema(refType), nil
@@ -707,7 +707,7 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	}
 	return spec.ComposedSchema(*schema, spec.Schema{
 		SchemaProps: spec.SchemaProps{
-			Type:       []string{"object"},
+			Type:       []string{OBJECT},
 			Properties: props,
 		},
 	}), nil
@@ -715,18 +715,20 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 
 func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch schemaType {
-	case "object":
+	case OBJECT:
 		if !strings.HasPrefix(refType, "[]") {
 			return operation.parseObjectSchema(refType, astFile)
 		}
 		refType = refType[2:]
 		fallthrough
-	case "array":
+	case ARRAY:
 		schema, err := operation.parseObjectSchema(refType, astFile)
 		if err != nil {
 			return nil, err
 		}
 		return spec.ArrayProperty(schema), nil
+	case PRIMITIVE:
+		return PrimitiveSchema(refType), nil
 	default:
 		return PrimitiveSchema(schemaType), nil
 	}
