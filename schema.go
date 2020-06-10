@@ -8,14 +8,22 @@ import (
 )
 
 const (
-	ARRAY     = "array"
-	OBJECT    = "object"
+	//ARRAY
+	ARRAY = "array"
+	//OBJECT
+	OBJECT = "object"
+	//PRIMITIVE
 	PRIMITIVE = "primitive"
-	BOOLEAN   = "boolean"
-	INTEGER   = "integer"
-	NUMBER    = "number"
-	STRING    = "string"
-	FUNC      = "func"
+	//BOOLEAN
+	BOOLEAN = "boolean"
+	//INTEGER
+	INTEGER = "integer"
+	//NUMBER
+	NUMBER = "number"
+	//STRING
+	STRING = "string"
+	//FUNC
+	FUNC = "func"
 )
 
 // CheckSchemaType checks if typeName is not a name of primitive type

@@ -21,8 +21,8 @@ func TestGetPropertyNameSelectorExpr(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 	propertyName, err := getPropertyName("test", input, New())
@@ -44,8 +44,8 @@ func TestGetPropertyNameIdentObjectId(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 
@@ -68,8 +68,8 @@ func TestGetPropertyNameIdentUUID(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 
@@ -115,8 +115,8 @@ func TestGetPropertyNameIdentTime(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 
@@ -135,8 +135,8 @@ func TestGetPropertyNameStarExprIdent(t *testing.T) {
 		},
 	}
 	expected := propertyName{
-		"string",
-		"string",
+		STRING,
+		STRING,
 		"",
 	}
 
@@ -187,7 +187,7 @@ func TestGetPropertyNameArrayStarExpr(t *testing.T) {
 	}
 	expected := propertyName{
 		ARRAY,
-		"string",
+		STRING,
 		"",
 	}
 	propertyName, err := getPropertyName("test", input, New())
@@ -216,7 +216,7 @@ func TestGetPropertyNameArrayStarExprSelector(t *testing.T) {
 	}
 	expected := propertyName{
 		ARRAY,
-		"string",
+		STRING,
 		"",
 	}
 

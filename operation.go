@@ -408,7 +408,7 @@ func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 }
 
 func setStringParam(name, schemaType, attr, commentLine string) (int64, error) {
-	if schemaType != "string" {
+	if schemaType != STRING {
 		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
 	n, err := strconv.ParseInt(attr, 10, 64)
