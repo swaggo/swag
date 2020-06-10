@@ -2294,6 +2294,15 @@ func TestParseNested(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseDuplicated(t *testing.T) {
+	searchDir := "testdata/duplicated"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.Errorf(t, err, "duplicated @id declarations successfully found")
+}
+
 func TestParser_ParseStructArrayObject(t *testing.T) {
 	src := `
 package api
