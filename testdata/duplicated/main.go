@@ -17,6 +17,6 @@ import (
 func main() {
 	r := gin.New()
 	r.GET("/testapi/get-foo", api.GetFoo)
-	r.GET("/testapi/get-bar", api.GetBar)
+	r.POST("/testapi/post-bar", api.PostBar)
 	r.Run()
 }
