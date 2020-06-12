@@ -75,9 +75,6 @@ type Parser struct {
 
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]bool
-
-	// operationsIds contains all operationId annotations to check it's unique
-	operationsIds map[string]string
 }
 
 // New creates a new Parser with default properties.
@@ -103,7 +100,6 @@ func New(options ...func(*Parser)) *Parser {
 		CustomPrimitiveTypes: make(map[string]string),
 		registerTypes:        make(map[string]*ast.TypeSpec),
 		excludes:             make(map[string]bool),
-		operationsIds:        make(map[string]string),
 	}
 
 	for _, option := range options {
@@ -1509,63 +1505,65 @@ func (parser *Parser) parseFile(path string) error {
 }
 
 func (parser *Parser) checkOperationIDUniqueness() error {
+	// operationsIds contains all operationId annotations to check it's unique
+	operationsIds := make(map[string]string)
+	saveOperationID := func(operationID, currentPath string) error {
+		if operationID == "" {
+			return nil
+		}
+		if previousPath, ok := operationsIds[operationID]; ok {
+			return fmt.Errorf(
+				"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
+				operationID, currentPath, previousPath)
+		}
+		operationsIds[operationID] = currentPath
+		return nil
+	}
+
 	for path, itm := range parser.swagger.Paths.Paths {
 		if itm.Get != nil {
 			currentPath := fmt.Sprintf("%s %s", "GET", path)
-			if err := parser.saveOperationID(itm.Get.ID, currentPath); err != nil {
+			if err := saveOperationID(itm.Get.ID, currentPath); err != nil {
 				return err
 			}
 		}
 		if itm.Put != nil {
 			currentPath := fmt.Sprintf("%s %s", "PUT", path)
-			if err := parser.saveOperationID(itm.Put.ID, currentPath); err != nil {
+			if err := saveOperationID(itm.Put.ID, currentPath); err != nil {
 				return err
 			}
 		}
 		if itm.Post != nil {
 			currentPath := fmt.Sprintf("%s %s", "POST", path)
-			if err := parser.saveOperationID(itm.Post.ID, currentPath); err != nil {
+			if err := saveOperationID(itm.Post.ID, currentPath); err != nil {
 				return err
 			}
 		}
 		if itm.Delete != nil {
 			currentPath := fmt.Sprintf("%s %s", "DELETE", path)
-			if err := parser.saveOperationID(itm.Delete.ID, currentPath); err != nil {
+			if err := saveOperationID(itm.Delete.ID, currentPath); err != nil {
 				return err
 			}
 		}
 		if itm.Options != nil {
 			currentPath := fmt.Sprintf("%s %s", "OPTIONS", path)
-			if err := parser.saveOperationID(itm.Options.ID, currentPath); err != nil {
+			if err := saveOperationID(itm.Options.ID, currentPath); err != nil {
 				return err
 			}
 		}
 		if itm.Head != nil {
 			currentPath := fmt.Sprintf("%s %s", "HEAD", path)
-			if err := parser.saveOperationID(itm.Head.ID, currentPath); err != nil {
+			if err := saveOperationID(itm.Head.ID, currentPath); err != nil {
 				return err
 			}
 		}
 		if itm.Patch != nil {
 			currentPath := fmt.Sprintf("%s %s", "PATCH", path)
-			if err := parser.saveOperationID(itm.Patch.ID, currentPath); err != nil {
+			if err := saveOperationID(itm.Patch.ID, currentPath); err != nil {
 				return err
 			}
 		}
 	}
-	return nil
-}
-
-func (parser *Parser) saveOperationID(operationID, currentPath string) error {
-	if operationID == "" {
-		return nil
-	}
-	if previousPath, ok := parser.operationsIds[operationID]; ok {
-		return fmt.Errorf(
-			"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
-			operationID, currentPath, previousPath)
-	}
-	parser.operationsIds[operationID] = currentPath
 	return nil
 }
 
