@@ -188,7 +188,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				},
 			}
 		case OBJECT:
-			schema, err := operation.parser.getTypeSchema(refType, astFile, true)
+			schema, err := operation.parser.getTypeSchema(refType, astFile, false)
 			if err != nil {
 				return err
 			}
