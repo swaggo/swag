@@ -1,7 +1,6 @@
 package swag
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"strings"
@@ -12,6 +11,14 @@ type PackagesDefinitions struct {
 	files             map[*ast.File]*AstFileInfo
 	packages          map[string]*PackageDefinitions
 	uniqueDefinitions map[string]*TypeSpecDef
+}
+
+func NewPackagesDefinitions() *PackagesDefinitions {
+	return &PackagesDefinitions{
+		files:             make(map[*ast.File]*AstFileInfo),
+		packages:          make(map[string]*PackageDefinitions),
+		uniqueDefinitions: make(map[string]*TypeSpecDef),
+	}
 }
 
 //CollectAstFile collect ast.file
@@ -85,9 +92,10 @@ func (pkgs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, error) 
 						fullName := typeSpecDef.FullName()
 						anotherTypeDef, ok := pkgs.uniqueDefinitions[fullName]
 						if ok {
-							delete(pkgs.uniqueDefinitions, fullName)
 							if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
-								return nil, fmt.Errorf("more than one models have the same name %s and in the same package %s", fullName, typeSpecDef.PkgPath)
+								continue
+							} else {
+								delete(pkgs.uniqueDefinitions, fullName)
 							}
 						} else {
 							pkgs.uniqueDefinitions[fullName] = typeSpecDef
@@ -172,17 +180,22 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *TypeSpecDef {
 	if IsGolangPrimitiveType(typeName) {
 		return nil
+	} else if file == nil { // for test
+		return pkgs.uniqueDefinitions[typeName]
 	}
 
 	if strings.ContainsRune(typeName, '.') {
 		parts := strings.Split(typeName, ".")
 
 		isAliasPkgName := func(file *ast.File, pkgName string) bool {
-			for _, pkg := range file.Imports {
-				if pkg.Name != nil && pkg.Name.Name == pkgName {
-					return true
+			if file != nil && file.Imports != nil {
+				for _, pkg := range file.Imports {
+					if pkg.Name != nil && pkg.Name.Name == pkgName {
+						return true
+					}
 				}
 			}
+
 			return false
 		}
 

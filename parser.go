@@ -51,7 +51,7 @@ type Parser struct {
 	swagger *spec.Swagger
 
 	//packages store entities of APIs, definitions, file, package path etc.  and their relations
-	packages PackagesDefinitions
+	packages *PackagesDefinitions
 
 	//ParsedSchemas store schemas which have been parsed from ast.TypeSpec
 	ParsedSchemas map[*TypeSpecDef]*Schema
@@ -99,6 +99,7 @@ func New(options ...func(*Parser)) *Parser {
 				Definitions: make(map[string]spec.Schema),
 			},
 		},
+		packages:      NewPackagesDefinitions(),
 		ParsedSchemas: make(map[*TypeSpecDef]*Schema),
 		OutputSchemas: make(map[*TypeSpecDef]*Schema),
 		excludes:      make(map[string]bool),
@@ -135,7 +136,10 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	Printf("Generate general API Info, search dir:%s", searchDir)
 
-	packageDir, _ := getPkgName(searchDir)
+	packageDir, err := getPkgName(searchDir)
+	if err != nil {
+		Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
+	}
 
 	if err := parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
 		return err
@@ -488,8 +492,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 		switch astDeclaration := astDescription.(type) {
 		case *ast.FuncDecl:
 			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-				operation := NewOperation() //for per 'function' comment, create a new 'Operation' object
-				operation.parser = parser
+				operation := NewOperation(parser) //for per 'function' comment, create a new 'Operation' object
 				for _, comment := range astDeclaration.Doc.List {
 					if err := operation.ParseComment(comment.Text, astFile); err != nil {
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
@@ -527,14 +530,17 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 }
 
 func convertFromSpecificToPrimitive(typeName string) (string, error) {
-	typeName = strings.ToUpper(typeName)
-	switch typeName {
+	name := typeName
+	if strings.ContainsRune(name, '.') {
+		name = strings.Split(name, ".")[1]
+	}
+	switch strings.ToUpper(name) {
 	case "TIME", "OBJECTID", "UUID":
 		return STRING, nil
 	case "DECIMAL":
 		return NUMBER, nil
 	}
-	return "", ErrFailedConvertPrimitiveType
+	return typeName, ErrFailedConvertPrimitiveType
 }
 
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
@@ -1279,4 +1285,21 @@ func (parser *Parser) Skip(path string, f os.FileInfo) error {
 // GetSwagger returns *spec.Swagger which is the root document object for the API specification.
 func (parser *Parser) GetSwagger() *spec.Swagger {
 	return parser.swagger
+}
+
+//addTestType just for tests
+func (parser *Parser) addTestType(typename string) {
+	if parser.ParsedSchemas == nil {
+		parser.ParsedSchemas = make(map[*TypeSpecDef]*Schema)
+	}
+	if parser.packages.uniqueDefinitions == nil {
+		parser.packages.uniqueDefinitions = make(map[string]*TypeSpecDef)
+	}
+	typeDef := &TypeSpecDef{}
+	parser.packages.uniqueDefinitions[typename] = typeDef
+	parser.ParsedSchemas[typeDef] = &Schema{
+		PkgPath: "",
+		Name:    typename,
+		Schema:  PrimitiveSchema(OBJECT),
+	}
 }

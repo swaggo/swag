@@ -46,8 +46,12 @@ var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
 
 // NewOperation creates a new Operation with default properties.
 // map[int]Response
-func NewOperation() *Operation {
+func NewOperation(parser *Parser) *Operation {
+	if parser == nil {
+		parser = New()
+	}
 	return &Operation{
+		parser:     parser,
 		HTTPMethod: "get",
 		Operation: spec.Operation{
 			OperationProps: spec.OperationProps{},
