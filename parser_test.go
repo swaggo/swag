@@ -1712,7 +1712,6 @@ func Test(){
          },
          "test2": {
             "description": "test2",
-            "type": "object",
             "$ref": "#/definitions/api.Child"
          }
       }
@@ -1723,7 +1722,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("", "", f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -1815,7 +1814,6 @@ func Test(){
          },
          "test6": {
             "description": "test6",
-            "type": "object",
             "$ref": "#/definitions/api.MyMapType"
          },
          "test7": {
@@ -1849,7 +1847,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("", "", f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
 
 	p.packages.ParseTypes()
 
