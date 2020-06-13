@@ -1478,21 +1478,6 @@ func TestParseDeprecationDescription(t *testing.T) {
 	}
 }
 
-func TestRegisterSchemaType(t *testing.T) {
-	operation := NewOperation()
-
-	fset := token.NewFileSet()
-	astFile, err := goparser.ParseFile(fset, "main.go", `package main
-	import "timer"
-`, goparser.ParseComments)
-
-	assert.NoError(t, err)
-
-	operation.parser = New()
-	_, _, err = operation.registerSchemaType("timer.Location", astFile)
-	assert.Error(t, err)
-}
-
 func TestParseExtentions(t *testing.T) {
 	// Fail if there are no args for attributes.
 	{
