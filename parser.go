@@ -564,9 +564,8 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		if err == ErrRecursiveParseStruct {
 			if ref {
 				return parser.getRefTypeSchema(typeSpecDef, schema), nil
-			} else {
-				return nil, err
 			}
+
 		} else if err != nil {
 			return nil, err
 		}
@@ -774,19 +773,96 @@ func (sf *structField) toStandardSchema() *spec.Schema {
 	}
 }
 
-func getFieldTypeName(field ast.Expr) (string, error) {
+func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {
+	if field.Names == nil {
+		typeName, err := getFieldType(field.Type)
+		if err != nil {
+			return nil, nil, err
+		}
+		schema, err := parser.getTypeSchema(typeName, file, false)
+		if err != nil {
+			return nil, nil, err
+		}
+		if len(schema.Type) > 0 && schema.Type[0] == "object" && len(schema.Properties) > 0 {
+			properties := map[string]spec.Schema{}
+			for k, v := range schema.Properties {
+				properties[k] = v
+			}
+			return properties, schema.SchemaProps.Required, nil
+		}
+		//for alias type of non-struct types ,such as array,map, etc. ignore field tag.
+		return map[string]spec.Schema{typeName: *schema}, nil, nil
+	}
+
+	fieldName, schema, err := parser.getFieldName(field)
+	if err != nil {
+		return nil, nil, err
+	} else if fieldName == "" {
+		return nil, nil, nil
+	} else if schema == nil {
+		typeName, err := getFieldType(field.Type)
+		if err == nil {
+			//named type
+			schema, err = parser.getTypeSchema(typeName, file, true)
+		} else {
+			//unnamed type
+			schema, err = parser.parseTypeExpr(file, field.Type, false)
+		}
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	types := parser.GetSchemaTypePath(schema, 2)
+	if len(types) == 0 {
+		return nil, nil, fmt.Errorf("invalid type for field: %s", field.Names[0])
+	}
+
+	structField, err := parser.parseFieldTag(field, types)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if structField.schemaType == "string" && types[0] != structField.schemaType {
+		schema = PrimitiveSchema(structField.schemaType)
+	}
+
+	schema.Description = structField.desc
+	schema.ReadOnly = structField.readOnly
+	schema.Default = structField.defaultValue
+	schema.Example = structField.exampleValue
+	schema.Format = structField.formatType
+	schema.Extensions = structField.extensions
+	eleSchema := schema
+	if structField.schemaType == "array" {
+		eleSchema = schema.Items.Schema
+	}
+	eleSchema.Maximum = structField.maximum
+	eleSchema.Minimum = structField.minimum
+	eleSchema.MaxLength = structField.maxLength
+	eleSchema.MinLength = structField.minLength
+	eleSchema.Enum = structField.enums
+
+	var tagRequired []string
+	if structField.isRequired {
+		tagRequired = append(tagRequired, fieldName)
+	}
+	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil
+}
+
+func getFieldType(field ast.Expr) (string, error) {
 	switch ftype := field.(type) {
 	case *ast.Ident:
 		return ftype.Name, nil
 	case *ast.SelectorExpr:
-		packageName, err := getFieldTypeName(ftype.X)
+		packageName, err := getFieldType(ftype.X)
 		if err != nil {
 			return "", err
 		}
 		return fullTypeName(packageName, ftype.Sel.Name), nil
 
 	case *ast.StarExpr:
-		fullName, err := getFieldTypeName(ftype.X)
+		fullName, err := getFieldType(ftype.X)
 		if err != nil {
 			return "", err
 		}
@@ -836,36 +912,6 @@ func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.
 		}
 	}
 	return name, schema, err
-}
-
-// GetSchemaTypePath get path of schema type
-func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string {
-	if schema == nil || depth == 0 {
-		return nil
-	}
-	if name := schema.Ref.String(); name != "" {
-		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
-			name = name[pos+1:]
-			if schema, ok := parser.swagger.Definitions[name]; ok {
-				return parser.GetSchemaTypePath(&schema, depth)
-			}
-		}
-	} else if len(schema.Type) > 0 {
-		if schema.Type[0] == "array" {
-			depth--
-			s := []string{schema.Type[0]}
-			return append(s, parser.GetSchemaTypePath(schema.Items.Schema, depth)...)
-		} else if schema.Type[0] == "object" {
-			if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
-				// for map
-				depth--
-				s := []string{schema.Type[0]}
-				return append(s, parser.GetSchemaTypePath(schema.AdditionalProperties.Schema, depth)...)
-			}
-		}
-		return []string{schema.Type[0]}
-	}
-	return nil
 }
 
 func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structField, error) {
@@ -938,7 +984,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 	}
 	if enumsTag := structTag.Get("enums"); enumsTag != "" {
 		enumType := structField.schemaType
-		if structField.schemaType == "array" {
+		if structField.schemaType == ARRAY {
 			enumType = structField.arrayType
 		}
 
@@ -971,7 +1017,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		}
 		structField.minimum = minimum
 	}
-	if structField.schemaType == "string" || structField.arrayType == "string" {
+	if structField.schemaType == STRING || structField.arrayType == STRING {
 		maxLength, err := getIntTag(structTag, "maxLength")
 		if err != nil {
 			return nil, err
@@ -994,14 +1040,14 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		// @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
 		defaultValues := map[string]string{
 			// Zero Values as string
-			"string":  "",
-			"integer": "0",
-			"boolean": "false",
-			"number":  "0",
+			STRING:  "",
+			INTEGER: "0",
+			BOOLEAN: "false",
+			NUMBER:  "0",
 		}
 
 		if defaultValue, ok := defaultValues[structField.schemaType]; ok {
-			structField.schemaType = "string"
+			structField.schemaType = STRING
 
 			if structField.exampleValue == nil {
 				// if exampleValue is not defined by the user,
@@ -1015,81 +1061,34 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 	return structField, nil
 }
 
-func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {
-	if field.Names == nil {
-		typeName, err := getFieldTypeName(field.Type)
-		if err != nil {
-			return nil, nil, err
-		}
-		schema, err := parser.getTypeSchema(typeName, file, false)
-		if err != nil {
-			return nil, nil, err
-		}
-		if len(schema.Type) > 0 && schema.Type[0] == "object" && len(schema.Properties) > 0 {
-			properties := map[string]spec.Schema{}
-			for k, v := range schema.Properties {
-				properties[k] = v
+// GetSchemaTypePath get path of schema type
+func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string {
+	if schema == nil || depth == 0 {
+		return nil
+	}
+	if name := schema.Ref.String(); name != "" {
+		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
+			name = name[pos+1:]
+			if schema, ok := parser.swagger.Definitions[name]; ok {
+				return parser.GetSchemaTypePath(&schema, depth)
 			}
-			return properties, schema.SchemaProps.Required, nil
 		}
-		//for alias type of non-struct types ,such as array,map, etc. ignore field tag.
-		return map[string]spec.Schema{typeName: *schema}, nil, nil
-	}
-
-	fieldName, schema, err := parser.getFieldName(field)
-	if err != nil {
-		return nil, nil, err
-	} else if fieldName == "" {
-		return nil, nil, nil
-	} else if schema == nil {
-		typeName, err := getFieldTypeName(field.Type)
-		if err == nil {
-			//named type
-			schema, err = parser.getTypeSchema(typeName, file, true)
-		} else {
-			//unnamed type
-			schema, err = parser.parseTypeExpr(file, field.Type, false)
+	} else if len(schema.Type) > 0 {
+		if schema.Type[0] == "array" {
+			depth--
+			s := []string{schema.Type[0]}
+			return append(s, parser.GetSchemaTypePath(schema.Items.Schema, depth)...)
+		} else if schema.Type[0] == "object" {
+			if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
+				// for map
+				depth--
+				s := []string{schema.Type[0]}
+				return append(s, parser.GetSchemaTypePath(schema.AdditionalProperties.Schema, depth)...)
+			}
 		}
-		if err != nil {
-			return nil, nil, err
-		}
+		return []string{schema.Type[0]}
 	}
-
-	types := parser.GetSchemaTypePath(schema, 2)
-	if len(types) == 0 {
-		return nil, nil, fmt.Errorf("invalid type for field: %s", field.Names[0])
-	}
-
-	structField, err := parser.parseFieldTag(field, types)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if structField.schemaType == "string" && types[0] != structField.schemaType {
-		schema = PrimitiveSchema(structField.schemaType)
-	}
-
-	schema.Description = structField.desc
-	schema.ReadOnly = structField.readOnly
-	schema.Default = structField.defaultValue
-	schema.Example = structField.exampleValue
-	schema.Format = structField.formatType
-	schema.Extensions = structField.extensions
-	eleSchema := schema
-	if structField.schemaType == "array" {
-		eleSchema = schema.Items.Schema
-	}
-	eleSchema.Maximum = structField.maximum
-	eleSchema.Minimum = structField.minimum
-	eleSchema.MaxLength = structField.maxLength
-	eleSchema.MinLength = structField.minLength
-	eleSchema.Enum = structField.enums
-
-	var tagRequired []string
-	if structField.isRequired {
-		tagRequired = append(tagRequired, fieldName)
-	}
-	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil
+	return nil
 }
 
 func replaceLastTag(slice []spec.Tag, element spec.Tag) {

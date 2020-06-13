@@ -13,6 +13,7 @@ type PackagesDefinitions struct {
 	uniqueDefinitions map[string]*TypeSpecDef
 }
 
+//NewPackagesDefinitions create object PackagesDefinitions
 func NewPackagesDefinitions() *PackagesDefinitions {
 	return &PackagesDefinitions{
 		files:             make(map[*ast.File]*AstFileInfo),
