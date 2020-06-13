@@ -2069,64 +2069,6 @@ func Test3(){
 	assert.NotNil(t, val.Delete)
 }
 
-func TestSkip(t *testing.T) {
-	folder1 := "/tmp/vendor"
-	err := os.Mkdir(folder1, os.ModePerm)
-	assert.NoError(t, err)
-	f1, _ := os.Stat(folder1)
-
-	parser := New()
-
-	assert.True(t, parser.Skip(folder1, f1) == filepath.SkipDir)
-	assert.NoError(t, os.Remove(folder1))
-
-	folder2 := "/tmp/.git"
-	err = os.Mkdir(folder2, os.ModePerm)
-	assert.NoError(t, err)
-	f2, _ := os.Stat(folder2)
-
-	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
-	assert.NoError(t, os.Remove(folder2))
-
-	currentPath := "./"
-	currentPathInfo, _ := os.Stat(currentPath)
-	assert.True(t, parser.Skip(currentPath, currentPathInfo) == nil)
-}
-
-func TestSkipMustParseVendor(t *testing.T) {
-	folder1 := "/tmp/vendor"
-	err := os.Mkdir(folder1, os.ModePerm)
-	assert.NoError(t, err)
-
-	f1, _ := os.Stat(folder1)
-
-	parser := New()
-	parser.ParseVendor = true
-
-	assert.True(t, parser.Skip(folder1, f1) == nil)
-	assert.NoError(t, os.Remove(folder1))
-
-	folder2 := "/tmp/.git"
-	err = os.Mkdir(folder2, os.ModePerm)
-	assert.NoError(t, err)
-
-	f2, _ := os.Stat(folder2)
-
-	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
-	assert.NoError(t, os.Remove(folder2))
-
-	currentPath := "./"
-	currentPathInfo, _ := os.Stat(currentPath)
-	assert.True(t, parser.Skip(currentPath, currentPathInfo) == nil)
-
-	folder3 := "/tmp/test/vendor/github.com/swaggo/swag"
-	assert.NoError(t, os.MkdirAll(folder3, os.ModePerm))
-	f3, _ := os.Stat(folder3)
-
-	assert.Nil(t, parser.Skip(folder3, f3))
-	assert.NoError(t, os.RemoveAll("/tmp/test"))
-}
-
 // func TestParseDeterministic(t *testing.T) {
 // 	mainAPIFile := "main.go"
 // 	for _, searchDir := range []string{
@@ -2306,7 +2248,7 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("", "", f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
 	p.packages.ParseTypes()
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
@@ -2339,7 +2281,7 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("", "", f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
 	p.packages.ParseTypes()
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
