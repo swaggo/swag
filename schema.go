@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-openapi/spec"
 	"go/ast"
@@ -144,4 +145,34 @@ func RefSchema(refType string) *spec.Schema {
 //PrimitiveSchema build a primitive schema
 func PrimitiveSchema(refType string) *spec.Schema {
 	return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{refType}}}
+}
+
+// BuildCustomSchema build custom schema specified by tag swaggertype
+func BuildCustomSchema(types []string) (*spec.Schema, error) {
+	if len(types) == 0 {
+		return nil, nil
+	}
+
+	switch types[0] {
+	case "primitive":
+		if len(types) == 1 {
+			return nil, errors.New("need primitive type after primitive")
+		}
+		return BuildCustomSchema(types[1:])
+	case "array":
+		if len(types) == 1 {
+			return nil, errors.New("need array item type after array")
+		}
+		schema, err := BuildCustomSchema(types[1:])
+		if err != nil {
+			return nil, err
+		}
+		return spec.ArrayProperty(schema), nil
+	default:
+		err := CheckSchemaType(types[0])
+		if err != nil {
+			return nil, err
+		}
+		return PrimitiveSchema(types[0]), nil
+	}
 }

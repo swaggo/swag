@@ -46,8 +46,12 @@ var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
 
 // NewOperation creates a new Operation with default properties.
 // map[int]Response
-func NewOperation() *Operation {
+func NewOperation(parser *Parser) *Operation {
+	if parser == nil {
+		parser = New()
+	}
 	return &Operation{
+		parser:     parser,
 		HTTPMethod: "get",
 		Operation: spec.Operation{
 			OperationProps: spec.OperationProps{},
@@ -184,16 +188,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				},
 			}
 		case OBJECT:
-			refType, typeSpec, err := operation.registerSchemaType(refType, astFile)
-			if err != nil {
-				return err
-			}
-			structType, ok := typeSpec.Type.(*ast.StructType)
-			if !ok {
-				return fmt.Errorf("%s is not supported type for %s", refType, paramType)
-			}
-			refSplit := strings.Split(refType, ".")
-			schema, err := operation.parser.parseStruct(refSplit[0], structType.Fields)
+			schema, err := operation.parser.getTypeSchema(refType, astFile, false)
 			if err != nil {
 				return err
 			}
@@ -274,52 +269,6 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 	return nil
-}
-
-func (operation *Operation) registerSchemaType(schemaType string, astFile *ast.File) (string, *ast.TypeSpec, error) {
-	if !strings.ContainsRune(schemaType, '.') {
-		if astFile == nil {
-			return schemaType, nil, fmt.Errorf("no package name for type %s", schemaType)
-		}
-		schemaType = fullTypeName(astFile.Name.String(), schemaType)
-	}
-	refSplit := strings.Split(schemaType, ".")
-	pkgName := refSplit[0]
-	typeName := refSplit[1]
-	if typeSpec, ok := operation.parser.TypeDefinitions[pkgName][typeName]; ok {
-		operation.parser.registerTypes[schemaType] = typeSpec
-		return schemaType, typeSpec, nil
-	}
-	var typeSpec *ast.TypeSpec
-	if astFile == nil {
-		return schemaType, nil, fmt.Errorf("can not register schema type: %q reason: astFile == nil", schemaType)
-	}
-	for _, imp := range astFile.Imports {
-		if imp.Name != nil && imp.Name.Name == pkgName { // the import had an alias that matched
-			break
-		}
-		impPath := strings.Replace(imp.Path.Value, `"`, ``, -1)
-		if strings.HasSuffix(impPath, "/"+pkgName) {
-			var err error
-			typeSpec, err = findTypeDef(impPath, typeName)
-			if err != nil {
-				return schemaType, nil, fmt.Errorf("can not find type def: %q error: %s", schemaType, err)
-			}
-			break
-		}
-	}
-
-	if typeSpec == nil {
-		return schemaType, nil, fmt.Errorf("can not find schema type: %q", schemaType)
-	}
-
-	if _, ok := operation.parser.TypeDefinitions[pkgName]; !ok {
-		operation.parser.TypeDefinitions[pkgName] = make(map[string]*ast.TypeSpec)
-	}
-
-	operation.parser.TypeDefinitions[pkgName][typeName] = typeSpec
-	operation.parser.registerTypes[schemaType] = typeSpec
-	return schemaType, typeSpec, nil
 }
 
 var regexAttributes = map[string]*regexp.Regexp{
@@ -654,11 +603,11 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 		return operation.parseCombinedObjectSchema(refType, astFile)
 	default:
 		if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
-			refNewType, typeSpec, err := operation.registerSchemaType(refType, astFile)
+			schema, err := operation.parser.getTypeSchema(refType, astFile, true)
 			if err != nil {
 				return nil, err
 			}
-			refType = TypeDocName(refNewType, typeSpec)
+			return schema, nil
 		}
 
 		return RefSchema(refType), nil
