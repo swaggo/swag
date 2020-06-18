@@ -141,7 +141,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
 	}
 
-	if err := parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
+	if err = parser.getAllGoFileInfo(packageDir, searchDir); err != nil {
 		return err
 	}
 
@@ -168,7 +168,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		}
 	}
 
-	if err := parser.ParseGeneralAPIInfo(absMainAPIFilePath); err != nil {
+	if err = parser.ParseGeneralAPIInfo(absMainAPIFilePath); err != nil {
 		return err
 	}
 
@@ -177,7 +177,11 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	return parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
+	if err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo); err != nil {
+		return err
+	}
+  
+  return parser.checkOperationIDUniqueness()
 }
 
 func getPkgName(searchDir string) (string, error) {
@@ -1259,6 +1263,69 @@ func (parser *Parser) parseFile(packageDir, path string, src interface{}) error 
 		return fmt.Errorf("ParseFile error:%+v", err)
 	}
 	parser.packages.CollectAstFile(packageDir, path, astFile)
+	return nil
+}
+
+func (parser *Parser) checkOperationIDUniqueness() error {
+	// operationsIds contains all operationId annotations to check it's unique
+	operationsIds := make(map[string]string)
+	saveOperationID := func(operationID, currentPath string) error {
+		if operationID == "" {
+			return nil
+		}
+		if previousPath, ok := operationsIds[operationID]; ok {
+			return fmt.Errorf(
+				"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
+				operationID, currentPath, previousPath)
+		}
+		operationsIds[operationID] = currentPath
+		return nil
+	}
+
+	for path, itm := range parser.swagger.Paths.Paths {
+		if itm.Get != nil {
+			currentPath := fmt.Sprintf("%s %s", "GET", path)
+			if err := saveOperationID(itm.Get.ID, currentPath); err != nil {
+				return err
+			}
+		}
+		if itm.Put != nil {
+			currentPath := fmt.Sprintf("%s %s", "PUT", path)
+			if err := saveOperationID(itm.Put.ID, currentPath); err != nil {
+				return err
+			}
+		}
+		if itm.Post != nil {
+			currentPath := fmt.Sprintf("%s %s", "POST", path)
+			if err := saveOperationID(itm.Post.ID, currentPath); err != nil {
+				return err
+			}
+		}
+		if itm.Delete != nil {
+			currentPath := fmt.Sprintf("%s %s", "DELETE", path)
+			if err := saveOperationID(itm.Delete.ID, currentPath); err != nil {
+				return err
+			}
+		}
+		if itm.Options != nil {
+			currentPath := fmt.Sprintf("%s %s", "OPTIONS", path)
+			if err := saveOperationID(itm.Options.ID, currentPath); err != nil {
+				return err
+			}
+		}
+		if itm.Head != nil {
+			currentPath := fmt.Sprintf("%s %s", "HEAD", path)
+			if err := saveOperationID(itm.Head.ID, currentPath); err != nil {
+				return err
+			}
+		}
+		if itm.Patch != nil {
+			currentPath := fmt.Sprintf("%s %s", "PATCH", path)
+			if err := saveOperationID(itm.Patch.ID, currentPath); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
