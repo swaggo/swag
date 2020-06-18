@@ -180,8 +180,8 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	if err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo); err != nil {
 		return err
 	}
-  
-  return parser.checkOperationIDUniqueness()
+
+	return parser.checkOperationIDUniqueness()
 }
 
 func getPkgName(searchDir string) (string, error) {
