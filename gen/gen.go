@@ -290,7 +290,11 @@ func (s *s) ReadDoc() string {
 			return string(a)
 		},
 		"escape": func(v interface{}) string {
-			return strings.Replace(v.(string), "\"", "\\\"", -1)
+			// escape tabs
+			str := strings.Replace(v.(string), "\t", "\\t", -1)
+			// replace " with \", and if that results in \\", replace that with \\\"
+			str = strings.Replace(str, "\"", "\\\"", -1)
+			return strings.Replace(str, "\\\\\"", "\\\\\\\"", -1)
 		},
 	}).Parse(doc)
 	if err != nil {
