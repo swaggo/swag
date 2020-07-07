@@ -53,11 +53,14 @@ type Parser struct {
 	//packages store entities of APIs, definitions, file, package path etc.  and their relations
 	packages *PackagesDefinitions
 
-	//ParsedSchemas store schemas which have been parsed from ast.TypeSpec
-	ParsedSchemas map[*TypeSpecDef]*Schema
+	//parsedSchemas store schemas which have been parsed from ast.TypeSpec
+	parsedSchemas map[*TypeSpecDef]*Schema
 
-	//OutputSchemas store schemas which will be export to swagger
-	OutputSchemas map[*TypeSpecDef]*Schema
+	//outputSchemas store schemas which will be export to swagger
+	outputSchemas map[*TypeSpecDef]*Schema
+
+	//existSchemaNames store names of models for conflict determination
+	existSchemaNames map[string]*Schema
 
 	PropNamingStrategy string
 
@@ -99,10 +102,11 @@ func New(options ...func(*Parser)) *Parser {
 				Definitions: make(map[string]spec.Schema),
 			},
 		},
-		packages:      NewPackagesDefinitions(),
-		ParsedSchemas: make(map[*TypeSpecDef]*Schema),
-		OutputSchemas: make(map[*TypeSpecDef]*Schema),
-		excludes:      make(map[string]bool),
+		packages:         NewPackagesDefinitions(),
+		parsedSchemas:    make(map[*TypeSpecDef]*Schema),
+		outputSchemas:    make(map[*TypeSpecDef]*Schema),
+		existSchemaNames: make(map[string]*Schema),
+		excludes:         make(map[string]bool),
 	}
 
 	for _, option := range options {
@@ -172,7 +176,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	parser.ParsedSchemas, err = parser.packages.ParseTypes()
+	parser.parsedSchemas, err = parser.packages.ParseTypes()
 	if err != nil {
 		return err
 	}
@@ -561,7 +565,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 
-	schema, ok := parser.ParsedSchemas[typeSpecDef]
+	schema, ok := parser.parsedSchemas[typeSpecDef]
 	if !ok {
 		var err error
 		schema, err = parser.ParseDefinition(typeSpecDef)
@@ -582,17 +586,30 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 }
 
 func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema) *spec.Schema {
-	if _, ok := parser.OutputSchemas[typeSpecDef]; !ok {
-		if _, ok := parser.swagger.Definitions[schema.Name]; ok {
+	if _, ok := parser.outputSchemas[typeSpecDef]; !ok {
+		if existSchema, ok := parser.existSchemaNames[schema.Name]; ok {
+			if existSchema != nil {
+				existSchema.Name = fullTypeName(existSchema.PkgPath, strings.Split(existSchema.Name, ".")[1])
+				existSchema.Name = strings.ReplaceAll(existSchema.Name, "/", "_")
+				if existSchema.Schema != nil {
+					parser.swagger.Definitions[existSchema.Name] = *existSchema.Schema
+				} else {
+					parser.swagger.Definitions[existSchema.Name] = spec.Schema{}
+				}
+				parser.existSchemaNames[schema.Name] = nil
+			}
+
 			schema.Name = fullTypeName(schema.PkgPath, strings.Split(schema.Name, ".")[1])
 			schema.Name = strings.ReplaceAll(schema.Name, "/", "_")
+		} else {
+			parser.existSchemaNames[schema.Name] = schema
 		}
 		if schema.Schema != nil {
 			parser.swagger.Definitions[schema.Name] = *schema.Schema
 		} else {
 			parser.swagger.Definitions[schema.Name] = spec.Schema{}
 		}
-		parser.OutputSchemas[typeSpecDef] = schema
+		parser.outputSchemas[typeSpecDef] = schema
 	}
 
 	return RefSchema(schema.Name)
@@ -614,7 +631,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	typeName := typeSpecDef.FullName()
 	refTypeName := TypeDocName(typeName, typeSpecDef.TypeSpec)
 
-	if schema, ok := parser.ParsedSchemas[typeSpecDef]; ok {
+	if schema, ok := parser.parsedSchemas[typeSpecDef]; ok {
 		Println("Skipping '" + typeName + "', already parsed.")
 		return schema, nil
 	}
@@ -636,10 +653,10 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		return nil, err
 	}
 	s := &Schema{Name: refTypeName, PkgPath: typeSpecDef.PkgPath, Schema: schema}
-	parser.ParsedSchemas[typeSpecDef] = s
+	parser.parsedSchemas[typeSpecDef] = s
 
 	//update an empty schema as a result of recursion
-	if s2, ok := parser.OutputSchemas[typeSpecDef]; ok {
+	if s2, ok := parser.outputSchemas[typeSpecDef]; ok {
 		parser.swagger.Definitions[s2.Name] = *schema
 	}
 
@@ -1355,15 +1372,15 @@ func (parser *Parser) GetSwagger() *spec.Swagger {
 
 //addTestType just for tests
 func (parser *Parser) addTestType(typename string) {
-	if parser.ParsedSchemas == nil {
-		parser.ParsedSchemas = make(map[*TypeSpecDef]*Schema)
+	if parser.parsedSchemas == nil {
+		parser.parsedSchemas = make(map[*TypeSpecDef]*Schema)
 	}
 	if parser.packages.uniqueDefinitions == nil {
 		parser.packages.uniqueDefinitions = make(map[string]*TypeSpecDef)
 	}
 	typeDef := &TypeSpecDef{}
 	parser.packages.uniqueDefinitions[typename] = typeDef
-	parser.ParsedSchemas[typeDef] = &Schema{
+	parser.parsedSchemas[typeDef] = &Schema{
 		PkgPath: "",
 		Name:    typename,
 		Schema:  PrimitiveSchema(OBJECT),
