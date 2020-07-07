@@ -106,7 +106,7 @@ import "github.com/swaggo/files" // swagger embed files
 
 2. 在`main.go`源代码中添加通用的API注释：
 
-```bash
+```go
 // @title Swagger Example API
 // @version 1.0
 // @description This is a sample server celler server.
@@ -375,7 +375,7 @@ Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/c
 
 ## Mime类型
 
-`swag` g接受所有格式正确的MIME类型, 即使匹配 `*/*`。除此之外，`swag`还接受某些MIME类型的别名，如下所示：
+`swag` 接受所有格式正确的MIME类型, 即使匹配 `*/*`。除此之外，`swag`还接受某些MIME类型的别名，如下所示：
 
 | Alias                 | MIME Type                         |
 | --------------------- | --------------------------------- |
