@@ -586,11 +586,15 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 }
 
 func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema) *spec.Schema {
+	renameSchema := func(schema *Schema) {
+		schema.Name = fullTypeName(schema.PkgPath, strings.Split(schema.Name, ".")[1])
+		schema.Name = strings.ReplaceAll(schema.Name, "/", "_")
+	}
+
 	if _, ok := parser.outputSchemas[typeSpecDef]; !ok {
 		if existSchema, ok := parser.existSchemaNames[schema.Name]; ok {
 			if existSchema != nil {
-				existSchema.Name = fullTypeName(existSchema.PkgPath, strings.Split(existSchema.Name, ".")[1])
-				existSchema.Name = strings.ReplaceAll(existSchema.Name, "/", "_")
+				renameSchema(existSchema)
 				if existSchema.Schema != nil {
 					parser.swagger.Definitions[existSchema.Name] = *existSchema.Schema
 				} else {
@@ -599,8 +603,7 @@ func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema)
 				parser.existSchemaNames[schema.Name] = nil
 			}
 
-			schema.Name = fullTypeName(schema.PkgPath, strings.Split(schema.Name, ".")[1])
-			schema.Name = strings.ReplaceAll(schema.Name, "/", "_")
+			renameSchema(schema)
 		} else {
 			parser.existSchemaNames[schema.Name] = schema
 		}
