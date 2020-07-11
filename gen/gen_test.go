@@ -129,11 +129,11 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 	if err := json.Unmarshal(jsonOutput, &jsonDoc); err != nil {
 		t.Fatal(err, string(jsonOutput))
 	}
-	expectedJson, err := ioutil.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
+	expectedJSON, err := ioutil.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, expectedJson, jsonOutput)
+	assert.Equal(t, expectedJSON, jsonOutput)
 }
 
 func TestGen_jsonIndent(t *testing.T) {
