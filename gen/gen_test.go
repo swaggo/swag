@@ -90,11 +90,10 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 	searchDir := "../testdata/quotes"
 	config := &Config{
-		SearchDir:          searchDir,
-		MainAPIFile:        "./main.go",
-		OutputDir:          "../testdata/quotes/docs",
-		MarkdownFilesDir:   searchDir,
-		PropNamingStrategy: "",
+		SearchDir:        searchDir,
+		MainAPIFile:      "./main.go",
+		OutputDir:        "../testdata/quotes/docs",
+		MarkdownFilesDir: searchDir,
 	}
 
 	require.NoError(t, New().Build(config))
