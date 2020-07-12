@@ -842,7 +842,11 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		if err != nil {
 			return nil, nil, err
 		}
-		if len(schema.Type) > 0 && schema.Type[0] == "object" && len(schema.Properties) > 0 {
+		if len(schema.Type) > 0 && schema.Type[0] == "object" {
+			if len(schema.Properties) == 0 {
+				return nil, nil, nil
+			}
+
 			properties := map[string]spec.Schema{}
 			for k, v := range schema.Properties {
 				properties[k] = v
@@ -856,9 +860,11 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	fieldName, schema, err := parser.getFieldName(field)
 	if err != nil {
 		return nil, nil, err
-	} else if fieldName == "" {
+	}
+	if fieldName == "" {
 		return nil, nil, nil
-	} else if schema == nil {
+	}
+	if schema == nil {
 		typeName, err := getFieldType(field.Type)
 		if err == nil {
 			//named type
