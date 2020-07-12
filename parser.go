@@ -842,7 +842,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		if err != nil {
 			return nil, nil, err
 		}
-		if len(schema.Type) > 0 && schema.Type[0] == "object" {
+		if len(schema.Type) > 0 && schema.Type[0] == OBJECT {
 			if len(schema.Properties) == 0 {
 				return nil, nil, nil
 			}
@@ -1143,7 +1143,7 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 			depth--
 			s := []string{schema.Type[0]}
 			return append(s, parser.GetSchemaTypePath(schema.Items.Schema, depth)...)
-		} else if schema.Type[0] == "object" {
+		} else if schema.Type[0] == OBJECT {
 			if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
 				// for map
 				depth--
