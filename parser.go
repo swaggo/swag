@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -62,6 +63,12 @@ type Parser struct {
 	//existSchemaNames store names of models for conflict determination
 	existSchemaNames map[string]*Schema
 
+	//toBeRenamedSchemas names of models to be renamed
+	toBeRenamedSchemas map[string]string
+
+	//toBeRenamedSchemas URLs of ref models to be renamed
+	toBeRenamedRefURLs []*url.URL
+
 	PropNamingStrategy string
 
 	ParseVendor bool
@@ -102,11 +109,12 @@ func New(options ...func(*Parser)) *Parser {
 				Definitions: make(map[string]spec.Schema),
 			},
 		},
-		packages:         NewPackagesDefinitions(),
-		parsedSchemas:    make(map[*TypeSpecDef]*Schema),
-		outputSchemas:    make(map[*TypeSpecDef]*Schema),
-		existSchemaNames: make(map[string]*Schema),
-		excludes:         make(map[string]bool),
+		packages:           NewPackagesDefinitions(),
+		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
+		outputSchemas:      make(map[*TypeSpecDef]*Schema),
+		existSchemaNames:   make(map[string]*Schema),
+		toBeRenamedSchemas: make(map[string]string),
+		excludes:           make(map[string]bool),
 	}
 
 	for _, option := range options {
@@ -184,6 +192,8 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	if err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo); err != nil {
 		return err
 	}
+
+	parser.renameRefSchemas()
 
 	return parser.checkOperationIDUniqueness()
 }
@@ -579,31 +589,53 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		}
 	}
 
-	if ref && len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == "object" {
+	if ref && len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == OBJECT {
 		return parser.getRefTypeSchema(typeSpecDef, schema), nil
 	}
 	return schema.Schema, nil
 }
 
-func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema) *spec.Schema {
-	renameSchema := func(schema *Schema) {
-		schema.Name = fullTypeName(schema.PkgPath, strings.Split(schema.Name, ".")[1])
-		schema.Name = strings.ReplaceAll(schema.Name, "/", "_")
+func (parser *Parser) renameRefSchemas() {
+	if len(parser.toBeRenamedSchemas) == 0 {
+		return
 	}
 
+	//rename schemas in swagger.Definitions
+	for name, pkgPath := range parser.toBeRenamedSchemas {
+		if schema, ok := parser.swagger.Definitions[name]; ok {
+			delete(parser.swagger.Definitions, name)
+			name = parser.renameSchema(name, pkgPath)
+			parser.swagger.Definitions[name] = schema
+		}
+	}
+
+	//rename URLs if match
+	for _, url := range parser.toBeRenamedRefURLs {
+		parts := strings.Split(url.Fragment, "/")
+		name := parts[len(parts)-1]
+		if pkgPath, ok := parser.toBeRenamedSchemas[name]; ok {
+			parts[len(parts)-1] = parser.renameSchema(name, pkgPath)
+			url.Fragment = strings.Join(parts, "/")
+		}
+	}
+}
+
+func (parser *Parser) renameSchema(name, pkgPath string) string {
+	parts := strings.Split(name, ".")
+	name = fullTypeName(pkgPath, parts[len(parts)-1])
+	name = strings.ReplaceAll(name, "/", "_")
+	return name
+}
+
+func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema) *spec.Schema {
 	if _, ok := parser.outputSchemas[typeSpecDef]; !ok {
 		if existSchema, ok := parser.existSchemaNames[schema.Name]; ok {
-			if existSchema != nil {
-				renameSchema(existSchema)
-				if existSchema.Schema != nil {
-					parser.swagger.Definitions[existSchema.Name] = *existSchema.Schema
-				} else {
-					parser.swagger.Definitions[existSchema.Name] = spec.Schema{}
-				}
-				parser.existSchemaNames[schema.Name] = nil
+			//store the first one to be renamed after parsing over
+			if _, ok = parser.toBeRenamedSchemas[existSchema.Name]; !ok {
+				parser.toBeRenamedSchemas[existSchema.Name] = existSchema.PkgPath
 			}
-
-			renameSchema(schema)
+			//rename not the first one
+			schema.Name = parser.renameSchema(schema.Name, schema.PkgPath)
 		} else {
 			parser.existSchemaNames[schema.Name] = schema
 		}
@@ -615,7 +647,10 @@ func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema)
 		parser.outputSchemas[typeSpecDef] = schema
 	}
 
-	return RefSchema(schema.Name)
+	refSchema := RefSchema(schema.Name)
+	//store every URL
+	parser.toBeRenamedRefURLs = append(parser.toBeRenamedRefURLs, refSchema.Ref.Ref.GetURL())
+	return refSchema
 }
 
 func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
