@@ -11,16 +11,29 @@ type Foo struct {
 type Bar struct {
 	Field2 string
 }
+type EmptyStruct struct {
+}
+type unexported struct {
+}
+type Ignored struct {
+	Field5 string `swaggerignore:"true"`
+}
 
 type FooBar struct {
 	Foo
 	Bar
+	EmptyStruct
+	unexported
+	Ignored
 }
 
 type FooBarPointer struct {
 	*common.ResponseFormat
 	*Foo
 	*Bar
+	*EmptyStruct
+	*unexported
+	*Ignored
 }
 
 type BarMap map[string]Bar
