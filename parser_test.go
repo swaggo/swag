@@ -1549,6 +1549,19 @@ func TestParseDuplicated(t *testing.T) {
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
+func TestParseConflictSchemaName(t *testing.T) {
+	searchDir := "testdata/conflict_name"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile)
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParser_ParseStructArrayObject(t *testing.T) {
 	src := `
 package api
