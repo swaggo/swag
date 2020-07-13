@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -53,11 +54,20 @@ type Parser struct {
 	//packages store entities of APIs, definitions, file, package path etc.  and their relations
 	packages *PackagesDefinitions
 
-	//ParsedSchemas store schemas which have been parsed from ast.TypeSpec
-	ParsedSchemas map[*TypeSpecDef]*Schema
+	//parsedSchemas store schemas which have been parsed from ast.TypeSpec
+	parsedSchemas map[*TypeSpecDef]*Schema
 
-	//OutputSchemas store schemas which will be export to swagger
-	OutputSchemas map[*TypeSpecDef]*Schema
+	//outputSchemas store schemas which will be export to swagger
+	outputSchemas map[*TypeSpecDef]*Schema
+
+	//existSchemaNames store names of models for conflict determination
+	existSchemaNames map[string]*Schema
+
+	//toBeRenamedSchemas names of models to be renamed
+	toBeRenamedSchemas map[string]string
+
+	//toBeRenamedSchemas URLs of ref models to be renamed
+	toBeRenamedRefURLs []*url.URL
 
 	PropNamingStrategy string
 
@@ -99,10 +109,12 @@ func New(options ...func(*Parser)) *Parser {
 				Definitions: make(map[string]spec.Schema),
 			},
 		},
-		packages:      NewPackagesDefinitions(),
-		ParsedSchemas: make(map[*TypeSpecDef]*Schema),
-		OutputSchemas: make(map[*TypeSpecDef]*Schema),
-		excludes:      make(map[string]bool),
+		packages:           NewPackagesDefinitions(),
+		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
+		outputSchemas:      make(map[*TypeSpecDef]*Schema),
+		existSchemaNames:   make(map[string]*Schema),
+		toBeRenamedSchemas: make(map[string]string),
+		excludes:           make(map[string]bool),
 	}
 
 	for _, option := range options {
@@ -172,7 +184,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	parser.ParsedSchemas, err = parser.packages.ParseTypes()
+	parser.parsedSchemas, err = parser.packages.ParseTypes()
 	if err != nil {
 		return err
 	}
@@ -180,6 +192,8 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 	if err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo); err != nil {
 		return err
 	}
+
+	parser.renameRefSchemas()
 
 	return parser.checkOperationIDUniqueness()
 }
@@ -561,7 +575,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 
-	schema, ok := parser.ParsedSchemas[typeSpecDef]
+	schema, ok := parser.parsedSchemas[typeSpecDef]
 	if !ok {
 		var err error
 		schema, err = parser.ParseDefinition(typeSpecDef)
@@ -575,27 +589,68 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		}
 	}
 
-	if ref && len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == "object" {
+	if ref && len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == OBJECT {
 		return parser.getRefTypeSchema(typeSpecDef, schema), nil
 	}
 	return schema.Schema, nil
 }
 
+func (parser *Parser) renameRefSchemas() {
+	if len(parser.toBeRenamedSchemas) == 0 {
+		return
+	}
+
+	//rename schemas in swagger.Definitions
+	for name, pkgPath := range parser.toBeRenamedSchemas {
+		if schema, ok := parser.swagger.Definitions[name]; ok {
+			delete(parser.swagger.Definitions, name)
+			name = parser.renameSchema(name, pkgPath)
+			parser.swagger.Definitions[name] = schema
+		}
+	}
+
+	//rename URLs if match
+	for _, url := range parser.toBeRenamedRefURLs {
+		parts := strings.Split(url.Fragment, "/")
+		name := parts[len(parts)-1]
+		if pkgPath, ok := parser.toBeRenamedSchemas[name]; ok {
+			parts[len(parts)-1] = parser.renameSchema(name, pkgPath)
+			url.Fragment = strings.Join(parts, "/")
+		}
+	}
+}
+
+func (parser *Parser) renameSchema(name, pkgPath string) string {
+	parts := strings.Split(name, ".")
+	name = fullTypeName(pkgPath, parts[len(parts)-1])
+	name = strings.ReplaceAll(name, "/", "_")
+	return name
+}
+
 func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema) *spec.Schema {
-	if _, ok := parser.OutputSchemas[typeSpecDef]; !ok {
-		if _, ok := parser.swagger.Definitions[schema.Name]; ok {
-			schema.Name = fullTypeName(schema.PkgPath, strings.Split(schema.Name, ".")[1])
-			schema.Name = strings.ReplaceAll(schema.Name, "/", "_")
+	if _, ok := parser.outputSchemas[typeSpecDef]; !ok {
+		if existSchema, ok := parser.existSchemaNames[schema.Name]; ok {
+			//store the first one to be renamed after parsing over
+			if _, ok = parser.toBeRenamedSchemas[existSchema.Name]; !ok {
+				parser.toBeRenamedSchemas[existSchema.Name] = existSchema.PkgPath
+			}
+			//rename not the first one
+			schema.Name = parser.renameSchema(schema.Name, schema.PkgPath)
+		} else {
+			parser.existSchemaNames[schema.Name] = schema
 		}
 		if schema.Schema != nil {
 			parser.swagger.Definitions[schema.Name] = *schema.Schema
 		} else {
 			parser.swagger.Definitions[schema.Name] = spec.Schema{}
 		}
-		parser.OutputSchemas[typeSpecDef] = schema
+		parser.outputSchemas[typeSpecDef] = schema
 	}
 
-	return RefSchema(schema.Name)
+	refSchema := RefSchema(schema.Name)
+	//store every URL
+	parser.toBeRenamedRefURLs = append(parser.toBeRenamedRefURLs, refSchema.Ref.Ref.GetURL())
+	return refSchema
 }
 
 func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
@@ -614,7 +669,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	typeName := typeSpecDef.FullName()
 	refTypeName := TypeDocName(typeName, typeSpecDef.TypeSpec)
 
-	if schema, ok := parser.ParsedSchemas[typeSpecDef]; ok {
+	if schema, ok := parser.parsedSchemas[typeSpecDef]; ok {
 		Println("Skipping '" + typeName + "', already parsed.")
 		return schema, nil
 	}
@@ -636,10 +691,10 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		return nil, err
 	}
 	s := &Schema{Name: refTypeName, PkgPath: typeSpecDef.PkgPath, Schema: schema}
-	parser.ParsedSchemas[typeSpecDef] = s
+	parser.parsedSchemas[typeSpecDef] = s
 
 	//update an empty schema as a result of recursion
-	if s2, ok := parser.OutputSchemas[typeSpecDef]; ok {
+	if s2, ok := parser.outputSchemas[typeSpecDef]; ok {
 		parser.swagger.Definitions[s2.Name] = *schema
 	}
 
@@ -787,7 +842,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		if err != nil {
 			return nil, nil, err
 		}
-		if len(schema.Type) > 0 && schema.Type[0] == "object" {
+		if len(schema.Type) > 0 && schema.Type[0] == OBJECT {
 			if len(schema.Properties) == 0 {
 				return nil, nil, nil
 			}
@@ -1088,7 +1143,7 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 			depth--
 			s := []string{schema.Type[0]}
 			return append(s, parser.GetSchemaTypePath(schema.Items.Schema, depth)...)
-		} else if schema.Type[0] == "object" {
+		} else if schema.Type[0] == OBJECT {
 			if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
 				// for map
 				depth--
@@ -1361,15 +1416,15 @@ func (parser *Parser) GetSwagger() *spec.Swagger {
 
 //addTestType just for tests
 func (parser *Parser) addTestType(typename string) {
-	if parser.ParsedSchemas == nil {
-		parser.ParsedSchemas = make(map[*TypeSpecDef]*Schema)
+	if parser.parsedSchemas == nil {
+		parser.parsedSchemas = make(map[*TypeSpecDef]*Schema)
 	}
 	if parser.packages.uniqueDefinitions == nil {
 		parser.packages.uniqueDefinitions = make(map[string]*TypeSpecDef)
 	}
 	typeDef := &TypeSpecDef{}
 	parser.packages.uniqueDefinitions[typename] = typeDef
-	parser.ParsedSchemas[typeDef] = &Schema{
+	parser.parsedSchemas[typeDef] = &Schema{
 		PkgPath: "",
 		Name:    typename,
 		Schema:  PrimitiveSchema(OBJECT),
