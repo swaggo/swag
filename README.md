@@ -73,14 +73,18 @@ USAGE:
    swag init [command options] [arguments...]
 
 OPTIONS:
-   --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
-   --dir value, -d value               Directory you want to parse (default: "./")
-   --exclude value                     Exclude directoies and files, comma separated
-   --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
-   --output value, -o value            Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
-   --parseVendor                       Parse go files in 'vendor' folder, disabled by default
-   --parseDependency                   Parse go files in outside dependency folder, disabled by default
-   --parseInternal                     Parse go files in internal packages, disabled by default
+   --generalInfo value, -g value          Go file path in which 'swagger general API Info' is written (default: "main.go")
+   --dir value, -d value                  Directory you want to parse (default: "./")
+   --exclude value                        exclude directories and files when searching, comma separated
+   --propertyStrategy value, -p value     Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
+   --output value, -o value               Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
+   --parseVendor                          Parse go files in 'vendor' folder, disabled by default (default: false)
+   --parseDependency                      Parse go files in outside dependency folder, disabled by default (default: false)
+   --markdownFiles value, --md value      Parse folder containing markdown files to use as description, disabled by default
+   --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
+   --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
+   --generatedTime                        Generate timestamp at the top of docs.go, true by default (default: false)
+   --help, -h                             show help (default: false)
 ```
 
 ## Supported Web Frameworks
