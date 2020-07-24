@@ -379,6 +379,7 @@ When a short string in your documentation is insufficient, or you need images, c
 | header      | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                            |
 | router      | Path definition that separated by spaces. `path`,`[httpMethod]`                                                            |
 | x-name      | The extension key, must be start by x- and take only json value.                                                           |
+| x-codeSample      | Optional Markdown usage. take `file` as parameter.                                       |
 | deprecated  | Mark endpoint as deprecated.                                                                                               |
 
 
