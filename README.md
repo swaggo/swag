@@ -95,6 +95,7 @@ OPTIONS:
 - [net/http](https://github.com/swaggo/http-swagger)
 - [flamingo](https://github.com/i-love-flamingo/swagger)
 - [fiber](https://github.com/arsmn/fiber-swagger)
+- [atreugo](https://github.com/Nerzal/atreugo-swagger)
 
 ## How to use it with Gin
 
