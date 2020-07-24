@@ -65,6 +65,9 @@ type Config struct {
 
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
+
+	// CodeExampleFilesDir used to find code example files, which can be used for x-codeSamples
+	CodeExampleFilesDir string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
