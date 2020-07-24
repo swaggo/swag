@@ -37,7 +37,12 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "1.0"
+        "version": "1.0",
+        "x-logo": {
+            "altText": "Petstore logo",
+            "backgroundColor": "#FFFFFF",
+            "url": "https://redocly.github.io/redoc/petstore-logo.png"
+        }
     },
     "host": "petstore.swagger.io",
     "basePath": "/v2",
