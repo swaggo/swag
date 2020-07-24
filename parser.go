@@ -102,6 +102,9 @@ func New(options ...func(*Parser)) *Parser {
 						Contact: &spec.ContactInfo{},
 						License: &spec.License{},
 					},
+					VendorExtensible: spec.VendorExtensible{
+						Extensions: spec.Extensions{},
+					},
 				},
 				Paths: &spec.Paths{
 					Paths: make(map[string]spec.PathItem),
@@ -358,7 +361,12 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						if err := json.Unmarshal([]byte(split[1]), &valueJSON); err != nil {
 							return fmt.Errorf("annotation %s need a valid json value", attribute)
 						}
-						parser.swagger.AddExtension(extensionName, valueJSON)
+
+						if strings.Contains(extensionName, "logo") {
+							parser.swagger.Info.Extensions.Add(extensionName, valueJSON)
+						} else {
+							parser.swagger.AddExtension(extensionName, valueJSON)
+						}
 					}
 				}
 			}
