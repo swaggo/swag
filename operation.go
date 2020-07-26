@@ -275,11 +275,9 @@ var regexAttributes = map[string]*regexp.Regexp{
 	// for Enums(A, B)
 	"enums": regexp.MustCompile(`(?i)\s+enums\(.*\)`),
 	// for maximum(0)
-	"maxinum": regexp.MustCompile(`(?i)\s+maxinum\(.*\)`),
-	"maximum": regexp.MustCompile(`(?i)\s+maximum\(.*\)`),
+	"maximum": regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
 	// for minimum(0)
-	"mininum": regexp.MustCompile(`(?i)\s+mininum\(.*\)`),
-	"minimum": regexp.MustCompile(`(?i)\s+minimum\(.*\)`),
+	"minimum": regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
 	// for default(0)
 	"default": regexp.MustCompile(`(?i)\s+default\(.*\)`),
 	// for minlength(0)
@@ -305,13 +303,13 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			if err != nil {
 				return err
 			}
-		case "maxinum", "maximum":
+		case "maximum":
 			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
 			param.Maximum = &n
-		case "mininum", "minimum":
+		case "minimum":
 			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
