@@ -449,7 +449,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 // @Param enumint query int false "int enums" Enums(1, 2, 3)
 // @Param enumnumber query number false "int enums" Enums(1.1, 1.2, 1.3)
 // @Param string query string false "string valid" minlength(5) maxlength(10)
-// @Param int query int false "int valid" mininum(1) maxinum(10)
+// @Param int query int false "int valid" minimum(1) maximum(10)
 // @Param default query string false "string default" default(A)
 // @Param collection query []string false "string collection" collectionFormat(multi)
 ```
