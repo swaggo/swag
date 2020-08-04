@@ -254,17 +254,9 @@ package {{.PackageName}}
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"go/format"
-	"io"
-	"log"
-	"os"
-	"path/filepath"
 	"strings"
-	"text/template"
-	"time"
-	"github.com/ghodss/yaml"
-	"github.com/go-openapi/spec"
+
+	"github.com/alecthomas/template"
 	"github.com/swaggo/swag"
 )
 
