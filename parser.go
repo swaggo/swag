@@ -145,7 +145,7 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 }
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile
-func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
+func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) error {
 	Printf("Generate general API Info, search dir:%s", searchDir)
 
 	packageDir, err := getPkgName(searchDir)
@@ -159,6 +159,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 
 	var t depth.Tree
 	t.ResolveInternal = true
+	t.MaxDepth = parseDepth
 
 	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDir, mainAPIFile))
 	if err != nil {

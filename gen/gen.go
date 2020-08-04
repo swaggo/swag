@@ -65,6 +65,9 @@ type Config struct {
 
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
+
+	// ParseDepth dependency parse depth
+	ParseDepth int
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
@@ -81,7 +84,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
 
-	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
+	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
 	}
 	swagger := p.GetSwagger()
@@ -251,9 +254,17 @@ package {{.PackageName}}
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"go/format"
+	"io"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
-
-	"github.com/alecthomas/template"
+	"text/template"
+	"time"
+	"github.com/ghodss/yaml"
+	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag"
 )
 
