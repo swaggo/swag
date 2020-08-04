@@ -146,6 +146,22 @@ func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainde
 }
 
 // ParseDescriptionComment godoc
+func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainder string) error {
+	if lineRemainder == "file" {
+		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
+		if err != nil {
+			return err
+		}
+
+		operation.Extensions["x-codeSamples"] = string(data)
+		return nil
+	}
+
+	// Fallback into existing logic
+	return operation.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
+}
+
+// ParseDescriptionComment godoc
 func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 	if operation.Description == "" {
 		operation.Description = lineRemainder
