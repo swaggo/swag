@@ -129,7 +129,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	return err
 }
 
-// ParseDescriptionComment godoc
+// ParseCodeSample godoc
 func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainder string) error {
 	if lineRemainder == "file" {
 		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
