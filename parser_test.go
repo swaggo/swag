@@ -224,7 +224,6 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "paths": {}
@@ -1236,7 +1235,6 @@ func TestParseStructComment(t *testing.T) {
         "description": "This is a sample server Petstore server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",
@@ -1325,7 +1323,6 @@ func TestParseNonExportedJSONFields(t *testing.T) {
         "description": "This is a sample server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",
@@ -2234,8 +2231,7 @@ func Fun()  {
 `
 	expected := `{
     "info": {
-        "contact": {},
-        "license": {}
+        "contact": {}
     },
     "paths": {
         "/test": {
@@ -2330,7 +2326,6 @@ func TestParseJSONFieldString(t *testing.T) {
         "description": "This is a sample server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",

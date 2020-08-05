@@ -100,7 +100,7 @@ func New(options ...func(*Parser)) *Parser {
 				Info: &spec.Info{
 					InfoProps: spec.InfoProps{
 						Contact: &spec.ContactInfo{},
-						License: &spec.License{},
+						License: nil,
 					},
 				},
 				Paths: &spec.Paths{
@@ -221,6 +221,14 @@ func getPkgName(searchDir string) (string, error) {
 	return outStr, nil
 }
 
+func initIfEmpty(license *spec.License) *spec.License {
+	if license == nil {
+		return new(spec.License)
+	}
+
+	return license
+}
+
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
@@ -272,8 +280,10 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 			case "@contact.url":
 				parser.swagger.Info.Contact.URL = value
 			case "@license.name":
+				parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
 				parser.swagger.Info.License.Name = value
 			case "@license.url":
+				parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
 				parser.swagger.Info.License.URL = value
 			case "@host":
 				parser.swagger.Host = value
