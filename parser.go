@@ -157,16 +157,16 @@ func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) er
 		return err
 	}
 
-	var t depth.Tree
-	t.ResolveInternal = true
-	t.MaxDepth = parseDepth
-
 	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDir, mainAPIFile))
 	if err != nil {
 		return err
 	}
 
 	if parser.ParseDependency {
+		var t depth.Tree
+		t.ResolveInternal = true
+		t.MaxDepth = parseDepth
+
 		pkgName, err := getPkgName(filepath.Dir(absMainAPIFilePath))
 		if err != nil {
 			return err
