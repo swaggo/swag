@@ -81,6 +81,7 @@ OPTIONS:
    --parseVendor                       Parse go files in 'vendor' folder, disabled by default
    --parseDependency                   Parse go files in outside dependency folder, disabled by default
    --parseInternal                     Parse go files in internal packages, disabled by default
+   --parseDepth                        Dependency parse depth (default: 100)
 ```
 
 ## Supported Web Frameworks
