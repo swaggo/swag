@@ -167,12 +167,12 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	param := createParameter(paramType, description, name, refType, required)
 
 	switch paramType {
-	case "path", "header", "formData":
+	case "path", "header":
 		switch objectType {
 		case ARRAY, OBJECT:
 			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
 		}
-	case "query":
+	case "query", "formData":
 		switch objectType {
 		case ARRAY:
 			if !IsPrimitiveType(refType) {
