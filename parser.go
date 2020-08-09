@@ -79,6 +79,9 @@ type Parser struct {
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
 
+	// Add required to the field by default
+	DefaultRequired bool
+
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []*TypeSpecDef
 
@@ -803,6 +806,7 @@ type structField struct {
 	arrayType    string
 	formatType   string
 	isRequired   bool
+	isOptional   bool
 	readOnly     bool
 	crossPkg     string
 	exampleValue interface{}
@@ -920,9 +924,11 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	eleSchema.Enum = structField.enums
 
 	var tagRequired []string
-	if structField.isRequired {
+
+	if structField.isRequired || (parser.DefaultRequired && !structField.isOptional) {
 		tagRequired = append(tagRequired, fieldName)
 	}
+
 	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil
 }
 
@@ -1037,12 +1043,20 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 				structField.isRequired = true
 				break
 			}
+			if val == "omitempty" {
+				structField.isOptional = true
+				break
+			}
 		}
 	}
 	if validateTag := structTag.Get("validate"); validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
 			if val == "required" {
 				structField.isRequired = true
+				break
+			}
+			if val == "omitempty" {
+				structField.isOptional = true
 				break
 			}
 		}

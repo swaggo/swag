@@ -68,6 +68,9 @@ type Config struct {
 
 	// ParseDepth dependency parse depth
 	ParseDepth int
+
+	// Add required to the field by default
+	DefaultRequired bool
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
@@ -83,6 +86,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
+	p.DefaultRequired = config.DefaultRequired
 
 	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err

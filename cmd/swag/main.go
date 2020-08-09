@@ -22,6 +22,7 @@ const (
 	parseInternalFlag    = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
 	parseDepthFlag       = "parseDepth"
+	defaultRequiredFlag  = "defaultRequired"
 )
 
 var initFlags = []cli.Flag{
@@ -80,6 +81,10 @@ var initFlags = []cli.Flag{
 		Value: 100,
 		Usage: "Dependency parse depth",
 	},
+	&cli.BoolFlag{
+		Name:  defaultRequiredFlag,
+		Usage: "Add required to the field by default",
+	},
 }
 
 func initAction(c *cli.Context) error {
@@ -103,6 +108,7 @@ func initAction(c *cli.Context) error {
 		ParseInternal:      c.Bool(parseInternalFlag),
 		GeneratedTime:      c.Bool(generatedTimeFlag),
 		ParseDepth:         c.Int(parseDepthFlag),
+		DefaultRequired:    c.Bool(defaultRequiredFlag),
 	})
 }
 
