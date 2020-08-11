@@ -5,7 +5,6 @@
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "petstore.swagger.io",

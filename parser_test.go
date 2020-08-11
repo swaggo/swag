@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const defaultParseDepth = 100
+
 func TestNew(t *testing.T) {
 	swagMode = test
 	New()
@@ -227,7 +229,6 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "paths": {}
@@ -287,7 +288,7 @@ func TestParseSimpleApi1(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = PascalCase
-	err = p.ParseAPI(searchDir, mainAPIFile)
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "  ")
@@ -770,7 +771,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = SnakeCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -1225,7 +1226,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
 	searchDir := "testdata/simple3"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -1239,7 +1240,6 @@ func TestParseStructComment(t *testing.T) {
         "description": "This is a sample server Petstore server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",
@@ -1315,7 +1315,7 @@ func TestParseStructComment(t *testing.T) {
 	searchDir := "testdata/struct_comment"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -1328,7 +1328,6 @@ func TestParseNonExportedJSONFields(t *testing.T) {
         "description": "This is a sample server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",
@@ -1390,7 +1389,7 @@ func TestParseNonExportedJSONFields(t *testing.T) {
 	searchDir := "testdata/non_exported_json_fields"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -1423,7 +1422,7 @@ func TestParsePetApi(t *testing.T) {
 	searchDir := "testdata/pet"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -1492,7 +1491,7 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 	searchDir := "testdata/alias_type"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -1503,7 +1502,7 @@ func TestParseComposition(t *testing.T) {
 	searchDir := "testdata/composition"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
@@ -1519,7 +1518,7 @@ func TestParseImportAliases(t *testing.T) {
 	searchDir := "testdata/alias_import"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
@@ -1535,7 +1534,7 @@ func TestParseNested(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
@@ -1550,7 +1549,7 @@ func TestParseDuplicated(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
@@ -1559,7 +1558,7 @@ func TestParseConflictSchemaName(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
@@ -2109,7 +2108,7 @@ func Test3(){
 // 			for i := 0; i < 100; i++ {
 // 				p := New()
 // 				p.PropNamingStrategy = PascalCase
-// 				err := p.ParseAPI(searchDir, mainAPIFile)
+// 				err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 // 				b, _ := json.MarshalIndent(p.swagger, "", "    ")
 // 				assert.NotEqual(t, "", string(b))
 
@@ -2128,7 +2127,7 @@ func TestApiParseTag(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	if len(p.swagger.Tags) != 3 {
@@ -2157,7 +2156,7 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	if err != nil {
 		t.Error("Failed to parse api description: " + err.Error())
 	}
@@ -2177,7 +2176,7 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	if err != nil {
 		t.Error("Failed to parse api description: " + err.Error())
 	}
@@ -2191,7 +2190,7 @@ func TestIgnoreInvalidPkg(t *testing.T) {
 	searchDir := "testdata/deps_having_invalid_pkg"
 	mainAPIFile := "main.go"
 	p := New()
-	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
 	}
 }
@@ -2201,7 +2200,7 @@ func TestFixes432(t *testing.T) {
 	mainAPIFile := "cmd/main.go"
 
 	p := New()
-	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
 	}
 }
@@ -2212,7 +2211,7 @@ func TestParseOutsideDependencies(t *testing.T) {
 
 	p := New()
 	p.ParseDependency = true
-	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to parse api: " + err.Error())
 	}
 }
@@ -2237,8 +2236,7 @@ func Fun()  {
 `
 	expected := `{
     "info": {
-        "contact": {},
-        "license": {}
+        "contact": {}
     },
     "paths": {
         "/test": {
@@ -2333,7 +2331,6 @@ func TestParseJSONFieldString(t *testing.T) {
         "description": "This is a sample server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",
@@ -2413,7 +2410,7 @@ func TestParseJSONFieldString(t *testing.T) {
 	searchDir := "testdata/json_field_string"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))

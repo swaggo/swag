@@ -20,8 +20,9 @@ const (
 	parseDependencyFlag  = "parseDependency"
 	markdownFilesFlag    = "markdownFiles"
 	codeExampleFilesFlag = "codeExampleFiles"
-	parseInternal        = "parseInternal"
+	parseInternalFlag    = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
+	parseDepthFlag       = "parseDepth"
 )
 
 var initFlags = []cli.Flag{
@@ -74,12 +75,17 @@ var initFlags = []cli.Flag{
 		Usage:   "Parse folder containing code example files to use for the x-codeSamples extension, disabled by default",
 	},
 	&cli.BoolFlag{
-		Name:  "parseInternal",
+		Name:  parseInternalFlag,
 		Usage: "Parse go files in internal packages, disabled by default",
 	},
 	&cli.BoolFlag{
-		Name:  "generatedTime",
+		Name:  generatedTimeFlag,
 		Usage: "Generate timestamp at the top of docs.go, true by default",
+	},
+	&cli.IntFlag{
+		Name:  parseDepthFlag,
+		Value: 100,
+		Usage: "Dependency parse depth",
 	},
 }
 
@@ -104,6 +110,7 @@ func initAction(c *cli.Context) error {
 		ParseInternal:       c.Bool(parseInternal),
 		GeneratedTime:       c.Bool(generatedTimeFlag),
 		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
+		ParseDepth:         c.Int(parseDepthFlag),
 	})
 }
 

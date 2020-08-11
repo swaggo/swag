@@ -68,6 +68,9 @@ type Config struct {
 
 	// CodeExampleFilesDir used to find code example files, which can be used for x-codeSamples
 	CodeExampleFilesDir string
+	
+	// ParseDepth dependency parse depth
+	ParseDepth int
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
@@ -84,7 +87,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
 
-	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile); err != nil {
+	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
 	}
 	swagger := p.GetSwagger()
