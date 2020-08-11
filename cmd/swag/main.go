@@ -107,7 +107,7 @@ func initAction(c *cli.Context) error {
 		ParseVendor:         c.Bool(parseVendorFlag),
 		ParseDependency:     c.Bool(parseDependencyFlag),
 		MarkdownFilesDir:    c.String(markdownFilesFlag),
-		ParseInternal:       c.Bool(parseInternal),
+		ParseInternal:       c.Bool(parseInternalFlag),
 		GeneratedTime:       c.Bool(generatedTimeFlag),
 		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
 		ParseDepth:          c.Int(parseDepthFlag),
