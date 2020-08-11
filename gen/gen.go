@@ -68,7 +68,7 @@ type Config struct {
 
 	// CodeExampleFilesDir used to find code example files, which can be used for x-codeSamples
 	CodeExampleFilesDir string
-	
+
 	// ParseDepth dependency parse depth
 	ParseDepth int
 }

@@ -110,7 +110,7 @@ func initAction(c *cli.Context) error {
 		ParseInternal:       c.Bool(parseInternal),
 		GeneratedTime:       c.Bool(generatedTimeFlag),
 		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
-		ParseDepth:         c.Int(parseDepthFlag),
+		ParseDepth:          c.Int(parseDepthFlag),
 	})
 }
 
