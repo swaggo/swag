@@ -137,7 +137,7 @@ func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 	}
 }
 
-// SetCodeExampleFilesDirectory sets the directory to search for code example files
+// SetCodeExamplesDirectory sets the directory to search for code example files
 func SetCodeExamplesDirectory(directoryPath string) func(*Parser) {
 	return func(p *Parser) {
 		p.codeExampleFilesDir = directoryPath
