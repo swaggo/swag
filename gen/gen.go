@@ -81,7 +81,8 @@ func (g *Gen) Build(config *Config) error {
 
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
-		swag.SetExcludedDirsAndFiles(config.Excludes))
+		swag.SetExcludedDirsAndFiles(config.Excludes),
+		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir))
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
