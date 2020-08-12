@@ -84,6 +84,7 @@ OPTIONS:
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
    --generatedTime                        Generate timestamp at the top of docs.go, true by default (default: false)
+   --parseDepth                        	  Dependency parse depth (default: 100)
    --help, -h                             show help (default: false)
 ```
 
