@@ -19,8 +19,9 @@ const (
 	parseVendorFlag      = "parseVendor"
 	parseDependencyFlag  = "parseDependency"
 	markdownFilesFlag    = "markdownFiles"
-	parseInternal        = "parseInternal"
+	parseInternalFlag    = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
+	parseDepthFlag       = "parseDepth"
 )
 
 var initFlags = []cli.Flag{
@@ -67,12 +68,17 @@ var initFlags = []cli.Flag{
 		Usage:   "Parse folder containing markdown files to use as description, disabled by default",
 	},
 	&cli.BoolFlag{
-		Name:  "parseInternal",
+		Name:  parseInternalFlag,
 		Usage: "Parse go files in internal packages, disabled by default",
 	},
 	&cli.BoolFlag{
-		Name:  "generatedTime",
+		Name:  generatedTimeFlag,
 		Usage: "Generate timestamp at the top of docs.go, true by default",
+	},
+	&cli.IntFlag{
+		Name:  parseDepthFlag,
+		Value: 100,
+		Usage: "Dependency parse depth",
 	},
 }
 
@@ -94,8 +100,9 @@ func initAction(c *cli.Context) error {
 		ParseVendor:        c.Bool(parseVendorFlag),
 		ParseDependency:    c.Bool(parseDependencyFlag),
 		MarkdownFilesDir:   c.String(markdownFilesFlag),
-		ParseInternal:      c.Bool(parseInternal),
+		ParseInternal:      c.Bool(parseInternalFlag),
 		GeneratedTime:      c.Bool(generatedTimeFlag),
+		ParseDepth:         c.Int(parseDepthFlag),
 	})
 }
 

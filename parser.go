@@ -100,7 +100,7 @@ func New(options ...func(*Parser)) *Parser {
 				Info: &spec.Info{
 					InfoProps: spec.InfoProps{
 						Contact: &spec.ContactInfo{},
-						License: &spec.License{},
+						License: nil,
 					},
 				},
 				Paths: &spec.Paths{
@@ -145,7 +145,7 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 }
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile
-func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
+func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) error {
 	Printf("Generate general API Info, search dir:%s", searchDir)
 
 	packageDir, err := getPkgName(searchDir)
@@ -157,15 +157,16 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string) error {
 		return err
 	}
 
-	var t depth.Tree
-	t.ResolveInternal = true
-
 	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDir, mainAPIFile))
 	if err != nil {
 		return err
 	}
 
 	if parser.ParseDependency {
+		var t depth.Tree
+		t.ResolveInternal = true
+		t.MaxDepth = parseDepth
+
 		pkgName, err := getPkgName(filepath.Dir(absMainAPIFilePath))
 		if err != nil {
 			return err
@@ -220,6 +221,14 @@ func getPkgName(searchDir string) (string, error) {
 	return outStr, nil
 }
 
+func initIfEmpty(license *spec.License) *spec.License {
+	if license == nil {
+		return new(spec.License)
+	}
+
+	return license
+}
+
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
@@ -271,8 +280,10 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 			case "@contact.url":
 				parser.swagger.Info.Contact.URL = value
 			case "@license.name":
+				parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
 				parser.swagger.Info.License.Name = value
 			case "@license.url":
+				parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
 				parser.swagger.Info.License.URL = value
 			case "@host":
 				parser.swagger.Host = value

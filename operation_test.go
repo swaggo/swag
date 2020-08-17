@@ -1268,8 +1268,8 @@ func TestParseParamCommentByMinLength(t *testing.T) {
 	assert.Error(t, operation.ParseComment(comment, nil))
 }
 
-func TestParseParamCommentByMininum(t *testing.T) {
-	comment := `@Param some_id query int true "Some ID" Mininum(10)`
+func TestParseParamCommentByMinimum(t *testing.T) {
+	comment := `@Param some_id query int true "Some ID" Minimum(10)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 
@@ -1289,15 +1289,18 @@ func TestParseParamCommentByMininum(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 
-	comment = `@Param some_id query string true "Some ID" Mininum(10)`
+	comment = `@Param some_id query int true "Some ID" Mininum(10)`
+	assert.NoError(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query string true "Some ID" Minimum(10)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 
-	comment = `@Param some_id query integer true "Some ID" Mininum(Goopher)`
+	comment = `@Param some_id query integer true "Some ID" Minimum(Goopher)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 }
 
-func TestParseParamCommentByMaxinum(t *testing.T) {
-	comment := `@Param some_id query int true "Some ID" Maxinum(10)`
+func TestParseParamCommentByMaximum(t *testing.T) {
+	comment := `@Param some_id query int true "Some ID" Maximum(10)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 
@@ -1317,10 +1320,13 @@ func TestParseParamCommentByMaxinum(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 
-	comment = `@Param some_id query string true "Some ID" Maxinum(10)`
+	comment = `@Param some_id query int true "Some ID" Maxinum(10)`
+	assert.NoError(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query string true "Some ID" Maximum(10)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 
-	comment = `@Param some_id query integer true "Some ID" Maxinum(Goopher)`
+	comment = `@Param some_id query integer true "Some ID" Maximum(Goopher)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 
 }

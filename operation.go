@@ -167,12 +167,12 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	param := createParameter(paramType, description, name, refType, required)
 
 	switch paramType {
-	case "path", "header", "formData":
+	case "path", "header":
 		switch objectType {
 		case ARRAY, OBJECT:
 			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
 		}
-	case "query":
+	case "query", "formData":
 		switch objectType {
 		case ARRAY:
 			if !IsPrimitiveType(refType) {
@@ -274,11 +274,11 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 var regexAttributes = map[string]*regexp.Regexp{
 	// for Enums(A, B)
 	"enums": regexp.MustCompile(`(?i)\s+enums\(.*\)`),
-	// for Minimum(0)
-	"maxinum": regexp.MustCompile(`(?i)\s+maxinum\(.*\)`),
-	// for Maximum(0)
-	"mininum": regexp.MustCompile(`(?i)\s+mininum\(.*\)`),
-	// for Maximum(0)
+	// for maximum(0)
+	"maximum": regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
+	// for minimum(0)
+	"minimum": regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
+	// for default(0)
 	"default": regexp.MustCompile(`(?i)\s+default\(.*\)`),
 	// for minlength(0)
 	"minlength": regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
@@ -303,13 +303,13 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			if err != nil {
 				return err
 			}
-		case "maxinum":
+		case "maximum":
 			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
 			param.Maximum = &n
-		case "mininum":
+		case "minimum":
 			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
