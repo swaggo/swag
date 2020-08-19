@@ -16,5 +16,5 @@ cover.out
 # Etc
 .DS_Store
 
-swag
-swag.exe
+/swag
+/swag.exe
