@@ -268,8 +268,9 @@ func TestParser_ParseType(t *testing.T) {
 	err := p.getAllGoFileInfo("testdata", searchDir)
 	assert.NoError(t, err)
 
-	p.packages.ParseTypes()
+	_, err = p.packages.ParseTypes()
 
+	assert.NoError(t, err)
 	assert.NotNil(t, p.packages.uniqueDefinitions["api.Pet3"])
 	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet"])
 	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet2"])
@@ -1690,7 +1691,8 @@ type ResponseWrapper struct {
 	assert.NoError(t, err)
 	parser.packages.CollectAstFile("rest", "rest/rest.go", f2)
 
-	parser.packages.ParseTypes()
+	_, err = parser.packages.ParseTypes()
+	assert.NoError(t, err)
 
 	err = parser.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
@@ -1875,7 +1877,8 @@ func Test(){
 	p := New()
 	p.packages.CollectAstFile("api", "api/api.go", f)
 
-	p.packages.ParseTypes()
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
 
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
@@ -2274,7 +2277,10 @@ func Fun()  {
 
 	p := New()
 	p.packages.CollectAstFile("api", "api/api.go", f)
-	p.packages.ParseTypes()
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2307,7 +2313,9 @@ func Fun()  {
 
 	p := New()
 	p.packages.CollectAstFile("api", "api/api.go", f)
-	p.packages.ParseTypes()
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2319,6 +2327,7 @@ func Fun()  {
 	_, ok = p.swagger.Definitions["Student"]
 	assert.True(t, ok)
 	path, ok := p.swagger.Paths.Paths["/test"]
+	assert.True(t, ok)
 	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
 	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
