@@ -1484,6 +1484,31 @@ func TestParseExtentions(t *testing.T) {
 		b, _ := json.MarshalIndent(operation, "", "    ")
 		assert.Equal(t, expected, string(b))
 	}
+
+	// Test x-tagGroups
+	{
+		comment := `@x-tagGroups [{"name":"Natural Persons","tags":["Person","PersonRisk","PersonDocuments"]}]`
+		operation := NewOperation(nil)
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		expected := `{
+    "x-tagGroups": [
+        {
+            "name": "Natural Persons",
+            "tags": [
+                "Person",
+                "PersonRisk",
+                "PersonDocuments"
+            ]
+        }
+    ]
+}`
+
+		b, _ := json.MarshalIndent(operation, "", "    ")
+		assert.Equal(t, expected, string(b))
+	}
 }
 
 func TestParseCodeSamples(t *testing.T) {

@@ -166,7 +166,8 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 		if err := json.Unmarshal([]byte(lineRemainder), &valueJSON); err != nil {
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
-		operation.Operation.AddExtension(attribute[1:], valueJSON) // Trim "@" at head
+
+		operation.Extensions[attribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
 	}
 	return nil
 }
