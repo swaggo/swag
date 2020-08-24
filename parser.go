@@ -833,34 +833,6 @@ type structField struct {
 	extensions   map[string]interface{}
 }
 
-func (sf *structField) toStandardSchema() *spec.Schema {
-	required := make([]string, 0)
-	if sf.isRequired {
-		required = append(required, sf.name)
-	}
-	return &spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type:        []string{sf.schemaType},
-			Description: sf.desc,
-			Format:      sf.formatType,
-			Required:    required,
-			Maximum:     sf.maximum,
-			Minimum:     sf.minimum,
-			MaxLength:   sf.maxLength,
-			MinLength:   sf.minLength,
-			Enum:        sf.enums,
-			Default:     sf.defaultValue,
-		},
-		SwaggerSchemaProps: spec.SwaggerSchemaProps{
-			Example:  sf.exampleValue,
-			ReadOnly: sf.readOnly,
-		},
-		VendorExtensible: spec.VendorExtensible{
-			Extensions: sf.extensions,
-		},
-	}
-}
-
 func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {
 	if field.Names == nil {
 		typeName, err := getFieldType(field.Type)
