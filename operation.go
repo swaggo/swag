@@ -137,7 +137,13 @@ func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainde
 			return err
 		}
 
-		operation.Extensions["x-codeSamples"] = string(data)
+		var valueJSON interface{}
+		if err := json.Unmarshal(data, &valueJSON); err != nil {
+			return fmt.Errorf("annotation %s need a valid json value", attribute)
+		}
+
+		operation.Extensions[attribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
+
 		return nil
 	}
 

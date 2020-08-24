@@ -1524,7 +1524,10 @@ func TestParseCodeSamples(t *testing.T) {
 
 		expected := `{
     "summary": "example",
-    "x-codeSamples": "{\n    \"lang\": \"JavaScript\",\n    \"source\": \"console.log('Hello World');\"\n}"
+    "x-codeSamples": {
+        "lang": "JavaScript",
+        "source": "console.log('Hello World');"
+    }
 }`
 		assert.Equal(t, expected, string(b))
 	})
