@@ -2154,6 +2154,15 @@ func TestApiParseTag(t *testing.T) {
 	}
 }
 
+func TestApiParseTag_NonExistendTag(t *testing.T) {
+	searchDir := "testdata/tags"
+	mainAPIFile := "main.go"
+	p := New(SetMarkdownFileDirectory(searchDir))
+	p.PropNamingStrategy = PascalCase
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Error(t, err)
+}
+
 func TestParseTagMarkdownDescription(t *testing.T) {
 	searchDir := "testdata/tags"
 	mainAPIFile := "main.go"
