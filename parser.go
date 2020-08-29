@@ -835,6 +835,13 @@ type structField struct {
 
 func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {
 	if field.Names == nil {
+		if field.Tag != nil {
+			skip, ok := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", "")).Lookup("swaggerignore")
+			if ok && strings.EqualFold(skip, "true") {
+				return nil, nil, nil
+			}
+		}
+
 		typeName, err := getFieldType(field.Type)
 		if err != nil {
 			return nil, nil, err
