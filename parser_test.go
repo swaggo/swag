@@ -2410,3 +2410,46 @@ func TestParseJSONFieldString(t *testing.T) {
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
+
+func TestParseSwaggerignoreForEmbedded(t *testing.T) {
+	src := `
+package main
+
+type Child struct {
+	ChildName string
+}//@name Student
+
+type Parent struct {
+	Name string
+	Child ` + "`swaggerignore:\"true\"`" + `
+}//@name Teacher
+
+// @Param request body Parent true "query params"
+// @Success 200 {object} Parent
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.ParseTypes()
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	assert.NoError(t, err)
+	teacher, ok := p.swagger.Definitions["Teacher"]
+	assert.True(t, ok)
+
+	name, ok := teacher.Properties["name"]
+	assert.True(t, ok)
+	assert.Len(t, name.Type, 1)
+	assert.Equal(t, "string", name.Type[0])
+
+	childName, ok := teacher.Properties["childName"]
+	assert.False(t, ok)
+	assert.Empty(t, childName)
+}
