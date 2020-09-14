@@ -1353,6 +1353,29 @@ func TestParseParamCommentByDefault(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentByExtensions(t *testing.T) {
+	comment := `@Param some_id path int true "Some ID" extensions(x-example=test,x-custom=Goopher)`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "integer",
+            "x-custom": "Goopher",
+            "x-example": "test",
+            "description": "Some ID",
+            "name": "some_id",
+            "in": "path",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseIdComment(t *testing.T) {
 	comment := `@Id myOperationId`
 	operation := NewOperation(nil)
