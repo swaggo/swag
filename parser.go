@@ -325,35 +325,38 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 			case "@securitydefinitions.basic":
 				securityMap[value] = spec.BasicAuth()
 			case "@securitydefinitions.apikey":
-				attrMap, _, err := extractSecurityAttribute(attribute, []string{"@in", "@name"}, comments[i+1:])
+				attrMap, _, _, err := extractSecurityAttribute(attribute, []string{"@in", "@name"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
 				securityMap[value] = spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
 			case "@securitydefinitions.oauth2.application":
-				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
+				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
-				securityMap[value] = securitySchemeOAuth2Application(attrMap["@tokenurl"], scopes)
+				securityMap[value] = securitySchemeOAuth2Application(attrMap["@tokenurl"], scopes, extensions)
 			case "@securitydefinitions.oauth2.implicit":
-				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@authorizationurl"}, comments[i+1:])
+				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@authorizationurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
-				securityMap[value] = securitySchemeOAuth2Implicit(attrMap["@authorizationurl"], scopes)
+				securityMap[value] = securitySchemeOAuth2Implicit(attrMap["@authorizationurl"], scopes, extensions)
 			case "@securitydefinitions.oauth2.password":
-				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
+				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
-				securityMap[value] = securitySchemeOAuth2Password(attrMap["@tokenurl"], scopes)
+				securityMap[value] = securitySchemeOAuth2Password(attrMap["@tokenurl"], scopes, extensions)
 			case "@securitydefinitions.oauth2.accesscode":
-				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@tokenurl", "@authorizationurl"}, comments[i+1:])
+				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl", "@authorizationurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
-				securityMap[value] = securitySchemeOAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"], scopes)
+				securityMap[value] = securitySchemeOAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"], scopes, extensions)
+			case "@x-tokenname":
+				// ignore this
+				break
 			case "@query.collection.format":
 				parser.collectionFormatInQuery = value
 			default:
@@ -396,9 +399,10 @@ func isGeneralAPIComment(comment *ast.CommentGroup) bool {
 	return true
 }
 
-func extractSecurityAttribute(context string, search []string, lines []string) (map[string]string, map[string]string, error) {
+func extractSecurityAttribute(context string, search []string, lines []string) (map[string]string, map[string]string, map[string]interface{}, error) {
 	attrMap := map[string]string{}
 	scopes := map[string]string{}
+	extensions := map[string]interface{}{}
 	for _, v := range lines {
 		securityAttr := strings.ToLower(strings.Split(v, " ")[0])
 		for _, findterm := range search {
@@ -409,14 +413,17 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 		}
 		isExists, err := isExistsScope(securityAttr)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		if isExists {
 			scopScheme, err := getScopeScheme(securityAttr)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 			scopes[scopScheme] = v[len(securityAttr):]
+		}
+		if securityAttr == "@x-tokenname" {
+			extensions["x-tokenName"] = strings.TrimSpace(v[len(securityAttr):])
 		}
 		// next securityDefinitions
 		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
@@ -424,41 +431,56 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 		}
 	}
 	if len(attrMap) != len(search) {
-		return nil, nil, fmt.Errorf("%s is %v required", context, search)
+		return nil, nil, nil, fmt.Errorf("%s is %v required", context, search)
 	}
-	return attrMap, scopes, nil
+	return attrMap, scopes, extensions, nil
 }
 
-func securitySchemeOAuth2Application(tokenurl string, scopes map[string]string) *spec.SecurityScheme {
+func securitySchemeOAuth2Application(tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Application(tokenurl)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
 	return securityScheme
 }
 
-func securitySchemeOAuth2Implicit(authorizationurl string, scopes map[string]string) *spec.SecurityScheme {
+func securitySchemeOAuth2Implicit(authorizationurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Implicit(authorizationurl)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
 	return securityScheme
 }
 
-func securitySchemeOAuth2Password(tokenurl string, scopes map[string]string) *spec.SecurityScheme {
+func securitySchemeOAuth2Password(tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Password(tokenurl)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
 	return securityScheme
 }
 
-func securitySchemeOAuth2AccessToken(authorizationurl, tokenurl string, scopes map[string]string) *spec.SecurityScheme {
+func securitySchemeOAuth2AccessToken(authorizationurl, tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2AccessToken(authorizationurl, tokenurl)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
 	return securityScheme
+}
+
+func handleSecuritySchemaExtensions(providedExtensions map[string]interface{}) spec.Extensions {
+	var extensions spec.Extensions
+	if len(providedExtensions) > 0 {
+		extensions = make(map[string]interface{}, len(providedExtensions))
+		for key, value := range providedExtensions {
+			extensions[key] = value
+		}
+	}
+	return extensions
 }
 
 func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {

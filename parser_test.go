@@ -60,7 +60,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information"
-            }
+            },
+            "x-tokenName": "id_token"
         },
         "OAuth2Application": {
             "type": "oauth2",
