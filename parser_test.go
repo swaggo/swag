@@ -2453,3 +2453,17 @@ func Fun()  {
 	assert.False(t, ok)
 	assert.Empty(t, childName)
 }
+
+func TestParseErrorField(t *testing.T) {
+	searchDir := "testdata/error_field"
+	mainAPIFile := "main.go"
+	p := New()
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, string(expected), string(b))
+}
