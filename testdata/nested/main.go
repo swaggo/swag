@@ -1,7 +1,8 @@
 package composition
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
+
 	"github.com/swaggo/swag/testdata/nested/api"
 )
 
@@ -14,7 +15,6 @@ import (
 // @BasePath /v2
 
 func main() {
-	r := gin.New()
-	r.GET("/testapi/get-foo", api.GetFoo)
-	r.Run()
+	http.HandleFunc("/testapi/get-foo", api.GetFoo)
+	http.ListenAndServe(":8080", nil)
 }

@@ -1,7 +1,8 @@
 package composition
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
+
 	"github.com/swaggo/swag/testdata/composition/api"
 )
 
@@ -14,11 +15,10 @@ import (
 // @BasePath /v2
 
 func main() {
-	r := gin.New()
-	r.GET("/testapi/get-foo", api.GetFoo)
-	r.GET("/testapi/get-bar", api.GetBar)
-	r.GET("/testapi/get-foobar", api.GetFooBar)
-	r.GET("/testapi/get-foobar-pointer", api.GetFooBarPointer)
-	r.GET("/testapi/get-barmap", api.GetBarMap)
-	r.Run()
+	http.handleFunc("/testapi/get-foo", api.GetFoo)
+	http.handleFunc("/testapi/get-bar", api.GetBar)
+	http.handleFunc("/testapi/get-foobar", api.GetFooBar)
+	http.handleFunc("/testapi/get-foobar-pointer", api.GetFooBarPointer)
+	http.handleFunc("/testapi/get-barmap", api.GetBarMap)
+	http.ListenAndServe(":8080", nil)
 }
