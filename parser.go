@@ -85,6 +85,9 @@ type Parser struct {
 	// markdownFileDir holds the path to the folder, where markdown files are stored
 	markdownFileDir string
 
+	// codeExampleFilesDir holds path to the folder, where code example files are stored
+	codeExampleFilesDir string
+
 	// collectionFormatInQuery set the default collectionFormat otherwise then 'csv' for array in query params
 	collectionFormatInQuery string
 
@@ -101,6 +104,9 @@ func New(options ...func(*Parser)) *Parser {
 					InfoProps: spec.InfoProps{
 						Contact: &spec.ContactInfo{},
 						License: nil,
+					},
+					VendorExtensible: spec.VendorExtensible{
+						Extensions: spec.Extensions{},
 					},
 				},
 				Paths: &spec.Paths{
@@ -128,6 +134,13 @@ func New(options ...func(*Parser)) *Parser {
 func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 	return func(p *Parser) {
 		p.markdownFileDir = directoryPath
+	}
+}
+
+// SetCodeExamplesDirectory sets the directory to search for code example files
+func SetCodeExamplesDirectory(directoryPath string) func(*Parser) {
+	return func(p *Parser) {
+		p.codeExampleFilesDir = directoryPath
 	}
 }
 
@@ -369,7 +382,12 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 						if err := json.Unmarshal([]byte(split[1]), &valueJSON); err != nil {
 							return fmt.Errorf("annotation %s need a valid json value", attribute)
 						}
-						parser.swagger.AddExtension(extensionName, valueJSON)
+
+						if strings.Contains(extensionName, "logo") {
+							parser.swagger.Info.Extensions.Add(extensionName, valueJSON)
+						} else {
+							parser.swagger.AddExtension(extensionName, valueJSON)
+						}
 					}
 				}
 			}
@@ -521,7 +539,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 		switch astDeclaration := astDescription.(type) {
 		case *ast.FuncDecl:
 			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-				operation := NewOperation(parser) //for per 'function' comment, create a new 'Operation' object
+				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir)) //for per 'function' comment, create a new 'Operation' object
 				for _, comment := range astDeclaration.Doc.List {
 					if err := operation.ParseComment(comment.Text, astFile); err != nil {
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
@@ -813,34 +831,6 @@ type structField struct {
 	enums        []interface{}
 	defaultValue interface{}
 	extensions   map[string]interface{}
-}
-
-func (sf *structField) toStandardSchema() *spec.Schema {
-	required := make([]string, 0)
-	if sf.isRequired {
-		required = append(required, sf.name)
-	}
-	return &spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type:        []string{sf.schemaType},
-			Description: sf.desc,
-			Format:      sf.formatType,
-			Required:    required,
-			Maximum:     sf.maximum,
-			Minimum:     sf.minimum,
-			MaxLength:   sf.maxLength,
-			MinLength:   sf.minLength,
-			Enum:        sf.enums,
-			Default:     sf.defaultValue,
-		},
-		SwaggerSchemaProps: spec.SwaggerSchemaProps{
-			Example:  sf.exampleValue,
-			ReadOnly: sf.readOnly,
-		},
-		VendorExtensible: spec.VendorExtensible{
-			Extensions: sf.extensions,
-		},
-	}
 }
 
 func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {

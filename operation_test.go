@@ -1484,4 +1484,60 @@ func TestParseExtentions(t *testing.T) {
 		b, _ := json.MarshalIndent(operation, "", "    ")
 		assert.Equal(t, expected, string(b))
 	}
+
+	// Test x-tagGroups
+	{
+		comment := `@x-tagGroups [{"name":"Natural Persons","tags":["Person","PersonRisk","PersonDocuments"]}]`
+		operation := NewOperation(nil)
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		expected := `{
+    "x-tagGroups": [
+        {
+            "name": "Natural Persons",
+            "tags": [
+                "Person",
+                "PersonRisk",
+                "PersonDocuments"
+            ]
+        }
+    ]
+}`
+
+		b, _ := json.MarshalIndent(operation, "", "    ")
+		assert.Equal(t, expected, string(b))
+	}
+}
+
+func TestParseCodeSamples(t *testing.T) {
+	t.Run("Find sample by file", func(t *testing.T) {
+		comment := `@x-codeSamples file`
+		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
+		operation.Summary = "example"
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err, "no error should be thrown")
+
+		b, _ := json.MarshalIndent(operation, "", "    ")
+
+		expected := `{
+    "summary": "example",
+    "x-codeSamples": {
+        "lang": "JavaScript",
+        "source": "console.log('Hello World');"
+    }
+}`
+		assert.Equal(t, expected, string(b))
+	})
+
+	t.Run("Example file not found", func(t *testing.T) {
+		comment := `@x-codeSamples file`
+		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
+		operation.Summary = "exampel"
+
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err, "error was expected, as file does not exist")
+	})
 }
