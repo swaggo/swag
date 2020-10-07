@@ -3,9 +3,10 @@ package swag
 import (
 	"errors"
 	"fmt"
-	"github.com/go-openapi/spec"
 	"go/ast"
 	"strings"
+
+	"github.com/go-openapi/spec"
 )
 
 const (

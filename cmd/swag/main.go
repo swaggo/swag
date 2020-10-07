@@ -19,6 +19,7 @@ const (
 	parseVendorFlag      = "parseVendor"
 	parseDependencyFlag  = "parseDependency"
 	markdownFilesFlag    = "markdownFiles"
+	codeExampleFilesFlag = "codeExampleFiles"
 	parseInternalFlag    = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
 	parseDepthFlag       = "parseDepth"
@@ -67,6 +68,12 @@ var initFlags = []cli.Flag{
 		Value:   "",
 		Usage:   "Parse folder containing markdown files to use as description, disabled by default",
 	},
+	&cli.StringFlag{
+		Name:    codeExampleFilesFlag,
+		Aliases: []string{"cef"},
+		Value:   "",
+		Usage:   "Parse folder containing code example files to use for the x-codeSamples extension, disabled by default",
+	},
 	&cli.BoolFlag{
 		Name:  parseInternalFlag,
 		Usage: "Parse go files in internal packages, disabled by default",
@@ -92,17 +99,18 @@ func initAction(c *cli.Context) error {
 	}
 
 	return gen.New().Build(&gen.Config{
-		SearchDir:          c.String(searchDirFlag),
-		Excludes:           c.String(excludeFlag),
-		MainAPIFile:        c.String(generalInfoFlag),
-		PropNamingStrategy: strategy,
-		OutputDir:          c.String(outputFlag),
-		ParseVendor:        c.Bool(parseVendorFlag),
-		ParseDependency:    c.Bool(parseDependencyFlag),
-		MarkdownFilesDir:   c.String(markdownFilesFlag),
-		ParseInternal:      c.Bool(parseInternalFlag),
-		GeneratedTime:      c.Bool(generatedTimeFlag),
-		ParseDepth:         c.Int(parseDepthFlag),
+		SearchDir:           c.String(searchDirFlag),
+		Excludes:            c.String(excludeFlag),
+		MainAPIFile:         c.String(generalInfoFlag),
+		PropNamingStrategy:  strategy,
+		OutputDir:           c.String(outputFlag),
+		ParseVendor:         c.Bool(parseVendorFlag),
+		ParseDependency:     c.Bool(parseDependencyFlag),
+		MarkdownFilesDir:    c.String(markdownFilesFlag),
+		ParseInternal:       c.Bool(parseInternalFlag),
+		GeneratedTime:       c.Bool(generatedTimeFlag),
+		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
+		ParseDepth:          c.Int(parseDepthFlag),
 	})
 }
 
