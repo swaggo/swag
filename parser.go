@@ -343,6 +343,12 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					return err
 				}
 				securityMap[value] = spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
+			case "@securitydefinitions.bearerauth":
+				attrMap, _, err := extractSecurityAttribute(attribute, []string{"@scheme", "@bearerformat"}, comments[i+1:])
+				if err != nil {
+					return err
+				}
+				securityMap[value] = spec.BearerAuth(attrMap["@scheme"], attrMap["@bearerformat"])
 			case "@securitydefinitions.oauth2.application":
 				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
 				if err != nil {

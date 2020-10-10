@@ -55,6 +55,10 @@ import (
 // @authorizationUrl https://example.com/oauth/authorize
 // @scope.admin Grants read and write access to administrative information
 
+// @securitydefinitions.bearerAuth BearerAuth
+// @scheme bearer
+// @bearerFormat JWT
+
 func main() {
 	r := gin.Default()
 

@@ -274,6 +274,9 @@
             "BasicAuth": []
           },
           {
+            "BearerAuth": []
+          },
+          {
             "OAuth2Application": [
               "write"
             ]
@@ -685,6 +688,11 @@
     },
     "BasicAuth": {
       "type": "basic"
+    },
+    "BearerAuth": {
+      "type": "http",
+      "scheme": "bearer",
+      "bearerFormat": "JWT"
     },
     "OAuth2AccessCode": {
       "type": "oauth2",

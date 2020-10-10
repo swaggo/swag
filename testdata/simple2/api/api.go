@@ -33,6 +33,7 @@ func GetStringByInt(c *gin.Context) {
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Security ApiKeyAuth
 // @Security BasicAuth
+// @Security BearerAuth
 // @Security OAuth2Application[write]
 // @Security OAuth2Implicit[read, admin]
 // @Security OAuth2AccessCode[read]

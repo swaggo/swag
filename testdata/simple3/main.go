@@ -46,6 +46,11 @@ import (
 // @tokenUrl https://example.com/oauth/token
 // @authorizationurl https://example.com/oauth/authorize
 // @scope.admin Grants read and write access to administrative information
+
+// @securitydefinitions.bearerAuth BearerAuth
+// @scheme bearer
+// @bearerFormat JWT
+
 func main() {
 	r := gin.New()
 	r.GET("/testapi/get-string-by-int/:some_id", api.GetStringByInt)

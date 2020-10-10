@@ -1401,6 +1401,23 @@ func TestParseSecurityComment(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseSecurityCommentBearer(t *testing.T) {
+	comment := `@Security BearerAuth`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "security": [
+        {
+            "BearerAuth": []
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
 func TestParseMultiDescription(t *testing.T) {
 	comment := `@Description line one`
 	operation := NewOperation(nil)

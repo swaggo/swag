@@ -94,6 +94,11 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
                 "read": " Grants read access",
                 "write": " Grants write access"
             }
+        },
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
         }
     },
     "x-google-endpoints": [
@@ -138,6 +143,11 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
         },
         "BasicAuth": {
             "type": "basic"
+        },
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
         },
         "OAuth2AccessCode": {
             "type": "oauth2",
@@ -419,6 +429,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     },
                     {
                         "BasicAuth": []
+                    },
+                    {
+                        "BearerAuth": []
                     },
                     {
                         "OAuth2Application": [
@@ -729,6 +742,11 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
         "BasicAuth": {
             "type": "basic"
         },
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        },
         "OAuth2AccessCode": {
             "type": "oauth2",
             "flow": "accessCode",
@@ -902,6 +920,9 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     },
                     {
                         "BasicAuth": []
+                    },
+                    {
+                        "BearerAuth": []
                     },
                     {
                         "OAuth2Application": [
@@ -1184,6 +1205,11 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
         },
         "BasicAuth": {
             "type": "basic"
+        },
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
         },
         "OAuth2AccessCode": {
             "type": "oauth2",
