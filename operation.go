@@ -247,13 +247,17 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				}
 				return false
 			}
-			orderedNames := make([]string, 0, len(schema.Properties))
-			for k := range schema.Properties {
-				orderedNames = append(orderedNames, k)
+			items := make(spec.OrderSchemaItems, 0, len(schema.Properties))
+			for k, v := range schema.Properties {
+				items = append(items, spec.OrderSchemaItem{
+					Name:   k,
+					Schema: v,
+				})
 			}
-			sort.Strings(orderedNames)
-			for _, name := range orderedNames {
-				prop := schema.Properties[name]
+			sort.Sort(items)
+			for _, item := range items {
+				name := item.Name
+				prop := item.Schema
 				if len(prop.Type) == 0 {
 					continue
 				}
