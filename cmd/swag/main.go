@@ -19,33 +19,40 @@ const (
 	parseVendorFlag      = "parseVendor"
 	parseDependencyFlag  = "parseDependency"
 	markdownFilesFlag    = "markdownFiles"
+	codeExampleFilesFlag = "codeExampleFiles"
+	parseInternalFlag    = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
+	parseDepthFlag       = "parseDepth"
 )
 
 var initFlags = []cli.Flag{
 	&cli.StringFlag{
-		Name:  generalInfoFlag + ", g",
-		Value: "main.go",
-		Usage: "Go file path in which 'swagger general API Info' is written",
+		Name:    generalInfoFlag,
+		Aliases: []string{"g"},
+		Value:   "main.go",
+		Usage:   "Go file path in which 'swagger general API Info' is written",
 	},
 	&cli.StringFlag{
-		Name:  searchDirFlag + ", d",
-		Value: "./",
-		Usage: "Directory you want to parse",
+		Name:    searchDirFlag,
+		Aliases: []string{"d"},
+		Value:   "./",
+		Usage:   "Directory you want to parse",
 	},
 	&cli.StringFlag{
 		Name:  excludeFlag,
 		Usage: "exclude directories and files when searching, comma separated",
 	},
 	&cli.StringFlag{
-		Name:  propertyStrategyFlag + ", p",
-		Value: "camelcase",
-		Usage: "Property Naming Strategy like snakecase,camelcase,pascalcase",
+		Name:    propertyStrategyFlag,
+		Aliases: []string{"p"},
+		Value:   "camelcase",
+		Usage:   "Property Naming Strategy like snakecase,camelcase,pascalcase",
 	},
 	&cli.StringFlag{
-		Name:  outputFlag + ", o",
-		Value: "./docs",
-		Usage: "Output directory for all the generated files(swagger.json, swagger.yaml and doc.go)",
+		Name:    outputFlag,
+		Aliases: []string{"o"},
+		Value:   "./docs",
+		Usage:   "Output directory for all the generated files(swagger.json, swagger.yaml and doc.go)",
 	},
 	&cli.BoolFlag{
 		Name:  parseVendorFlag,
@@ -56,13 +63,29 @@ var initFlags = []cli.Flag{
 		Usage: "Parse go files in outside dependency folder, disabled by default",
 	},
 	&cli.StringFlag{
-		Name:  markdownFilesFlag + ", md",
-		Value: "",
-		Usage: "Parse folder containing markdown files to use as description, disabled by default",
+		Name:    markdownFilesFlag,
+		Aliases: []string{"md"},
+		Value:   "",
+		Usage:   "Parse folder containing markdown files to use as description, disabled by default",
+	},
+	&cli.StringFlag{
+		Name:    codeExampleFilesFlag,
+		Aliases: []string{"cef"},
+		Value:   "",
+		Usage:   "Parse folder containing code example files to use for the x-codeSamples extension, disabled by default",
 	},
 	&cli.BoolFlag{
-		Name:  "generatedTime",
+		Name:  parseInternalFlag,
+		Usage: "Parse go files in internal packages, disabled by default",
+	},
+	&cli.BoolFlag{
+		Name:  generatedTimeFlag,
 		Usage: "Generate timestamp at the top of docs.go, true by default",
+	},
+	&cli.IntFlag{
+		Name:  parseDepthFlag,
+		Value: 100,
+		Usage: "Dependency parse depth",
 	},
 }
 
@@ -76,15 +99,18 @@ func initAction(c *cli.Context) error {
 	}
 
 	return gen.New().Build(&gen.Config{
-		SearchDir:          c.String(searchDirFlag),
-		Excludes:           c.String(excludeFlag),
-		MainAPIFile:        c.String(generalInfoFlag),
-		PropNamingStrategy: strategy,
-		OutputDir:          c.String(outputFlag),
-		ParseVendor:        c.Bool(parseVendorFlag),
-		ParseDependency:    c.Bool(parseDependencyFlag),
-		MarkdownFilesDir:   c.String(markdownFilesFlag),
-		GeneratedTime:      c.Bool(generatedTimeFlag),
+		SearchDir:           c.String(searchDirFlag),
+		Excludes:            c.String(excludeFlag),
+		MainAPIFile:         c.String(generalInfoFlag),
+		PropNamingStrategy:  strategy,
+		OutputDir:           c.String(outputFlag),
+		ParseVendor:         c.Bool(parseVendorFlag),
+		ParseDependency:     c.Bool(parseDependencyFlag),
+		MarkdownFilesDir:    c.String(markdownFilesFlag),
+		ParseInternal:       c.Bool(parseInternalFlag),
+		GeneratedTime:       c.Bool(generatedTimeFlag),
+		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
+		ParseDepth:          c.Int(parseDepthFlag),
 	})
 }
 

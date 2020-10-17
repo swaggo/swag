@@ -45,7 +45,6 @@
             "type": "object",
             "properties": {
                 "application": {
-                    "type": "object",
                     "$ref": "#/definitions/types.Application"
                 },
                 "application_array": {
@@ -55,6 +54,9 @@
                     }
                 },
                 "application_time": {
+                    "type": "string"
+                },
+                "embedded": {
                     "type": "string"
                 }
             }

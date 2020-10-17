@@ -3,7 +3,7 @@ package web
 import (
 	"time"
 
-	"github.com/satori/go.uuid"
+	"github.com/gofrs/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/swaggo/swag/testdata/simple/cross"
 )
