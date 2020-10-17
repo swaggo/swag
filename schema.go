@@ -12,8 +12,6 @@ import (
 const (
 	//ARRAY array
 	ARRAY = "array"
-	//MAP map
-	MAP = "map"
 	//OBJECT object
 	OBJECT = "object"
 	//PRIMITIVE primitive
@@ -51,7 +49,7 @@ func IsSimplePrimitiveType(typeName string) bool {
 // IsPrimitiveType determine whether the type name is a primitive type
 func IsPrimitiveType(typeName string) bool {
 	switch typeName {
-	case STRING, NUMBER, INTEGER, BOOLEAN, ARRAY, MAP, OBJECT, FUNC:
+	case STRING, NUMBER, INTEGER, BOOLEAN, ARRAY, OBJECT, FUNC:
 		return true
 	default:
 		return false
@@ -171,6 +169,15 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 			return nil, err
 		}
 		return spec.ArrayProperty(schema), nil
+	case "object":
+		if len(types) == 1 {
+			return nil, errors.New("need object item type after object")
+		}
+		schema, err := BuildCustomSchema(types[1:])
+		if err != nil {
+			return nil, err
+		}
+		return spec.MapProperty(schema), nil
 	default:
 		err := CheckSchemaType(types[0])
 		if err != nil {

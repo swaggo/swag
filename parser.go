@@ -992,7 +992,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		//    name:       field.Names[0].Name,
 		schemaType: types[0],
 	}
-	if len(types) > 1 && types[0] == "array" {
+	if len(types) > 1 && (types[0] == "array" || types[0] == "object") {
 		structField.arrayType = types[1]
 	}
 
@@ -1263,7 +1263,11 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 			result = append(result, v)
 		}
 		return result, nil
-	case "map":
+	case OBJECT:
+		if arrayType == "" {
+			return nil, fmt.Errorf("%s is unsupported type in example value", schemaType)
+		}
+
 		values := strings.Split(exampleValue, ",")
 		result := map[string]interface{}{}
 		for _, value := range values {
