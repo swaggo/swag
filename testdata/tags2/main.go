@@ -8,5 +8,5 @@ package main
 // @tag.docs.url https://google.de
 // @tag.docs.description google is super useful to find out that cats are evil!
 // @tag.name apes
-// @tag.description Apes are also cool
+// @tag.description.markdown
 func main() {}
