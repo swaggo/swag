@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	uuid "github.com/satori/go.uuid"
+	uuid "github.com/gofrs/uuid"
 )
 
 // Account example

@@ -66,6 +66,9 @@ type Config struct {
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
 
+	// CodeExampleFilesDir used to find code example files, which can be used for x-codeSamples
+	CodeExampleFilesDir string
+
 	// ParseDepth dependency parse depth
 	ParseDepth int
 }
@@ -78,7 +81,8 @@ func (g *Gen) Build(config *Config) error {
 
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
-		swag.SetExcludedDirsAndFiles(config.Excludes))
+		swag.SetExcludedDirsAndFiles(config.Excludes),
+		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir))
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
