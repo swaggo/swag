@@ -6,12 +6,13 @@ import (
 	"go/token"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+const defaultParseDepth = 100
 
 func TestNew(t *testing.T) {
 	swagMode = test
@@ -38,7 +39,12 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "1.0"
+        "version": "1.0",
+        "x-logo": {
+            "altText": "Petstore logo",
+            "backgroundColor": "#FFFFFF",
+            "url": "https://redocly.github.io/redoc/petstore-logo.png"
+        }
     },
     "host": "petstore.swagger.io",
     "basePath": "/v2",
@@ -59,7 +65,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information"
-            }
+            },
+            "x-tokenName": "id_token"
         },
         "OAuth2Application": {
             "type": "oauth2",
@@ -223,7 +230,6 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "paths": {}
@@ -250,28 +256,25 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "testdata/pet"
 
 	p := New()
-	err := p.getAllGoFileInfo(searchDir)
+	err := p.getAllGoFileInfo("testdata", searchDir)
 
 	assert.NoError(t, err)
-	assert.NotEmpty(t, p.files[filepath.Join("testdata", "pet", "main.go")])
-	assert.NotEmpty(t, p.files[filepath.Join("testdata", "pet", "web", "handler.go")])
-	assert.Equal(t, 2, len(p.files))
+	assert.Equal(t, 2, len(p.packages.files))
 }
 
 func TestParser_ParseType(t *testing.T) {
 	searchDir := "testdata/simple/"
 
 	p := New()
-	err := p.getAllGoFileInfo(searchDir)
+	err := p.getAllGoFileInfo("testdata", searchDir)
 	assert.NoError(t, err)
 
-	for _, file := range p.files {
-		p.ParseType(file)
-	}
+	_, err = p.packages.ParseTypes()
 
-	assert.NotNil(t, p.TypeDefinitions["api"]["Pet3"])
-	assert.NotNil(t, p.TypeDefinitions["web"]["Pet"])
-	assert.NotNil(t, p.TypeDefinitions["web"]["Pet2"])
+	assert.NoError(t, err)
+	assert.NotNil(t, p.packages.uniqueDefinitions["api.Pet3"])
+	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet"])
+	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet2"])
 }
 
 func TestGetSchemes(t *testing.T) {
@@ -281,615 +284,17 @@ func TestGetSchemes(t *testing.T) {
 }
 
 func TestParseSimpleApi1(t *testing.T) {
-	expected := `{
-    "swagger": "2.0",
-    "info": {
-        "description": "This is a sample server Petstore server.",
-        "title": "Swagger Example API",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "1.0"
-    },
-    "host": "petstore.swagger.io",
-    "basePath": "/v2",
-    "paths": {
-        "/file/upload": {
-            "post": {
-                "description": "Upload file",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Upload file",
-                "operationId": "file.upload",
-                "parameters": [
-                    {
-                        "type": "file",
-                        "description": "this is a test file",
-                        "name": "file",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "We need ID!!",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Can not find ID",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    }
-                }
-            }
-        },
-        "/testapi/get-string-by-int/{some_id}": {
-            "get": {
-                "description": "get string by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Add a new pet to the store",
-                "operationId": "get-string-by-int",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "format": "int64",
-                        "description": "Some ID",
-                        "name": "some_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Some ID",
-                        "name": "some_id",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/web.Pet"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "We need ID!!",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    },
-                    "404": {
-                        "description": "Can not find ID",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    }
-                }
-            }
-        },
-        "/testapi/get-struct-array-by-string/{some_id}": {
-            "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    },
-                    {
-                        "BasicAuth": []
-                    },
-                    {
-                        "OAuth2Application": [
-                            "write"
-                        ]
-                    },
-                    {
-                        "OAuth2Implicit": [
-                            "read",
-                            "admin"
-                        ]
-                    },
-                    {
-                        "OAuth2AccessCode": [
-                            "read"
-                        ]
-                    },
-                    {
-                        "OAuth2Password": [
-                            "admin"
-                        ]
-                    }
-                ],
-                "description": "get struct array by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "operationId": "get-struct-array-by-string",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Some ID",
-                        "name": "some_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "enum": [
-                            1,
-                            2,
-                            3
-                        ],
-                        "type": "integer",
-                        "description": "Category",
-                        "name": "category",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "minimum": 0,
-                        "type": "integer",
-                        "default": 0,
-                        "description": "Offset",
-                        "name": "offset",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "maximum": 50,
-                        "type": "integer",
-                        "default": 10,
-                        "description": "Limit",
-                        "name": "limit",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "maxLength": 50,
-                        "minLength": 1,
-                        "type": "string",
-                        "default": "\"\"",
-                        "description": "q",
-                        "name": "q",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "We need ID!!",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    },
-                    "404": {
-                        "description": "Can not find ID",
-                        "schema": {
-                            "$ref": "#/definitions/web.APIError"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "definitions": {
-        "api.SwagReturn": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "additionalProperties": {
-                    "type": "string"
-                }
-            }
-        },
-        "cross.Cross": {
-            "type": "object",
-            "properties": {
-                "Array": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "String": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.APIError": {
-            "type": "object",
-            "properties": {
-                "CreatedAt": {
-                    "type": "string"
-                },
-                "ErrorCode": {
-                    "type": "integer"
-                },
-                "ErrorMessage": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.AnonymousStructArray": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "foo": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "web.CrossAlias": {
-            "$ref": "#/definitions/cross.Cross"
-        },
-        "web.IndirectRecursiveTest": {
-            "type": "object",
-            "properties": {
-                "Tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Tag"
-                    }
-                }
-            }
-        },
-        "web.Pet": {
-            "type": "object",
-            "required": [
-                "name",
-                "photo_urls"
-            ],
-            "properties": {
-                "category": {
-                    "type": "object",
-                    "properties": {
-                        "id": {
-                            "type": "integer",
-                            "example": 1
-                        },
-                        "name": {
-                            "type": "string",
-                            "example": "category_name"
-                        },
-                        "photo_urls": {
-                            "type": "array",
-                            "format": "url",
-                            "items": {
-                                "type": "string"
-                            },
-                            "example": [
-                                "http://test/image/1.jpg",
-                                "http://test/image/2.jpg"
-                            ]
-                        },
-                        "small_category": {
-                            "type": "object",
-                            "required": [
-                                "name"
-                            ],
-                            "properties": {
-                                "id": {
-                                    "type": "integer",
-                                    "example": 1
-                                },
-                                "name": {
-                                    "type": "string",
-                                    "maxLength": 16,
-                                    "minLength": 4,
-                                    "example": "detail_category_name"
-                                },
-                                "photo_urls": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    },
-                                    "example": [
-                                        "http://test/image/1.jpg",
-                                        "http://test/image/2.jpg"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                },
-                "data": {
-                    "type": "object"
-                },
-                "decimal": {
-                    "type": "number"
-                },
-                "enum_array": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer",
-                        "enum": [
-                            1,
-                            2,
-                            3,
-                            5,
-                            7
-                        ]
-                    }
-                },
-                "id": {
-                    "type": "integer",
-                    "format": "int64",
-                    "readOnly": true,
-                    "example": 1
-                },
-                "int_array": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    },
-                    "example": [
-                        1,
-                        2
-                    ]
-                },
-                "is_alive": {
-                    "type": "boolean",
-                    "default": true,
-                    "example": true
-                },
-                "name": {
-                    "type": "string",
-                    "example": "poti"
-                },
-                "pets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Pet2"
-                    }
-                },
-                "pets2": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Pet2"
-                    }
-                },
-                "photo_urls": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    },
-                    "example": [
-                        "http://test/image/1.jpg",
-                        "http://test/image/2.jpg"
-                    ]
-                },
-                "price": {
-                    "type": "number",
-                    "maximum": 1000,
-                    "minimum": 1,
-                    "example": 3.25
-                },
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "healthy",
-                        "ill"
-                    ]
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Tag"
-                    }
-                },
-                "uuid": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.Pet2": {
-            "type": "object",
-            "properties": {
-                "deleted_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "middlename": {
-                    "type": "string",
-                    "x-abc": "def",
-                    "x-nullable": true
-                }
-            }
-        },
-        "web.Pet5a": {
-            "type": "object",
-            "required": [
-                "name",
-                "odd"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "odd": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "web.Pet5b": {
-            "type": "object",
-            "required": [
-                "name"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "web.Pet5c": {
-            "type": "object",
-            "required": [
-                "name",
-                "odd"
-            ],
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "odd": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "web.RevValue": {
-            "type": "object",
-            "properties": {
-                "Data": {
-                    "type": "integer"
-                },
-                "Err": {
-                    "type": "integer"
-                },
-                "Status": {
-                    "type": "boolean"
-                },
-                "cross": {
-                    "type": "object",
-                    "$ref": "#/definitions/cross.Cross"
-                },
-                "crosses": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/cross.Cross"
-                    }
-                }
-            }
-        },
-        "web.Tag": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer",
-                    "format": "int64"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "pets": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/web.Pet"
-                    }
-                }
-            }
-        },
-        "web.Tags": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/web.Tag"
-            }
-        }
-    },
-    "securityDefinitions": {
-        "ApiKeyAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "BasicAuth": {
-            "type": "basic"
-        },
-        "OAuth2AccessCode": {
-            "type": "oauth2",
-            "flow": "accessCode",
-            "authorizationUrl": "https://example.com/oauth/authorize",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information"
-            }
-        },
-        "OAuth2Application": {
-            "type": "oauth2",
-            "flow": "application",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
-            }
-        },
-        "OAuth2Implicit": {
-            "type": "oauth2",
-            "flow": "implicit",
-            "authorizationUrl": "https://example.com/oauth/authorize",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
-            }
-        },
-        "OAuth2Password": {
-            "type": "oauth2",
-            "flow": "password",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "read": " Grants read access",
-                "write": " Grants write access"
-            }
-        }
-    }
-}`
+	expected, err := ioutil.ReadFile("testdata/simple/expected.json")
+	assert.NoError(t, err)
 	searchDir := "testdata/simple"
 	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	assert.Equal(t, expected, string(b))
+	b, _ := json.MarshalIndent(p.swagger, "", "  ")
+	assert.Equal(t, string(expected), string(b))
 }
 
 func TestParseSimpleApi_ForSnakecase(t *testing.T) {
@@ -1368,7 +773,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = SnakeCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -1823,7 +1228,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
 	searchDir := "testdata/simple3"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -1837,7 +1242,6 @@ func TestParseStructComment(t *testing.T) {
         "description": "This is a sample server Petstore server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",
@@ -1913,7 +1317,7 @@ func TestParseStructComment(t *testing.T) {
 	searchDir := "testdata/struct_comment"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -1926,7 +1330,6 @@ func TestParseNonExportedJSONFields(t *testing.T) {
         "description": "This is a sample server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",
@@ -1988,7 +1391,7 @@ func TestParseNonExportedJSONFields(t *testing.T) {
 	searchDir := "testdata/non_exported_json_fields"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -2021,159 +1424,7 @@ func TestParsePetApi(t *testing.T) {
 	searchDir := "testdata/pet"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
-	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	assert.Equal(t, expected, string(b))
-}
-
-func TestParseModelNotUnderRoot(t *testing.T) {
-	expected := `{
-    "swagger": "2.0",
-    "info": {
-        "description": "This is a sample server Petstore server.",
-        "title": "Swagger Example API",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
-        "version": "1.0"
-    },
-    "host": "petstore.swagger.io",
-    "basePath": "/v2",
-    "paths": {
-        "/file/upload": {
-            "post": {
-                "description": "Upload file",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Upload file",
-                "operationId": "file.upload",
-                "parameters": [
-                    {
-                        "description": "Foo to create",
-                        "name": "data",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/data.Foo"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/testapi/get-string-by-int/{some_id}": {
-            "get": {
-                "description": "get string by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Add a new pet to the store",
-                "operationId": "get-string-by-int",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "format": "int64",
-                        "description": "Some ID",
-                        "name": "some_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "ok",
-                        "schema": {
-                            "$ref": "#/definitions/data.Foo"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "definitions": {
-        "data.Foo": {
-            "type": "object",
-            "properties": {
-                "field1": {
-                    "type": "string"
-                }
-            }
-        }
-    },
-    "securityDefinitions": {
-        "ApiKeyAuth": {
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
-        },
-        "BasicAuth": {
-            "type": "basic"
-        },
-        "OAuth2AccessCode": {
-            "type": "oauth2",
-            "flow": "accessCode",
-            "authorizationUrl": "https://example.com/oauth/authorize",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information"
-            }
-        },
-        "OAuth2Application": {
-            "type": "oauth2",
-            "flow": "application",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
-            }
-        },
-        "OAuth2Implicit": {
-            "type": "oauth2",
-            "flow": "implicit",
-            "authorizationUrl": "https://example.com/oauth/authorize",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
-            }
-        },
-        "OAuth2Password": {
-            "type": "oauth2",
-            "flow": "password",
-            "tokenUrl": "https://example.com/oauth/token",
-            "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "read": " Grants read access",
-                "write": " Grants write access"
-            }
-        }
-    }
-}`
-	searchDir := "testdata/model_not_under_root/cmd"
-	mainAPIFile := "main.go"
-	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -2242,7 +1493,7 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 	searchDir := "testdata/alias_type"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2253,10 +1504,10 @@ func TestParseComposition(t *testing.T) {
 	searchDir := "testdata/composition"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2269,10 +1520,10 @@ func TestParseImportAliases(t *testing.T) {
 	searchDir := "testdata/alias_import"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2285,13 +1536,35 @@ func TestParseNested(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(path.Join(searchDir, "expected.json"))
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, string(expected), string(b))
+}
+
+func TestParseDuplicated(t *testing.T) {
+	searchDir := "testdata/duplicated"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Errorf(t, err, "duplicated @id declarations successfully found")
+}
+
+func TestParseConflictSchemaName(t *testing.T) {
+	searchDir := "testdata/conflict_name"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
 
@@ -2350,12 +1623,11 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
-	typeSpec := p.TypeDefinitions["api"]["Response"]
-	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
@@ -2414,17 +1686,16 @@ type ResponseWrapper struct {
 
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
-	parser.ParseType(f)
+	parser.packages.CollectAstFile("api", "api/api.go", f)
 
 	f2, err := goparser.ParseFile(token.NewFileSet(), "", restsrc, goparser.ParseComments)
 	assert.NoError(t, err)
-	parser.ParseType(f2)
+	parser.packages.CollectAstFile("rest", "rest/rest.go", f2)
 
-	err = parser.ParseRouterAPIInfo("", f)
+	_, err = parser.packages.ParseTypes()
 	assert.NoError(t, err)
 
-	typeSpec := parser.TypeDefinitions["api"]["Response"]
-	err = parser.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	err = parser.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(parser.swagger.Definitions, "", "   ")
@@ -2470,7 +1741,6 @@ func Test(){
          },
          "test2": {
             "description": "test2",
-            "type": "object",
             "$ref": "#/definitions/api.Child"
          }
       }
@@ -2481,12 +1751,11 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
-	typeSpec := p.TypeDefinitions["api"]["Parent"]
-	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
@@ -2574,7 +1843,6 @@ func Test(){
          },
          "test6": {
             "description": "test6",
-            "type": "object",
             "$ref": "#/definitions/api.MyMapType"
          },
          "test7": {
@@ -2608,12 +1876,12 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
+
+	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
-	typeSpec := p.TypeDefinitions["api"]["Parent"]
-	err = p.ParseDefinition("api", typeSpec.Name.Name, typeSpec)
+	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
@@ -2831,64 +2099,6 @@ func Test3(){
 	assert.NotNil(t, val.Delete)
 }
 
-func TestSkip(t *testing.T) {
-	folder1 := "/tmp/vendor"
-	err := os.Mkdir(folder1, os.ModePerm)
-	assert.NoError(t, err)
-	f1, _ := os.Stat(folder1)
-
-	parser := New()
-
-	assert.True(t, parser.Skip(folder1, f1) == filepath.SkipDir)
-	assert.NoError(t, os.Remove(folder1))
-
-	folder2 := "/tmp/.git"
-	err = os.Mkdir(folder2, os.ModePerm)
-	assert.NoError(t, err)
-	f2, _ := os.Stat(folder2)
-
-	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
-	assert.NoError(t, os.Remove(folder2))
-
-	currentPath := "./"
-	currentPathInfo, _ := os.Stat(currentPath)
-	assert.True(t, parser.Skip(currentPath, currentPathInfo) == nil)
-}
-
-func TestSkipMustParseVendor(t *testing.T) {
-	folder1 := "/tmp/vendor"
-	err := os.Mkdir(folder1, os.ModePerm)
-	assert.NoError(t, err)
-
-	f1, _ := os.Stat(folder1)
-
-	parser := New()
-	parser.ParseVendor = true
-
-	assert.True(t, parser.Skip(folder1, f1) == nil)
-	assert.NoError(t, os.Remove(folder1))
-
-	folder2 := "/tmp/.git"
-	err = os.Mkdir(folder2, os.ModePerm)
-	assert.NoError(t, err)
-
-	f2, _ := os.Stat(folder2)
-
-	assert.True(t, parser.Skip(folder2, f2) == filepath.SkipDir)
-	assert.NoError(t, os.Remove(folder2))
-
-	currentPath := "./"
-	currentPathInfo, _ := os.Stat(currentPath)
-	assert.True(t, parser.Skip(currentPath, currentPathInfo) == nil)
-
-	folder3 := "/tmp/test/vendor/github.com/swaggo/swag"
-	assert.NoError(t, os.MkdirAll(folder3, os.ModePerm))
-	f3, _ := os.Stat(folder3)
-
-	assert.Nil(t, parser.Skip(folder3, f3))
-	assert.NoError(t, os.RemoveAll("/tmp/test"))
-}
-
 // func TestParseDeterministic(t *testing.T) {
 // 	mainAPIFile := "main.go"
 // 	for _, searchDir := range []string{
@@ -2902,7 +2112,7 @@ func TestSkipMustParseVendor(t *testing.T) {
 // 			for i := 0; i < 100; i++ {
 // 				p := New()
 // 				p.PropNamingStrategy = PascalCase
-// 				err := p.ParseAPI(searchDir, mainAPIFile)
+// 				err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 // 				b, _ := json.MarshalIndent(p.swagger, "", "    ")
 // 				assert.NotEqual(t, "", string(b))
 
@@ -2921,7 +2131,7 @@ func TestApiParseTag(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
 	if len(p.swagger.Tags) != 3 {
@@ -2945,12 +2155,21 @@ func TestApiParseTag(t *testing.T) {
 	}
 }
 
+func TestApiParseTag_NonExistendTag(t *testing.T) {
+	searchDir := "testdata/tags_nonexistend_tag"
+	mainAPIFile := "main.go"
+	p := New(SetMarkdownFileDirectory(searchDir))
+	p.PropNamingStrategy = PascalCase
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Error(t, err)
+}
+
 func TestParseTagMarkdownDescription(t *testing.T) {
 	searchDir := "testdata/tags"
 	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	if err != nil {
 		t.Error("Failed to parse api description: " + err.Error())
 	}
@@ -2970,7 +2189,7 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	if err != nil {
 		t.Error("Failed to parse api description: " + err.Error())
 	}
@@ -2984,7 +2203,7 @@ func TestIgnoreInvalidPkg(t *testing.T) {
 	searchDir := "testdata/deps_having_invalid_pkg"
 	mainAPIFile := "main.go"
 	p := New()
-	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
 	}
 }
@@ -2994,7 +2213,7 @@ func TestFixes432(t *testing.T) {
 	mainAPIFile := "cmd/main.go"
 
 	p := New()
-	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
 	}
 }
@@ -3005,7 +2224,7 @@ func TestParseOutsideDependencies(t *testing.T) {
 
 	p := New()
 	p.ParseDependency = true
-	if err := p.ParseAPI(searchDir, mainAPIFile); err != nil {
+	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to parse api: " + err.Error())
 	}
 }
@@ -3030,8 +2249,7 @@ func Fun()  {
 `
 	expected := `{
     "info": {
-        "contact": {},
-        "license": {}
+        "contact": {}
     },
     "paths": {
         "/test": {
@@ -3068,7 +2286,11 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.ParseType(f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -3100,14 +2322,13 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.ParseType(f)
-	err = p.ParseRouterAPIInfo("", f)
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
-	err = p.parseDefinitions()
 	assert.NoError(t, err)
 	teacher, ok := p.swagger.Definitions["Teacher"]
 	assert.True(t, ok)
@@ -3116,6 +2337,7 @@ func Fun()  {
 	_, ok = p.swagger.Definitions["Student"]
 	assert.True(t, ok)
 	path, ok := p.swagger.Paths.Paths["/test"]
+	assert.True(t, ok)
 	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
 	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
@@ -3128,7 +2350,6 @@ func TestParseJSONFieldString(t *testing.T) {
         "description": "This is a sample server.",
         "title": "Swagger Example API",
         "contact": {},
-        "license": {},
         "version": "1.0"
     },
     "host": "localhost:4000",
@@ -3208,8 +2429,51 @@ func TestParseJSONFieldString(t *testing.T) {
 	searchDir := "testdata/json_field_string"
 	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParseSwaggerignoreForEmbedded(t *testing.T) {
+	src := `
+package main
+
+type Child struct {
+	ChildName string
+}//@name Student
+
+type Parent struct {
+	Name string
+	Child ` + "`swaggerignore:\"true\"`" + `
+}//@name Teacher
+
+// @Param request body Parent true "query params"
+// @Success 200 {object} Parent
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.ParseTypes()
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	assert.NoError(t, err)
+	teacher, ok := p.swagger.Definitions["Teacher"]
+	assert.True(t, ok)
+
+	name, ok := teacher.Properties["name"]
+	assert.True(t, ok)
+	assert.Len(t, name.Type, 1)
+	assert.Equal(t, "string", name.Type[0])
+
+	childName, ok := teacher.Properties["childName"]
+	assert.False(t, ok)
+	assert.Empty(t, childName)
 }

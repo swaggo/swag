@@ -73,14 +73,19 @@ USAGE:
    swag init [command options] [arguments...]
 
 OPTIONS:
-   --generalInfo value, -g value       Go file path in which 'swagger general API Info' is written (default: "main.go")
-   --dir value, -d value               Directory you want to parse (default: "./")
-   --exclude value                     Exclude directoies and files, comma separated
-   --propertyStrategy value, -p value  Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
-   --output value, -o value            Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
-   --parseVendor                       Parse go files in 'vendor' folder, disabled by default
-   --parseDependency                   Parse go files in outside dependency folder, disabled by default
-   --parseInternal                     Parse go files in internal packages, disabled by default
+   --generalInfo value, -g value          Go file path in which 'swagger general API Info' is written (default: "main.go")
+   --dir value, -d value                  Directory you want to parse (default: "./")
+   --exclude value                        Exclude directories and files when searching, comma separated
+   --propertyStrategy value, -p value     Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
+   --output value, -o value               Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
+   --parseVendor                          Parse go files in 'vendor' folder, disabled by default (default: false)
+   --parseDependency                      Parse go files in outside dependency folder, disabled by default (default: false)
+   --markdownFiles value, --md value      Parse folder containing markdown files to use as description, disabled by default
+   --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
+   --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
+   --generatedTime                        Generate timestamp at the top of docs.go, disabled by default (default: false)
+   --parseDepth value                     Dependency parse depth (default: 100)
+   --help, -h                             show help (default: false)
 ```
 
 ## Supported Web Frameworks
@@ -91,6 +96,7 @@ OPTIONS:
 - [net/http](https://github.com/swaggo/http-swagger)
 - [flamingo](https://github.com/i-love-flamingo/swagger)
 - [fiber](https://github.com/arsmn/fiber-swagger)
+- [atreugo](https://github.com/Nerzal/atreugo-swagger)
 
 ## How to use it with Gin
 
@@ -174,7 +180,7 @@ func main() {
 //...
 ```
 
-Additionally some general API info can be set dynamically. The generated code package `docs` exports `SwaggerInfo` variable which we can use to set the title, description, version, host and base path programatically. Example using Gin:
+Additionally some general API info can be set dynamically. The generated code package `docs` exports `SwaggerInfo` variable which we can use to set the title, description, version, host and base path programmatically. Example using Gin:
 
 ```go
 package main
@@ -198,7 +204,7 @@ import (
 
 func main() {
 
-	// programatically set swagger info
+	// programmatically set swagger info
 	docs.SwaggerInfo.Title = "Swagger Example API"
 	docs.SwaggerInfo.Description = "This is a sample server Petstore server."
 	docs.SwaggerInfo.Version = "1.0"
@@ -376,6 +382,8 @@ When a short string in your documentation is insufficient, or you need images, c
 | header      | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                            |
 | router      | Path definition that separated by spaces. `path`,`[httpMethod]`                                                            |
 | x-name      | The extension key, must be start by x- and take only json value.                                                           |
+| x-codeSample      | Optional Markdown usage. take `file` as parameter. This will then search for a file named like the summary in the given folder.                                      |
+| deprecated  | Mark endpoint as deprecated.                                                                                               |
 
 
 
@@ -444,7 +452,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 // @Param enumint query int false "int enums" Enums(1, 2, 3)
 // @Param enumnumber query number false "int enums" Enums(1.1, 1.2, 1.3)
 // @Param string query string false "string valid" minlength(5) maxlength(10)
-// @Param int query int false "int valid" mininum(1) maxinum(10)
+// @Param int query int false "int valid" minimum(1) maximum(10)
 // @Param default query string false "string default" default(A)
 // @Param collection query []string false "string collection" collectionFormat(multi)
 ```

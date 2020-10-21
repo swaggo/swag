@@ -45,7 +45,6 @@
             "type": "object",
             "properties": {
                 "application": {
-                    "type": "object",
                     "$ref": "#/definitions/types.Application"
                 },
                 "application_array": {
