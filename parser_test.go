@@ -39,7 +39,12 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "name": "Apache 2.0",
             "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "1.0"
+        "version": "1.0",
+        "x-logo": {
+            "altText": "Petstore logo",
+            "backgroundColor": "#FFFFFF",
+            "url": "https://redocly.github.io/redoc/petstore-logo.png"
+        }
     },
     "host": "petstore.swagger.io",
     "basePath": "/v2",
@@ -60,7 +65,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information"
-            }
+            },
+            "x-tokenName": "id_token"
         },
         "OAuth2Application": {
             "type": "oauth2",
@@ -263,8 +269,9 @@ func TestParser_ParseType(t *testing.T) {
 	err := p.getAllGoFileInfo("testdata", searchDir)
 	assert.NoError(t, err)
 
-	p.packages.ParseTypes()
+	_, err = p.packages.ParseTypes()
 
+	assert.NoError(t, err)
 	assert.NotNil(t, p.packages.uniqueDefinitions["api.Pet3"])
 	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet"])
 	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet2"])
@@ -1685,7 +1692,8 @@ type ResponseWrapper struct {
 	assert.NoError(t, err)
 	parser.packages.CollectAstFile("rest", "rest/rest.go", f2)
 
-	parser.packages.ParseTypes()
+	_, err = parser.packages.ParseTypes()
+	assert.NoError(t, err)
 
 	err = parser.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
@@ -1870,7 +1878,8 @@ func Test(){
 	p := New()
 	p.packages.CollectAstFile("api", "api/api.go", f)
 
-	p.packages.ParseTypes()
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
 
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
@@ -2146,6 +2155,15 @@ func TestApiParseTag(t *testing.T) {
 	}
 }
 
+func TestApiParseTag_NonExistendTag(t *testing.T) {
+	searchDir := "testdata/tags_nonexistend_tag"
+	mainAPIFile := "main.go"
+	p := New(SetMarkdownFileDirectory(searchDir))
+	p.PropNamingStrategy = PascalCase
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Error(t, err)
+}
+
 func TestParseTagMarkdownDescription(t *testing.T) {
 	searchDir := "testdata/tags"
 	mainAPIFile := "main.go"
@@ -2269,7 +2287,10 @@ func Fun()  {
 
 	p := New()
 	p.packages.CollectAstFile("api", "api/api.go", f)
-	p.packages.ParseTypes()
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2302,7 +2323,9 @@ func Fun()  {
 
 	p := New()
 	p.packages.CollectAstFile("api", "api/api.go", f)
-	p.packages.ParseTypes()
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2314,6 +2337,7 @@ func Fun()  {
 	_, ok = p.swagger.Definitions["Student"]
 	assert.True(t, ok)
 	path, ok := p.swagger.Paths.Paths["/test"]
+	assert.True(t, ok)
 	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
 	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())

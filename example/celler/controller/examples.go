@@ -22,7 +22,6 @@ import (
 // @Router /examples/ping [get]
 func (c *Controller) PingExample(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "pong")
-	return
 }
 
 // CalcExample godoc
