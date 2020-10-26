@@ -40,7 +40,7 @@ var initFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:  excludeFlag,
-		Usage: "exclude directories and files when searching, comma separated",
+		Usage: "Exclude directories and files when searching, comma separated",
 	},
 	&cli.StringFlag{
 		Name:    propertyStrategyFlag,
@@ -80,7 +80,7 @@ var initFlags = []cli.Flag{
 	},
 	&cli.BoolFlag{
 		Name:  generatedTimeFlag,
-		Usage: "Generate timestamp at the top of docs.go, true by default",
+		Usage: "Generate timestamp at the top of docs.go, disabled by default",
 	},
 	&cli.IntFlag{
 		Name:  parseDepthFlag,
