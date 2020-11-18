@@ -71,6 +71,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
         "OAuth2Application": {
             "type": "oauth2",
             "flow": "application",
+            "authorizationUrl": "",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
@@ -89,6 +90,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
         "OAuth2Password": {
             "type": "oauth2",
             "flow": "password",
+            "authorizationUrl": "",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
@@ -152,6 +154,7 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
         "OAuth2Application": {
             "type": "oauth2",
             "flow": "application",
+            "authorizationUrl": "",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
@@ -170,6 +173,7 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
         "OAuth2Password": {
             "type": "oauth2",
             "flow": "password",
+            "authorizationUrl": "",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
@@ -742,6 +746,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
         "OAuth2Application": {
             "type": "oauth2",
             "flow": "application",
+            "authorizationUrl": "",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
@@ -760,6 +765,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
         "OAuth2Password": {
             "type": "oauth2",
             "flow": "password",
+            "authorizationUrl": "",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
@@ -1198,6 +1204,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
         "OAuth2Application": {
             "type": "oauth2",
             "flow": "application",
+            "authorizationUrl": "",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
@@ -1216,6 +1223,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
         "OAuth2Password": {
             "type": "oauth2",
             "flow": "password",
+            "authorizationUrl": "",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
@@ -1576,9 +1584,9 @@ type Response struct {
 	Code int
 	Table [][]string
 	Data []struct{
-		Field1 uint 
-		Field2 string 
-	} 
+		Field1 uint
+		Field2 string
+	}
 }
 
 // @Success 200 {object} Response
@@ -1653,7 +1661,7 @@ func Test(){
 package rest
 
 type ResponseWrapper struct {
-	Status   string      
+	Status   string
 	Code     int
 	Messages []string
 	Result   interface{}
@@ -2275,7 +2283,9 @@ func Fun()  {
                     }
                 ],
                 "responses": {
-                    "200": {}
+                    "200": {
+                        "description": ""
+                    }
                 }
             }
         }
@@ -2383,7 +2393,9 @@ func TestParseJSONFieldString(t *testing.T) {
                             "$ref": "#/definitions/main.MyStruct"
                         }
                     },
-                    "500": {}
+                    "500": {
+                        "description": ""
+                    }
                 }
             }
         }
