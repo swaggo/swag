@@ -582,7 +582,7 @@ func TestParseResponseCommentWithObjectTypeInSameFile(t *testing.T) {
 	fset := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fset, "operation_test.go", `package swag
 	type testOwner struct {
-		
+
 	}
 	`, goparser.ParseComments)
 	assert.NoError(t, err)
@@ -856,7 +856,9 @@ func TestParseEmptyResponseOnlyCode(t *testing.T) {
 
 	expected := `{
     "responses": {
-        "200": {}
+        "200": {
+            "description": ""
+        }
     }
 }`
 	assert.Equal(t, expected, string(b))
