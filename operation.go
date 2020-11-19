@@ -111,7 +111,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		err = operation.ParseProduceComment(lineRemainder)
 	case "@param":
 		err = operation.ParseParamComment(lineRemainder, astFile)
-	case "@success", "@failure":
+	case "@success", "@failure", "@response":
 		err = operation.ParseResponseComment(lineRemainder, astFile)
 	case "@header":
 		err = operation.ParseResponseHeaderComment(lineRemainder, astFile)
@@ -611,7 +611,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type spec not found")
 }
 
-var responsePattern = regexp.MustCompile(`([\d]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
+var responsePattern = regexp.MustCompile(`([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
 //RepsonseType{data1=Type1,data2=Type2}
 var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
@@ -743,13 +743,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 
-	code, _ := strconv.Atoi(matches[1])
-
 	responseDescription := strings.Trim(matches[4], "\"")
-	if responseDescription == "" {
-		responseDescription = http.StatusText(code)
-	}
-
 	schemaType := strings.Trim(matches[2], "{}")
 	refType := matches[3]
 	schema, err := operation.parseAPIObjectSchema(schemaType, refType, astFile)
@@ -757,17 +751,23 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 
-	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{
-			ResponsesProps: spec.ResponsesProps{
-				StatusCodeResponses: make(map[int]spec.Response),
-			},
+	for _, codeStr := range strings.Split(matches[1], ",") {
+		if strings.EqualFold(codeStr, "default") {
+			operation.DefaultResponse().Schema = schema
+			operation.DefaultResponse().Description = responseDescription
+		} else if code, err := strconv.Atoi(codeStr); err == nil {
+			if responseDescription == "" {
+				responseDescription = http.StatusText(code)
+			}
+
+			operation.AddResponse(code, &spec.Response{
+				ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
+			})
+		} else {
+			return fmt.Errorf("unrecognized reponse code in: %s", commentLine)
 		}
 	}
 
-	operation.Responses.StatusCodeResponses[code] = spec.Response{
-		ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
-	}
 	return nil
 }
 
@@ -779,45 +779,60 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
-	response := spec.Response{}
-
-	code, _ := strconv.Atoi(matches[1])
-
-	responseDescription := strings.Trim(matches[4], "\"")
-	if responseDescription == "" {
-		responseDescription = http.StatusText(code)
-	}
-	response.Description = responseDescription
-
 	schemaType := strings.Trim(matches[2], "{}")
-	refType := matches[3]
+	headerKey := matches[3]
+	description := strings.Trim(matches[4], "\"")
+	header := spec.Header{}
+	header.Description = description
+	header.Type = schemaType
 
-	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{
-			ResponsesProps: spec.ResponsesProps{
-				StatusCodeResponses: make(map[int]spec.Response),
-			},
+	if strings.EqualFold(matches[1], "all") {
+		if operation.Responses.Default != nil {
+			if operation.Responses.Default.Headers == nil {
+				operation.Responses.Default.Headers = make(map[string]spec.Header)
+			}
+			operation.Responses.Default.Headers[headerKey] = header
 		}
+		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
+			for code, response := range operation.Responses.StatusCodeResponses {
+				if response.Headers == nil {
+					response.Headers = make(map[string]spec.Header)
+				}
+				response.Headers[headerKey] = header
+				operation.Responses.StatusCodeResponses[code] = response
+			}
+		}
+		return nil
 	}
 
-	response, responseExist := operation.Responses.StatusCodeResponses[code]
-	if responseExist {
-		header := spec.Header{}
-		header.Description = responseDescription
-		header.Type = schemaType
+	for _, codeStr := range strings.Split(matches[1], ",") {
+		if strings.EqualFold(codeStr, "default") {
+			if operation.Responses.Default != nil {
+				if operation.Responses.Default.Headers == nil {
+					operation.Responses.Default.Headers = make(map[string]spec.Header)
+				}
+				operation.Responses.Default.Headers[headerKey] = header
+			}
+		} else if code, err := strconv.Atoi(codeStr); err == nil {
+			if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
+				if response, responseExist := operation.Responses.StatusCodeResponses[code]; responseExist {
+					if response.Headers == nil {
+						response.Headers = make(map[string]spec.Header)
+					}
+					response.Headers[headerKey] = header
 
-		if response.Headers == nil {
-			response.Headers = make(map[string]spec.Header)
+					operation.Responses.StatusCodeResponses[code] = response
+				}
+			}
+		} else {
+			return fmt.Errorf("unrecognized reponse code in: %s", commentLine)
 		}
-		response.Headers[refType] = header
-
-		operation.Responses.StatusCodeResponses[code] = response
 	}
 
 	return nil
 }
 
-var emptyResponsePattern = regexp.MustCompile(`([\d]+)[\s]+"(.*)"`)
+var emptyResponsePattern = regexp.MustCompile(`([\w,]+)[\s]+"(.*)"`)
 
 // ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok"
 func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
@@ -827,33 +842,49 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
-	response := spec.Response{}
-
-	code, _ := strconv.Atoi(matches[1])
-
-	response.Description = strings.Trim(matches[2], "")
-
-	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{
-			ResponsesProps: spec.ResponsesProps{
-				StatusCodeResponses: make(map[int]spec.Response),
-			},
+	responseDescription := strings.Trim(matches[2], "\"")
+	for _, codeStr := range strings.Split(matches[1], ",") {
+		if strings.EqualFold(codeStr, "default") {
+			operation.DefaultResponse().Description = responseDescription
+		} else if code, err := strconv.Atoi(codeStr); err == nil {
+			var response spec.Response
+			response.Description = responseDescription
+			operation.AddResponse(code, &response)
+		} else {
+			return fmt.Errorf("unrecognized reponse code in: %s", commentLine)
 		}
 	}
-
-	operation.Responses.StatusCodeResponses[code] = response
 
 	return nil
 }
 
 //ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200
 func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
-	response := spec.Response{}
-
-	code, err := strconv.Atoi(commentLine)
-	if err != nil {
-		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+	for _, codeStr := range strings.Split(commentLine, ",") {
+		if strings.EqualFold(codeStr, "default") {
+			_ = operation.DefaultResponse()
+		} else if code, err := strconv.Atoi(codeStr); err == nil {
+			var response spec.Response
+			//response.Description = http.StatusText(code)
+			operation.AddResponse(code, &response)
+		} else {
+			return fmt.Errorf("unrecognized reponse code in: %s", commentLine)
+		}
 	}
+
+	return nil
+}
+
+//DefaultResponse return the default response member pointer
+func (operation *Operation) DefaultResponse() *spec.Response {
+	if operation.Responses.Default == nil {
+		operation.Responses.Default = &spec.Response{}
+	}
+	return operation.Responses.Default
+}
+
+//AddResponse add a response for a code
+func (operation *Operation) AddResponse(code int, response *spec.Response) {
 	if operation.Responses == nil {
 		operation.Responses = &spec.Responses{
 			ResponsesProps: spec.ResponsesProps{
@@ -861,10 +892,7 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 			},
 		}
 	}
-
-	operation.Responses.StatusCodeResponses[code] = response
-
-	return nil
+	operation.Responses.StatusCodeResponses[code] = *response
 }
 
 // createParameter returns swagger spec.Parameter for gived  paramType, description, paramName, schemaType, required
