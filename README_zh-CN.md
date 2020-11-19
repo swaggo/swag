@@ -356,10 +356,10 @@ swag init
 
 Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
 
-| 注释                 | 描述                                                                                                    |                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 注释                 | 描述                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
 | description          | 操作行为的详细说明。                                                                                    |
-| description.markdown | 应用程序的简短描述。该描述将从名为`endpointname.md`的文件中读取。                                       | // @description.file endpoint.description.markdown |
+| description.markdown | 应用程序的简短描述。该描述将从名为`endpointname.md`的文件中读取。                                       |
 | id                   | 用于标识操作的唯一字符串。在所有API操作中必须唯一。                                                     |
 | tags                 | 每个API操作的标签列表，以逗号分隔。                                                                     |
 | summary              | 该操作的简短摘要。                                                                                      |
