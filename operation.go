@@ -764,7 +764,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 				ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
 			})
 		} else {
-			return fmt.Errorf("unrecognized reponse code in: %s", commentLine)
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 	}
 
@@ -825,7 +825,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 				}
 			}
 		} else {
-			return fmt.Errorf("unrecognized reponse code in: %s", commentLine)
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 	}
 
@@ -851,7 +851,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 			response.Description = responseDescription
 			operation.AddResponse(code, &response)
 		} else {
-			return fmt.Errorf("unrecognized reponse code in: %s", commentLine)
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 	}
 
@@ -868,7 +868,7 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 			//response.Description = http.StatusText(code)
 			operation.AddResponse(code, &response)
 		} else {
-			return fmt.Errorf("unrecognized reponse code in: %s", commentLine)
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 	}
 

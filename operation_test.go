@@ -874,9 +874,15 @@ func TestParseEmptyResponseOnlyCodes(t *testing.T) {
 
 	expected := `{
     "responses": {
-        "200": {},
-        "201": {},
-        "default": {}
+        "200": {
+            "description": ""
+        },
+        "201": {
+            "description": ""
+        },
+        "default": {
+            "description": ""
+        }
     }
 }`
 	assert.Equal(t, expected, string(b))
