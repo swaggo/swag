@@ -671,6 +671,38 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseResponseCommentWithBasicTypeAndCodes(t *testing.T) {
+	comment := `@Success 200,201,default {string} string "it's ok'"`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "it's ok'",
+            "schema": {
+                "type": "string"
+            }
+        },
+        "201": {
+            "description": "it's ok'",
+            "schema": {
+                "type": "string"
+            }
+        },
+        "default": {
+            "description": "it's ok'",
+            "schema": {
+                "type": "string"
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseEmptyResponseComment(t *testing.T) {
 	comment := `@Success 200 "it's ok"`
 	operation := NewOperation(nil)
@@ -682,6 +714,30 @@ func TestParseEmptyResponseComment(t *testing.T) {
 	expected := `{
     "responses": {
         "200": {
+            "description": "it's ok"
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseEmptyResponseCommentWithCodes(t *testing.T) {
+	comment := `@Success 200,201,default "it's ok"`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "it's ok"
+        },
+        "201": {
+            "description": "it's ok"
+        },
+        "default": {
             "description": "it's ok"
         }
     }
@@ -720,7 +776,74 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 	comment = `@Header 200 "Mallformed"`
 	err = operation.ParseComment(comment, nil)
 	assert.Error(t, err, "ParseComment should not fail")
+}
 
+func TestParseResponseCommentWithHeaderForCodes(t *testing.T) {
+	operation := NewOperation(nil)
+
+	comment := `@Success 200,201,default "it's ok"`
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	comment = `@Header 200,201,default {string} Token "qwerty"`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	comment = `@Header all {string} Token2 "qwerty"`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	b, err := json.MarshalIndent(operation, "", "    ")
+	assert.NoError(t, err)
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "it's ok",
+            "headers": {
+                "Token": {
+                    "type": "string",
+                    "description": "qwerty"
+                },
+                "Token2": {
+                    "type": "string",
+                    "description": "qwerty"
+                }
+            }
+        },
+        "201": {
+            "description": "it's ok",
+            "headers": {
+                "Token": {
+                    "type": "string",
+                    "description": "qwerty"
+                },
+                "Token2": {
+                    "type": "string",
+                    "description": "qwerty"
+                }
+            }
+        },
+        "default": {
+            "description": "it's ok",
+            "headers": {
+                "Token": {
+                    "type": "string",
+                    "description": "qwerty"
+                },
+                "Token2": {
+                    "type": "string",
+                    "description": "qwerty"
+                }
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+	comment = `@Header 200 "Mallformed"`
+	err = operation.ParseComment(comment, nil)
+	assert.Error(t, err, "ParseComment should not fail")
 }
 
 func TestParseEmptyResponseOnlyCode(t *testing.T) {
@@ -741,12 +864,44 @@ func TestParseEmptyResponseOnlyCode(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseEmptyResponseOnlyCodes(t *testing.T) {
+	comment := `@Success 200,201,default`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+    "responses": {
+        "200": {
+            "description": ""
+        },
+        "201": {
+            "description": ""
+        },
+        "default": {
+            "description": ""
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseResponseCommentParamMissing(t *testing.T) {
 	operation := NewOperation(nil)
 
-	paramLenErrComment := `@Success notIntCode {string}`
+	paramLenErrComment := `@Success notIntCode`
 	paramLenErr := operation.ParseComment(paramLenErrComment, nil)
-	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode {string}"`)
+	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode"`)
+
+	paramLenErrComment = `@Success notIntCode {string} string "it ok"`
+	paramLenErr = operation.ParseComment(paramLenErrComment, nil)
+	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode {string} string "it ok""`)
+
+	paramLenErrComment = `@Success notIntCode "it ok"`
+	paramLenErr = operation.ParseComment(paramLenErrComment, nil)
+	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode "it ok""`)
 }
 
 // Test ParseParamComment
