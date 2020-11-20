@@ -1,0 +1,53 @@
+basePath: /api/v1
+definitions:
+  controller.Data:
+    properties:
+      title:
+        example: Object data
+        type: string
+    type: object
+  controller.Response:
+    properties:
+      map_data:
+        additionalProperties:
+          type: string
+        example:
+          key: value
+          key2: value2
+        type: object
+      object:
+        $ref: '#/definitions/controller.Data'
+      title:
+        additionalProperties:
+          type: string
+        example:
+          en: Map
+          kk: Карталар
+          ru: Карта
+        type: object
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Map Example API
+  version: "1.0"
+paths:
+  /test:
+    get:
+      consumes:
+      - application/json
+      description: get map
+      operationId: get-map
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.Response'
+      summary: Get Map Example
+swagger: "2.0"
