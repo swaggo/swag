@@ -169,6 +169,15 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 			return nil, err
 		}
 		return spec.ArrayProperty(schema), nil
+	case "object":
+		if len(types) == 1 {
+			return nil, errors.New("need object item type after object")
+		}
+		schema, err := BuildCustomSchema(types[1:])
+		if err != nil {
+			return nil, err
+		}
+		return spec.MapProperty(schema), nil
 	default:
 		err := CheckSchemaType(types[0])
 		if err != nil {

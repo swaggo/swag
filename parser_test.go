@@ -2489,3 +2489,60 @@ func Fun()  {
 	assert.False(t, ok)
 	assert.Empty(t, childName)
 }
+
+func TestDefineTypeOfExample(t *testing.T) {
+	var example interface{}
+	var err error
+
+	example, err = defineTypeOfExample("string", "", "example")
+	assert.NoError(t, err)
+	assert.Equal(t, example.(string), "example")
+
+	example, err = defineTypeOfExample("number", "", "12.34")
+	assert.NoError(t, err)
+	assert.Equal(t, example.(float64), 12.34)
+
+	example, err = defineTypeOfExample("boolean", "", "true")
+	assert.NoError(t, err)
+	assert.Equal(t, example.(bool), true)
+
+	example, err = defineTypeOfExample("array", "", "one,two,three")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+
+	example, err = defineTypeOfExample("array", "string", "one,two,three")
+	assert.NoError(t, err)
+	arr := []string{}
+
+	for _, v := range example.([]interface{}) {
+		arr = append(arr, v.(string))
+	}
+
+	assert.Equal(t, arr, []string{"one", "two", "three"})
+
+	example, err = defineTypeOfExample("object", "", "key_one:one,key_two:two,key_three:three")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+
+	example, err = defineTypeOfExample("object", "string", "key_one,key_two,key_three")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+
+	example, err = defineTypeOfExample("object", "oops", "key_one:one,key_two:two,key_three:three")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+
+	example, err = defineTypeOfExample("object", "string", "key_one:one,key_two:two,key_three:three")
+	assert.NoError(t, err)
+	obj := map[string]string{}
+
+	for k, v := range example.(map[string]interface{}) {
+		obj[k] = v.(string)
+	}
+
+	assert.Equal(t, obj, map[string]string{"key_one": "one", "key_two": "two", "key_three": "three"})
+
+	example, err = defineTypeOfExample("oops", "", "")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+}

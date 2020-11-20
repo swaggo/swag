@@ -8,6 +8,7 @@ require (
 	github.com/go-openapi/spec v0.19.14
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible
+	github.com/shopspring/decimal v1.2.0
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
