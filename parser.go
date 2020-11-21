@@ -1393,49 +1393,34 @@ func (parser *Parser) checkOperationIDUniqueness() error {
 		operationsIds[operationID] = currentPath
 		return nil
 	}
-
-	for path, itm := range parser.swagger.Paths.Paths {
+	getOperationID := func(itm spec.PathItem) (string, string) {
 		if itm.Get != nil {
-			currentPath := fmt.Sprintf("%s %s", "GET", path)
-			if err := saveOperationID(itm.Get.ID, currentPath); err != nil {
-				return err
-			}
+			return "GET", itm.Get.ID
 		}
 		if itm.Put != nil {
-			currentPath := fmt.Sprintf("%s %s", "PUT", path)
-			if err := saveOperationID(itm.Put.ID, currentPath); err != nil {
-				return err
-			}
+			return "PUT", itm.Put.ID
 		}
 		if itm.Post != nil {
-			currentPath := fmt.Sprintf("%s %s", "POST", path)
-			if err := saveOperationID(itm.Post.ID, currentPath); err != nil {
-				return err
-			}
+			return "POST", itm.Post.ID
 		}
 		if itm.Delete != nil {
-			currentPath := fmt.Sprintf("%s %s", "DELETE", path)
-			if err := saveOperationID(itm.Delete.ID, currentPath); err != nil {
-				return err
-			}
+			return "DELETE", itm.Delete.ID
 		}
 		if itm.Options != nil {
-			currentPath := fmt.Sprintf("%s %s", "OPTIONS", path)
-			if err := saveOperationID(itm.Options.ID, currentPath); err != nil {
-				return err
-			}
+			return "OPTIONS", itm.Options.ID
 		}
 		if itm.Head != nil {
-			currentPath := fmt.Sprintf("%s %s", "HEAD", path)
-			if err := saveOperationID(itm.Head.ID, currentPath); err != nil {
-				return err
-			}
+			return "HEAD", itm.Head.ID
 		}
 		if itm.Patch != nil {
-			currentPath := fmt.Sprintf("%s %s", "PATCH", path)
-			if err := saveOperationID(itm.Patch.ID, currentPath); err != nil {
-				return err
-			}
+			return "PATCH", itm.Patch.ID
+		}
+		return "", ""
+	}
+	for path, itm := range parser.swagger.Paths.Paths {
+		method, id := getOperationID(itm)
+		if err := saveOperationID(id, fmt.Sprintf("%s %s", method, path)); err != nil {
+			return err
 		}
 	}
 	return nil
