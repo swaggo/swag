@@ -1,7 +1,8 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
+
 	_ "github.com/swaggo/swag/testdata/simple/web"
 )
 
@@ -16,7 +17,7 @@ import (
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /testapi/get-string-by-int/{some_id} [get]
-func GetStringByInt(c *gin.Context) {
+func GetStringByInt(w http.ResponseWriter, r *http.Request) {
 	//write your code
 }
 
@@ -39,7 +40,7 @@ func GetStringByInt(c *gin.Context) {
 // @Security OAuth2AccessCode[read]
 // @Security OAuth2Password[admin]
 // @Router /testapi/get-struct-array-by-string/{some_id} [get]
-func GetStructArrayByString(c *gin.Context) {
+func GetStructArrayByString(w http.ResponseWriter, r *http.Request) {
 	//write your code
 }
 
@@ -54,7 +55,7 @@ func GetStructArrayByString(c *gin.Context) {
 // @Failure 401 {array} string
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /file/upload [post]
-func Upload(ctx *gin.Context) {
+func Upload(w http.ResponseWriter, r *http.Request) {
 	//write your code
 }
 

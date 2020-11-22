@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
+
 	"github.com/swaggo/swag/testdata/struct_comment/api"
 )
 
@@ -11,7 +12,6 @@ import (
 // @host localhost:4000
 // @basePath /api
 func main() {
-	r := gin.New()
-	r.GET("/posts/:post_id", api.GetPost)
-	r.Run()
+	http.HandleFunc("/posts/", api.GetPost)
+	http.ListenAndServe(":8080", nil)
 }
