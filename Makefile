@@ -56,7 +56,6 @@ clean:
 deps:
 	$(GOGET) github.com/swaggo/cli
 	$(GOGET) github.com/ghodss/yaml
-	$(GOGET) github.com/gin-gonic/gin
 	$(GOGET) github.com/KyleBanks/depth
 	$(GOGET) github.com/go-openapi/jsonreference
 	$(GOGET) github.com/go-openapi/spec
