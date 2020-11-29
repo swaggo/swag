@@ -106,8 +106,8 @@ func TestBuildCustomSchema(t *testing.T) {
 	assert.Equal(t, schema.SchemaProps.Items.Schema.SchemaProps.Type, spec.StringOrArray{"string"})
 
 	schema, err = BuildCustomSchema([]string{"object"})
-	assert.Error(t, err)
-	assert.Nil(t, schema)
+	assert.NoError(t, err)
+	assert.Equal(t, schema.SchemaProps.Type, spec.StringOrArray{"object"})
 
 	schema, err = BuildCustomSchema([]string{"object", "oops"})
 	assert.Error(t, err)
