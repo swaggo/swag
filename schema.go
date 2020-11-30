@@ -155,12 +155,12 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 	}
 
 	switch types[0] {
-	case "primitive":
+	case PRIMITIVE:
 		if len(types) == 1 {
 			return nil, errors.New("need primitive type after primitive")
 		}
 		return BuildCustomSchema(types[1:])
-	case "array":
+	case ARRAY:
 		if len(types) == 1 {
 			return nil, errors.New("need array item type after array")
 		}
@@ -169,9 +169,9 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 			return nil, err
 		}
 		return spec.ArrayProperty(schema), nil
-	case "object":
+	case OBJECT:
 		if len(types) == 1 {
-			return nil, errors.New("need object item type after object")
+			return PrimitiveSchema(types[0]), nil
 		}
 		schema, err := BuildCustomSchema(types[1:])
 		if err != nil {
