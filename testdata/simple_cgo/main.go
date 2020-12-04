@@ -10,7 +10,8 @@ void Hello(){
 import "C"
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
+
 	"github.com/swaggo/swag/testdata/simple_cgo/api"
 )
 
@@ -58,7 +59,6 @@ import (
 func main() {
 	C.Hello()
 
-	r := gin.New()
-	r.GET("/testapi/get-string-by-int/:some_id", api.GetStringByInt)
-	r.Run()
+	http.HandleFunc("/testapi/get-string-by-int/", api.GetStringByInt)
+	http.ListenAndServe(":8080", nil)
 }
