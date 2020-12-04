@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -247,14 +246,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				}
 				return false
 			}
-			items := make(spec.OrderSchemaItems, 0, len(schema.Properties))
-			for k, v := range schema.Properties {
-				items = append(items, spec.OrderSchemaItem{
-					Name:   k,
-					Schema: v,
-				})
-			}
-			sort.Sort(items)
+			items := schema.Properties.ToOrderedSchemaItems()
 			for _, item := range items {
 				name := item.Name
 				prop := item.Schema
