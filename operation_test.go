@@ -672,7 +672,7 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithBasicTypeAndCodes(t *testing.T) {
-	comment := `@Success 200,201,default {string} string "it's ok'"`
+	comment := `@Success 200,201,default {string} string "it's ok"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
@@ -681,19 +681,19 @@ func TestParseResponseCommentWithBasicTypeAndCodes(t *testing.T) {
 	expected := `{
     "responses": {
         "200": {
-            "description": "it's ok'",
+            "description": "it's ok",
             "schema": {
                 "type": "string"
             }
         },
         "201": {
-            "description": "it's ok'",
+            "description": "it's ok",
             "schema": {
                 "type": "string"
             }
         },
         "default": {
-            "description": "it's ok'",
+            "description": "it's ok",
             "schema": {
                 "type": "string"
             }
@@ -704,7 +704,7 @@ func TestParseResponseCommentWithBasicTypeAndCodes(t *testing.T) {
 }
 
 func TestParseEmptyResponseComment(t *testing.T) {
-	comment := `@Success 200 "it's ok"`
+	comment := `@Success 200 "it is ok"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
@@ -714,7 +714,7 @@ func TestParseEmptyResponseComment(t *testing.T) {
 	expected := `{
     "responses": {
         "200": {
-            "description": "it's ok"
+            "description": "it is ok"
         }
     }
 }`
@@ -722,7 +722,7 @@ func TestParseEmptyResponseComment(t *testing.T) {
 }
 
 func TestParseEmptyResponseCommentWithCodes(t *testing.T) {
-	comment := `@Success 200,201,default "it's ok"`
+	comment := `@Success 200,201,default "it is ok"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
@@ -732,13 +732,13 @@ func TestParseEmptyResponseCommentWithCodes(t *testing.T) {
 	expected := `{
     "responses": {
         "200": {
-            "description": "it's ok"
+            "description": "it is ok"
         },
         "201": {
-            "description": "it's ok"
+            "description": "it is ok"
         },
         "default": {
-            "description": "it's ok"
+            "description": "it is ok"
         }
     }
 }`
