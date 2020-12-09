@@ -857,7 +857,7 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 			_ = operation.DefaultResponse()
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
 			var response spec.Response
-			response.Description = http.StatusText(code)
+			//response.Description = http.StatusText(code)
 			operation.AddResponse(code, &response)
 		} else {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
