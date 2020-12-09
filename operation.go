@@ -603,9 +603,9 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type spec not found")
 }
 
-var responsePattern = regexp.MustCompile(`([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
+var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
-//RepsonseType{data1=Type1,data2=Type2}
+//ResponseType{data1=Type1,data2=Type2}
 var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
@@ -748,13 +748,13 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 			operation.DefaultResponse().Schema = schema
 			operation.DefaultResponse().Description = responseDescription
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
-			if responseDescription == "" {
-				responseDescription = http.StatusText(code)
-			}
-
-			operation.AddResponse(code, &spec.Response{
+			resp := &spec.Response{
 				ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
-			})
+			}
+			if resp.Description == "" {
+				resp.Description = http.StatusText(code)
+			}
+			operation.AddResponse(code, resp)
 		} else {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
