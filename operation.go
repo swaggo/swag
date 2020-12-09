@@ -748,13 +748,13 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 			operation.DefaultResponse().Schema = schema
 			operation.DefaultResponse().Description = responseDescription
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
-			if responseDescription == "" {
-				responseDescription = http.StatusText(code)
-			}
-
-			operation.AddResponse(code, &spec.Response{
+			resp := &spec.Response{
 				ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
-			})
+			}
+			if resp.Description == "" {
+				resp.Description = http.StatusText(code)
+			}
+			operation.AddResponse(code, resp)
 		} else {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
@@ -857,7 +857,7 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 			_ = operation.DefaultResponse()
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
 			var response spec.Response
-			//response.Description = http.StatusText(code)
+			response.Description = http.StatusText(code)
 			operation.AddResponse(code, &response)
 		} else {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
