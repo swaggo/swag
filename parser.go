@@ -93,6 +93,9 @@ type Parser struct {
 
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]bool
+
+	// categories specify which definitions of swagger should be parsed
+	categories []string
 }
 
 // New creates a new Parser with default properties.
@@ -134,6 +137,27 @@ func New(options ...func(*Parser)) *Parser {
 func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 	return func(p *Parser) {
 		p.markdownFileDir = directoryPath
+	}
+}
+
+// SetCategories sets the categories to be parsed
+func SetCategories(cats string) func(*Parser) {
+	return func(p *Parser) {
+		if len(cats) == 0 {
+			p.categories = nil
+			return
+		}
+		cc := []string{}
+		for _, a := range strings.Split(cats, ",") {
+			x := strings.Trim(a, ", ")
+			if x == "" {
+				continue
+			}
+			cc = append(cc, x)
+		}
+		if len(cc) > 0 {
+			p.categories = cc
+		}
 	}
 }
 
@@ -561,12 +585,23 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 		switch astDeclaration := astDescription.(type) {
 		case *ast.FuncDecl:
 			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir)) //for per 'function' comment, create a new 'Operation' object
-				for _, comment := range astDeclaration.Doc.List {
-					if err := operation.ParseComment(comment.Text, astFile); err != nil {
-						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
-					}
+				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
+
+				comments := []string{}
+				for _, c := range astDeclaration.Doc.List {
+					comments = append(comments, c.Text)
 				}
+
+				// First parse category, find out if this is even somthing we want to include
+				// in definition files. This done in advance to avoid olprahn definitions.
+				if !isAllowedCategory(comments, parser.categories) {
+					continue
+				}
+
+				if err := operation.ParseComments(comments, astFile); err != nil {
+					return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+				}
+
 				var pathItem spec.PathItem
 				var ok bool
 

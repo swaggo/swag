@@ -158,6 +158,14 @@ func TestParseRouterCommentMethodMissingErr(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestCategory(t *testing.T) {
+	comment := `/@Category a ,b, d`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, operation.Categories, []string{"a", "b", "d"})
+}
+
 func TestParseResponseCommentWithObjectType(t *testing.T) {
 	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200`
 	operation := NewOperation(nil)

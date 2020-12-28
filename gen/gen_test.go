@@ -370,3 +370,30 @@ func TestGen_cgoImports(t *testing.T) {
 		os.Remove(expectedFile)
 	}
 }
+
+func TestGen_multipleDefs(t *testing.T) {
+	searchDir := "../testdata/multiple_def"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/multiple_def/docs",
+		PropNamingStrategy: "",
+		ParseDependency:    true,
+		Categories:         "bar",
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
+	}
+}

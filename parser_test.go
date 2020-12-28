@@ -2499,6 +2499,58 @@ func Fun()  {
 	assert.Empty(t, childName)
 }
 
+func TestParsingCategories(t *testing.T) {
+	src := `
+package main
+
+type Child struct {
+	ChildName string
+}//@name Student
+
+type Parent struct {
+	Name string
+	Child ` + "`swaggerignore:\"true\"`" + `
+}//@name Teacher
+
+// @Param request body Parent true "query params"
+// @Success 200 {object} Parent
+// @Router /test [get]
+// @Category test
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New(SetCategories("test"))
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.ParseTypes()
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	_, ok := p.swagger.SwaggerProps.Paths.Paths["/test"]
+	assert.True(t, ok)
+
+	p = New(SetCategories(""))
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.ParseTypes()
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	_, ok = p.swagger.SwaggerProps.Paths.Paths["/test"]
+	assert.True(t, ok)
+
+	p = New(SetCategories("x"))
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.ParseTypes()
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	_, ok = p.swagger.SwaggerProps.Paths.Paths["/test"]
+	assert.False(t, ok)
+}
+
 func TestDefineTypeOfExample(t *testing.T) {
 	var example interface{}
 	var err error

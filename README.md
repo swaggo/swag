@@ -370,6 +370,7 @@ When a short string in your documentation is insufficient, or you need images, c
 | description.markdown     |  A short description of the application. The description will be read from a file named like endpointname.md| // @description.file endpoint.description.markdown  |
 | id          | A unique string used to identify the operation. Must be unique among all API operations.                                   |
 | tags        | A list of tags to each API operation that separated by commas.                                                             |
+| category    | A list of categories for given endpoint. Useful if you want to split your definitions.                                     |
 | summary     | A short summary of what the operation does.                                                                                |
 | accept      | A list of MIME types the APIs can consume. Value MUST be as described under [Mime Types](#mime-types).                     |
 | produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     |
@@ -761,3 +762,4 @@ Support this project by becoming a sponsor. Your logo will show up here with a l
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fswaggo%2Fswag.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fswaggo%2Fswag?ref=badge_large)
+

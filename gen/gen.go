@@ -42,6 +42,11 @@ type Config struct {
 	// excludes dirs and files in SearchDir,comma separated
 	Excludes string
 
+	// Categories specifies which definitions should be accounted
+	// this allows to filter only specific endpoints by using
+	// @category tag.
+	Categories string
+
 	// OutputDir represents the output directory for all the generated files
 	OutputDir string
 
@@ -80,9 +85,18 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	log.Println("Generate swagger docs....")
-	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
+
+	options := []func(*swag.Parser){
+		swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
-		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir))
+		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
+	}
+
+	if len(config.Categories) > 0 {
+		options = append(options, swag.SetCategories(config.Categories))
+	}
+
+	p := swag.New(options...)
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency

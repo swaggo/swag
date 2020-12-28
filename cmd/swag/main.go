@@ -13,6 +13,7 @@ import (
 const (
 	searchDirFlag        = "dir"
 	excludeFlag          = "exclude"
+	categoryFlag         = "category"
 	generalInfoFlag      = "generalInfo"
 	propertyStrategyFlag = "propertyStrategy"
 	outputFlag           = "output"
@@ -41,6 +42,10 @@ var initFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  excludeFlag,
 		Usage: "Exclude directories and files when searching, comma separated",
+	},
+	&cli.StringFlag{
+		Name:  categoryFlag,
+		Usage: "Specify categories should be parsed, comma separated",
 	},
 	&cli.StringFlag{
 		Name:    propertyStrategyFlag,
@@ -101,6 +106,7 @@ func initAction(c *cli.Context) error {
 	return gen.New().Build(&gen.Config{
 		SearchDir:           c.String(searchDirFlag),
 		Excludes:            c.String(excludeFlag),
+		Categories:          c.String(categoryFlag),
 		MainAPIFile:         c.String(generalInfoFlag),
 		PropNamingStrategy:  strategy,
 		OutputDir:           c.String(outputFlag),

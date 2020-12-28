@@ -23,6 +23,7 @@ import (
 type Operation struct {
 	HTTPMethod string
 	Path       string
+	Categories []string
 	spec.Operation
 
 	parser              *Parser
@@ -78,6 +79,53 @@ func SetCodeExampleFilesDirectory(directoryPath string) func(*Operation) {
 	}
 }
 
+// IsAllowedCategory check if given category is allowed, if so return true.
+func isAllowedCategory(comments []string, categories []string) bool {
+	if categories == nil {
+		return true
+	}
+
+	for _, c := range comments {
+		commentLine := strings.TrimSpace(strings.TrimLeft(c, "//"))
+		if len(commentLine) == 0 {
+			continue
+		}
+
+		attribute := strings.Fields(commentLine)[0]
+		lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
+		lowerAttribute := strings.ToLower(attribute)
+
+		switch lowerAttribute {
+		case "@category":
+			return len(intersections(parseCategories(lineRemainder), categories)) > 0
+		default:
+			continue
+		}
+	}
+	return true
+}
+
+// https://stackoverflow.com/questions/44956031/how-to-get-intersection-of-two-slice-in-golang
+func intersections(section1, section2 []string) (intersection []string) {
+	str1 := strings.Join(filterDuplicates(section1), " ")
+	for _, s := range filterDuplicates(section2) {
+		if strings.Contains(str1, s) {
+			intersection = append(intersection, s)
+		}
+	}
+	return
+}
+
+func filterDuplicates(src []string) (res []string) {
+	for _, s := range src {
+		newStr := strings.Join(res, " ")
+		if !strings.Contains(newStr, s) {
+			res = append(res, s)
+		}
+	}
+	return
+}
+
 // ParseComment parses comment for given comment string and returns error if error occurs.
 func (operation *Operation) ParseComment(comment string, astFile *ast.File) error {
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "//"))
@@ -90,6 +138,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 
 	var err error
 	switch lowerAttribute {
+	case "@category":
+		operation.ParseCategoryComment(lineRemainder)
 	case "@description":
 		operation.ParseDescriptionComment(lineRemainder)
 	case "@description.markdown":
@@ -128,6 +178,17 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	return err
 }
 
+// ParseComments parses comment for given comments as strings and returns error if error occurs.
+func (operation *Operation) ParseComments(comments []string, astFile *ast.File) error {
+	//for per 'function' comment, create a new 'Operation' object
+	for _, comment := range comments {
+		if err := operation.ParseComment(comment, astFile); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // ParseCodeSample godoc
 func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainder string) error {
 	if lineRemainder == "file" {
@@ -148,6 +209,26 @@ func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainde
 
 	// Fallback into existing logic
 	return operation.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
+}
+
+// ParseCategoryComment godoc
+func (operation *Operation) ParseCategoryComment(lineRemainder string) {
+	operation.Categories = parseCategories(lineRemainder)
+}
+
+func parseCategories(lineRemainder string) (cats []string) {
+	arr := strings.Split(lineRemainder, ",")
+	if len(arr) == 0 {
+		return
+	}
+	for _, a := range arr {
+		x := strings.Trim(a, " ")
+		if x == "" {
+			continue
+		}
+		cats = append(cats, x)
+	}
+	return
 }
 
 // ParseDescriptionComment godoc
