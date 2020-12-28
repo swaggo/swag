@@ -1706,3 +1706,21 @@ func TestParseCodeSamples(t *testing.T) {
 		assert.Error(t, err, "error was expected, as file does not exist")
 	})
 }
+
+func TestAllowedCategory(t *testing.T) {
+	assert.True(t, isAllowedCategory([]string{"// @category a"}, []string{"a"}))
+	assert.False(t, isAllowedCategory([]string{"// @category a"}, []string{"b"}))
+	assert.True(t, isAllowedCategory([]string{"", "// comment"}, nil))
+	assert.True(t, isAllowedCategory([]string{"", "// @category z"}, nil))
+	assert.False(t, isAllowedCategory([]string{}, []string{"a"}))
+	assert.False(t, isAllowedCategory([]string{"// @category b"}, []string{"a"}))
+}
+
+func TestParseComments(t *testing.T) {
+	comments := []string{`// @category z`, `// @summary ok`}
+	operation := NewOperation(nil)
+
+	err := operation.ParseComments(comments, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, operation.Categories, []string{"z"})
+}
