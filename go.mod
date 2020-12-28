@@ -5,8 +5,6 @@ require (
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/spec v0.19.14
-	github.com/gofrs/uuid v3.3.0+incompatible
-	github.com/shopspring/decimal v1.2.0
 	github.com/stretchr/testify v1.6.1
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b // indirect
