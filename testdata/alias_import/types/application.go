@@ -7,3 +7,7 @@ type Application struct {
 }
 
 type DateOnly time.Time
+
+type TypeToEmbed struct {
+	Embedded string
+}

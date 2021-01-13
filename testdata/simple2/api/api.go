@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // @Summary Add a new pet to the store
@@ -15,7 +15,7 @@ import (
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /testapi/get-string-by-int/{some_id} [get]
-func GetStringByInt(c *gin.Context) {
+func GetStringByInt(w http.ResponseWriter, r *http.Request) {
 	//write your code
 }
 
@@ -25,8 +25,8 @@ func GetStringByInt(c *gin.Context) {
 // @Produce  json
 // @Param some_id path string true "Some ID"
 // @Param category query int true "Category" Enums(1, 2, 3)
-// @Param offset query int true "Offset" Mininum(0) default(0)
-// @Param limit query int true "Limit" Maxinum(50) default(10)
+// @Param offset query int true "Offset" Minimum(0) default(0)
+// @Param limit query int true "Limit" Maximum(50) default(10)
 // @Param q query string true "q" Minlength(1) Maxlength(50) default("")
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} web.APIError "We need ID!!"
@@ -38,7 +38,7 @@ func GetStringByInt(c *gin.Context) {
 // @Security OAuth2AccessCode[read]
 // @Security OAuth2Password[admin]
 // @Router /testapi/get-struct-array-by-string/{some_id} [get]
-func GetStructArrayByString(c *gin.Context) {
+func GetStructArrayByString(w http.ResponseWriter, r *http.Request) {
 	//write your code
 }
 
@@ -52,7 +52,7 @@ func GetStructArrayByString(c *gin.Context) {
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /file/upload [post]
-func Upload(ctx *gin.Context) {
+func Upload(w http.ResponseWriter, r *http.Request) {
 	//write your code
 }
 

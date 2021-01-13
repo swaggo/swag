@@ -42,8 +42,10 @@ package main
 // @tokenUrl https://example.com/oauth/token
 // @authorizationurl https://example.com/oauth/authorize
 // @scope.admin Grants read and write access to administrative information
+// @x-tokenname id_token
 
 // @x-google-endpoints [{"name":"name.endpoints.environment.cloud.goog","allowCors":true}]
 // @x-google-marks "marks values"
+// @x-logo {"url":"https://redocly.github.io/redoc/petstore-logo.png", "altText": "Petstore logo", "backgroundColor": "#FFFFFF"}
 
 func main() {}

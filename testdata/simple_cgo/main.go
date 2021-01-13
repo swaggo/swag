@@ -1,8 +1,18 @@
 package main
 
+/*
+#include <stdio.h>
+
+void Hello(){
+    printf("Hello world\n");
+}
+*/
+import "C"
+
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/testdata/model_not_under_root/cmd/api"
+	"net/http"
+
+	"github.com/swaggo/swag/testdata/simple_cgo/api"
 )
 
 // @title Swagger Example API
@@ -47,7 +57,8 @@ import (
 // @authorizationurl https://example.com/oauth/authorize
 // @scope.admin Grants read and write access to administrative information
 func main() {
-	r := gin.New()
-	r.GET("/testapi/get-string-by-int/:some_id", api.GetStringByInt)
-	r.Run()
+	C.Hello()
+
+	http.HandleFunc("/testapi/get-string-by-int/", api.GetStringByInt)
+	http.ListenAndServe(":8080", nil)
 }

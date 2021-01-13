@@ -1,0 +1,113 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "test for conflict name",
+        "title": "Swag test",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/health": {
+            "get": {
+                "description": "Check if Health  of service it's OK!",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "operationId": "health",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github.com_swaggo_swag_testdata_conflict_name_model.ErrorsResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health2": {
+            "get": {
+                "description": "Check if Health  of service it's OK!",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "operationId": "health2",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github.com_swaggo_swag_testdata_conflict_name_model2.ErrorsResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "github.com_swaggo_swag_testdata_conflict_name_model.ErrorsResponse": {
+            "type": "object",
+            "properties": {
+                "newTime": {
+                    "$ref": "#/definitions/model.MyPayload"
+                }
+            }
+        },
+        "github.com_swaggo_swag_testdata_conflict_name_model.MyStruct": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github.com_swaggo_swag_testdata_conflict_name_model2.ErrorsResponse": {
+            "type": "object",
+            "properties": {
+                "newTime": {
+                    "$ref": "#/definitions/model.MyPayload2"
+                }
+            }
+        },
+        "github.com_swaggo_swag_testdata_conflict_name_model2.MyStruct": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.MyPayload": {
+            "type": "object",
+            "properties": {
+                "my": {
+                    "$ref": "#/definitions/github.com_swaggo_swag_testdata_conflict_name_model.MyStruct"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.MyPayload2": {
+            "type": "object",
+            "properties": {
+                "my": {
+                    "$ref": "#/definitions/github.com_swaggo_swag_testdata_conflict_name_model2.MyStruct"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

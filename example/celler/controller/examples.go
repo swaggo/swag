@@ -22,7 +22,6 @@ import (
 // @Router /examples/ping [get]
 func (c *Controller) PingExample(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "pong")
-	return
 }
 
 // CalcExample godoc
@@ -33,7 +32,7 @@ func (c *Controller) PingExample(ctx *gin.Context) {
 // @Produce json
 // @Param val1 query int true "used for calc"
 // @Param val2 query int true "used for calc"
-// @Success 200 {integer} integer "answer"
+// @Success 200 {integer} string "answer"
 // @Failure 400 {string} string "ok"
 // @Failure 404 {string} string "ok"
 // @Failure 500 {string} string "ok"
@@ -123,7 +122,7 @@ func (c *Controller) SecuritiesExample(ctx *gin.Context) {
 // @Param enumint query int false "int enums" Enums(1, 2, 3)
 // @Param enumnumber query number false "int enums" Enums(1.1, 1.2, 1.3)
 // @Param string query string false "string valid" minlength(5) maxlength(10)
-// @Param int query int false "int valid" mininum(1) maxinum(10)
+// @Param int query int false "int valid" minimum(1) maximum(10)
 // @Param default query string false "string default" default(A)
 // @Success 200 {string} string "answer"
 // @Failure 400 {string} string "ok"
@@ -139,4 +138,16 @@ func (c *Controller) AttributeExample(ctx *gin.Context) {
 		ctx.Query("int"),
 		ctx.Query("default"),
 	))
+}
+
+// PostExample godoc
+// @Summary post request example
+// @Description post request example
+// @Accept json
+// @Produce plain
+// @Param message body model.Account true "Account Info"
+// @Success 200 {string} string "success"
+// @Failure 500 {string} string "fail"
+// @Router /examples/post [post]
+func (c *Controller) PostExample(ctx *gin.Context) {
 }

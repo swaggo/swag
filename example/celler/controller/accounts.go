@@ -11,7 +11,7 @@ import (
 )
 
 // ShowAccount godoc
-// @Summary Show a account
+// @Summary Show an account
 // @Description get string by ID
 // @Tags accounts
 // @Accept  json
@@ -60,7 +60,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 }
 
 // AddAccount godoc
-// @Summary Add a account
+// @Summary Add an account
 // @Description add by json account
 // @Tags accounts
 // @Accept  json
@@ -94,7 +94,7 @@ func (c *Controller) AddAccount(ctx *gin.Context) {
 }
 
 // UpdateAccount godoc
-// @Summary Update a account
+// @Summary Update an account
 // @Description Update by json account
 // @Tags accounts
 // @Accept  json
@@ -131,7 +131,7 @@ func (c *Controller) UpdateAccount(ctx *gin.Context) {
 }
 
 // DeleteAccount godoc
-// @Summary Update a account
+// @Summary Delete an account
 // @Description Delete by account ID
 // @Tags accounts
 // @Accept  json

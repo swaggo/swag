@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
+
 	"github.com/swaggo/swag/testdata/simple3/api"
 )
 
@@ -47,9 +48,8 @@ import (
 // @authorizationurl https://example.com/oauth/authorize
 // @scope.admin Grants read and write access to administrative information
 func main() {
-	r := gin.New()
-	r.GET("/testapi/get-string-by-int/:some_id", api.GetStringByInt)
-	r.GET("//testapi/get-struct-array-by-string/:some_id", api.GetStructArrayByString)
-	r.POST("/testapi/upload", api.Upload)
-	r.Run()
+	http.HandleFunc("/testapi/get-string-by-int/", api.GetStringByInt)
+	http.HandleFunc("//testapi/get-struct-array-by-string/", api.GetStructArrayByString)
+	http.HandleFunc("/testapi/upload", api.Upload)
+	http.ListenAndServe(":8080", nil)
 }
