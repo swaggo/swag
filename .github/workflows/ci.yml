@@ -24,7 +24,7 @@ jobs:
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin # https://github.com/actions/setup-go/issues/14
           mkdir -p $(go env GOPATH)/src/github.com/swaggo
-          ln -s $(pwd) $(go env GOPATH)/src/github.com/swaggo/swag
+          ln -s $(pwd) $(go env GOPATH)/src/github.com/Nerzal/swag
           make fmt-check lint vet
         env:
           GOPATH: ${{ runner.workspace }}

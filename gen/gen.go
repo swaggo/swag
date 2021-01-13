@@ -13,9 +13,9 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Nerzal/swag"
 	"github.com/ghodss/yaml"
 	"github.com/go-openapi/spec"
-	"github.com/swaggo/swag"
 )
 
 // Gen presents a generate tool for swag.
@@ -261,7 +261,7 @@ import (
 	"strings"
 
 	"github.com/alecthomas/template"
-	"github.com/swaggo/swag"
+	"github.com/Nerzal/swag"
 )
 
 var doc = ` + "`{{ printDoc .Doc}}`" + `

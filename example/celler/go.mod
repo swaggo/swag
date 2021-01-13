@@ -1,4 +1,4 @@
-module github.com/swaggo/swag/example/celler
+module github.com/Nerzal/swag/example/celler
 
 go 1.13
 
