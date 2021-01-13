@@ -184,9 +184,11 @@ func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) er
 		if err != nil {
 			return err
 		}
+
 		if err := t.Resolve(pkgName); err != nil {
 			return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
 		}
+
 		for i := 0; i < len(t.Root.Deps); i++ {
 			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
 				return err
@@ -372,6 +374,18 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 				break
 			case "@query.collection.format":
 				parser.collectionFormatInQuery = value
+			case "@x-taggroups":
+				originalAttribute := strings.Split(commentLine, " ")[0]
+				if len(value) == 0 {
+					return fmt.Errorf("annotation %s need a value", attribute)
+				}
+
+				var valueJSON interface{}
+				if err := json.Unmarshal([]byte(value), &valueJSON); err != nil {
+					return fmt.Errorf("annotation %s need a valid json value", originalAttribute)
+				}
+
+				parser.swagger.Extensions[originalAttribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
 			default:
 				prefixExtension := "@x-"
 				if len(attribute) > 5 { // Prefix extension + 1 char + 1 space  + 1 char
