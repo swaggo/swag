@@ -222,6 +222,8 @@ func getPkgName(searchDir string) (string, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	fmt.Println("get pkg name for directory:", searchDir)
+
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("execute go list command, %s, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
 	}
