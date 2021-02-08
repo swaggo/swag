@@ -1,6 +1,7 @@
 module github.com/Nerzal/swag
 
 require (
+	dev.azure.com/kycnow/kycnow/_git/kycnow-api-v2 v0.0.0-20210205164801-0c0fd001cc30 // indirect
 	github.com/KyleBanks/depth v1.2.1
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/ghodss/yaml v1.0.0

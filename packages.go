@@ -224,7 +224,7 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *
 				return pkgs.findTypeSpec(pkgPath, parts[1])
 			}
 
-			typeDef := pkgDefinition.TypeDefinitions[parts[0]]
+			typeDef := pkgDefinition.TypeDefinitions[parts[1]]
 			if typeDef != nil {
 				return typeDef
 			}
