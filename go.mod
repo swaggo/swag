@@ -11,6 +11,7 @@ require (
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	golang.org/x/tools v0.1.0
+	k8s.io/apimachinery v0.20.2
 )
 
 go 1.15
