@@ -251,22 +251,26 @@ func initIfEmpty(license *spec.License) *spec.License {
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 
+	filePath := mainAPIFile
+
 	if !strings.Contains(mainAPIFile, "main.go") {
-		mainAPIFile += "/main.go"
+		filePath = mainAPIFile + "/main.go"
 	}
 
-	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
+	fileTree, err := goparser.ParseFile(fileSet, filePath, nil, goparser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("cannot parse source files %s: %s", mainAPIFile, err)
+		return fmt.Errorf("cannot parse source files %s: %s", filePath, err)
 	}
 
 	parser.swagger.Swagger = "2.0"
 	securityMap := map[string]*spec.SecurityScheme{}
 
-	for _, comment := range fileTree.Comments {
+	for i := range fileTree.Comments {
+		comment := fileTree.Comments[i]
 		if !isGeneralAPIComment(comment) {
 			continue
 		}
+
 		comments := strings.Split(comment.Text(), "\n")
 		previousAttribute := ""
 		// parsing classic meta data model
