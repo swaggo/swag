@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"errors"
 	"go/ast"
 	"go/token"
 	"strings"
@@ -68,42 +69,49 @@ func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *a
 func (pkgs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, error) {
 	parsedSchemas := make(map[*TypeSpecDef]*Schema)
 	for astFile, info := range pkgs.files {
-		for _, astDeclaration := range astFile.Decls {
-			if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
-				for _, astSpec := range generalDeclaration.Specs {
-					if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
-						typeSpecDef := &TypeSpecDef{
-							PkgPath:  info.PackagePath,
-							File:     astFile,
-							TypeSpec: typeSpec,
-						}
+		for i := range astFile.Decls {
+			astDeclaration := astFile.Decls[i]
 
-						if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) {
-							parsedSchemas[typeSpecDef] = &Schema{
-								PkgPath: typeSpecDef.PkgPath,
-								Name:    astFile.Name.Name,
-								Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
-							}
-						}
+			generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
 
-						if pkgs.uniqueDefinitions == nil {
-							pkgs.uniqueDefinitions = make(map[string]*TypeSpecDef)
-						}
+			if !ok || generalDeclaration.Tok != token.TYPE {
+				continue
+			}
 
-						fullName := typeSpecDef.FullName()
-						anotherTypeDef, ok := pkgs.uniqueDefinitions[fullName]
-						if ok {
-							if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
-								continue
-							} else {
-								delete(pkgs.uniqueDefinitions, fullName)
-							}
-						} else {
-							pkgs.uniqueDefinitions[fullName] = typeSpecDef
-						}
-
-						pkgs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
+			for _, astSpec := range generalDeclaration.Specs {
+				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
+					typeSpecDef := &TypeSpecDef{
+						PkgPath:  info.PackagePath,
+						File:     astFile,
+						TypeSpec: typeSpec,
 					}
+
+					if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) {
+						parsedSchemas[typeSpecDef] = &Schema{
+							PkgPath: typeSpecDef.PkgPath,
+							Name:    astFile.Name.Name,
+							Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
+						}
+					}
+
+					if pkgs.uniqueDefinitions == nil {
+						return nil, errors.New("could not parse types, as unique definitions were nil")
+					}
+
+					fullName := typeSpecDef.FullName()
+					anotherTypeDef, ok := pkgs.uniqueDefinitions[fullName]
+					if ok {
+						if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
+							continue
+						} else {
+							delete(pkgs.uniqueDefinitions, fullName)
+						}
+					} else {
+						pkgs.uniqueDefinitions[fullName] = typeSpecDef
+					}
+
+					pkgs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
+
 				}
 			}
 		}
@@ -112,13 +120,16 @@ func (pkgs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, error) 
 }
 
 func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *TypeSpecDef {
-	if pkgs.packages != nil {
-		if pd, ok := pkgs.packages[pkgPath]; ok {
-			if typeSpec, ok := pd.TypeDefinitions[typeName]; ok {
-				return typeSpec
-			}
+	if pkgs.packages == nil {
+		return nil
+	}
+
+	if pd, ok := pkgs.packages[pkgPath]; ok {
+		if typeSpec, ok := pd.TypeDefinitions[typeName]; ok {
+			return typeSpec
 		}
 	}
+
 	return nil
 }
 

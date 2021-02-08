@@ -16,6 +16,7 @@ import (
 	"github.com/Nerzal/swag"
 	"github.com/ghodss/yaml"
 	"github.com/go-openapi/spec"
+	"github.com/pkg/errors"
 )
 
 // Gen presents a generate tool for swag.
@@ -76,7 +77,7 @@ type Config struct {
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
 	if _, err := os.Stat(config.SearchDir); os.IsNotExist(err) {
-		return fmt.Errorf("dir: %s is not exist", config.SearchDir)
+		return errors.Wrap(fmt.Errorf("dir: %s does not exist", config.SearchDir), "could not find specified searchDir")
 	}
 
 	log.Println("Generate swagger docs....")

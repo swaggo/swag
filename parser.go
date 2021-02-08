@@ -2,7 +2,6 @@ package swag
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -19,6 +18,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/pkg/errors"
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
@@ -180,18 +181,18 @@ func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) er
 		t.ResolveInternal = true
 		t.MaxDepth = parseDepth
 
-		pkgName, err := getPkgName(filepath.Dir(absMainAPIFilePath))
+		pkgName, err := getPkgName(absMainAPIFilePath)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "could not parse dependencies")
 		}
 
 		if err := t.Resolve(pkgName); err != nil {
-			return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
+			return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not parse dependencies")
 		}
 
 		for i := 0; i < len(t.Root.Deps); i++ {
 			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
-				return err
+				return errors.Wrap(err, "could not parse dependencies")
 			}
 		}
 	}
@@ -247,6 +248,11 @@ func initIfEmpty(license *spec.License) *spec.License {
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
+
+	if !strings.Contains(mainAPIFile, "main.go") {
+		mainAPIFile += "/main.go"
+	}
+
 	fileTree, err := goparser.ParseFile(fileSet, mainAPIFile, nil, goparser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("cannot parse source files %s: %s", mainAPIFile, err)
@@ -637,6 +643,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 
 	typeSpecDef := parser.packages.FindTypeSpec(typeName, file)
 	if typeSpecDef == nil {
+		// parser.packages.FindTypeSpec(typeName, file) // uncomment for debugging
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 
@@ -1338,6 +1345,7 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 		if err != nil {
 			return err
 		}
+
 		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil)
 	})
 }
