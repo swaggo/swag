@@ -84,6 +84,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	if len(commentLine) == 0 {
 		return nil
 	}
+
 	attribute := strings.Fields(commentLine)[0]
 	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
 	lowerAttribute := strings.ToLower(attribute)

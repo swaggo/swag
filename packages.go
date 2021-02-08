@@ -137,13 +137,13 @@ func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *
 // @pkg the name of the target package
 // @file current ast.File in which to search imports
 // @return the package path of a package of @pkg
-func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File) string {
+func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkgName string, file *ast.File) string {
 	if file == nil {
 		return ""
 	}
 
-	if strings.ContainsRune(pkg, '.') {
-		pkg = strings.Split(pkg, ".")[0]
+	if strings.ContainsRune(pkgName, '.') {
+		pkgName = strings.Split(pkgName, ".")[0]
 	}
 
 	hasAnonymousPkg := false
@@ -151,7 +151,7 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 	// prior to match named package
 	for _, imp := range file.Imports {
 		if imp.Name != nil {
-			if imp.Name.Name == pkg {
+			if imp.Name.Name == pkgName {
 				return strings.Trim(imp.Path.Value, `"`)
 			} else if imp.Name.Name == "_" {
 				hasAnonymousPkg = true
@@ -159,7 +159,7 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 		} else if pkgs.packages != nil {
 			path := strings.Trim(imp.Path.Value, `"`)
 			if pd, ok := pkgs.packages[path]; ok {
-				if pd.Name == pkg {
+				if pd.Name == pkgName {
 					return path
 				}
 			}
@@ -175,13 +175,21 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 			if imp.Name.Name == "_" {
 				path := strings.Trim(imp.Path.Value, `"`)
 				if pd, ok := pkgs.packages[path]; ok {
-					if pd.Name == pkg {
+					if pd.Name == pkgName {
 						return path
 					}
 				}
 			}
 		}
 	}
+
+	// for
+	// if pd, ok := pkgs.packages[path]; ok {
+	// 	if pd.Name == pkgName {
+	// 		return path
+	// 	}
+	// }
+
 	return ""
 }
 
@@ -199,18 +207,6 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *
 	if strings.ContainsRune(typeName, '.') {
 		parts := strings.Split(typeName, ".")
 
-		isAliasPkgName := func(file *ast.File, pkgName string) bool {
-			if file != nil && file.Imports != nil {
-				for _, pkg := range file.Imports {
-					if pkg.Name != nil && pkg.Name.Name == pkgName {
-						return true
-					}
-				}
-			}
-
-			return false
-		}
-
 		if !isAliasPkgName(file, parts[0]) {
 			if typeDef, ok := pkgs.uniqueDefinitions[typeName]; ok {
 				return typeDef
@@ -221,6 +217,19 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *
 		if len(pkgPath) == 0 && parts[0] == file.Name.Name {
 			pkgPath = pkgs.files[file].PackagePath
 		}
+
+		if pkgPath == "" {
+			pkgDefinition := pkgs.packages["pkg/"+parts[0]]
+			if pkgDefinition == nil {
+				return pkgs.findTypeSpec(pkgPath, parts[1])
+			}
+
+			typeDef := pkgDefinition.TypeDefinitions[parts[0]]
+			if typeDef != nil {
+				return typeDef
+			}
+		}
+
 		return pkgs.findTypeSpec(pkgPath, parts[1])
 	}
 
@@ -242,4 +251,18 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *
 	}
 
 	return nil
+}
+
+func isAliasPkgName(file *ast.File, pkgName string) bool {
+	if file == nil && file.Imports == nil {
+		return false
+	}
+
+	for _, pkg := range file.Imports {
+		if pkg.Name != nil && pkg.Name.Name == pkgName {
+			return true
+		}
+	}
+
+	return false
 }
