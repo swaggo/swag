@@ -797,6 +797,9 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 			return nil, err
 		}
 		return spec.MapProperty(schema), nil
+	// type Foo interface{}
+	case *ast.InterfaceType:
+		return &spec.Schema{}, nil
 	case *ast.FuncType:
 		return nil, ErrFuncTypeField
 	// ...
@@ -1183,7 +1186,7 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 		}
 		return []string{schema.Type[0]}
 	}
-	return nil
+	return []string{ANY}
 }
 
 func replaceLastTag(slice []spec.Tag, element spec.Tag) {
@@ -1254,6 +1257,8 @@ func toLowerCamelCase(in string) string {
 // defineTypeOfExample example value define the type (object and array unsupported)
 func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{}, error) {
 	switch schemaType {
+	case ANY:
+		fallthrough
 	case STRING:
 		return exampleValue, nil
 	case NUMBER:
