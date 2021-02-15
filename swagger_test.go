@@ -185,5 +185,5 @@ func TestCalledTwicelRegister(t *testing.T) {
 }
 
 func setup() {
-	swag = nil
+	swags = make(map[string]Swagger)
 }

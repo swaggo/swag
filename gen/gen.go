@@ -310,6 +310,6 @@ func (s *s) ReadDoc() string {
 }
 
 func init() {
-	swag.Register(swag.Name, &s{})
+	swag.Register({{ printf "%q + %q" .Host .BasePath}}, &s{})
 }
 `
