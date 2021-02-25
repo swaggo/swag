@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 type MyStruct struct {
@@ -28,7 +28,7 @@ type MyStruct struct {
 // @Produce  json
 // @Success 200 {object} MyStruct
 // @Router /so-something [get]
-func DoSomething(c *gin.Context) {
+func DoSomething(w http.ResponseWriter, r *http.Request) {
 	//write your code
 }
 
@@ -38,7 +38,6 @@ func DoSomething(c *gin.Context) {
 // @host localhost:4000
 // @basePath /api
 func main() {
-	r := gin.New()
-	r.GET("/do-something", DoSomething)
-	r.Run()
+	http.HandleFunc("/do-something", DoSomething)
+	http.ListenAndServe(":8080", nil)
 }

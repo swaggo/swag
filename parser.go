@@ -410,7 +410,7 @@ func isGeneralAPIComment(comment *ast.CommentGroup) bool {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
 		// The @summary, @router, @success,@failure  annotation belongs to Operation
-		case "@summary", "@router", "@success", "@failure":
+		case "@summary", "@router", "@success", "@failure", "@response":
 			return false
 		}
 	}
@@ -1014,7 +1014,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		//    name:       field.Names[0].Name,
 		schemaType: types[0],
 	}
-	if len(types) > 1 && types[0] == "array" {
+	if len(types) > 1 && (types[0] == "array" || types[0] == "object") {
 		structField.arrayType = types[1]
 	}
 
@@ -1285,6 +1285,27 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 			result = append(result, v)
 		}
 		return result, nil
+	case OBJECT:
+		if arrayType == "" {
+			return nil, fmt.Errorf("%s is unsupported type in example value", schemaType)
+		}
+
+		values := strings.Split(exampleValue, ",")
+		result := map[string]interface{}{}
+		for _, value := range values {
+			mapData := strings.Split(value, ":")
+
+			if len(mapData) == 2 {
+				v, err := defineTypeOfExample(arrayType, "", mapData[1])
+				if err != nil {
+					return nil, err
+				}
+				result[mapData[0]] = v
+			} else {
+				return nil, fmt.Errorf("example value %s should format: key:value", exampleValue)
+			}
+		}
+		return result, nil
 	default:
 		return nil, fmt.Errorf("%s is unsupported type in example value", schemaType)
 	}
@@ -1372,49 +1393,34 @@ func (parser *Parser) checkOperationIDUniqueness() error {
 		operationsIds[operationID] = currentPath
 		return nil
 	}
-
-	for path, itm := range parser.swagger.Paths.Paths {
+	getOperationID := func(itm spec.PathItem) (string, string) {
 		if itm.Get != nil {
-			currentPath := fmt.Sprintf("%s %s", "GET", path)
-			if err := saveOperationID(itm.Get.ID, currentPath); err != nil {
-				return err
-			}
+			return "GET", itm.Get.ID
 		}
 		if itm.Put != nil {
-			currentPath := fmt.Sprintf("%s %s", "PUT", path)
-			if err := saveOperationID(itm.Put.ID, currentPath); err != nil {
-				return err
-			}
+			return "PUT", itm.Put.ID
 		}
 		if itm.Post != nil {
-			currentPath := fmt.Sprintf("%s %s", "POST", path)
-			if err := saveOperationID(itm.Post.ID, currentPath); err != nil {
-				return err
-			}
+			return "POST", itm.Post.ID
 		}
 		if itm.Delete != nil {
-			currentPath := fmt.Sprintf("%s %s", "DELETE", path)
-			if err := saveOperationID(itm.Delete.ID, currentPath); err != nil {
-				return err
-			}
+			return "DELETE", itm.Delete.ID
 		}
 		if itm.Options != nil {
-			currentPath := fmt.Sprintf("%s %s", "OPTIONS", path)
-			if err := saveOperationID(itm.Options.ID, currentPath); err != nil {
-				return err
-			}
+			return "OPTIONS", itm.Options.ID
 		}
 		if itm.Head != nil {
-			currentPath := fmt.Sprintf("%s %s", "HEAD", path)
-			if err := saveOperationID(itm.Head.ID, currentPath); err != nil {
-				return err
-			}
+			return "HEAD", itm.Head.ID
 		}
 		if itm.Patch != nil {
-			currentPath := fmt.Sprintf("%s %s", "PATCH", path)
-			if err := saveOperationID(itm.Patch.ID, currentPath); err != nil {
-				return err
-			}
+			return "PATCH", itm.Patch.ID
+		}
+		return "", ""
+	}
+	for path, itm := range parser.swagger.Paths.Paths {
+		method, id := getOperationID(itm)
+		if err := saveOperationID(id, fmt.Sprintf("%s %s", method, path)); err != nil {
+			return err
 		}
 	}
 	return nil

@@ -1,7 +1,8 @@
 package alias_import
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
+
 	"github.com/swaggo/swag/testdata/alias_import/api"
 )
 
@@ -20,7 +21,6 @@ import (
 // @host petstore.swagger.io
 // @BasePath /v2
 func main() {
-	r := gin.New()
-	r.GET("/testapi/application", api.GetApplication)
-	r.Run()
+	http.HandleFunc("/testapi/application", api.GetApplication)
+	http.ListenAndServe(":8080", nil)
 }
