@@ -15,11 +15,15 @@ import (
 const defaultParseDepth = 100
 
 func TestNew(t *testing.T) {
+	t.Parallel()
+
 	swagMode = test
 	New()
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "schemes": [
         "http",
@@ -107,15 +111,19 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
+
 	p := New()
 	err := p.ParseGeneralAPIInfo("testdata/main.go")
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
 	assert.Equal(t, expected, string(b))
 }
 
 func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -188,7 +196,9 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
+
 	p := New()
+
 	err := p.ParseGeneralAPIInfo("testdata/templated.go")
 	assert.NoError(t, err)
 
@@ -197,32 +207,34 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 }
 
 func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
+	t.Parallel()
+
 	// should be return an error because extension value is not a valid json
 	func() {
-		expected := "annotation @x-google-endpoints need a valid json value"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
-		p := New()
-		err := p.ParseGeneralAPIInfo("testdata/extensionsFail1.go")
+
+		err := New().ParseGeneralAPIInfo("testdata/extensionsFail1.go")
 		if assert.Error(t, err) {
-			assert.Equal(t, expected, err.Error())
+			assert.Equal(t, "annotation @x-google-endpoints need a valid json value", err.Error())
 		}
 	}()
 
 	// should be return an error because extension don't have a value
 	func() {
-		expected := "annotation @x-google-endpoints need a value"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
-		p := New()
-		err := p.ParseGeneralAPIInfo("testdata/extensionsFail2.go")
+
+		err := New().ParseGeneralAPIInfo("testdata/extensionsFail2.go")
 		if assert.Error(t, err) {
-			assert.Equal(t, expected, err.Error())
+			assert.Equal(t, "annotation @x-google-endpoints need a value", err.Error())
 		}
 	}()
 }
 
 func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -237,7 +249,9 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
+
 	p := New()
+
 	err := p.ParseGeneralAPIInfo("testdata/single_file_api/main.go")
 	assert.NoError(t, err)
 
@@ -246,13 +260,19 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 }
 
 func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
+	t.Parallel()
+
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
+
 	p := New()
+
 	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/pet"
 
 	p := New()
@@ -263,9 +283,12 @@ func TestGetAllGoFileInfo(t *testing.T) {
 }
 
 func TestParser_ParseType(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/simple/"
 
 	p := New()
+
 	err := p.getAllGoFileInfo("testdata", searchDir)
 	assert.NoError(t, err)
 
@@ -278,19 +301,23 @@ func TestParser_ParseType(t *testing.T) {
 }
 
 func TestGetSchemes(t *testing.T) {
+	t.Parallel()
+
 	schemes := getSchemes("@schemes http https")
 	expectedSchemes := []string{"http", "https"}
 	assert.Equal(t, expectedSchemes, schemes)
 }
 
 func TestParseSimpleApi1(t *testing.T) {
+	t.Parallel()
+
 	expected, err := ioutil.ReadFile("testdata/simple/expected.json")
 	assert.NoError(t, err)
-	searchDir := "testdata/simple"
-	mainAPIFile := "main.go"
+
 	p := New()
+
 	p.PropNamingStrategy = PascalCase
-	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err = p.ParseAPI("testdata/simple", "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "  ")
@@ -298,6 +325,8 @@ func TestParseSimpleApi1(t *testing.T) {
 }
 
 func TestParseSimpleApi_ForSnakecase(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -770,10 +799,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
     }
 }`
 	searchDir := "testdata/simple2"
-	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = SnakeCase
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -781,6 +809,8 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
 }
 
 func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -1226,9 +1256,8 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
     }
 }`
 	searchDir := "testdata/simple3"
-	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -1236,6 +1265,8 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
 }
 
 func TestParseStructComment(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -1315,15 +1346,16 @@ func TestParseStructComment(t *testing.T) {
     }
 }`
 	searchDir := "testdata/struct_comment"
-	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
 }
 
 func TestParseNonExportedJSONFields(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -1398,6 +1430,8 @@ func TestParseNonExportedJSONFields(t *testing.T) {
 }
 
 func TestParsePetApi(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "schemes": [
         "http",
@@ -1423,14 +1457,20 @@ func TestParsePetApi(t *testing.T) {
 }`
 	searchDir := "testdata/pet"
 	mainAPIFile := "main.go"
+
 	p := New()
+
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
 	assert.Equal(t, expected, string(b))
 }
 
 func TestParseModelAsTypeAlias(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -1490,10 +1530,10 @@ func TestParseModelAsTypeAlias(t *testing.T) {
         }
     }
 }`
-	searchDir := "testdata/alias_type"
-	mainAPIFile := "main.go"
+
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+
+	err := p.ParseAPI("testdata/alias_type", "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -1501,10 +1541,13 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 }
 
 func TestParseComposition(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/composition"
-	mainAPIFile := "main.go"
+
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 
 	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
@@ -1512,26 +1555,33 @@ func TestParseComposition(t *testing.T) {
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 
-	//windows will fail: \r\n \n
+	// windows will fail: \r\n \n
 	assert.Equal(t, string(expected), string(b))
 }
 
 func TestParseImportAliases(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/alias_import"
-	mainAPIFile := "main.go"
+
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 
 	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	//windows will fail: \r\n \n
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+
+	// windows will fail: \r\n \n
 	assert.Equal(t, string(expected), string(b))
 }
 
 func TestParseNested(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/nested"
 	mainAPIFile := "main.go"
 	p := New()
@@ -1547,37 +1597,47 @@ func TestParseNested(t *testing.T) {
 }
 
 func TestParseDuplicated(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/duplicated"
-	mainAPIFile := "main.go"
+
 	p := New()
+
 	p.ParseDependency = true
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
 func TestParseDuplicatedOtherMethods(t *testing.T) {
-	searchDir := "testdata/duplicated2"
-	mainAPIFile := "main.go"
+	t.Parallel()
+
 	p := New()
 	p.ParseDependency = true
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI("testdata/duplicated2", "main.go", defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
 func TestParseConflictSchemaName(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/conflict_name"
-	mainAPIFile := "main.go"
 	p := New()
+
 	p.ParseDependency = true
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+
 	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
 
 func TestParser_ParseStructArrayObject(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package api
 
@@ -1642,10 +1702,11 @@ func Test(){
 	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(out))
-
 }
 
 func TestParser_ParseEmbededStruct(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package api
 
@@ -1710,10 +1771,11 @@ type ResponseWrapper struct {
 	out, err := json.MarshalIndent(parser.swagger.Definitions, "", "   ")
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(out))
-
 }
 
 func TestParser_ParseStructPointerMembers(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package api
 
@@ -1773,6 +1835,8 @@ func Test(){
 }
 
 func TestParser_ParseStructMapMember(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package api
 
@@ -1899,6 +1963,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -1915,6 +1981,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiGet(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -1938,6 +2006,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiPOST(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -1961,6 +2031,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiDELETE(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -1970,6 +2042,7 @@ func Test(){
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
+
 	p := New()
 
 	err = p.ParseRouterAPIInfo("", f)
@@ -1984,6 +2057,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiPUT(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2007,6 +2082,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiPATCH(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2030,6 +2107,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiHead(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2053,6 +2132,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiOptions(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2076,6 +2157,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiMultiple(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2137,10 +2220,9 @@ func Test3(){
 
 func TestApiParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
-	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 
 	if len(p.swagger.Tags) != 3 {
@@ -2165,6 +2247,8 @@ func TestApiParseTag(t *testing.T) {
 }
 
 func TestApiParseTag_NonExistendTag(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/tags_nonexistend_tag"
 	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
@@ -2175,10 +2259,9 @@ func TestApiParseTag_NonExistendTag(t *testing.T) {
 
 func TestParseTagMarkdownDescription(t *testing.T) {
 	searchDir := "testdata/tags"
-	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	if err != nil {
 		t.Error("Failed to parse api description: " + err.Error())
 	}
@@ -2195,29 +2278,29 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 
 func TestParseApiMarkdownDescription(t *testing.T) {
 	searchDir := "testdata/tags"
-	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, "main.go", defaultParseDepth)
 	if err != nil {
 		t.Error("Failed to parse api description: " + err.Error())
 	}
 
-	if p.swagger.Info.Description == "" {
+	if p.swagger.Info.Description == "" && err != nil {
 		t.Error("Failed to parse api description: " + err.Error())
 	}
 }
 
 func TestIgnoreInvalidPkg(t *testing.T) {
-	searchDir := "testdata/deps_having_invalid_pkg"
-	mainAPIFile := "main.go"
-	p := New()
-	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
+	t.Parallel()
+
+	if err := New().ParseAPI("testdata/deps_having_invalid_pkg", "main.go", defaultParseDepth); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
 	}
 }
 
 func TestFixes432(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/fixes-432"
 	mainAPIFile := "cmd/main.go"
 
@@ -2228,6 +2311,8 @@ func TestFixes432(t *testing.T) {
 }
 
 func TestParseOutsideDependencies(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/pare_outside_dependencies"
 	mainAPIFile := "cmd/main.go"
 
@@ -2239,6 +2324,8 @@ func TestParseOutsideDependencies(t *testing.T) {
 }
 
 func TestParseStructParamCommentByQueryType(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package main
 
@@ -2310,6 +2397,8 @@ func Fun()  {
 }
 
 func TestParseRenamedStructDefinition(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package main
 
@@ -2355,6 +2444,8 @@ func Fun()  {
 }
 
 func TestParseJSONFieldString(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -2444,11 +2535,15 @@ func TestParseJSONFieldString(t *testing.T) {
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
 	assert.Equal(t, expected, string(b))
 }
 
 func TestParseSwaggerignoreForEmbedded(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package main
 
@@ -2492,10 +2587,11 @@ func Fun()  {
 }
 
 func TestDefineTypeOfExample(t *testing.T) {
-	var example interface{}
-	var err error
+	t.Parallel()
 
-	example, err = defineTypeOfExample("string", "", "example")
+	var example interface{}
+
+	example, err := defineTypeOfExample("string", "", "example")
 	assert.NoError(t, err)
 	assert.Equal(t, example.(string), "example")
 
@@ -2513,8 +2609,8 @@ func TestDefineTypeOfExample(t *testing.T) {
 
 	example, err = defineTypeOfExample("array", "string", "one,two,three")
 	assert.NoError(t, err)
-	arr := []string{}
 
+	var arr []string
 	for _, v := range example.([]interface{}) {
 		arr = append(arr, v.(string))
 	}
@@ -2535,7 +2631,8 @@ func TestDefineTypeOfExample(t *testing.T) {
 
 	example, err = defineTypeOfExample("object", "string", "key_one:one,key_two:two,key_three:three")
 	assert.NoError(t, err)
-	obj := map[string]string{}
+
+	obj := make(map[string]string)
 
 	for k, v := range example.(map[string]interface{}) {
 		obj[k] = v.(string)

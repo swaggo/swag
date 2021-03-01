@@ -8,6 +8,8 @@ import (
 )
 
 func TestValidDataType(t *testing.T) {
+	t.Parallel()
+
 	assert.NoError(t, CheckSchemaType(STRING))
 	assert.NoError(t, CheckSchemaType(NUMBER))
 	assert.NoError(t, CheckSchemaType(INTEGER))
@@ -19,6 +21,8 @@ func TestValidDataType(t *testing.T) {
 }
 
 func TestTransToValidSchemeType(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, TransToValidSchemeType("uint"), INTEGER)
 	assert.Equal(t, TransToValidSchemeType("uint32"), INTEGER)
 	assert.Equal(t, TransToValidSchemeType("uint64"), INTEGER)
@@ -31,6 +35,8 @@ func TestTransToValidSchemeType(t *testing.T) {
 }
 
 func TestTransToValidCollectionFormat(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, TransToValidCollectionFormat("csv"), "csv")
 	assert.Equal(t, TransToValidCollectionFormat("multi"), "multi")
 	assert.Equal(t, TransToValidCollectionFormat("pipes"), "pipes")
@@ -42,6 +48,7 @@ func TestTransToValidCollectionFormat(t *testing.T) {
 }
 
 func TestIsGolangPrimitiveType(t *testing.T) {
+	t.Parallel()
 
 	assert.Equal(t, IsGolangPrimitiveType("uint"), true)
 	assert.Equal(t, IsGolangPrimitiveType("int"), true)
@@ -63,6 +70,7 @@ func TestIsGolangPrimitiveType(t *testing.T) {
 }
 
 func TestIsSimplePrimitiveType(t *testing.T) {
+	t.Parallel()
 
 	assert.Equal(t, IsSimplePrimitiveType("string"), true)
 	assert.Equal(t, IsSimplePrimitiveType("number"), true)
@@ -73,10 +81,9 @@ func TestIsSimplePrimitiveType(t *testing.T) {
 }
 
 func TestBuildCustomSchema(t *testing.T) {
-	var schema *spec.Schema
-	var err error
+	t.Parallel()
 
-	schema, err = BuildCustomSchema([]string{})
+	schema, err := BuildCustomSchema([]string{})
 	assert.NoError(t, err)
 	assert.Nil(t, schema)
 
@@ -120,6 +127,8 @@ func TestBuildCustomSchema(t *testing.T) {
 }
 
 func TestIsNumericType(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, IsNumericType(INTEGER), true)
 	assert.Equal(t, IsNumericType(NUMBER), true)
 
