@@ -73,7 +73,7 @@ type Config struct {
 	ParseDepth int
 }
 
-// Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
+// Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
 func (g *Gen) Build(config *Config) error {
 	if _, err := os.Stat(config.SearchDir); os.IsNotExist(err) {
 		return fmt.Errorf("dir: %s is not exist", config.SearchDir)
@@ -106,7 +106,7 @@ func (g *Gen) Build(config *Config) error {
 	if err != nil {
 		return err
 	}
-	packageName := filepath.Base(absOutputDir)
+
 	docFileName := filepath.Join(config.OutputDir, "docs.go")
 	jsonFileName := filepath.Join(config.OutputDir, "swagger.json")
 	yamlFileName := filepath.Join(config.OutputDir, "swagger.yaml")
@@ -124,7 +124,7 @@ func (g *Gen) Build(config *Config) error {
 
 	y, err := g.jsonToYAML(b)
 	if err != nil {
-		return fmt.Errorf("cannot convert json to yaml error: %s", err)
+		return fmt.Errorf("cannot convert json to yaml error: %w", err)
 	}
 
 	err = g.writeFile(y, yamlFileName)
@@ -133,7 +133,7 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	// Write doc
-	err = g.writeGoDoc(packageName, docs, swagger, config)
+	err = g.writeGoDoc(filepath.Base(absOutputDir), docs, swagger, config)
 	if err != nil {
 		return err
 	}
@@ -153,6 +153,7 @@ func (g *Gen) writeFile(b []byte, file string) error {
 	defer f.Close()
 
 	_, err = f.Write(b)
+
 	return err
 }
 
@@ -161,6 +162,7 @@ func (g *Gen) formatSource(src []byte) []byte {
 	if err != nil {
 		code = src // Output the unformatted code anyway
 	}
+
 	return code
 }
 
@@ -246,6 +248,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 
 	// write
 	_, err = output.Write(code)
+
 	return err
 }
 

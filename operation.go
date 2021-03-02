@@ -47,13 +47,13 @@ var mimeTypeAliases = map[string]string{
 var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
 
 // NewOperation creates a new Operation with default properties.
-// map[int]Response
+// map[int]Response.
 func NewOperation(parser *Parser, options ...func(*Operation)) *Operation {
 	if parser == nil {
 		parser = New()
 	}
 
-	result := &Operation{
+	result := Operation{
 		parser:     parser,
 		HTTPMethod: "get",
 		Operation: spec.Operation{
@@ -65,13 +65,13 @@ func NewOperation(parser *Parser, options ...func(*Operation)) *Operation {
 	}
 
 	for _, option := range options {
-		option(result)
+		option(&result)
 	}
 
-	return result
+	return &result
 }
 
-// SetCodeExampleFilesDirectory sets the directory to search for codeExamples
+// SetCodeExampleFilesDirectory sets the directory to search for codeExamples.
 func SetCodeExampleFilesDirectory(directoryPath string) func(*Operation) {
 	return func(o *Operation) {
 		o.codeExampleFilesDir = directoryPath
@@ -84,6 +84,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	if len(commentLine) == 0 {
 		return nil
 	}
+
 	attribute := strings.Fields(commentLine)[0]
 	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
 	lowerAttribute := strings.ToLower(attribute)
@@ -97,6 +98,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		if err != nil {
 			return err
 		}
+
 		operation.ParseDescriptionComment(string(commentInfo))
 	case "@summary":
 		operation.Summary = lineRemainder
@@ -125,10 +127,11 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	default:
 		err = operation.ParseMetadata(attribute, lowerAttribute, lineRemainder)
 	}
+
 	return err
 }
 
-// ParseCodeSample godoc
+// ParseCodeSample godoc.
 func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainder string) error {
 	if lineRemainder == "file" {
 		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
@@ -141,7 +144,8 @@ func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainde
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
-		operation.Extensions[attribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
+		// don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongly
+		operation.Extensions[attribute[1:]] = valueJSON
 
 		return nil
 	}
@@ -150,16 +154,18 @@ func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainde
 	return operation.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
 }
 
-// ParseDescriptionComment godoc
+// ParseDescriptionComment godoc.
 func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 	if operation.Description == "" {
 		operation.Description = lineRemainder
+
 		return
 	}
+
 	operation.Description += "\n" + lineRemainder
 }
 
-// ParseMetadata godoc
+// ParseMetadata godoc.
 func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemainder string) error {
 	// parsing specific meta data extensions
 	if strings.HasPrefix(lowerAttribute, "@x-") {
@@ -172,8 +178,10 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
-		operation.Extensions[attribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
+		// don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongly
+		operation.Extensions[attribute[1:]] = valueJSON
 	}
+
 	return nil
 }
 
@@ -182,12 +190,13 @@ var paramPattern = regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+
 // ParseParamComment parses params return []string of param properties
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
 //              [param name]    [paramType] [data type]  [is mandatory?]   [Comment]
-// E.g. @Param   some_id     path    int     true        "Some ID"
+// E.g. @Param   some_id     path    int     true        "Some ID".
 func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
 	matches := paramPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
 		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
 	}
+
 	name := matches[1]
 	paramType := matches[2]
 	refType := TransToValidSchemeType(matches[3])
@@ -221,10 +230,12 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if !IsPrimitiveType(refType) {
 				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
 			}
+
 			param.SimpleSchema.Type = objectType
 			if operation.parser != nil {
 				param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
 			}
+
 			param.SimpleSchema.Items = &spec.Items{
 				SimpleSchema: spec.SimpleSchema{
 					Type: refType,
@@ -235,24 +246,29 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if err != nil {
 				return err
 			}
+
 			if len(schema.Properties) == 0 {
 				return nil
 			}
+
 			find := func(arr []string, target string) bool {
 				for _, str := range arr {
 					if str == target {
 						return true
 					}
 				}
+
 				return false
 			}
 			items := schema.Properties.ToOrderedSchemaItems()
+
 			for _, item := range items {
 				name := item.Name
 				prop := item.Schema
 				if len(prop.Type) == 0 {
 					continue
 				}
+
 				if prop.Type[0] == ARRAY &&
 					prop.Items.Schema != nil &&
 					len(prop.Items.Schema.Type) > 0 &&
@@ -262,6 +278,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					if operation.parser != nil && operation.parser.collectionFormatInQuery != "" && param.CollectionFormat == "" {
 						param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
 					}
+
 					param.SimpleSchema.Items = &spec.Items{
 						SimpleSchema: spec.SimpleSchema{
 							Type: prop.Items.Schema.Type[0],
@@ -271,6 +288,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					param = createParameter(paramType, prop.Description, name, prop.Type[0], find(schema.Required, name))
 				} else {
 					Println(fmt.Sprintf("skip field [%s] in %s is not supported type for %s", name, refType, paramType))
+
 					continue
 				}
 				param.Nullable = prop.Nullable
@@ -292,6 +310,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				param.CommonValidations.Enum = prop.Enum
 				operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 			}
+
 			return nil
 		}
 	case "body":
@@ -299,6 +318,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		if err != nil {
 			return err
 		}
+
 		param.Schema = schema
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
@@ -307,7 +327,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	if err := operation.parseAndExtractionParamAttribute(commentLine, objectType, refType, &param); err != nil {
 		return err
 	}
+
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
+
 	return nil
 }
 
@@ -332,11 +354,13 @@ var regexAttributes = map[string]*regexp.Regexp{
 
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, objectType, schemaType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
+
 	for attrKey, re := range regexAttributes {
 		attr, err := findAttr(re, commentLine)
 		if err != nil {
 			continue
 		}
+
 		switch attrKey {
 		case "enums":
 			err := setEnumParam(attr, schemaType, param)
@@ -348,30 +372,35 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			if err != nil {
 				return err
 			}
+
 			param.Maximum = &n
 		case "minimum":
 			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
+
 			param.Minimum = &n
 		case "default":
 			value, err := defineType(schemaType, attr)
 			if err != nil {
 				return nil
 			}
+
 			param.Default = value
 		case "maxlength":
 			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
+
 			param.MaxLength = &n
 		case "minlength":
 			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
+
 			param.MinLength = &n
 		case "format":
 			param.Format = attr
@@ -380,9 +409,11 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			if err != nil {
 				return err
 			}
+
 			param.CollectionFormat = n
 		}
 	}
+
 	return nil
 }
 
@@ -393,6 +424,7 @@ func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	if l == -1 || r == -1 {
 		return "", fmt.Errorf("can not find regex=%s, comment=%s", re.String(), commentLine)
 	}
+
 	return strings.TrimSpace(attr[l+1 : r]), nil
 }
 
@@ -400,10 +432,12 @@ func setStringParam(name, schemaType, attr, commentLine string) (int64, error) {
 	if schemaType != STRING {
 		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
+
 	n, err := strconv.ParseInt(attr, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("%s is allow only a number got=%s", name, attr)
 	}
+
 	return n, nil
 }
 
@@ -411,10 +445,12 @@ func setNumberParam(name, schemaType, attr, commentLine string) (float64, error)
 	if schemaType != INTEGER && schemaType != NUMBER {
 		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
+
 	n, err := strconv.ParseFloat(attr, 64)
 	if err != nil {
 		return 0, fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
 	}
+
 	return n, nil
 }
 
@@ -426,8 +462,10 @@ func setEnumParam(attr, schemaType string, param *spec.Parameter) error {
 		if err != nil {
 			return err
 		}
+
 		param.Enum = append(param.Enum, value)
 	}
+
 	return nil
 }
 
@@ -435,10 +473,11 @@ func setCollectionFormatParam(name, schemaType, attr, commentLine string) (strin
 	if schemaType != ARRAY {
 		return "", fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
 	}
+
 	return TransToValidCollectionFormat(attr), nil
 }
 
-// defineType enum value define the type (object and array unsupported)
+// defineType enum value define the type (object and array unsupported).
 func defineType(schemaType string, value string) (interface{}, error) {
 	schemaType = TransToValidSchemeType(schemaType)
 	switch schemaType {
@@ -447,20 +486,23 @@ func defineType(schemaType string, value string) (interface{}, error) {
 	case NUMBER:
 		v, err := strconv.ParseFloat(value, 64)
 		if err != nil {
-			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
+			return nil, fmt.Errorf("enum value %s can't convert to %s err: %w", value, schemaType, err)
 		}
+
 		return v, nil
 	case INTEGER:
 		v, err := strconv.Atoi(value)
 		if err != nil {
-			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
+			return nil, fmt.Errorf("enum value %s can't convert to %s err: %w", value, schemaType, err)
 		}
+
 		return v, nil
 	case BOOLEAN:
 		v, err := strconv.ParseBool(value)
 		if err != nil {
-			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
+			return nil, fmt.Errorf("enum value %s can't convert to %s err: %w", value, schemaType, err)
 		}
+
 		return v, nil
 	default:
 		return nil, fmt.Errorf("%s is unsupported type in enum value", schemaType)
@@ -487,24 +529,29 @@ func (operation *Operation) ParseProduceComment(commentLine string) error {
 
 // parseMimeTypeList parses a list of MIME Types for a comment like
 // `produce` (`Content-Type:` response header) or
-// `accept` (`Accept:` request header)
+// `accept` (`Accept:` request header).
 func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) error {
 	mimeTypes := strings.Split(mimeTypeList, ",")
 	for _, typeName := range mimeTypes {
 		if mimeTypePattern.MatchString(typeName) {
 			*typeList = append(*typeList, typeName)
+
 			continue
 		}
+
 		if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
 			*typeList = append(*typeList, aliasMimeType)
+
 			continue
 		}
+
 		return fmt.Errorf(format, typeName)
 	}
+
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]*)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w\./\-{}+:]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
@@ -513,9 +560,9 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	if matches = routerPattern.FindStringSubmatch(commentLine); len(matches) != 3 {
 		return fmt.Errorf("can not parse router comment \"%s\"", commentLine)
 	}
+
 	path := matches[1]
 	httpMethod := matches[2]
-
 	operation.Path = path
 	operation.HTTPMethod = strings.ToUpper(httpMethod)
 
@@ -535,6 +582,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 			scope = strings.TrimSpace(scope)
 			s = append(s, scope)
 		}
+
 		securityKey := securitySource[0:l]
 		securityMap := map[string][]string{}
 		securityMap[securityKey] = append(securityMap[securityKey], s...)
@@ -545,11 +593,12 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 		securityMap[securityKey] = []string{}
 		operation.Security = append(operation.Security, securityMap)
 	}
+
 	return nil
 }
 
 // findTypeDef attempts to find the *ast.TypeSpec for a specific type given the
-// type's name and the package's import path
+// type's name and the package's import path.
 // TODO: improve finding external pkg
 func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	cwd, err := os.Getwd()
@@ -600,12 +649,13 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 			}
 		}
 	}
+
 	return nil, fmt.Errorf("type spec not found")
 }
 
 var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
-//ResponseType{data1=Type1,data2=Type2}
+// ResponseType{data1=Type1,data2=Type2}
 var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
@@ -614,6 +664,7 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 		return PrimitiveSchema(OBJECT), nil
 	case IsGolangPrimitiveType(refType):
 		refType = TransToValidSchemeType(refType)
+
 		return PrimitiveSchema(refType), nil
 	case IsPrimitiveType(refType):
 		return PrimitiveSchema(refType), nil
@@ -622,22 +673,27 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 		if err != nil {
 			return nil, err
 		}
+
 		return spec.ArrayProperty(schema), nil
 	case strings.HasPrefix(refType, "map["):
-		//ignore key type
+
+		// ignore key type
 		idx := strings.Index(refType, "]")
 		if idx < 0 {
 			return nil, fmt.Errorf("invalid type: %s", refType)
 		}
+
 		refType = refType[idx+1:]
+
 		if refType == "interface{}" {
 			return spec.MapProperty(nil), nil
-
 		}
+
 		schema, err := operation.parseObjectSchema(refType, astFile)
 		if err != nil {
 			return nil, err
 		}
+
 		return spec.MapProperty(schema), nil
 	case strings.Contains(refType, "{"):
 		return operation.parseCombinedObjectSchema(refType, astFile)
@@ -647,6 +703,7 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 			if err != nil {
 				return nil, err
 			}
+
 			return schema, nil
 		}
 
@@ -659,7 +716,9 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	if len(matches) != 3 {
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
+
 	refType = matches[1]
+
 	schema, err := operation.parseObjectSchema(refType, astFile)
 	if err != nil {
 		return nil, err
@@ -670,23 +729,26 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 		return strings.FieldsFunc(s, func(r rune) bool {
 			if r == '{' {
 				n++
+
 				return false
 			} else if r == '}' {
 				n--
+
 				return false
 			}
+
 			return r == ',' && n == 0
 		})
 	}
 
-	fields := parseFields(matches[2])
 	props := map[string]spec.Schema{}
-	for _, field := range fields {
+	for _, field := range parseFields(matches[2]) {
 		if matches := strings.SplitN(field, "=", 2); len(matches) == 2 {
 			schema, err := operation.parseObjectSchema(matches[1], astFile)
 			if err != nil {
 				return nil, err
 			}
+
 			props[matches[0]] = *schema
 		}
 	}
@@ -694,6 +756,7 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	if len(props) == 0 {
 		return schema, nil
 	}
+
 	return spec.ComposedSchema(*schema, spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type:       []string{OBJECT},
@@ -708,13 +771,16 @@ func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, ast
 		if !strings.HasPrefix(refType, "[]") {
 			return operation.parseObjectSchema(refType, astFile)
 		}
+
 		refType = refType[2:]
+
 		fallthrough
 	case ARRAY:
 		schema, err := operation.parseObjectSchema(refType, astFile)
 		if err != nil {
 			return nil, err
 		}
+
 		return spec.ArrayProperty(schema), nil
 	case PRIMITIVE:
 		return PrimitiveSchema(refType), nil
@@ -732,6 +798,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		if err != nil {
 			return operation.ParseEmptyResponseOnly(commentLine)
 		}
+
 		return err
 	}
 
@@ -748,13 +815,13 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 			operation.DefaultResponse().Schema = schema
 			operation.DefaultResponse().Description = responseDescription
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
-			resp := &spec.Response{
+			resp := spec.Response{
 				ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
 			}
 			if resp.Description == "" {
 				resp.Description = http.StatusText(code)
 			}
-			operation.AddResponse(code, resp)
+			operation.AddResponse(code, &resp)
 		} else {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
@@ -783,17 +850,21 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 			if operation.Responses.Default.Headers == nil {
 				operation.Responses.Default.Headers = make(map[string]spec.Header)
 			}
+
 			operation.Responses.Default.Headers[headerKey] = header
 		}
+
 		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
 			for code, response := range operation.Responses.StatusCodeResponses {
 				if response.Headers == nil {
 					response.Headers = make(map[string]spec.Header)
 				}
+
 				response.Headers[headerKey] = header
 				operation.Responses.StatusCodeResponses[code] = response
 			}
 		}
+
 		return nil
 	}
 
@@ -803,6 +874,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 				if operation.Responses.Default.Headers == nil {
 					operation.Responses.Default.Headers = make(map[string]spec.Header)
 				}
+
 				operation.Responses.Default.Headers[headerKey] = header
 			}
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
@@ -826,7 +898,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 
 var emptyResponsePattern = regexp.MustCompile(`([\w,]+)[\s]+"(.*)"`)
 
-// ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok"
+// ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok".
 func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
 	var matches []string
 
@@ -850,14 +922,14 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 	return nil
 }
 
-//ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200
+// ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200.
 func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 	for _, codeStr := range strings.Split(commentLine, ",") {
 		if strings.EqualFold(codeStr, "default") {
 			_ = operation.DefaultResponse()
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
 			var response spec.Response
-			//response.Description = http.StatusText(code)
+			// response.Description = http.StatusText(code)
 			operation.AddResponse(code, &response)
 		} else {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
@@ -867,15 +939,16 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 	return nil
 }
 
-//DefaultResponse return the default response member pointer
+// DefaultResponse return the default response member pointer.
 func (operation *Operation) DefaultResponse() *spec.Response {
 	if operation.Responses.Default == nil {
 		operation.Responses.Default = &spec.Response{}
 	}
+
 	return operation.Responses.Default
 }
 
-//AddResponse add a response for a code
+// AddResponse add a response for a code.
 func (operation *Operation) AddResponse(code int, response *spec.Response) {
 	if operation.Responses == nil {
 		operation.Responses = &spec.Responses{
@@ -884,10 +957,11 @@ func (operation *Operation) AddResponse(code int, response *spec.Response) {
 			},
 		}
 	}
+
 	operation.Responses.StatusCodeResponses[code] = *response
 }
 
-// createParameter returns swagger spec.Parameter for gived  paramType, description, paramName, schemaType, required
+// createParameter returns swagger spec.Parameter for gived  paramType, description, paramName, schemaType, required.
 func createParameter(paramType, description, paramName, schemaType string, required bool) spec.Parameter {
 	// //five possible parameter types. 	query, path, body, header, form
 	paramProps := spec.ParamProps{
@@ -896,6 +970,7 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 		Required:    required,
 		In:          paramType,
 	}
+
 	if paramType == "body" {
 		paramProps.Schema = &spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -905,14 +980,17 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 		parameter := spec.Parameter{
 			ParamProps: paramProps,
 		}
+
 		return parameter
 	}
+
 	parameter := spec.Parameter{
 		ParamProps: paramProps,
 		SimpleSchema: spec.SimpleSchema{
 			Type: schemaType,
 		},
 	}
+
 	return parameter
 }
 
@@ -936,10 +1014,12 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 			fullPath := filepath.Join(dirPath, fileName)
 			commentInfo, err := ioutil.ReadFile(fullPath)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
+				return nil, fmt.Errorf("failed to read code example file %s error: %w", fullPath, err)
 			}
+
 			return commentInfo, nil
 		}
 	}
-	return nil, fmt.Errorf("Unable to find code example file for tag %s in the given directory", summaryName)
+
+	return nil, fmt.Errorf("unable to find code example file for tag %s in the given directory", summaryName)
 }

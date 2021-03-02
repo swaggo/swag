@@ -1420,10 +1420,8 @@ func TestParseNonExportedJSONFields(t *testing.T) {
     }
 }`
 
-	searchDir := "testdata/non_exported_json_fields"
-	mainAPIFile := "main.go"
 	p := New()
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI("testdata/non_exported_json_fields", "main.go", defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
@@ -2568,7 +2566,9 @@ func Fun()  {
 
 	p := New()
 	p.packages.CollectAstFile("api", "api/api.go", f)
-	p.packages.ParseTypes()
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -2610,12 +2610,16 @@ func TestDefineTypeOfExample(t *testing.T) {
 	example, err = defineTypeOfExample("array", "string", "one,two,three")
 	assert.NoError(t, err)
 
-	var arr []string
-	for _, v := range example.([]interface{}) {
-		arr = append(arr, v.(string))
+	values, ok := example.([]interface{})
+	assert.True(t, ok)
+
+	arr := make([]string, len(values))
+	for idx, value := range values {
+		arr[idx] = value.(string)
 	}
 
-	assert.Equal(t, arr, []string{"one", "two", "three"})
+	expected := []string{"one", "two", "three"}
+	assert.Equal(t, arr, expected)
 
 	example, err = defineTypeOfExample("object", "", "key_one:one,key_two:two,key_three:three")
 	assert.Error(t, err)

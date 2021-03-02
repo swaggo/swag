@@ -14,13 +14,10 @@ import (
 func TestGen_Build(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "../testdata/simple"
-
 	config := Config{
-		SearchDir:          searchDir,
-		MainAPIFile:        "./main.go",
-		OutputDir:          "../testdata/simple/docs",
-		PropNamingStrategy: "",
+		SearchDir:   "../testdata/simple",
+		MainAPIFile: "./main.go",
+		OutputDir:   "../testdata/simple/docs",
 	}
 
 	assert.NoError(t, New().Build(&config))
@@ -42,9 +39,8 @@ func TestGen_Build(t *testing.T) {
 func TestGen_BuildSnakecase(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "../testdata/simple2"
 	config := Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../testdata/simple2",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple2/docs",
 		PropNamingStrategy: "snakecase",
@@ -69,12 +65,10 @@ func TestGen_BuildSnakecase(t *testing.T) {
 func TestGen_BuildLowerCamelcase(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "../testdata/simple3"
 	config := Config{
-		SearchDir:          searchDir,
-		MainAPIFile:        "./main.go",
-		OutputDir:          "../testdata/simple3/docs",
-		PropNamingStrategy: "",
+		SearchDir:   "../testdata/simple3",
+		MainAPIFile: "./main.go",
+		OutputDir:   "../testdata/simple3/docs",
 	}
 
 	assert.NoError(t, New().Build(&config))
@@ -96,14 +90,12 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 func TestGen_jsonIndent(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "../testdata/simple"
-
 	config := Config{
-		SearchDir:          searchDir,
-		MainAPIFile:        "./main.go",
-		OutputDir:          "../testdata/simple/docs",
-		PropNamingStrategy: "",
+		SearchDir:   "../testdata/simple",
+		MainAPIFile: "./main.go",
+		OutputDir:   "../testdata/simple/docs",
 	}
+
 	gen := New()
 	gen.jsonIndent = func(data interface{}) ([]byte, error) {
 		return nil, errors.New("fail")
@@ -112,14 +104,12 @@ func TestGen_jsonIndent(t *testing.T) {
 }
 
 func TestGen_jsonToYAML(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	config := Config{
-		SearchDir:          searchDir,
-		MainAPIFile:        "./main.go",
-		OutputDir:          "../testdata/simple/docs",
-		PropNamingStrategy: "",
+		SearchDir:   "../testdata/simple",
+		MainAPIFile: "./main.go",
+		OutputDir:   "../testdata/simple/docs",
 	}
+
 	gen := New()
 	gen.jsonToYAML = func(data []byte) ([]byte, error) {
 		return nil, errors.New("fail")
@@ -142,55 +132,39 @@ func TestGen_jsonToYAML(t *testing.T) {
 func TestGen_SearchDirIsNotExist(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "../isNotExistDir"
-
-	var swaggerConfDir, propNamingStrategy string
 	config := Config{
-		SearchDir:          searchDir,
-		MainAPIFile:        "./main.go",
-		OutputDir:          swaggerConfDir,
-		PropNamingStrategy: propNamingStrategy,
+		SearchDir:   "../isNotExistDir",
+		MainAPIFile: "./main.go",
 	}
 
 	assert.EqualError(t, New().Build(&config), "dir: ../isNotExistDir is not exist")
 }
 
 func TestGen_MainAPiNotExist(t *testing.T) {
-	searchDir := "../testdata/simple"
-
-	var swaggerConfDir, propNamingStrategy string
 	config := Config{
-		SearchDir:          searchDir,
-		MainAPIFile:        "./notexists.go",
-		OutputDir:          swaggerConfDir,
-		PropNamingStrategy: propNamingStrategy,
+		SearchDir:   "../testdata/simple",
+		MainAPIFile: "./notexists.go",
 	}
 
 	assert.Error(t, New().Build(&config))
 }
 
 func TestGen_OutputIsNotExist(t *testing.T) {
-	searchDir := "../testdata/simple"
-
-	var propNamingStrategy string
 	config := Config{
-		SearchDir:          searchDir,
-		MainAPIFile:        "./main.go",
-		OutputDir:          "/dev/null",
-		PropNamingStrategy: propNamingStrategy,
+		SearchDir:   "../testdata/simple",
+		MainAPIFile: "./main.go",
+		OutputDir:   "/dev/null",
 	}
 
 	assert.Error(t, New().Build(&config))
 }
 
 func TestGen_FailToWrite(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	outputDir := filepath.Join(os.TempDir(), "swagg", "test")
 
 	var propNamingStrategy string
 	config := Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../testdata/simple",
 		MainAPIFile:        "./main.go",
 		OutputDir:          outputDir,
 		PropNamingStrategy: propNamingStrategy,
@@ -215,16 +189,14 @@ func TestGen_FailToWrite(t *testing.T) {
 }
 
 func TestGen_configWithOutputDir(t *testing.T) {
-	searchDir := "../testdata/simple"
-
-	config := &Config{
-		SearchDir:          searchDir,
+	config := Config{
+		SearchDir:          "../testdata/simple",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
 		PropNamingStrategy: "",
 	}
 
-	assert.NoError(t, New().Build(config))
+	assert.NoError(t, New().Build(&config))
 
 	expectedFiles := []string{
 		filepath.Join(config.OutputDir, "docs.go"),
@@ -323,10 +295,8 @@ func TestGen_writeGoDoc(t *testing.T) {
 }
 
 func TestGen_GeneratedDoc(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	config := Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../testdata/simple",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
 		PropNamingStrategy: "",
@@ -358,10 +328,8 @@ func TestGen_GeneratedDoc(t *testing.T) {
 func TestGen_cgoImports(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "../testdata/simple_cgo"
-
 	config := Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../testdata/simple_cgo",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple_cgo/docs",
 		PropNamingStrategy: "",
