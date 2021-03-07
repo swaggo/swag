@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
-	goparser "go/parser"
+	"go/parser"
 	"go/token"
 	"io/ioutil"
 	"net/http"
@@ -686,7 +686,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	}
 
 	conf := loader.Config{
-		ParserMode: goparser.SpuriousErrors,
+		ParserMode: parser.SpuriousErrors,
 		Cwd:        cwd,
 	}
 
