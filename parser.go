@@ -338,35 +338,38 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 			case "@securitydefinitions.basic":
 				securityMap[value] = spec.BasicAuth()
 			case "@securitydefinitions.apikey":
-				attrMap, _, err := extractSecurityAttribute(attribute, []string{"@in", "@name"}, comments[i+1:])
+				attrMap, _, _, err := extractSecurityAttribute(attribute, []string{"@in", "@name"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
 				securityMap[value] = spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
 			case "@securitydefinitions.oauth2.application":
-				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
+				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
-				securityMap[value] = securitySchemeOAuth2Application(attrMap["@tokenurl"], scopes)
+				securityMap[value] = securitySchemeOAuth2Application(attrMap["@tokenurl"], scopes, extensions)
 			case "@securitydefinitions.oauth2.implicit":
-				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@authorizationurl"}, comments[i+1:])
+				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@authorizationurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
-				securityMap[value] = securitySchemeOAuth2Implicit(attrMap["@authorizationurl"], scopes)
+				securityMap[value] = securitySchemeOAuth2Implicit(attrMap["@authorizationurl"], scopes, extensions)
 			case "@securitydefinitions.oauth2.password":
-				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
+				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
-				securityMap[value] = securitySchemeOAuth2Password(attrMap["@tokenurl"], scopes)
+				securityMap[value] = securitySchemeOAuth2Password(attrMap["@tokenurl"], scopes, extensions)
 			case "@securitydefinitions.oauth2.accesscode":
-				attrMap, scopes, err := extractSecurityAttribute(attribute, []string{"@tokenurl", "@authorizationurl"}, comments[i+1:])
+				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl", "@authorizationurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
-				securityMap[value] = securitySchemeOAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"], scopes)
+				securityMap[value] = securitySchemeOAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"], scopes, extensions)
+			case "@x-tokenname":
+				// ignore this
+				break
 			case "@query.collection.format":
 				parser.collectionFormatInQuery = value
 			default:
@@ -407,16 +410,17 @@ func isGeneralAPIComment(comment *ast.CommentGroup) bool {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
 		// The @summary, @router, @success,@failure  annotation belongs to Operation
-		case "@summary", "@router", "@success", "@failure":
+		case "@summary", "@router", "@success", "@failure", "@response":
 			return false
 		}
 	}
 	return true
 }
 
-func extractSecurityAttribute(context string, search []string, lines []string) (map[string]string, map[string]string, error) {
+func extractSecurityAttribute(context string, search []string, lines []string) (map[string]string, map[string]string, map[string]interface{}, error) {
 	attrMap := map[string]string{}
 	scopes := map[string]string{}
+	extensions := map[string]interface{}{}
 	for _, v := range lines {
 		securityAttr := strings.ToLower(strings.Split(v, " ")[0])
 		for _, findterm := range search {
@@ -427,14 +431,17 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 		}
 		isExists, err := isExistsScope(securityAttr)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		if isExists {
 			scopScheme, err := getScopeScheme(securityAttr)
 			if err != nil {
-				return nil, nil, err
+				return nil, nil, nil, err
 			}
 			scopes[scopScheme] = v[len(securityAttr):]
+		}
+		if securityAttr == "@x-tokenname" {
+			extensions["x-tokenName"] = strings.TrimSpace(v[len(securityAttr):])
 		}
 		// next securityDefinitions
 		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
@@ -442,41 +449,56 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 		}
 	}
 	if len(attrMap) != len(search) {
-		return nil, nil, fmt.Errorf("%s is %v required", context, search)
+		return nil, nil, nil, fmt.Errorf("%s is %v required", context, search)
 	}
-	return attrMap, scopes, nil
+	return attrMap, scopes, extensions, nil
 }
 
-func securitySchemeOAuth2Application(tokenurl string, scopes map[string]string) *spec.SecurityScheme {
+func securitySchemeOAuth2Application(tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Application(tokenurl)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
 	return securityScheme
 }
 
-func securitySchemeOAuth2Implicit(authorizationurl string, scopes map[string]string) *spec.SecurityScheme {
+func securitySchemeOAuth2Implicit(authorizationurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Implicit(authorizationurl)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
 	return securityScheme
 }
 
-func securitySchemeOAuth2Password(tokenurl string, scopes map[string]string) *spec.SecurityScheme {
+func securitySchemeOAuth2Password(tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Password(tokenurl)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
 	return securityScheme
 }
 
-func securitySchemeOAuth2AccessToken(authorizationurl, tokenurl string, scopes map[string]string) *spec.SecurityScheme {
+func securitySchemeOAuth2AccessToken(authorizationurl, tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2AccessToken(authorizationurl, tokenurl)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
 	return securityScheme
+}
+
+func handleSecuritySchemaExtensions(providedExtensions map[string]interface{}) spec.Extensions {
+	var extensions spec.Extensions
+	if len(providedExtensions) > 0 {
+		extensions = make(map[string]interface{}, len(providedExtensions))
+		for key, value := range providedExtensions {
+			extensions[key] = value
+		}
+	}
+	return extensions
 }
 
 func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
@@ -992,7 +1014,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		//    name:       field.Names[0].Name,
 		schemaType: types[0],
 	}
-	if len(types) > 1 && types[0] == "array" {
+	if len(types) > 1 && (types[0] == "array" || types[0] == "object") {
 		structField.arrayType = types[1]
 	}
 
@@ -1263,6 +1285,27 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 			result = append(result, v)
 		}
 		return result, nil
+	case OBJECT:
+		if arrayType == "" {
+			return nil, fmt.Errorf("%s is unsupported type in example value", schemaType)
+		}
+
+		values := strings.Split(exampleValue, ",")
+		result := map[string]interface{}{}
+		for _, value := range values {
+			mapData := strings.Split(value, ":")
+
+			if len(mapData) == 2 {
+				v, err := defineTypeOfExample(arrayType, "", mapData[1])
+				if err != nil {
+					return nil, err
+				}
+				result[mapData[0]] = v
+			} else {
+				return nil, fmt.Errorf("example value %s should format: key:value", exampleValue)
+			}
+		}
+		return result, nil
 	default:
 		return nil, fmt.Errorf("%s is unsupported type in example value", schemaType)
 	}
@@ -1350,49 +1393,34 @@ func (parser *Parser) checkOperationIDUniqueness() error {
 		operationsIds[operationID] = currentPath
 		return nil
 	}
-
-	for path, itm := range parser.swagger.Paths.Paths {
+	getOperationID := func(itm spec.PathItem) (string, string) {
 		if itm.Get != nil {
-			currentPath := fmt.Sprintf("%s %s", "GET", path)
-			if err := saveOperationID(itm.Get.ID, currentPath); err != nil {
-				return err
-			}
+			return "GET", itm.Get.ID
 		}
 		if itm.Put != nil {
-			currentPath := fmt.Sprintf("%s %s", "PUT", path)
-			if err := saveOperationID(itm.Put.ID, currentPath); err != nil {
-				return err
-			}
+			return "PUT", itm.Put.ID
 		}
 		if itm.Post != nil {
-			currentPath := fmt.Sprintf("%s %s", "POST", path)
-			if err := saveOperationID(itm.Post.ID, currentPath); err != nil {
-				return err
-			}
+			return "POST", itm.Post.ID
 		}
 		if itm.Delete != nil {
-			currentPath := fmt.Sprintf("%s %s", "DELETE", path)
-			if err := saveOperationID(itm.Delete.ID, currentPath); err != nil {
-				return err
-			}
+			return "DELETE", itm.Delete.ID
 		}
 		if itm.Options != nil {
-			currentPath := fmt.Sprintf("%s %s", "OPTIONS", path)
-			if err := saveOperationID(itm.Options.ID, currentPath); err != nil {
-				return err
-			}
+			return "OPTIONS", itm.Options.ID
 		}
 		if itm.Head != nil {
-			currentPath := fmt.Sprintf("%s %s", "HEAD", path)
-			if err := saveOperationID(itm.Head.ID, currentPath); err != nil {
-				return err
-			}
+			return "HEAD", itm.Head.ID
 		}
 		if itm.Patch != nil {
-			currentPath := fmt.Sprintf("%s %s", "PATCH", path)
-			if err := saveOperationID(itm.Patch.ID, currentPath); err != nil {
-				return err
-			}
+			return "PATCH", itm.Patch.ID
+		}
+		return "", ""
+	}
+	for path, itm := range parser.swagger.Paths.Paths {
+		method, id := getOperationID(itm)
+		if err := saveOperationID(id, fmt.Sprintf("%s %s", method, path)); err != nil {
+			return err
 		}
 	}
 	return nil

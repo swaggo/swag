@@ -65,7 +65,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": " Grants read and write access to administrative information"
-            }
+            },
+            "x-tokenName": "id_token"
         },
         "OAuth2Application": {
             "type": "oauth2",
@@ -1554,6 +1555,15 @@ func TestParseDuplicated(t *testing.T) {
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
+func TestParseDuplicatedOtherMethods(t *testing.T) {
+	searchDir := "testdata/duplicated2"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Errorf(t, err, "duplicated @id declarations successfully found")
+}
+
 func TestParseConflictSchemaName(t *testing.T) {
 	searchDir := "testdata/conflict_name"
 	mainAPIFile := "main.go"
@@ -1575,9 +1585,9 @@ type Response struct {
 	Code int
 	Table [][]string
 	Data []struct{
-		Field1 uint 
-		Field2 string 
-	} 
+		Field1 uint
+		Field2 string
+	}
 }
 
 // @Success 200 {object} Response
@@ -1652,7 +1662,7 @@ func Test(){
 package rest
 
 type ResponseWrapper struct {
-	Status   string      
+	Status   string
 	Code     int
 	Messages []string
 	Result   interface{}
@@ -2274,7 +2284,9 @@ func Fun()  {
                     }
                 ],
                 "responses": {
-                    "200": {}
+                    "200": {
+                        "description": ""
+                    }
                 }
             }
         }
@@ -2382,7 +2394,9 @@ func TestParseJSONFieldString(t *testing.T) {
                             "$ref": "#/definitions/main.MyStruct"
                         }
                     },
-                    "500": {}
+                    "500": {
+                        "description": ""
+                    }
                 }
             }
         }
@@ -2475,4 +2489,61 @@ func Fun()  {
 	childName, ok := teacher.Properties["childName"]
 	assert.False(t, ok)
 	assert.Empty(t, childName)
+}
+
+func TestDefineTypeOfExample(t *testing.T) {
+	var example interface{}
+	var err error
+
+	example, err = defineTypeOfExample("string", "", "example")
+	assert.NoError(t, err)
+	assert.Equal(t, example.(string), "example")
+
+	example, err = defineTypeOfExample("number", "", "12.34")
+	assert.NoError(t, err)
+	assert.Equal(t, example.(float64), 12.34)
+
+	example, err = defineTypeOfExample("boolean", "", "true")
+	assert.NoError(t, err)
+	assert.Equal(t, example.(bool), true)
+
+	example, err = defineTypeOfExample("array", "", "one,two,three")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+
+	example, err = defineTypeOfExample("array", "string", "one,two,three")
+	assert.NoError(t, err)
+	arr := []string{}
+
+	for _, v := range example.([]interface{}) {
+		arr = append(arr, v.(string))
+	}
+
+	assert.Equal(t, arr, []string{"one", "two", "three"})
+
+	example, err = defineTypeOfExample("object", "", "key_one:one,key_two:two,key_three:three")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+
+	example, err = defineTypeOfExample("object", "string", "key_one,key_two,key_three")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+
+	example, err = defineTypeOfExample("object", "oops", "key_one:one,key_two:two,key_three:three")
+	assert.Error(t, err)
+	assert.Nil(t, example)
+
+	example, err = defineTypeOfExample("object", "string", "key_one:one,key_two:two,key_three:three")
+	assert.NoError(t, err)
+	obj := map[string]string{}
+
+	for k, v := range example.(map[string]interface{}) {
+		obj[k] = v.(string)
+	}
+
+	assert.Equal(t, obj, map[string]string{"key_one": "one", "key_two": "two", "key_three": "three"})
+
+	example, err = defineTypeOfExample("oops", "", "")
+	assert.Error(t, err)
+	assert.Nil(t, example)
 }

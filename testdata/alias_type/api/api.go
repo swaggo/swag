@@ -1,10 +1,11 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/testdata/alias_type/data"
 	"log"
+	"net/http"
 	"time"
+
+	"github.com/swaggo/swag/testdata/alias_type/data"
 )
 
 /*// @Summary Get time as string
@@ -14,7 +15,7 @@ import (
 // @Produce  json
 // @Success 200 {object} data.StringAlias	"ok"
 // @Router /testapi/time-as-string [get]
-func GetTimeAsStringAlias(c *gin.Context) {
+func GetTimeAsStringAlias(w http.ResponseWriter, r *http.Request) {
 	var foo data.StringAlias = "test"
 	log.Println(foo)
 	//write your code
@@ -27,7 +28,7 @@ func GetTimeAsStringAlias(c *gin.Context) {
 // @Produce  json
 // @Success 200 {object} data.DateOnly	"ok"
 // @Router /testapi/time-as-time [get]
-func GetTimeAsTimeAlias(c *gin.Context) {
+func GetTimeAsTimeAlias(w http.ResponseWriter, r *http.Request) {
 	var foo = data.DateOnly(time.Now())
 	log.Println(foo)
 	//write your code
@@ -40,7 +41,7 @@ func GetTimeAsTimeAlias(c *gin.Context) {
 // @Produce  json
 // @Success 200 {object} data.TimeContainer	"ok"
 // @Router /testapi/time-as-time-container [get]
-func GetTimeAsTimeContainer(c *gin.Context) {
+func GetTimeAsTimeContainer(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	var foo = data.TimeContainer{
 		Name:      "test",

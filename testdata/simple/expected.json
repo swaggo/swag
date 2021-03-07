@@ -567,6 +567,16 @@
             "ill"
           ]
         },
+        "string_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "key1": "value",
+            "key2": "value2"
+          }
+        },
         "tags": {
           "type": "array",
           "items": {

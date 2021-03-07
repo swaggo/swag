@@ -1,8 +1,6 @@
 package api
 
-import (
-	"github.com/gin-gonic/gin"
-)
+import "net/http"
 
 // @Summary Add a new pet to the store
 // @Description get string by ID
@@ -13,6 +11,6 @@ import (
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /posts/{post_id} [get]
-func GetPost(c *gin.Context) {
+func GetPost(w http.ResponseWriter, r *http.Request) {
 	//write your code
 }

@@ -245,9 +245,9 @@ import (
 // @Param id path int true "Account ID"
 // @Success 200 {object} model.Account
 // @Header 200 {string} Token "qwerty"
-// @Failure 400 {object} httputil.HTTPError
-// @Failure 404 {object} httputil.HTTPError
+// @Failure 400,404 {object} httputil.HTTPError
 // @Failure 500 {object} httputil.HTTPError
+// @Failure default {object} httputil.DefaultError
 // @Router /accounts/{id} [get]
 func (c *Controller) ShowAccount(ctx *gin.Context) {
 	id := ctx.Param("id")
@@ -272,9 +272,9 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 // @Param q query string false "name search by q"
 // @Success 200 {array} model.Account
 // @Header 200 {string} Token "qwerty"
-// @Failure 400 {object} httputil.HTTPError
-// @Failure 404 {object} httputil.HTTPError
+// @Failure 400,404 {object} httputil.HTTPError
 // @Failure 500 {object} httputil.HTTPError
+// @Failure default {object} httputil.DefaultError
 // @Router /accounts [get]
 func (c *Controller) ListAccounts(ctx *gin.Context) {
 	q := ctx.Request.URL.Query().Get("q")
@@ -375,8 +375,9 @@ When a short string in your documentation is insufficient, or you need images, c
 | produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     |
 | param       | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)` |
 | security    | [Security](#security) to each API operation.                                                                               |
-| success     | Success response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                              |
-| failure     | Failure response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                              |
+| success     | Success response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                   |
+| failure     | Failure response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                    |
+| response    | As same as `success` and `failure` |
 | header      | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                            |
 | router      | Path definition that separated by spaces. `path`,`[httpMethod]`                                                            |
 | x-name      | The extension key, must be start by x- and take only json value.                                                           |
@@ -560,8 +561,11 @@ type DeepObject struct { //in `proto` package
 
 ```go
 // @Success 200 {string} string	"ok"
+// @failure 400 {string} string	"error"
+// @response default {string} string	"other error"
 // @Header 200 {string} Location "/entity/1"
-// @Header 200 {string} Token "qwerty"
+// @Header 200,400,default {string} Token "token"
+// @Header all {string} Token2 "token2"
 ```
 
 ### Use multiple path params
