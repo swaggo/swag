@@ -215,12 +215,13 @@ func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) er
 }
 
 func getPkgName(searchDir string) (string, error) {
+	stdout := strings.Builder{}
+	stderr := strings.Builder{}
 	cmd := exec.Command("go", "list", "-f={{.ImportPath}}")
+
 	cmd.Dir = searchDir
-	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("execute go list command, %w, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
 	}
@@ -230,7 +231,9 @@ func getPkgName(searchDir string) (string, error) {
 	if outStr[0] == '_' { // will shown like _/{GOPATH}/src/{YOUR_PACKAGE} when NOT enable GO MODULE.
 		outStr = strings.TrimPrefix(outStr, "_"+build.Default.GOPATH+"/src/")
 	}
+
 	f := strings.Split(outStr, "\n")
+
 	outStr = f[0]
 
 	return outStr, nil
@@ -273,55 +276,55 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 			}
 
 			switch attribute {
-			case "@version":
+			case versionAttribute:
 				parser.swagger.Info.Version = value
-			case "@title":
+			case titleAttribute:
 				parser.swagger.Info.Title = value
-			case "@description":
+			case descriptionAttribute:
 				if multilineBlock {
 					parser.swagger.Info.Description += "\n" + value
 					continue
 				}
 
 				parser.swagger.Info.Description = value
-			case "@description.markdown":
+			case descriptionMarkdownAttribute:
 				commentInfo, err := getMarkdownForTag("api", parser.markdownFileDir)
 				if err != nil {
 					return err
 				}
 
 				parser.swagger.Info.Description = string(commentInfo)
-			case "@termsofservice":
+			case termsOfServiceAttribute:
 				parser.swagger.Info.TermsOfService = value
-			case "@contact.name":
+			case contactNameAttribute:
 				parser.swagger.Info.Contact.Name = value
-			case "@contact.email":
+			case contactEmailAttribute:
 				parser.swagger.Info.Contact.Email = value
-			case "@contact.url":
+			case contactURLAttribute:
 				parser.swagger.Info.Contact.URL = value
-			case "@license.name":
+			case licenseNameAttribute:
 				parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
 				parser.swagger.Info.License.Name = value
-			case "@license.url":
+			case licenseURLAttribute:
 				parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
 				parser.swagger.Info.License.URL = value
-			case "@host":
+			case hostAttribute:
 				parser.swagger.Host = value
-			case "@basepath":
+			case basePathAttribute:
 				parser.swagger.BasePath = value
-			case "@schemes":
+			case schemesAttribute:
 				parser.swagger.Schemes = getSchemes(commentLine)
-			case "@tag.name":
+			case tagNameAttribute:
 				parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
 					TagProps: spec.TagProps{
 						Name: value,
 					},
 				})
-			case "@tag.description":
+			case tagDescriptionAttribute:
 				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 				tag.TagProps.Description = value
 				replaceLastTag(parser.swagger.Tags, tag)
-			case "@tag.description.markdown":
+			case tagDescriptionMarkdownAttribute:
 				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 				commentInfo, err := getMarkdownForTag(tag.TagProps.Name, parser.markdownFileDir)
 				if err != nil {
@@ -330,14 +333,14 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 
 				tag.TagProps.Description = string(commentInfo)
 				replaceLastTag(parser.swagger.Tags, tag)
-			case "@tag.docs.url":
+			case tagDocsURLAttribute:
 				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 				tag.TagProps.ExternalDocs = &spec.ExternalDocumentation{
 					URL: value,
 				}
 
 				replaceLastTag(parser.swagger.Tags, tag)
-			case "@tag.docs.description":
+			case tagDocsDescriptionAttribute:
 				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 				if tag.TagProps.ExternalDocs == nil {
 					return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
@@ -345,36 +348,36 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 
 				tag.TagProps.ExternalDocs.Description = value
 				replaceLastTag(parser.swagger.Tags, tag)
-			case "@securitydefinitions.basic":
+			case securityDefinitionsBasicAttribute:
 				securityMap[value] = spec.BasicAuth()
-			case "@securitydefinitions.apikey":
+			case securityDefinitionsAPIKeyAttribute:
 				attrMap, _, _, err := extractSecurityAttribute(attribute, []string{"@in", "@name"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
 
 				securityMap[value] = spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
-			case "@securitydefinitions.oauth2.application":
+			case securityDefinitionsOAuth2ApplicationAttribute:
 				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
 
 				securityMap[value] = securitySchemeOAuth2Application(attrMap["@tokenurl"], scopes, extensions)
-			case "@securitydefinitions.oauth2.implicit":
+			case securityDefinitionsOAuth2ImplicitAttribute:
 				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@authorizationurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
 
 				securityMap[value] = securitySchemeOAuth2Implicit(attrMap["@authorizationurl"], scopes, extensions)
-			case "@securitydefinitions.oauth2.password":
+			case securityDefinitionsOAuth2PasswordAttribute:
 				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
 				if err != nil {
 					return err
 				}
 				securityMap[value] = securitySchemeOAuth2Password(attrMap["@tokenurl"], scopes, extensions)
-			case "@securitydefinitions.oauth2.accesscode":
+			case securityDefinitionsOAuth2AccessCodeAttribute:
 				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl", "@authorizationurl"}, comments[i+1:])
 				if err != nil {
 					return err
@@ -387,9 +390,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 			case "@query.collection.format":
 				parser.collectionFormatInQuery = value
 			default:
-				prefixExtension := "@x-"
 				if len(attribute) > 5 { // Prefix extension + 1 char + 1 space  + 1 char
-					if attribute[:len(prefixExtension)] == prefixExtension {
+					if attribute[:len(customAttribute)] == customAttribute {
 						var valueJSON interface{}
 
 						split := strings.SplitAfter(commentLine, attribute+" ")
@@ -398,7 +400,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 							return fmt.Errorf("annotation %s need a value", attribute)
 						}
 
-						extensionName := "x-" + strings.SplitAfter(attribute, prefixExtension)[1]
+						extensionName := "x-" + strings.SplitAfter(attribute, customAttribute)[1]
 
 						if err := json.Unmarshal([]byte(split[1]), &valueJSON); err != nil {
 							return fmt.Errorf("annotation %s need a valid json value", attribute)
@@ -429,7 +431,7 @@ func isGeneralAPIComment(comment *ast.CommentGroup) bool {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
 		// The @summary, @router, @success,@failure  annotation belongs to Operation
-		case "@summary", "@router", "@success", "@failure", "@response":
+		case summaryAttribute, routerAttribute, successAttribute, failureAttribute, responseAttribute:
 			return false
 		}
 	}
@@ -470,8 +472,8 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 			extensions["x-tokenName"] = strings.TrimSpace(v[len(securityAttr):])
 		}
 
-		// next securityDefinitions
-		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+		// next securityDefinitionsAttribute
+		if strings.Index(securityAttr, securityDefinitionsAttribute+".") == 0 {
 			break
 		}
 	}
@@ -486,6 +488,7 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 func securitySchemeOAuth2Application(tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Application(tokenurl)
 	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
@@ -496,6 +499,7 @@ func securitySchemeOAuth2Application(tokenurl string, scopes map[string]string, 
 func securitySchemeOAuth2Implicit(authorizationurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Implicit(authorizationurl)
 	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
@@ -506,6 +510,7 @@ func securitySchemeOAuth2Implicit(authorizationurl string, scopes map[string]str
 func securitySchemeOAuth2Password(tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Password(tokenurl)
 	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
@@ -516,6 +521,7 @@ func securitySchemeOAuth2Password(tokenurl string, scopes map[string]string, ext
 func securitySchemeOAuth2AccessToken(authorizationurl, tokenurl string, scopes map[string]string, extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2AccessToken(authorizationurl, tokenurl)
 	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
@@ -554,6 +560,7 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 
 		if strings.Contains(fileName, tagName) {
 			fullPath := filepath.Join(dirPath, fileName)
+
 			commentInfo, err := ioutil.ReadFile(fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read markdown file %s error: %w", fullPath, err)
@@ -591,6 +598,7 @@ func isExistsScope(scope string) (bool, error) {
 // getSchemes parses swagger schemes for given commentLine.
 func getSchemes(commentLine string) []string {
 	attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+
 	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
@@ -603,8 +611,9 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 				// for per 'function' comment, create a new 'Operation' object
 				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
 				for _, comment := range astDeclaration.Doc.List {
-					if err := operation.ParseComment(comment.Text, astFile); err != nil {
-						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+					err := operation.ParseComment(comment.Text, astFile)
+					if err != nil {
+						return fmt.Errorf("ParseComment error in file %s :%w", fileName, err)
 					}
 				}
 
@@ -1046,18 +1055,20 @@ func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.
 	if field.Tag != nil {
 		// `json:"tag"` -> json:"tag"
 		structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
-		if ignoreTag := structTag.Get("swaggerignore"); strings.EqualFold(ignoreTag, "true") {
+
+		if ignoreTag := structTag.Get(swaggerIgnoreStructTag); strings.EqualFold(ignoreTag, "true") {
 			return "", nil, nil
 		}
 
-		name = structTag.Get("json")
+		name = structTag.Get(jsonStructTag)
 		// json:"tag,hoge"
 		if name = strings.TrimSpace(strings.Split(name, ",")[0]); name == "-" {
 			return "", nil, nil
 		}
 
-		if typeTag := structTag.Get("swaggertype"); typeTag != "" {
+		if typeTag := structTag.Get(swaggerTypeStructTag); typeTag != "" {
 			parts := strings.Split(typeTag, ",")
+
 			schema, err = BuildCustomSchema(parts)
 			if err != nil {
 				return "", nil, err
@@ -1087,7 +1098,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		schemaType: types[0],
 	}
 
-	if len(types) > 1 && (types[0] == "array" || types[0] == "object") {
+	if len(types) > 1 && (types[0] == ARRAY || types[0] == OBJECT) {
 		structField.arrayType = types[1]
 	}
 
@@ -1106,11 +1117,11 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 	// `json:"tag"` -> json:"tag"
 	structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
 
-	jsonTag := structTag.Get("json")
+	jsonTag := structTag.Get(jsonStructTag)
 	// json:"name,string" or json:",string"
 	hasStringTag := strings.Contains(jsonTag, ",string")
 
-	if exampleTag := structTag.Get("example"); exampleTag != "" {
+	if exampleTag := structTag.Get(exampleStructTag); exampleTag != "" {
 		if hasStringTag {
 			// then the example must be in string format
 			structField.exampleValue = exampleTag
@@ -1119,17 +1130,18 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 			if err != nil {
 				return nil, err
 			}
+
 			structField.exampleValue = example
 		}
 	}
 
-	if formatTag := structTag.Get("format"); formatTag != "" {
+	if formatTag := structTag.Get(formatStructTag); formatTag != "" {
 		structField.formatType = formatTag
 	}
 
-	if bindingTag := structTag.Get("binding"); bindingTag != "" {
+	if bindingTag := structTag.Get(bindingStructTag); bindingTag != "" {
 		for _, val := range strings.Split(bindingTag, ",") {
-			if val == "required" {
+			if val == requiredParam {
 				structField.isRequired = true
 
 				break
@@ -1137,9 +1149,9 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		}
 	}
 
-	if validateTag := structTag.Get("validate"); validateTag != "" {
+	if validateTag := structTag.Get(validateParam); validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
-			if val == "required" {
+			if val == requiredParam {
 				structField.isRequired = true
 
 				break
@@ -1147,7 +1159,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		}
 	}
 
-	if extensionsTag := structTag.Get("extensions"); extensionsTag != "" {
+	if extensionsTag := structTag.Get(extensionsStructTag); extensionsTag != "" {
 		structField.extensions = map[string]interface{}{}
 		for _, val := range strings.Split(extensionsTag, ",") {
 			parts := strings.SplitN(val, "=", 2)
@@ -1159,7 +1171,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		}
 	}
 
-	if enumsTag := structTag.Get("enums"); enumsTag != "" {
+	if enumsTag := structTag.Get(enumsParam); enumsTag != "" {
 		enumType := structField.schemaType
 		if structField.schemaType == ARRAY {
 			enumType = structField.arrayType
@@ -1175,7 +1187,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		}
 	}
 
-	if defaultTag := structTag.Get("default"); defaultTag != "" {
+	if defaultTag := structTag.Get(defaultParam); defaultTag != "" {
 		value, err := defineType(structField.schemaType, defaultTag)
 		if err != nil {
 			return nil, err
@@ -1185,14 +1197,14 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 	}
 
 	if IsNumericType(structField.schemaType) || IsNumericType(structField.arrayType) {
-		maximum, err := getFloatTag(structTag, "maximum")
+		maximum, err := getFloatTag(structTag, maximumStructTag)
 		if err != nil {
 			return nil, err
 		}
 
 		structField.maximum = maximum
 
-		minimum, err := getFloatTag(structTag, "minimum")
+		minimum, err := getFloatTag(structTag, minimumStructTag)
 		if err != nil {
 			return nil, err
 		}
@@ -1201,14 +1213,14 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 	}
 
 	if structField.schemaType == STRING || structField.arrayType == STRING {
-		maxLength, err := getIntTag(structTag, "maxLength")
+		maxLength, err := getIntTag(structTag, maxLengthStructTag)
 		if err != nil {
 			return nil, err
 		}
 
 		structField.maxLength = maxLength
 
-		minLength, err := getIntTag(structTag, "minLength")
+		minLength, err := getIntTag(structTag, minLengthStrucTag)
 		if err != nil {
 			return nil, err
 		}
@@ -1216,7 +1228,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		structField.minLength = minLength
 	}
 
-	if readOnly := structTag.Get("readonly"); readOnly != "" {
+	if readOnly := structTag.Get(readOnlyParam); readOnly != "" {
 		structField.readOnly = readOnly == "true"
 	}
 
@@ -1260,7 +1272,7 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 			}
 		}
 	} else if len(schema.Type) > 0 {
-		if schema.Type[0] == "array" {
+		if schema.Type[0] == ARRAY {
 			depth--
 			s := []string{schema.Type[0]}
 
@@ -1319,6 +1331,7 @@ func toSnakeCase(in string) string {
 	length := len(runes)
 
 	var out []rune
+
 	for i := 0; i < length; i++ {
 		if i > 0 && unicode.IsUpper(runes[i]) && ((i+1 < length && unicode.IsLower(runes[i+1])) || unicode.IsLower(runes[i-1])) {
 			out = append(out, '_')
@@ -1335,6 +1348,7 @@ func toLowerCamelCase(in string) string {
 
 	var out []rune
 	flag := false
+
 	for i, curr := range runes {
 		if (i == 0 && unicode.IsUpper(curr)) || (flag && unicode.IsUpper(curr)) {
 			out = append(out, unicode.ToLower(curr))
@@ -1377,6 +1391,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 	case ARRAY:
 		values := strings.Split(exampleValue, ",")
 		result := make([]interface{}, 0)
+
 		for _, value := range values {
 			v, err := defineTypeOfExample(arrayType, "", value)
 			if err != nil {
@@ -1394,6 +1409,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 		values := strings.Split(exampleValue, ",")
 		result := map[string]interface{}{}
+
 		for _, value := range values {
 			mapData := strings.Split(value, ":")
 
@@ -1508,26 +1524,33 @@ func (parser *Parser) checkOperationIDUniqueness() error {
 
 	getOperationID := func(itm spec.PathItem) (string, string) {
 		if itm.Get != nil {
-			return "GET", itm.Get.ID
+			return http.MethodGet, itm.Get.ID
 		}
+
 		if itm.Put != nil {
-			return "PUT", itm.Put.ID
+			return http.MethodPut, itm.Put.ID
 		}
+
 		if itm.Post != nil {
-			return "POST", itm.Post.ID
+			return http.MethodPost, itm.Post.ID
 		}
+
 		if itm.Delete != nil {
-			return "DELETE", itm.Delete.ID
+			return http.MethodDelete, itm.Delete.ID
 		}
+
 		if itm.Options != nil {
-			return "OPTIONS", itm.Options.ID
+			return http.MethodOptions, itm.Options.ID
 		}
+
 		if itm.Head != nil {
-			return "HEAD", itm.Head.ID
+			return http.MethodHead, itm.Head.ID
 		}
+
 		if itm.Patch != nil {
-			return "PATCH", itm.Patch.ID
+			return http.MethodPatch, itm.Patch.ID
 		}
+
 		return "", ""
 	}
 

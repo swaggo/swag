@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"go/ast"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -78,6 +79,33 @@ func TestIsSimplePrimitiveType(t *testing.T) {
 	assert.Equal(t, IsSimplePrimitiveType("boolean"), true)
 
 	assert.Equal(t, IsSimplePrimitiveType("oops"), false)
+}
+
+func TestTypeDocName(t *testing.T) {
+	t.Parallel()
+
+	expectedName := "User"
+	assert.Equal(t, expectedName, TypeDocName(expectedName, nil))
+
+	pakageName := "model"
+	expectedName = "model.User"
+	assert.Equal(t, expectedName, TypeDocName(pakageName, &ast.TypeSpec{
+		Name: &ast.Ident{
+			Name: "User",
+		},
+	}))
+
+	// undocumented aliasing feature
+	expectedName = "model.AliasName"
+	assert.Equal(t, expectedName, TypeDocName(pakageName, &ast.TypeSpec{
+		Comment: &ast.CommentGroup{
+			List: []*ast.Comment{
+				{
+					Text: "// @name model.AliasName",
+				},
+			},
+		},
+	}))
 }
 
 func TestBuildCustomSchema(t *testing.T) {

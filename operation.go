@@ -46,6 +46,81 @@ var mimeTypeAliases = map[string]string{
 
 var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
 
+const (
+	titleAttribute                                = "@title"
+	summaryAttribute                              = "@summary"
+	descriptionAttribute                          = "@description"
+	descriptionMarkdownAttribute                  = descriptionAttribute + ".markdown"
+	hostAttribute                                 = "@host"
+	basePathAttribute                             = "@basepath"
+	schemesAttribute                              = "@schemes"
+	acceptAttribute                               = "@accept"
+	produceAttribute                              = "@produce"
+	paramAttribute                                = "@param"
+	idAttribute                                   = "@id"
+	headerAttribute                               = "@header"
+	tagsAttribute                                 = "@tags"
+	securityAttribute                             = "@security"
+	successAttribute                              = "@success"
+	failureAttribute                              = "@failure"
+	responseAttribute                             = "@response"
+	deprecatedAttribute                           = "@deprecated"
+	routerAttribute                               = "@router"
+	versionAttribute                              = "@version"
+	customAttribute                               = "@x-"
+	customCodeSamplesAttribute                    = customAttribute + "codesamples"
+	contactAttribute                              = "@contact"
+	contactNameAttribute                          = contactAttribute + ".name"
+	contactEmailAttribute                         = contactAttribute + ".email"
+	contactURLAttribute                           = contactAttribute + ".url"
+	licenseAttribute                              = "@license"
+	licenseNameAttribute                          = licenseAttribute + ".name"
+	licenseURLAttribute                           = licenseAttribute + ".url"
+	termsOfServiceAttribute                       = "@termsofservice"
+	securityDefinitionsAttribute                  = "@securitydefinitions"
+	securityDefinitionsBasicAttribute             = securityDefinitionsAttribute + ".basic"
+	securityDefinitionsAPIKeyAttribute            = securityDefinitionsAttribute + ".apikey"
+	securityDefinitionsOAuth2ApplicationAttribute = securityDefinitionsAttribute + ".oauth2.application"
+	securityDefinitionsOAuth2ImplicitAttribute    = securityDefinitionsAttribute + ".oauth2.implicit"
+	securityDefinitionsOAuth2PasswordAttribute    = securityDefinitionsAttribute + ".oauth2.password"
+	securityDefinitionsOAuth2AccessCodeAttribute  = securityDefinitionsAttribute + ".oauth2.accesscode"
+	tagAttribute                                  = "@tag"
+	tagNameAttribute                              = tagAttribute + ".name"
+	tagDescriptionAttribute                       = tagAttribute + ".description"
+	tagDescriptionMarkdownAttribute               = tagDescriptionAttribute + ".markdown"
+	tagDocsURLAttribute                           = tagAttribute + ".docs.url"
+	tagDocsDescriptionAttribute                   = tagAttribute + ".docs.description"
+)
+
+const (
+	// struct tags.
+	swaggerTypeStructTag   = "swaggertype"
+	swaggerIgnoreStructTag = "swaggerignore"
+	jsonStructTag          = "json"
+	exampleStructTag       = "example"
+	formatStructTag        = "format"
+	bindingStructTag       = "binding"
+	extensionsStructTag    = "extensions"
+	minimumStructTag       = "minimum"
+	maximumStructTag       = "maximum"
+	minLengthStrucTag      = "minLength"
+	maxLengthStructTag     = "maxLength"
+)
+
+const (
+	// Params.
+	enumsParam            = "enums"
+	maximumParam          = "maximum"
+	minimumParam          = "minimum"
+	defaultParam          = "default"
+	requiredParam         = "required"
+	readOnlyParam         = "readonly"
+	validateParam         = "validate"
+	maxlengthParam        = "maxlength"
+	minlengthParam        = "minlength"
+	collectionFormatParam = "collectionFormat"
+)
+
 // NewOperation creates a new Operation with default properties.
 // map[int]Response.
 func NewOperation(parser *Parser, options ...func(*Operation)) *Operation {
@@ -55,7 +130,7 @@ func NewOperation(parser *Parser, options ...func(*Operation)) *Operation {
 
 	result := Operation{
 		parser:     parser,
-		HTTPMethod: "get",
+		HTTPMethod: http.MethodGet,
 		Operation: spec.Operation{
 			OperationProps: spec.OperationProps{},
 			VendorExtensible: spec.VendorExtensible{
@@ -80,7 +155,7 @@ func SetCodeExampleFilesDirectory(directoryPath string) func(*Operation) {
 
 // ParseComment parses comment for given comment string and returns error if error occurs.
 func (operation *Operation) ParseComment(comment string, astFile *ast.File) error {
-	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "//"))
+	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "/"))
 	if len(commentLine) == 0 {
 		return nil
 	}
@@ -89,46 +164,45 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
 	lowerAttribute := strings.ToLower(attribute)
 
-	var err error
 	switch lowerAttribute {
-	case "@description":
+	case descriptionAttribute:
 		operation.ParseDescriptionComment(lineRemainder)
-	case "@description.markdown":
+	case descriptionMarkdownAttribute:
 		commentInfo, err := getMarkdownForTag(lineRemainder, operation.parser.markdownFileDir)
 		if err != nil {
 			return err
 		}
 
 		operation.ParseDescriptionComment(string(commentInfo))
-	case "@summary":
+	case summaryAttribute:
 		operation.Summary = lineRemainder
-	case "@id":
+	case idAttribute:
 		operation.ID = lineRemainder
-	case "@tags":
+	case tagsAttribute:
 		operation.ParseTagsComment(lineRemainder)
-	case "@accept":
-		err = operation.ParseAcceptComment(lineRemainder)
-	case "@produce":
-		err = operation.ParseProduceComment(lineRemainder)
-	case "@param":
-		err = operation.ParseParamComment(lineRemainder, astFile)
-	case "@success", "@failure", "@response":
-		err = operation.ParseResponseComment(lineRemainder, astFile)
-	case "@header":
-		err = operation.ParseResponseHeaderComment(lineRemainder, astFile)
-	case "@router":
-		err = operation.ParseRouterComment(lineRemainder)
-	case "@security":
-		err = operation.ParseSecurityComment(lineRemainder)
-	case "@deprecated":
+	case acceptAttribute:
+		return operation.ParseAcceptComment(lineRemainder)
+	case produceAttribute:
+		return operation.ParseProduceComment(lineRemainder)
+	case paramAttribute:
+		return operation.ParseParamComment(lineRemainder, astFile)
+	case successAttribute, failureAttribute, responseAttribute:
+		return operation.ParseResponseComment(lineRemainder, astFile)
+	case headerAttribute:
+		return operation.ParseResponseHeaderComment(lineRemainder, astFile)
+	case routerAttribute:
+		return operation.ParseRouterComment(lineRemainder)
+	case securityAttribute:
+		return operation.ParseSecurityComment(lineRemainder)
+	case deprecatedAttribute:
 		operation.Deprecate()
-	case "@x-codesamples":
-		err = operation.ParseCodeSample(attribute, commentLine, lineRemainder)
+	case customCodeSamplesAttribute:
+		return operation.ParseCodeSample(attribute, commentLine, lineRemainder)
 	default:
-		err = operation.ParseMetadata(attribute, lowerAttribute, lineRemainder)
+		return operation.ParseMetadata(attribute, lowerAttribute, lineRemainder)
 	}
 
-	return err
+	return nil
 }
 
 // ParseCodeSample godoc.
@@ -168,7 +242,7 @@ func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 // ParseMetadata godoc.
 func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemainder string) error {
 	// parsing specific meta data extensions
-	if strings.HasPrefix(lowerAttribute, "@x-") {
+	if strings.HasPrefix(lowerAttribute, customAttribute) {
 		if len(lineRemainder) == 0 {
 			return fmt.Errorf("annotation %s need a value", attribute)
 		}
@@ -238,7 +312,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 			param.SimpleSchema.Items = &spec.Items{
 				SimpleSchema: spec.SimpleSchema{
-					Type: refType,
+					Type:   refType,
+					Format: "",
 				},
 			}
 		case OBJECT:
@@ -335,21 +410,21 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 var regexAttributes = map[string]*regexp.Regexp{
 	// for Enums(A, B)
-	"enums": regexp.MustCompile(`(?i)\s+enums\(.*\)`),
+	enumsParam: regexp.MustCompile(`(?i)\s+enums\(.*\)`),
 	// for maximum(0)
-	"maximum": regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
+	maximumParam: regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
 	// for minimum(0)
-	"minimum": regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
+	minimumParam: regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
 	// for default(0)
-	"default": regexp.MustCompile(`(?i)\s+default\(.*\)`),
+	defaultParam: regexp.MustCompile(`(?i)\s+default\(.*\)`),
 	// for minlength(0)
-	"minlength": regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
+	minlengthParam: regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
 	// for maxlength(0)
-	"maxlength": regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
+	maxlengthParam: regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
 	// for format(email)
-	"format": regexp.MustCompile(`(?i)\s+format\(.*\)`),
+	formatStructTag: regexp.MustCompile(`(?i)\s+format\(.*\)`),
 	// for collectionFormat(csv)
-	"collectionFormat": regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
+	collectionFormatParam: regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
 }
 
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, objectType, schemaType string, param *spec.Parameter) error {
@@ -362,49 +437,49 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 		}
 
 		switch attrKey {
-		case "enums":
+		case enumsParam:
 			err := setEnumParam(attr, schemaType, param)
 			if err != nil {
 				return err
 			}
-		case "maximum":
+		case maximumParam:
 			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
 
 			param.Maximum = &n
-		case "minimum":
+		case minimumParam:
 			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
 
 			param.Minimum = &n
-		case "default":
+		case defaultParam:
 			value, err := defineType(schemaType, attr)
 			if err != nil {
 				return nil
 			}
 
 			param.Default = value
-		case "maxlength":
+		case maxlengthParam:
 			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
 
 			param.MaxLength = &n
-		case "minlength":
+		case minlengthParam:
 			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
 
 			param.MinLength = &n
-		case "format":
+		case formatStructTag:
 			param.Format = attr
-		case "collectionFormat":
+		case collectionFormatParam:
 			n, err := setCollectionFormatParam(attrKey, objectType, attr, commentLine)
 			if err != nil {
 				return err
@@ -551,7 +626,7 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w\./\-{}+:]*)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w./\-{}+:]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
@@ -653,10 +728,10 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type spec not found")
 }
 
-var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
+var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w{}]+)[\s]+([\w\-./{}=,\[\]]+)[^"]*(.*)?`)
 
-// ResponseType{data1=Type1,data2=Type2}
-var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
+// ResponseType{data1=Type1,data2=Type2}.
+var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
@@ -811,7 +886,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, "default") {
+		if strings.EqualFold(codeStr, defaultParam) {
 			operation.DefaultResponse().Schema = schema
 			operation.DefaultResponse().Description = responseDescription
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
@@ -869,7 +944,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 	}
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, "default") {
+		if strings.EqualFold(codeStr, defaultParam) {
 			if operation.Responses.Default != nil {
 				if operation.Responses.Default.Headers == nil {
 					operation.Responses.Default.Headers = make(map[string]spec.Header)
@@ -908,7 +983,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 
 	responseDescription := strings.Trim(matches[2], "\"")
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, "default") {
+		if strings.EqualFold(codeStr, defaultParam) {
 			operation.DefaultResponse().Description = responseDescription
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
 			var response spec.Response
@@ -925,7 +1000,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 // ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200.
 func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 	for _, codeStr := range strings.Split(commentLine, ",") {
-		if strings.EqualFold(codeStr, "default") {
+		if strings.EqualFold(codeStr, defaultParam) {
 			_ = operation.DefaultResponse()
 		} else if code, err := strconv.Atoi(codeStr); err == nil {
 			var response spec.Response
@@ -983,7 +1058,6 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 
 		return parameter
 	}
-
 	parameter := spec.Parameter{
 		ParamProps: paramProps,
 		SimpleSchema: spec.SimpleSchema{

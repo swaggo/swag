@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	goparser "go/parser"
 	"go/token"
+	"net/http"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -119,7 +120,7 @@ func TestParseRouterComment(t *testing.T) {
 	err := operation.ParseComment(`/@Router /customer/get-wishlist/{wishlist_id} [get]`, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}", operation.Path)
-	assert.Equal(t, "GET", operation.HTTPMethod)
+	assert.Equal(t, http.MethodGet, operation.HTTPMethod)
 }
 
 func TestParseRouterOnlySlash(t *testing.T) {
@@ -129,7 +130,7 @@ func TestParseRouterOnlySlash(t *testing.T) {
 	err := operation.ParseComment(`// @Router / [get]`, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "/", operation.Path)
-	assert.Equal(t, "GET", operation.HTTPMethod)
+	assert.Equal(t, http.MethodGet, operation.HTTPMethod)
 }
 
 func TestParseRouterCommentWithPlusSign(t *testing.T) {
@@ -139,7 +140,7 @@ func TestParseRouterCommentWithPlusSign(t *testing.T) {
 	err := operation.ParseComment(`/@Router /customer/get-wishlist/{proxy+} [post]`, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "/customer/get-wishlist/{proxy+}", operation.Path)
-	assert.Equal(t, "POST", operation.HTTPMethod)
+	assert.Equal(t, http.MethodPost, operation.HTTPMethod)
 }
 
 func TestParseRouterCommentWithColonSign(t *testing.T) {
@@ -149,7 +150,7 @@ func TestParseRouterCommentWithColonSign(t *testing.T) {
 	err := operation.ParseComment(`/@Router /customer/get-wishlist/{wishlist_id}:move [post]`, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}:move", operation.Path)
-	assert.Equal(t, "POST", operation.HTTPMethod)
+	assert.Equal(t, http.MethodPost, operation.HTTPMethod)
 }
 
 func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {
