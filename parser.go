@@ -1177,13 +1177,11 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 			enumType = structField.arrayType
 		}
 
-		for _, e := range strings.Split(enumsTag, ",") {
-			value, err := defineType(enumType, e)
-			if err != nil {
-				return nil, err
-			}
+		var err error
 
-			structField.enums = append(structField.enums, value)
+		structField.enums, err = setEnumParam(enumsTag, enumType)
+		if err != nil {
+			return nil, err
 		}
 	}
 

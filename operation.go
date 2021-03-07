@@ -162,18 +162,12 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 
 	attribute := strings.Fields(commentLine)[0]
 	lineRemainder := strings.TrimSpace(commentLine[len(attribute):])
-	lowerAttribute := strings.ToLower(attribute)
 
-	switch lowerAttribute {
+	switch strings.ToLower(attribute) {
 	case descriptionAttribute:
 		operation.ParseDescriptionComment(lineRemainder)
 	case descriptionMarkdownAttribute:
-		commentInfo, err := getMarkdownForTag(lineRemainder, operation.parser.markdownFileDir)
-		if err != nil {
-			return err
-		}
-
-		operation.ParseDescriptionComment(string(commentInfo))
+		return operation.ParseMarkdownDescriptionComment(lineRemainder)
 	case summaryAttribute:
 		operation.Summary = lineRemainder
 	case idAttribute:
@@ -197,16 +191,16 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	case deprecatedAttribute:
 		operation.Deprecate()
 	case customCodeSamplesAttribute:
-		return operation.ParseCodeSample(attribute, commentLine, lineRemainder)
+		return operation.ParseCodeSample(attribute, lineRemainder)
 	default:
-		return operation.ParseMetadata(attribute, lowerAttribute, lineRemainder)
+		return operation.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
 	}
 
 	return nil
 }
 
 // ParseCodeSample godoc.
-func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainder string) error {
+func (operation *Operation) ParseCodeSample(attribute, lineRemainder string) error {
 	if lineRemainder == "file" {
 		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
 		if err != nil {
@@ -226,6 +220,18 @@ func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainde
 
 	// Fallback into existing logic
 	return operation.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
+}
+
+// ParseMarkdownDescriptionComment godoc.
+func (operation *Operation) ParseMarkdownDescriptionComment(lineRemainder string) error {
+	commentInfo, err := getMarkdownForTag(lineRemainder, operation.parser.markdownFileDir)
+	if err != nil {
+		return err
+	}
+
+	operation.ParseDescriptionComment(string(commentInfo))
+
+	return nil
 }
 
 // ParseDescriptionComment godoc.
@@ -399,7 +405,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
 
-	if err := operation.parseAndExtractionParamAttribute(commentLine, objectType, refType, &param); err != nil {
+	err := operation.parseAndExtractionParamAttribute(commentLine, objectType, refType, &param)
+	if err != nil {
 		return err
 	}
 
@@ -438,45 +445,36 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 
 		switch attrKey {
 		case enumsParam:
-			err := setEnumParam(attr, schemaType, param)
+			param.Enum, err = setEnumParam(attr, schemaType)
 			if err != nil {
 				return err
 			}
 		case maximumParam:
-			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
+			err = setNumberParam(&param.Maximum, attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
-
-			param.Maximum = &n
 		case minimumParam:
-			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
+			err = setNumberParam(&param.Minimum, attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
-
-			param.Minimum = &n
 		case defaultParam:
-			value, err := defineType(schemaType, attr)
+			param.Default, err = defineType(schemaType, attr)
 			if err != nil {
-				return nil
+				return err
 			}
 
-			param.Default = value
 		case maxlengthParam:
-			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
+			err = setStringParam(&param.MaxLength, attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
-
-			param.MaxLength = &n
 		case minlengthParam:
-			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
+			err = setStringParam(&param.MinLength, attrKey, schemaType, attr, commentLine)
 			if err != nil {
 				return err
 			}
-
-			param.MinLength = &n
 		case formatStructTag:
 			param.Format = attr
 		case collectionFormatParam:
@@ -503,45 +501,51 @@ func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	return strings.TrimSpace(attr[l+1 : r]), nil
 }
 
-func setStringParam(name, schemaType, attr, commentLine string) (int64, error) {
+func setStringParam(value **int64, name, schemaType, attr, commentLine string) error {
 	if schemaType != STRING {
-		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
+		return fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
 
 	n, err := strconv.ParseInt(attr, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("%s is allow only a number got=%s", name, attr)
+		return fmt.Errorf("%s is allow only a number got=%s", name, attr)
 	}
 
-	return n, nil
+	*value = &n
+
+	return nil
 }
 
-func setNumberParam(name, schemaType, attr, commentLine string) (float64, error) {
+func setNumberParam(value **float64, name, schemaType, attr, commentLine string) error {
 	if schemaType != INTEGER && schemaType != NUMBER {
-		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
+		return fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
 
 	n, err := strconv.ParseFloat(attr, 64)
 	if err != nil {
-		return 0, fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+		return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
 	}
 
-	return n, nil
+	*value = &n
+
+	return nil
 }
 
-func setEnumParam(attr, schemaType string, param *spec.Parameter) error {
+func setEnumParam(attr, schemaType string) ([]interface{}, error) {
+	var result []interface{}
+
 	for _, e := range strings.Split(attr, ",") {
 		e = strings.TrimSpace(e)
 
 		value, err := defineType(schemaType, e)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		param.Enum = append(param.Enum, value)
+		result = append(result, value)
 	}
 
-	return nil
+	return result, nil
 }
 
 func setCollectionFormatParam(name, schemaType, attr, commentLine string) (string, error) {
