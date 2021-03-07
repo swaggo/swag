@@ -258,8 +258,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"strings"
+	"text/template"
 
-	"github.com/alecthomas/template"
 	"github.com/swaggo/swag"
 )
 
@@ -275,7 +275,7 @@ type swaggerInfo struct {
 }
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
-var SwaggerInfo = swaggerInfo{ 
+var SwaggerInfo = swaggerInfo{
 	Version:     {{ printf "%q" .Version}},
 	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},
