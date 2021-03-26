@@ -38,6 +38,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [Add extension info to struct field](#add-extension-info-to-struct-field)
 	- [Rename model to display](#rename-model-to-display)
 	- [How to using security annotations](#how-to-using-security-annotations)
+	- [Add a description for enum items](#add-a-description-for-enum-items)
 - [About the Project](#about-the-project)
 
 ## Getting started
@@ -724,6 +725,17 @@ Make it AND condition
 ```go
 // @Security ApiKeyAuth
 // @Security OAuth2Application[write, admin]
+```
+
+### Add a description for enum items
+
+```go
+type Example struct {
+	// Sort order:
+	// * asc - Ascending, from A to Z.
+	// * desc - Descending, from Z to A.
+	Order string `enums:"asc,desc"`
+}
 ```
 
 ## About the Project
