@@ -1510,6 +1510,35 @@ func TestParseParamCommentByDefault(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamArrayWithEnums(t *testing.T) {
+	comment := `@Param field query []string true "An enum collection" collectionFormat(csv) enums(also,valid)`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "array",
+            "items": {
+                "enum": [
+                    "also",
+                    "valid"
+                ],
+                "type": "string"
+            },
+            "collectionFormat": "csv",
+            "description": "An enum collection",
+            "name": "field",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseIdComment(t *testing.T) {
 	comment := `@Id myOperationId`
 	operation := NewOperation(nil)
