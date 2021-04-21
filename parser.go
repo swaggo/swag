@@ -1287,7 +1287,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 		return result, nil
 	case OBJECT:
 		if arrayType == "" {
-			return nil, fmt.Errorf("%s is unsupported type in example value", schemaType)
+			return nil, fmt.Errorf("%s is unsupported type in example value `%s`", schemaType, exampleValue)
 		}
 
 		values := strings.Split(exampleValue, ",")
@@ -1307,7 +1307,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 		}
 		return result, nil
 	default:
-		return nil, fmt.Errorf("%s is unsupported type in example value", schemaType)
+		return nil, fmt.Errorf("%s is unsupported type in example value %s", schemaType, exampleValue)
 	}
 }
 

@@ -463,7 +463,7 @@ func defineType(schemaType string, value string) (interface{}, error) {
 		}
 		return v, nil
 	default:
-		return nil, fmt.Errorf("%s is unsupported type in enum value", schemaType)
+		return nil, fmt.Errorf("%s is unsupported type in enum value %s", schemaType, value)
 	}
 }
 
