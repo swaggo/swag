@@ -675,7 +675,7 @@ type Account struct {
 
 ```go
 type Account struct {
-    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def"` // extensions fields must start with "x-"
+    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def,!x-omitempty"` // extensions fields must start with "x-"
 }
 ```
 
@@ -688,7 +688,8 @@ generate swagger doc as follows:
         "id": {
             "type": "string",
             "x-nullable": true,
-            "x-abc": "def"
+            "x-abc": "def",
+            "x-omitempty": false
         }
     }
 }

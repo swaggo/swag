@@ -1073,7 +1073,11 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 			if len(parts) == 2 {
 				structField.extensions[parts[0]] = parts[1]
 			} else {
-				structField.extensions[parts[0]] = true
+				if len(parts[0]) > 0 && string(parts[0][0]) == "!" {
+					structField.extensions[string(parts[0][1:])] = false
+				} else {
+					structField.extensions[parts[0]] = true
+				}
 			}
 		}
 	}
