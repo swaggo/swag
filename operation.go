@@ -90,6 +90,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 
 	var err error
 	switch lowerAttribute {
+	case "@hidden":
+		return ErrIsHidden
 	case "@description":
 		operation.ParseDescriptionComment(lineRemainder)
 	case "@description.markdown":

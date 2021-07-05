@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
-
 	"github.com/swaggo/swag"
 	"github.com/swaggo/swag/gen"
 	"github.com/urfave/cli/v2"
+	"log"
+	"os"
 )
 
 const (

@@ -564,6 +564,9 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir)) //for per 'function' comment, create a new 'Operation' object
 				for _, comment := range astDeclaration.Doc.List {
 					if err := operation.ParseComment(comment.Text, astFile); err != nil {
+						if errors.Is(ErrIsHidden, err) {
+							break
+						}
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
 					}
 				}
