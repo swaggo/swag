@@ -18,11 +18,16 @@ import (
 	"golang.org/x/tools/go/loader"
 )
 
+// RouteProperties describes HTTP properties of a single router comment.
+type RouteProperties struct {
+	HTTPMethod string
+	Path       string
+}
+
 // Operation describes a single API operation on a path.
 // For more information: https://github.com/swaggo/swag#api-operation
 type Operation struct {
-	HTTPMethod string
-	Path       string
+	RouterProperties []RouteProperties
 	spec.Operation
 
 	parser              *Parser
@@ -54,8 +59,8 @@ func NewOperation(parser *Parser, options ...func(*Operation)) *Operation {
 	}
 
 	result := &Operation{
-		parser:     parser,
-		HTTPMethod: "get",
+		parser:           parser,
+		RouterProperties: []RouteProperties{},
 		Operation: spec.Operation{
 			OperationProps: spec.OperationProps{},
 			VendorExtensible: spec.VendorExtensible{
@@ -516,8 +521,11 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	path := matches[1]
 	httpMethod := matches[2]
 
-	operation.Path = path
-	operation.HTTPMethod = strings.ToUpper(httpMethod)
+	signature := RouteProperties{
+		Path:       path,
+		HTTPMethod: strings.ToUpper(httpMethod),
+	}
+	operation.RouterProperties = append(operation.RouterProperties, signature)
 
 	return nil
 }
