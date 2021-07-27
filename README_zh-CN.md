@@ -366,7 +366,7 @@ Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/c
 | accept               | API可以使用的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  |
 | produce              | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  |
 | param                | 用空格分隔的参数。`param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)` |
-| security             | 每个API操作的[安全性](#security)。                                                                      |
+| security             | 每个API操作的[安全性](#安全性)。                                                                      |
 | success              | 以空格分隔的成功响应。`return code`,`{param type}`,`data type`,`comment`                                |
 | failure              | 以空格分隔的故障响应。`return code`,`{param type}`,`data type`,`comment`                                |
 | response             | 与success、failure作用相同                                                                               |
