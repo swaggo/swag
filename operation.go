@@ -339,7 +339,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 		}
 		switch attrKey {
 		case "enums":
-			err := setEnumParam(attr, schemaType, param)
+			err := setEnumParam(attr, objectType, schemaType, param)
 			if err != nil {
 				return err
 			}
@@ -418,7 +418,7 @@ func setNumberParam(name, schemaType, attr, commentLine string) (float64, error)
 	return n, nil
 }
 
-func setEnumParam(attr, schemaType string, param *spec.Parameter) error {
+func setEnumParam(attr, objectType, schemaType string, param *spec.Parameter) error {
 	for _, e := range strings.Split(attr, ",") {
 		e = strings.TrimSpace(e)
 
@@ -426,7 +426,13 @@ func setEnumParam(attr, schemaType string, param *spec.Parameter) error {
 		if err != nil {
 			return err
 		}
-		param.Enum = append(param.Enum, value)
+
+		switch objectType {
+		case ARRAY:
+			param.Items.Enum = append(param.Items.Enum, value)
+		default:
+			param.Enum = append(param.Enum, value)
+		}
 	}
 	return nil
 }
