@@ -136,7 +136,7 @@ func TestGen_SearchDirIsNotExist(t *testing.T) {
 		OutputDir:          swaggerConfDir,
 		PropNamingStrategy: propNamingStrategy,
 	}
-	assert.EqualError(t, New().Build(config), "dir: ../isNotExistDir is not exist")
+	assert.EqualError(t, New().Build(config), "dir: ../isNotExistDir does not exist")
 }
 
 func TestGen_MainAPiNotExist(t *testing.T) {
