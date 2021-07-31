@@ -574,30 +574,33 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
 					}
 				}
-				var pathItem spec.PathItem
-				var ok bool
 
-				if pathItem, ok = parser.swagger.Paths.Paths[operation.Path]; !ok {
-					pathItem = spec.PathItem{}
-				}
-				switch strings.ToUpper(operation.HTTPMethod) {
-				case http.MethodGet:
-					pathItem.Get = &operation.Operation
-				case http.MethodPost:
-					pathItem.Post = &operation.Operation
-				case http.MethodDelete:
-					pathItem.Delete = &operation.Operation
-				case http.MethodPut:
-					pathItem.Put = &operation.Operation
-				case http.MethodPatch:
-					pathItem.Patch = &operation.Operation
-				case http.MethodHead:
-					pathItem.Head = &operation.Operation
-				case http.MethodOptions:
-					pathItem.Options = &operation.Operation
-				}
+				for _, routeProperties := range operation.RouterProperties {
+					var pathItem spec.PathItem
+					var ok bool
 
-				parser.swagger.Paths.Paths[operation.Path] = pathItem
+					if pathItem, ok = parser.swagger.Paths.Paths[routeProperties.Path]; !ok {
+						pathItem = spec.PathItem{}
+					}
+					switch strings.ToUpper(routeProperties.HTTPMethod) {
+					case http.MethodGet:
+						pathItem.Get = &operation.Operation
+					case http.MethodPost:
+						pathItem.Post = &operation.Operation
+					case http.MethodDelete:
+						pathItem.Delete = &operation.Operation
+					case http.MethodPut:
+						pathItem.Put = &operation.Operation
+					case http.MethodPatch:
+						pathItem.Patch = &operation.Operation
+					case http.MethodHead:
+						pathItem.Head = &operation.Operation
+					case http.MethodOptions:
+						pathItem.Options = &operation.Operation
+					}
+
+					parser.swagger.Paths.Paths[routeProperties.Path] = pathItem
+				}
 			}
 		}
 	}

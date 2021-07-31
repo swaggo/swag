@@ -106,8 +106,27 @@ func TestParseRouterComment(t *testing.T) {
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}", operation.Path)
-	assert.Equal(t, "GET", operation.HTTPMethod)
+	assert.Len(t, operation.RouterProperties, 1)
+	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}", operation.RouterProperties[0].Path)
+	assert.Equal(t, "GET", operation.RouterProperties[0].HTTPMethod)
+}
+
+func TestParseRouterMultipleComments(t *testing.T) {
+	comment := `/@Router /customer/get-wishlist/{wishlist_id} [get]`
+	anotherComment := `/@Router /customer/get-the-wishlist/{wishlist_id} [post]`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	err = operation.ParseComment(anotherComment, nil)
+	assert.NoError(t, err)
+
+	assert.Len(t, operation.RouterProperties, 2)
+	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}", operation.RouterProperties[0].Path)
+	assert.Equal(t, "GET", operation.RouterProperties[0].HTTPMethod)
+	assert.Equal(t, "/customer/get-the-wishlist/{wishlist_id}", operation.RouterProperties[1].Path)
+	assert.Equal(t, "POST", operation.RouterProperties[1].HTTPMethod)
 }
 
 func TestParseRouterOnlySlash(t *testing.T) {
@@ -115,8 +134,9 @@ func TestParseRouterOnlySlash(t *testing.T) {
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "/", operation.Path)
-	assert.Equal(t, "GET", operation.HTTPMethod)
+	assert.Len(t, operation.RouterProperties, 1)
+	assert.Equal(t, "/", operation.RouterProperties[0].Path)
+	assert.Equal(t, "GET", operation.RouterProperties[0].HTTPMethod)
 }
 
 func TestParseRouterCommentWithPlusSign(t *testing.T) {
@@ -124,8 +144,9 @@ func TestParseRouterCommentWithPlusSign(t *testing.T) {
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "/customer/get-wishlist/{proxy+}", operation.Path)
-	assert.Equal(t, "POST", operation.HTTPMethod)
+	assert.Len(t, operation.RouterProperties, 1)
+	assert.Equal(t, "/customer/get-wishlist/{proxy+}", operation.RouterProperties[0].Path)
+	assert.Equal(t, "POST", operation.RouterProperties[0].HTTPMethod)
 }
 
 func TestParseRouterCommentWithColonSign(t *testing.T) {
@@ -133,8 +154,9 @@ func TestParseRouterCommentWithColonSign(t *testing.T) {
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
-	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}:move", operation.Path)
-	assert.Equal(t, "POST", operation.HTTPMethod)
+	assert.Len(t, operation.RouterProperties, 1)
+	assert.Equal(t, "/customer/get-wishlist/{wishlist_id}:move", operation.RouterProperties[0].Path)
+	assert.Equal(t, "POST", operation.RouterProperties[0].HTTPMethod)
 }
 
 func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {

@@ -576,6 +576,17 @@ type DeepObject struct { //in `proto` package
 // @Router /examples/groups/{group_id}/accounts/{account_id} [get]
 ```
 
+### Add multiple paths
+
+```go
+/// ...
+// @Param group_id path int true "Group ID"
+// @Param user_id path int true "User ID"
+// ...
+// @Router /examples/groups/{group_id}/user/{user_id}/address [put]
+// @Router /examples/user/{user_id}/address [put]
+```
+
 ### Example value of struct
 
 ```go
