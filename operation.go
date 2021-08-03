@@ -52,7 +52,7 @@ var mimeTypeAliases = map[string]string{
 var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
 
 // NewOperation creates a new Operation with default properties.
-// map[int]Response
+// map[int]Response.
 func NewOperation(parser *Parser, options ...func(*Operation)) *Operation {
 	if parser == nil {
 		parser = New()
@@ -130,6 +130,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	default:
 		err = operation.ParseMetadata(attribute, lowerAttribute, lineRemainder)
 	}
+
 	return err
 }
 
@@ -155,7 +156,7 @@ func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainde
 	return operation.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
 }
 
-// ParseDescriptionComment godoc
+// ParseDescriptionComment godoc.
 func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 	if operation.Description == "" {
 		operation.Description = lineRemainder
@@ -164,7 +165,7 @@ func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 	operation.Description += "\n" + lineRemainder
 }
 
-// ParseMetadata godoc
+// ParseMetadata godoc.
 func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemainder string) error {
 	// parsing specific meta data extensions
 	if strings.HasPrefix(lowerAttribute, "@x-") {
@@ -179,6 +180,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 
 		operation.Extensions[attribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
 	}
+
 	return nil
 }
 
@@ -276,6 +278,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					param = createParameter(paramType, prop.Description, name, prop.Type[0], find(schema.Required, name))
 				} else {
 					Println(fmt.Sprintf("skip field [%s] in %s is not supported type for %s", name, refType, paramType))
+
 					continue
 				}
 				param.Nullable = prop.Nullable
@@ -313,6 +316,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		return err
 	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
+
 	return nil
 }
 
@@ -388,6 +392,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			param.CollectionFormat = n
 		}
 	}
+
 	return nil
 }
 
@@ -398,6 +403,7 @@ func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	if l == -1 || r == -1 {
 		return "", fmt.Errorf("can not find regex=%s, comment=%s", re.String(), commentLine)
 	}
+
 	return strings.TrimSpace(attr[l+1 : r]), nil
 }
 
@@ -405,10 +411,12 @@ func setStringParam(name, schemaType, attr, commentLine string) (int64, error) {
 	if schemaType != STRING {
 		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
+
 	n, err := strconv.ParseInt(attr, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("%s is allow only a number got=%s", name, attr)
 	}
+
 	return n, nil
 }
 
@@ -416,10 +424,12 @@ func setNumberParam(name, schemaType, attr, commentLine string) (float64, error)
 	if schemaType != INTEGER && schemaType != NUMBER {
 		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
+
 	n, err := strconv.ParseFloat(attr, 64)
 	if err != nil {
 		return 0, fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
 	}
+
 	return n, nil
 }
 
@@ -439,6 +449,7 @@ func setEnumParam(attr, objectType, schemaType string, param *spec.Parameter) er
 			param.Enum = append(param.Enum, value)
 		}
 	}
+
 	return nil
 }
 
@@ -446,6 +457,7 @@ func setCollectionFormatParam(name, schemaType, attr, commentLine string) (strin
 	if schemaType != ARRAY {
 		return "", fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
 	}
+
 	return TransToValidCollectionFormat(attr), nil
 }
 
@@ -460,22 +472,25 @@ func defineType(schemaType string, value string) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
+
 		return v, nil
 	case INTEGER:
 		v, err := strconv.Atoi(value)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
+
 		return v, nil
 	case BOOLEAN:
 		v, err := strconv.ParseBool(value)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
+
 		return v, nil
-	default:
-		return nil, fmt.Errorf("%s is unsupported type in enum value %s", schemaType, value)
 	}
+
+	return nil, fmt.Errorf("%s is unsupported type in enum value %s", schemaType, value)
 }
 
 // ParseTagsComment parses comment for given `tag` comment string.
@@ -504,14 +519,18 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	for _, typeName := range mimeTypes {
 		if mimeTypePattern.MatchString(typeName) {
 			*typeList = append(*typeList, typeName)
+
 			continue
 		}
 		if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
 			*typeList = append(*typeList, aliasMimeType)
+
 			continue
 		}
+
 		return fmt.Errorf(format, typeName)
 	}
+
 	return nil
 }
 
@@ -559,6 +578,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 		securityMap[securityKey] = []string{}
 		operation.Security = append(operation.Security, securityMap)
 	}
+
 	return nil
 }
 
@@ -619,7 +639,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 
 var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
-//ResponseType{data1=Type1,data2=Type2}
+// ResponseType{data1=Type1,data2=Type2}.
 var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
@@ -628,6 +648,7 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 		return PrimitiveSchema(OBJECT), nil
 	case IsGolangPrimitiveType(refType):
 		refType = TransToValidSchemeType(refType)
+
 		return PrimitiveSchema(refType), nil
 	case IsPrimitiveType(refType):
 		return PrimitiveSchema(refType), nil
@@ -636,6 +657,7 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 		if err != nil {
 			return nil, err
 		}
+
 		return spec.ArrayProperty(schema), nil
 	case strings.HasPrefix(refType, "map["):
 		//ignore key type
@@ -646,12 +668,12 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 		refType = refType[idx+1:]
 		if refType == "interface{}" {
 			return spec.MapProperty(nil), nil
-
 		}
 		schema, err := operation.parseObjectSchema(refType, astFile)
 		if err != nil {
 			return nil, err
 		}
+
 		return spec.MapProperty(schema), nil
 	case strings.Contains(refType, "{"):
 		return operation.parseCombinedObjectSchema(refType, astFile)
@@ -661,6 +683,7 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 			if err != nil {
 				return nil, err
 			}
+
 			return schema, nil
 		}
 
@@ -723,12 +746,14 @@ func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, ast
 			return operation.parseObjectSchema(refType, astFile)
 		}
 		refType = refType[2:]
+
 		fallthrough
 	case ARRAY:
 		schema, err := operation.parseObjectSchema(refType, astFile)
 		if err != nil {
 			return nil, err
 		}
+
 		return spec.ArrayProperty(schema), nil
 	case PRIMITIVE:
 		return PrimitiveSchema(refType), nil
@@ -808,6 +833,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 				operation.Responses.StatusCodeResponses[code] = response
 			}
 		}
+
 		return nil
 	}
 
