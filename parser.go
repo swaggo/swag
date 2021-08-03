@@ -766,6 +766,7 @@ func fullTypeName(pkgName, typeName string) string {
 	if pkgName != "" {
 		return pkgName + "." + typeName
 	}
+
 	return typeName
 }
 
