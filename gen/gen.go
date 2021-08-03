@@ -190,7 +190,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 			Info: &spec.Info{
 				VendorExtensible: swagger.Info.VendorExtensible,
 				InfoProps: spec.InfoProps{
-					Description:    "{{.Description}}",
+					Description:    "{{escape .Description}}",
 					Title:          "{{.Title}}",
 					TermsOfService: swagger.Info.TermsOfService,
 					Contact:        swagger.Info.Contact,
@@ -280,7 +280,7 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     {{ printf "%q" .Version}},
- 	Host:        {{ printf "%q" .Host}},
+	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},
 	Schemes:     []string{ {{ range $index, $schema := .Schemes}}{{if gt $index 0}},{{end}}{{printf "%q" $schema}}{{end}} },
 	Title:       {{ printf "%q" .Title}},
@@ -297,6 +297,13 @@ func (s *s) ReadDoc() string {
 		"marshal": func(v interface{}) string {
 			a, _ := json.Marshal(v)
 			return string(a)
+		},
+		"escape": func(v interface{}) string {
+			// escape tabs
+			str := strings.Replace(v.(string), "\t", "\\t", -1)
+			// replace " with \", and if that results in \\", replace that with \\\"
+			str = strings.Replace(str, "\"", "\\\"", -1)
+			return strings.Replace(str, "\\\\\"", "\\\\\\\"", -1)
 		},
 	}).Parse(doc)
 	if err != nil {

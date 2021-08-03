@@ -1,0 +1,27 @@
+{
+    "schemes": [],
+    "swagger": "2.0",
+    "info": {
+        "description": "# Title with \"quotes\"\n\nAs we want to verify that this markdown is formatted equally in both the general\nAPI description, in a tag description and in an endpoint description, the tag\ndefined in main.go is called api, and the markdown file name is specified\nmanually in the description comment in api/api.go.\n\n```json\n{\n\t\"with\": \"escaped \\\"quotes\\\"\",\n\t\"indentedWith\": \"tabs\",\n\t\"foo\": \"bar\",\n\t\"baz\": null\n}\n```\n\nSome more text.\n",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "",
+    "basePath": "",
+    "paths": {
+        "/random": {
+            "get": {
+                "description": "# Title with \"quotes\"\n\nAs we want to verify that this markdown is formatted equally in both the general\nAPI description, in a tag description and in an endpoint description, the tag\ndefined in main.go is called api, and the markdown file name is specified\nmanually in the description comment in api/api.go.\n\n```json\n{\n\t\"with\": \"escaped \\\"quotes\\\"\",\n\t\"indentedWith\": \"tabs\",\n\t\"foo\": \"bar\",\n\t\"baz\": null\n}\n```\n\nSome more text.\n"
+            }
+        }
+    },
+    "tags": [
+        {
+            "description": "# Title with \"quotes\"\n\nAs we want to verify that this markdown is formatted equally in both the general\nAPI description, in a tag description and in an endpoint description, the tag\ndefined in main.go is called api, and the markdown file name is specified\nmanually in the description comment in api/api.go.\n\n```json\n{\n\t\"with\": \"escaped \\\"quotes\\\"\",\n\t\"indentedWith\": \"tabs\",\n\t\"foo\": \"bar\",\n\t\"baz\": null\n}\n```\n\nSome more text.\n",
+            "name": "api"
+        }
+    ]
+}
