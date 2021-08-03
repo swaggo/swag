@@ -39,6 +39,9 @@ type Config struct {
 	// SearchDir the swag would be parse,comma separated if multiple
 	SearchDir string
 
+	// includes dirs and files in SearchDir,comma separated
+	Includes string
+
 	// excludes dirs and files in SearchDir,comma separated
 	Excludes string
 
@@ -85,6 +88,7 @@ func (g *Gen) Build(config *Config) error {
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
+		swag.SetIncludedDirsAndFiles(config.Includes),
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir))
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
