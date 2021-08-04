@@ -245,6 +245,30 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParser_ParseGeneralAPIInfoMarkdown(t *testing.T) {
+	p := New(SetMarkdownFileDirectory("testdata"))
+	err := p.ParseGeneralAPIInfo("testdata/markdown.go")
+	assert.NoError(t, err)
+
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "Swagger Example API Markdown Description",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {}
+}`
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+
+	p = New()
+	err = p.ParseGeneralAPIInfo("testdata/markdown.go")
+	assert.Error(t, err)
+}
+
 func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
@@ -2575,4 +2599,40 @@ func TestDefineTypeOfExample(t *testing.T) {
 	example, err = defineTypeOfExample("oops", "", "")
 	assert.Error(t, err)
 	assert.Nil(t, example)
+}
+
+type mockFS struct {
+	os.FileInfo
+	FileName    string
+	IsDirectory bool
+}
+
+func (fs *mockFS) Name() string {
+	return fs.FileName
+}
+
+func (fs *mockFS) IsDir() bool {
+	return fs.IsDirectory
+}
+
+func TestParser_Skip(t *testing.T) {
+	parser := New()
+	parser.ParseVendor = true
+
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "vendor"}))
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "vendor", IsDirectory: true}))
+
+	parser.ParseVendor = false
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "vendor"}))
+	assert.Error(t, parser.Skip("", &mockFS{FileName: "vendor", IsDirectory: true}))
+
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "models", IsDirectory: true}))
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "admin", IsDirectory: true}))
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "release", IsDirectory: true}))
+
+	parser = New(SetExcludedDirsAndFiles("admin/release,admin/models"))
+	assert.NoError(t, parser.Skip("admin", &mockFS{IsDirectory: true}))
+	assert.NoError(t, parser.Skip("admin/service", &mockFS{IsDirectory: true}))
+	assert.Error(t, parser.Skip("admin/models", &mockFS{IsDirectory: true}))
+	assert.Error(t, parser.Skip("admin/release", &mockFS{IsDirectory: true}))
 }

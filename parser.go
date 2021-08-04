@@ -1487,8 +1487,8 @@ func (parser *Parser) checkOperationIDUniqueness() error {
 // Skip returns filepath.SkipDir error if match vendor and hidden folder
 func (parser *Parser) Skip(path string, f os.FileInfo) error {
 	if f.IsDir() {
-		if !parser.ParseVendor && f.Name() == "vendor" || //ignore "vendor"
-			f.Name() == "docs" || //exclude docs
+		if !parser.ParseVendor && f.Name() == "vendor" || // ignore "vendor"
+			f.Name() == "docs" || // exclude docs
 			len(f.Name()) > 1 && f.Name()[0] == '.' { // exclude all hidden folder
 			return filepath.SkipDir
 		}
