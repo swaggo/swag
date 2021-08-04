@@ -14,9 +14,23 @@ import (
 
 const defaultParseDepth = 100
 
+const mainAPIFile = "main.go"
+
 func TestNew(t *testing.T) {
 	swagMode = test
 	New()
+}
+
+func TestSetMarkdownFileDirectory(t *testing.T) {
+	expected := "docs/markdown"
+	p := New(SetMarkdownFileDirectory(expected))
+	assert.Equal(t, expected, p.markdownFileDir)
+}
+
+func TestSetCodeExamplesDirectory(t *testing.T) {
+	expected := "docs/examples"
+	p := New(SetCodeExamplesDirectory(expected))
+	assert.Equal(t, expected, p.codeExampleFilesDir)
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -245,6 +259,37 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParser_ParseGeneralAPIInfoMarkdown(t *testing.T) {
+	p := New(SetMarkdownFileDirectory("testdata"))
+	mainAPIFile := "testdata/markdown.go"
+	err := p.ParseGeneralAPIInfo(mainAPIFile)
+	assert.NoError(t, err)
+
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "Swagger Example API Markdown Description",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {},
+    "tags": [
+        {
+            "description": "Users Tag Markdown Description",
+            "name": "users"
+        }
+    ]
+}`
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+
+	p = New()
+	err = p.ParseGeneralAPIInfo(mainAPIFile)
+	assert.Error(t, err)
+}
+
 func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
@@ -287,7 +332,6 @@ func TestParseSimpleApi1(t *testing.T) {
 	expected, err := ioutil.ReadFile("testdata/simple/expected.json")
 	assert.NoError(t, err)
 	searchDir := "testdata/simple"
-	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = PascalCase
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -770,7 +814,6 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
     }
 }`
 	searchDir := "testdata/simple2"
-	mainAPIFile := "main.go"
 	p := New()
 	p.PropNamingStrategy = SnakeCase
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -1226,7 +1269,6 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
     }
 }`
 	searchDir := "testdata/simple3"
-	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -1315,7 +1357,6 @@ func TestParseStructComment(t *testing.T) {
     }
 }`
 	searchDir := "testdata/struct_comment"
-	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -1389,7 +1430,6 @@ func TestParseNonExportedJSONFields(t *testing.T) {
 }`
 
 	searchDir := "testdata/non_exported_json_fields"
-	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -1422,7 +1462,6 @@ func TestParsePetApi(t *testing.T) {
     "paths": {}
 }`
 	searchDir := "testdata/pet"
-	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -1491,7 +1530,6 @@ func TestParseModelAsTypeAlias(t *testing.T) {
     }
 }`
 	searchDir := "testdata/alias_type"
-	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -1502,7 +1540,6 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 
 func TestParseComposition(t *testing.T) {
 	searchDir := "testdata/composition"
-	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -1518,7 +1555,6 @@ func TestParseComposition(t *testing.T) {
 
 func TestParseImportAliases(t *testing.T) {
 	searchDir := "testdata/alias_import"
-	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -1533,7 +1569,6 @@ func TestParseImportAliases(t *testing.T) {
 
 func TestParseNested(t *testing.T) {
 	searchDir := "testdata/nested"
-	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -1548,7 +1583,6 @@ func TestParseNested(t *testing.T) {
 
 func TestParseDuplicated(t *testing.T) {
 	searchDir := "testdata/duplicated"
-	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -1557,7 +1591,6 @@ func TestParseDuplicated(t *testing.T) {
 
 func TestParseDuplicatedOtherMethods(t *testing.T) {
 	searchDir := "testdata/duplicated2"
-	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -1566,7 +1599,6 @@ func TestParseDuplicatedOtherMethods(t *testing.T) {
 
 func TestParseConflictSchemaName(t *testing.T) {
 	searchDir := "testdata/conflict_name"
-	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -2166,7 +2198,6 @@ func Test3(){
 
 func TestApiParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
-	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -2195,7 +2226,6 @@ func TestApiParseTag(t *testing.T) {
 
 func TestApiParseTag_NonExistendTag(t *testing.T) {
 	searchDir := "testdata/tags_nonexistend_tag"
-	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -2204,7 +2234,6 @@ func TestApiParseTag_NonExistendTag(t *testing.T) {
 
 func TestParseTagMarkdownDescription(t *testing.T) {
 	searchDir := "testdata/tags"
-	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -2224,7 +2253,6 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 
 func TestParseApiMarkdownDescription(t *testing.T) {
 	searchDir := "testdata/tags"
-	mainAPIFile := "main.go"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -2239,7 +2267,6 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 
 func TestIgnoreInvalidPkg(t *testing.T) {
 	searchDir := "testdata/deps_having_invalid_pkg"
-	mainAPIFile := "main.go"
 	p := New()
 	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to ignore valid pkg: " + err.Error())
@@ -2469,7 +2496,6 @@ func TestParseJSONFieldString(t *testing.T) {
 }`
 
 	searchDir := "testdata/json_field_string"
-	mainAPIFile := "main.go"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -2575,4 +2601,40 @@ func TestDefineTypeOfExample(t *testing.T) {
 	example, err = defineTypeOfExample("oops", "", "")
 	assert.Error(t, err)
 	assert.Nil(t, example)
+}
+
+type mockFS struct {
+	os.FileInfo
+	FileName    string
+	IsDirectory bool
+}
+
+func (fs *mockFS) Name() string {
+	return fs.FileName
+}
+
+func (fs *mockFS) IsDir() bool {
+	return fs.IsDirectory
+}
+
+func TestParser_Skip(t *testing.T) {
+	parser := New()
+	parser.ParseVendor = true
+
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "vendor"}))
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "vendor", IsDirectory: true}))
+
+	parser.ParseVendor = false
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "vendor"}))
+	assert.Error(t, parser.Skip("", &mockFS{FileName: "vendor", IsDirectory: true}))
+
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "models", IsDirectory: true}))
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "admin", IsDirectory: true}))
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "release", IsDirectory: true}))
+
+	parser = New(SetExcludedDirsAndFiles("admin/release,admin/models"))
+	assert.NoError(t, parser.Skip("admin", &mockFS{IsDirectory: true}))
+	assert.NoError(t, parser.Skip("admin/service", &mockFS{IsDirectory: true}))
+	assert.Error(t, parser.Skip("admin/models", &mockFS{IsDirectory: true}))
+	assert.Error(t, parser.Skip("admin/release", &mockFS{IsDirectory: true}))
 }

@@ -1630,6 +1630,21 @@ func TestParseMultiDescription(t *testing.T) {
 	assert.Contains(t, string(b), expected)
 }
 
+func TestParseDescriptionMarkdown(t *testing.T) {
+	operation := NewOperation(nil)
+	operation.parser.markdownFileDir = "example/markdown"
+
+	comment := `@description.markdown admin.md`
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	comment = `@description.markdown missing.md`
+
+	err = operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+}
+
 func TestParseSummary(t *testing.T) {
 	comment := `@summary line one`
 	operation := NewOperation(nil)
