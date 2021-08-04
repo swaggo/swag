@@ -160,6 +160,7 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 		if len(types) == 1 {
 			return nil, errors.New("need primitive type after primitive")
 		}
+
 		return BuildCustomSchema(types[1:])
 	case ARRAY:
 		if len(types) == 1 {
@@ -169,6 +170,7 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return spec.ArrayProperty(schema), nil
 	case OBJECT:
 		if len(types) == 1 {
@@ -178,12 +180,14 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		return spec.MapProperty(schema), nil
 	default:
 		err := CheckSchemaType(types[0])
 		if err != nil {
 			return nil, err
 		}
+
 		return PrimitiveSchema(types[0]), nil
 	}
 }

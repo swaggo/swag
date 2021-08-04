@@ -145,10 +145,14 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 		if imp.Name != nil {
 			if imp.Name.Name == pkg {
 				return strings.Trim(imp.Path.Value, `"`)
-			} else if imp.Name.Name == "_" {
+			}
+			if imp.Name.Name == "_" {
 				hasAnonymousPkg = true
 			}
-		} else if pkgs.packages != nil {
+
+			continue
+		}
+		if pkgs.packages != nil {
 			path := strings.Trim(imp.Path.Value, `"`)
 			if pd, ok := pkgs.packages[path]; ok {
 				if pd.Name == pkg {
@@ -185,13 +189,13 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *TypeSpecDef {
 	if IsGolangPrimitiveType(typeName) {
 		return nil
-	} else if file == nil { // for test
+	}
+	if file == nil { // for test
 		return pkgs.uniqueDefinitions[typeName]
 	}
 
-	if strings.ContainsRune(typeName, '.') {
-		parts := strings.Split(typeName, ".")
-
+	parts := strings.Split(typeName, ".")
+	if len(parts) > 1 { //nolint:nestif
 		isAliasPkgName := func(file *ast.File, pkgName string) bool {
 			if file != nil && file.Imports != nil {
 				for _, pkg := range file.Imports {

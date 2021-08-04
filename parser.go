@@ -582,10 +582,10 @@ func getSchemes(commentLine string) []string {
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) error {
 	for _, astDescription := range astFile.Decls {
-		switch astDeclaration := astDescription.(type) {
-		case *ast.FuncDecl:
+		if astDeclaration, ok := astDescription.(*ast.FuncDecl); ok {
 			if astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir)) //for per 'function' comment, create a new 'Operation' object
+				// for per 'function' comment, create a new 'Operation' object
+				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
 				for _, comment := range astDeclaration.Doc.List {
 					if err := operation.ParseComment(comment.Text, astFile); err != nil {
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
@@ -704,6 +704,7 @@ func (parser *Parser) renameSchema(name, pkgPath string) string {
 	parts := strings.Split(name, ".")
 	name = fullTypeName(pkgPath, parts[len(parts)-1])
 	name = strings.ReplaceAll(name, "/", "_")
+
 	return name
 }
 
@@ -719,11 +720,12 @@ func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema)
 		} else {
 			parser.existSchemaNames[schema.Name] = schema
 		}
+		parser.swagger.Definitions[schema.Name] = spec.Schema{}
+
 		if schema.Schema != nil {
 			parser.swagger.Definitions[schema.Name] = *schema.Schema
-		} else {
-			parser.swagger.Definitions[schema.Name] = spec.Schema{}
 		}
+
 		parser.outputSchemas[typeSpecDef] = schema
 	}
 
@@ -740,6 +742,7 @@ func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -758,6 +761,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	if parser.isInStructStack(typeSpecDef) {
 		Println("Skipping '" + typeName + "', recursion detected.")
+
 		return &Schema{
 				Name:    refTypeName,
 				PkgPath: typeSpecDef.PkgPath,
@@ -842,16 +846,18 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 }
 
 func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
-
 	required := make([]string, 0)
 	properties := make(map[string]spec.Schema)
 	for _, field := range fields.List {
 		fieldProps, requiredFromAnon, err := parser.parseStructField(file, field)
-		if err == ErrFuncTypeField {
-			continue
-		} else if err != nil {
+		if err != nil {
+			if err == ErrFuncTypeField {
+				continue
+			}
+
 			return nil, err
-		} else if len(fieldProps) == 0 {
+		}
+		if len(fieldProps) == 0 {
 			continue
 		}
 		required = append(required, requiredFromAnon...)
@@ -954,7 +960,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		return nil, nil, err
 	}
 
-	if structField.schemaType == "string" && types[0] != structField.schemaType {
+	if structField.schemaType == STRING && types[0] != structField.schemaType {
 		schema = PrimitiveSchema(structField.schemaType)
 	}
 
@@ -965,7 +971,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	schema.Format = structField.formatType
 	schema.Extensions = structField.extensions
 	eleSchema := schema
-	if structField.schemaType == "array" {
+	if structField.schemaType == ARRAY {
 		eleSchema = schema.Items.Schema
 	}
 	eleSchema.Maximum = structField.maximum
@@ -1171,9 +1177,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 	}
 
 	// perform this after setting everything else (min, max, etc...)
-	if hasStringTag {
-
-		// @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
+	if hasStringTag { // @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
 		defaultValues := map[string]string{
 			// Zero Values as string
 			STRING:  "",
@@ -1202,14 +1206,18 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 	if schema == nil || depth == 0 {
 		return nil
 	}
-	if name := schema.Ref.String(); name != "" {
+	name := schema.Ref.String()
+	if name != "" {
 		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
 			name = name[pos+1:]
 			if schema, ok := parser.swagger.Definitions[name]; ok {
 				return parser.GetSchemaTypePath(&schema, depth)
 			}
 		}
-	} else if len(schema.Type) > 0 {
+
+		return nil
+	}
+	if len(schema.Type) > 0 {
 		if schema.Type[0] == "array" {
 			depth--
 			s := []string{schema.Type[0]}
