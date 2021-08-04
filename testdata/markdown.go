@@ -5,4 +5,7 @@ package main
 // @description.markdown markdown.md
 // @termsOfService http://swagger.io/terms/
 
+// @tag.name users
+// @tag.description.markdown
+
 func main() {}

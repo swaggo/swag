@@ -1040,8 +1040,6 @@ func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.
 			name = toSnakeCase(field.Names[0].Name)
 		case PascalCase:
 			name = field.Names[0].Name
-		case CamelCase:
-			name = toLowerCamelCase(field.Names[0].Name)
 		default:
 			name = toLowerCamelCase(field.Names[0].Name)
 		}
