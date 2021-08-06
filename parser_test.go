@@ -5,10 +5,12 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -2408,6 +2410,52 @@ func Fun()  {
 	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
 	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
+}
+
+func TestPackagesDefinitions_CollectAstFileInit(t *testing.T) {
+	src := `
+package main
+
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	pkgs := NewPackagesDefinitions()
+
+	// unset the .files and .packages and check that they're re-initialized by CollectAstFile
+	pkgs.packages = nil
+	pkgs.files = nil
+
+	pkgs.CollectAstFile("api", "api/api.go", f)
+	assert.NotNil(t, pkgs.packages)
+	assert.NotNil(t, pkgs.files)
+}
+
+func TestCollectAstFileMultipleTimes(t *testing.T) {
+	src := `
+package main
+
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NotNil(t, p.packages.files[f])
+
+	astFileInfo := p.packages.files[f]
+
+	// if we collect the same again nothing should happen
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.Equal(t, astFileInfo, p.packages.files[f])
 }
 
 func TestParseJSONFieldString(t *testing.T) {
