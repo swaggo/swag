@@ -434,7 +434,11 @@ func TestGen_duplicateRoute(t *testing.T) {
 		PropNamingStrategy: "",
 		ParseDependency:    true,
 	}
-
 	err := New().Build(config)
-	assert.Error(t, err)
+	assert.NoError(t, err)
+
+	// with Strict enabled should cause an error instead of warning about the duplicate route
+	config.Strict = true
+	err = New().Build(config)
+	assert.EqualError(t, err, "route GET /testapi/endpoint is declared multiple times")
 }

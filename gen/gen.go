@@ -60,6 +60,9 @@ type Config struct {
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
 
+	// Strict whether swag should error or warn when it detects cases which are most likely user errors
+	Strict bool
+
 	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
 	MarkdownFilesDir string
 
@@ -85,7 +88,8 @@ func (g *Gen) Build(config *Config) error {
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
-		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir))
+		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
+		swag.SetStrict(config.Strict))
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
