@@ -423,3 +423,18 @@ func TestGen_cgoImports(t *testing.T) {
 		os.Remove(expectedFile)
 	}
 }
+
+func TestGen_duplicateRoute(t *testing.T) {
+	searchDir := "../testdata/duplicate_route"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/duplicate_route/docs",
+		PropNamingStrategy: "",
+		ParseDependency:    true,
+	}
+
+	err := New().Build(config)
+	assert.Error(t, err)
+}
