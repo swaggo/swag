@@ -3,6 +3,7 @@ package swag
 import (
 	"go/ast"
 	"go/token"
+	"sort"
 	"strings"
 )
 
@@ -53,10 +54,19 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 	}
 }
 
-// RangeFiles for range the collection of ast.File.
+// RangeFiles for range the collection of ast.File in alphabetic order.
 func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *ast.File) error) error {
-	for file, info := range pkgs.files {
-		if err := handle(info.Path, file); err != nil {
+	sortedFiles := make([]*AstFileInfo, 0, len(pkgs.files))
+	for _, info := range pkgs.files {
+		sortedFiles = append(sortedFiles, info)
+	}
+
+	sort.Slice(sortedFiles, func(i, j int) bool {
+		return strings.Compare(sortedFiles[i].Path, sortedFiles[j].Path) < 0
+	})
+
+	for _, info := range sortedFiles {
+		if err := handle(info.Path, info.File); err != nil {
 			return err
 		}
 	}
