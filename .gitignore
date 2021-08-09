@@ -6,7 +6,6 @@ example/basic/docs/*
 example/celler/docs/*
 cover.out
 
-
 # Test binary, build with `go test -c`
 *.test
 
@@ -14,6 +13,9 @@ cover.out
 *.out
 .idea
 .vscode
+
+# Dependency directories
+vendor/
 
 # Etc
 .DS_Store

@@ -816,6 +816,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
 			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, ref)
 		}
+
 	// type Foo []Baz
 	case *ast.ArrayType:
 		itemSchema, err := parser.parseTypeExpr(file, expr.Elt, true)
@@ -824,6 +825,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 		}
 
 		return spec.ArrayProperty(itemSchema), nil
+
 	// type Foo map[string]Bar
 	case *ast.MapType:
 		if _, ok := expr.Value.(*ast.InterfaceType); ok {
@@ -835,6 +837,11 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 		}
 
 		return spec.MapProperty(schema), nil
+
+	// type Foo interface{}
+	case *ast.InterfaceType:
+		return parser.parseStruct(file, expr.Methods)
+
 	case *ast.FuncType:
 		return nil, ErrFuncTypeField
 	// ...
