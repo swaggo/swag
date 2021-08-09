@@ -377,15 +377,28 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 					return err
 				}
 				securityMap[value] = securitySchemeOAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"], scopes, extensions)
-			case "@x-tokenname":
-				// ignore this
-				break
 			case "@query.collection.format":
 				parser.collectionFormatInQuery = value
 			default:
 				prefixExtension := "@x-"
 				if len(attribute) > 5 { // Prefix extension + 1 char + 1 space  + 1 char
 					if attribute[:len(prefixExtension)] == prefixExtension {
+
+						extExistsInSecurityDef := false
+						// for each security definition
+						for _, v := range securityMap {
+							// check if extension exists
+							_, extExistsInSecurityDef = v.VendorExtensible.Extensions.GetString(attribute[1:])
+							// if it exists in at least one, then we stop iterating
+							if extExistsInSecurityDef {
+								break
+							}
+						}
+						// if it is present on security def, don't add it again
+						if extExistsInSecurityDef {
+							break
+						}
+
 						var valueJSON interface{}
 						split := strings.SplitAfter(commentLine, attribute+" ")
 						if len(split) < 2 {
@@ -452,8 +465,9 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 			}
 			scopes[scopScheme] = v[len(securityAttr):]
 		}
-		if securityAttr == "@x-tokenname" {
-			extensions["x-tokenName"] = strings.TrimSpace(v[len(securityAttr):])
+		if strings.HasPrefix(securityAttr, "@x-") {
+			// Add the custom attribute without the @
+			extensions[securityAttr[1:]] = strings.TrimSpace(v[len(securityAttr):])
 		}
 		// next securityDefinitions
 		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {

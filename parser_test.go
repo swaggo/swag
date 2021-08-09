@@ -80,7 +80,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "scopes": {
                 "admin": " Grants read and write access to administrative information"
             },
-            "x-tokenName": "id_token"
+            "x-tokenname": "id_token"
         },
         "OAuth2Application": {
             "type": "oauth2",
@@ -98,7 +98,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "scopes": {
                 "admin": " Grants read and write access to administrative information",
                 "write": " Grants write access"
-            }
+            },
+            "x-google-audiences": "some_audience.google.com"
         },
         "OAuth2Password": {
             "type": "oauth2",
