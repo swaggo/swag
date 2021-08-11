@@ -423,3 +423,22 @@ func TestGen_cgoImports(t *testing.T) {
 		os.Remove(expectedFile)
 	}
 }
+
+func TestGen_duplicateRoute(t *testing.T) {
+	searchDir := "../testdata/duplicate_route"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/duplicate_route/docs",
+		PropNamingStrategy: "",
+		ParseDependency:    true,
+	}
+	err := New().Build(config)
+	assert.NoError(t, err)
+
+	// with Strict enabled should cause an error instead of warning about the duplicate route
+	config.Strict = true
+	err = New().Build(config)
+	assert.EqualError(t, err, "route GET /testapi/endpoint is declared multiple times")
+}

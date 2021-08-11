@@ -3,6 +3,8 @@ package swag
 import (
 	"go/ast"
 	"go/token"
+	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -23,26 +25,30 @@ func NewPackagesDefinitions() *PackagesDefinitions {
 }
 
 // CollectAstFile collect ast.file.
-func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile *ast.File) {
+func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile *ast.File) error {
 	if pkgs.files == nil {
 		pkgs.files = make(map[*ast.File]*AstFileInfo)
-	}
-
-	pkgs.files[astFile] = &AstFileInfo{
-		File:        astFile,
-		Path:        path,
-		PackagePath: packageDir,
-	}
-
-	if len(packageDir) == 0 {
-		return
 	}
 
 	if pkgs.packages == nil {
 		pkgs.packages = make(map[string]*PackageDefinitions)
 	}
 
+	// return without storing the file if we lack a packageDir
+	if len(packageDir) == 0 {
+		return nil
+	}
+
+	path, err := filepath.Abs(path)
+	if err != nil {
+		return err
+	}
+
 	if pd, ok := pkgs.packages[packageDir]; ok {
+		// return without storing the file if it already exists
+		if _, exists := pd.Files[path]; exists {
+			return nil
+		}
 		pd.Files[path] = astFile
 	} else {
 		pkgs.packages[packageDir] = &PackageDefinitions{
@@ -51,12 +57,29 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 			TypeDefinitions: make(map[string]*TypeSpecDef),
 		}
 	}
+
+	pkgs.files[astFile] = &AstFileInfo{
+		File:        astFile,
+		Path:        path,
+		PackagePath: packageDir,
+	}
+
+	return nil
 }
 
-// RangeFiles for range the collection of ast.File.
+// RangeFiles for range the collection of ast.File in alphabetic order.
 func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *ast.File) error) error {
-	for file, info := range pkgs.files {
-		if err := handle(info.Path, file); err != nil {
+	sortedFiles := make([]*AstFileInfo, 0, len(pkgs.files))
+	for _, info := range pkgs.files {
+		sortedFiles = append(sortedFiles, info)
+	}
+
+	sort.Slice(sortedFiles, func(i, j int) bool {
+		return strings.Compare(sortedFiles[i].Path, sortedFiles[j].Path) < 0
+	})
+
+	for _, info := range sortedFiles {
+		if err := handle(info.Path, info.File); err != nil {
 			return err
 		}
 	}

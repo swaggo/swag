@@ -81,6 +81,9 @@ type Parser struct {
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
 
+	// Strict whether swag should error or warn when it detects cases which are most likely user errors
+	Strict bool
+
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []*TypeSpecDef
 
@@ -156,6 +159,13 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 				p.excludes[f] = true
 			}
 		}
+	}
+}
+
+// SetStrict sets whether swag should error or warn when it detects cases which are most likely user errors
+func SetStrict(strict bool) func(*Parser) {
+	return func(p *Parser) {
+		p.Strict = strict
 	}
 }
 
@@ -599,22 +609,17 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 					if pathItem, ok = parser.swagger.Paths.Paths[routeProperties.Path]; !ok {
 						pathItem = spec.PathItem{}
 					}
-					switch strings.ToUpper(routeProperties.HTTPMethod) {
-					case http.MethodGet:
-						pathItem.Get = &operation.Operation
-					case http.MethodPost:
-						pathItem.Post = &operation.Operation
-					case http.MethodDelete:
-						pathItem.Delete = &operation.Operation
-					case http.MethodPut:
-						pathItem.Put = &operation.Operation
-					case http.MethodPatch:
-						pathItem.Patch = &operation.Operation
-					case http.MethodHead:
-						pathItem.Head = &operation.Operation
-					case http.MethodOptions:
-						pathItem.Options = &operation.Operation
+
+					// check if we already have a operation for this path and method
+					if hasRouteMethodOp(pathItem, routeProperties.HTTPMethod) {
+						err := fmt.Errorf("route %s %s is declared multiple times", routeProperties.HTTPMethod, routeProperties.Path)
+						if parser.Strict {
+							return err
+						}
+						Printf("warning: %s\n", err)
 					}
+
+					setRouteMethodOp(&pathItem, routeProperties.HTTPMethod, &operation.Operation)
 
 					parser.swagger.Paths.Paths[routeProperties.Path] = pathItem
 				}
@@ -623,6 +628,46 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 	}
 
 	return nil
+}
+
+func setRouteMethodOp(pathItem *spec.PathItem, method string, op *spec.Operation) {
+	switch strings.ToUpper(method) {
+	case http.MethodGet:
+		pathItem.Get = op
+	case http.MethodPost:
+		pathItem.Post = op
+	case http.MethodDelete:
+		pathItem.Delete = op
+	case http.MethodPut:
+		pathItem.Put = op
+	case http.MethodPatch:
+		pathItem.Patch = op
+	case http.MethodHead:
+		pathItem.Head = op
+	case http.MethodOptions:
+		pathItem.Options = op
+	}
+}
+
+func hasRouteMethodOp(pathItem spec.PathItem, method string) bool {
+	switch strings.ToUpper(method) {
+	case http.MethodGet:
+		return pathItem.Get != nil
+	case http.MethodPost:
+		return pathItem.Post != nil
+	case http.MethodDelete:
+		return pathItem.Delete != nil
+	case http.MethodPut:
+		return pathItem.Put != nil
+	case http.MethodPatch:
+		return pathItem.Patch != nil
+	case http.MethodHead:
+		return pathItem.Head != nil
+	case http.MethodOptions:
+		return pathItem.Options != nil
+	}
+
+	return false
 }
 
 func convertFromSpecificToPrimitive(typeName string) (string, error) {
