@@ -1013,11 +1013,14 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	schema.ReadOnly = structField.readOnly
 	schema.Default = structField.defaultValue
 	schema.Example = structField.exampleValue
-	schema.Format = structField.formatType
+	if structField.schemaType != ARRAY {
+		schema.Format = structField.formatType
+	}
 	schema.Extensions = structField.extensions
 	eleSchema := schema
 	if structField.schemaType == ARRAY {
 		eleSchema = schema.Items.Schema
+		eleSchema.Format = structField.formatType
 	}
 	eleSchema.Maximum = structField.maximum
 	eleSchema.Minimum = structField.minimum
