@@ -5,10 +5,12 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,6 +33,14 @@ func TestSetCodeExamplesDirectory(t *testing.T) {
 	expected := "docs/examples"
 	p := New(SetCodeExamplesDirectory(expected))
 	assert.Equal(t, expected, p.codeExampleFilesDir)
+}
+
+func TestSetStrict(t *testing.T) {
+	p := New()
+	assert.Equal(t, false, p.Strict)
+
+	p = New(SetStrict(true))
+	assert.Equal(t, true, p.Strict)
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -2197,6 +2207,29 @@ func Test3(){
 // 	}
 // }
 
+func TestParser_ParseRouterApiDuplicateRoute(t *testing.T) {
+	src := `
+package test
+
+// @Router /api/{id} [get]
+func Test1(){
+}
+// @Router /api/{id} [get]
+func Test2(){
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New(SetStrict(true))
+	err = p.ParseRouterAPIInfo("", f)
+	assert.EqualError(t, err, "route GET /api/{id} is declared multiple times")
+
+	p = New()
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+}
+
 func TestApiParseTag(t *testing.T) {
 	searchDir := "testdata/tags"
 	p := New(SetMarkdownFileDirectory(searchDir))
@@ -2411,6 +2444,52 @@ func Fun()  {
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }
 
+func TestPackagesDefinitions_CollectAstFileInit(t *testing.T) {
+	src := `
+package main
+
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	pkgs := NewPackagesDefinitions()
+
+	// unset the .files and .packages and check that they're re-initialized by CollectAstFile
+	pkgs.packages = nil
+	pkgs.files = nil
+
+	pkgs.CollectAstFile("api", "api/api.go", f)
+	assert.NotNil(t, pkgs.packages)
+	assert.NotNil(t, pkgs.files)
+}
+
+func TestCollectAstFileMultipleTimes(t *testing.T) {
+	src := `
+package main
+
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NotNil(t, p.packages.files[f])
+
+	astFileInfo := p.packages.files[f]
+
+	// if we collect the same again nothing should happen
+	p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.Equal(t, astFileInfo, p.packages.files[f])
+}
+
 func TestParseJSONFieldString(t *testing.T) {
 	expected := `{
     "swagger": "2.0",
@@ -2602,6 +2681,64 @@ func TestDefineTypeOfExample(t *testing.T) {
 	example, err = defineTypeOfExample("oops", "", "")
 	assert.Error(t, err)
 	assert.Nil(t, example)
+}
+
+func TestSetRouteMethodOp(t *testing.T) {
+	op := spec.NewOperation("dummy")
+
+	// choosing to test each method explicitly instead of table driven to avoid reliance on helpers
+
+	pathItem := spec.PathItem{}
+	setRouteMethodOp(&pathItem, http.MethodGet, op)
+	assert.Equal(t, op, pathItem.Get)
+
+	pathItem = spec.PathItem{}
+	setRouteMethodOp(&pathItem, http.MethodPost, op)
+	assert.Equal(t, op, pathItem.Post)
+
+	pathItem = spec.PathItem{}
+	setRouteMethodOp(&pathItem, http.MethodDelete, op)
+	assert.Equal(t, op, pathItem.Delete)
+
+	pathItem = spec.PathItem{}
+	setRouteMethodOp(&pathItem, http.MethodPut, op)
+	assert.Equal(t, op, pathItem.Put)
+
+	pathItem = spec.PathItem{}
+	setRouteMethodOp(&pathItem, http.MethodPatch, op)
+	assert.Equal(t, op, pathItem.Patch)
+
+	pathItem = spec.PathItem{}
+	setRouteMethodOp(&pathItem, http.MethodHead, op)
+	assert.Equal(t, op, pathItem.Head)
+
+	pathItem = spec.PathItem{}
+	setRouteMethodOp(&pathItem, http.MethodOptions, op)
+	assert.Equal(t, op, pathItem.Options)
+}
+
+func TestHasRouteMethodOp(t *testing.T) {
+	pathItem := spec.PathItem{}
+
+	// assert that an invalid http method produces false
+	assert.False(t, hasRouteMethodOp(pathItem, "OOPSIE"))
+
+	// test each (supported) http method
+	httpMethods := []string{
+		http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut,
+		http.MethodPatch, http.MethodHead, http.MethodOptions,
+	}
+	for _, httpMethod := range httpMethods {
+		pathItem = spec.PathItem{}
+
+		// should be false before setting
+		assert.False(t, hasRouteMethodOp(pathItem, httpMethod))
+
+		// and true after we set it
+		// we rely on setRouteMethodOp, which is tested more thoroughly above
+		setRouteMethodOp(&pathItem, httpMethod, spec.NewOperation("dummy"))
+		assert.True(t, hasRouteMethodOp(pathItem, httpMethod))
+	}
 }
 
 type mockFS struct {
