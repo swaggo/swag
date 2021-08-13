@@ -799,6 +799,11 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 	comment = `@Header 200 "Mallformed"`
 	err = operation.ParseComment(comment, nil)
 	assert.Error(t, err, "ParseComment should not fail")
+
+	comment = `@Header 1.1 {string} Token "qwerty"`
+	err = operation.ParseComment(comment, nil)
+	assert.Error(t, err, "ParseComment should not fail")
+
 }
 
 func TestParseResponseCommentWithHeaderForCodes(t *testing.T) {
