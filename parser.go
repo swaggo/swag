@@ -33,6 +33,8 @@ const (
 
 	// SnakeCase indicates using SnakeCase strategy for struct field.
 	SnakeCase = "snakecase"
+
+	scopeAttrPrefix = "@scope."
 )
 
 var (
@@ -102,6 +104,8 @@ type Parser struct {
 
 // New creates a new Parser with default properties.
 func New(options ...func(*Parser)) *Parser {
+	//parser.swagger.SecurityDefinitions =
+
 	parser := &Parser{
 		swagger: &spec.Swagger{
 			SwaggerProps: spec.SwaggerProps{
@@ -117,7 +121,8 @@ func New(options ...func(*Parser)) *Parser {
 				Paths: &spec.Paths{
 					Paths: make(map[string]spec.PathItem),
 				},
-				Definitions: make(map[string]spec.Schema),
+				Definitions:         make(map[string]spec.Schema),
+				SecurityDefinitions: make(map[string]*spec.SecurityScheme),
 			},
 		},
 		packages:           NewPackagesDefinitions(),
@@ -276,168 +281,173 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	}
 
 	parser.swagger.Swagger = "2.0"
-	securityMap := map[string]*spec.SecurityScheme{}
 
 	for _, comment := range fileTree.Comments {
 		if !isGeneralAPIComment(comment) {
 			continue
 		}
 		comments := strings.Split(comment.Text(), "\n")
-		previousAttribute := ""
-		// parsing classic meta data model
-		for i, commentLine := range comments {
-			attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
-			value := strings.TrimSpace(commentLine[len(attribute):])
-			multilineBlock := false
-			if previousAttribute == attribute {
-				multilineBlock = true
-			}
-			switch attribute {
-			case "@version":
-				parser.swagger.Info.Version = value
-			case "@title":
-				parser.swagger.Info.Title = value
-			case "@description":
-				if multilineBlock {
-					parser.swagger.Info.Description += "\n" + value
-
-					continue
-				}
-				parser.swagger.Info.Description = value
-			case "@description.markdown":
-				commentInfo, err := getMarkdownForTag("api", parser.markdownFileDir)
-				if err != nil {
-					return err
-				}
-				parser.swagger.Info.Description = string(commentInfo)
-			case "@termsofservice":
-				parser.swagger.Info.TermsOfService = value
-			case "@contact.name":
-				parser.swagger.Info.Contact.Name = value
-			case "@contact.email":
-				parser.swagger.Info.Contact.Email = value
-			case "@contact.url":
-				parser.swagger.Info.Contact.URL = value
-			case "@license.name":
-				parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
-				parser.swagger.Info.License.Name = value
-			case "@license.url":
-				parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
-				parser.swagger.Info.License.URL = value
-			case "@host":
-				parser.swagger.Host = value
-			case "@basepath":
-				parser.swagger.BasePath = value
-			case "@schemes":
-				parser.swagger.Schemes = getSchemes(commentLine)
-			case "@tag.name":
-				parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
-					TagProps: spec.TagProps{
-						Name: value,
-					},
-				})
-			case "@tag.description":
-				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
-				tag.TagProps.Description = value
-				replaceLastTag(parser.swagger.Tags, tag)
-			case "@tag.description.markdown":
-				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
-				commentInfo, err := getMarkdownForTag(tag.TagProps.Name, parser.markdownFileDir)
-				if err != nil {
-					return err
-				}
-				tag.TagProps.Description = string(commentInfo)
-				replaceLastTag(parser.swagger.Tags, tag)
-			case "@tag.docs.url":
-				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
-				tag.TagProps.ExternalDocs = &spec.ExternalDocumentation{
-					URL: value,
-				}
-				replaceLastTag(parser.swagger.Tags, tag)
-			case "@tag.docs.description":
-				tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
-				if tag.TagProps.ExternalDocs == nil {
-					return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
-				}
-				tag.TagProps.ExternalDocs.Description = value
-				replaceLastTag(parser.swagger.Tags, tag)
-			case "@securitydefinitions.basic":
-				securityMap[value] = spec.BasicAuth()
-			case "@securitydefinitions.apikey":
-				attrMap, _, _, err := extractSecurityAttribute(attribute, []string{"@in", "@name"}, comments[i+1:])
-				if err != nil {
-					return err
-				}
-				securityMap[value] = spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
-			case "@securitydefinitions.oauth2.application":
-				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
-				if err != nil {
-					return err
-				}
-				securityMap[value] = securitySchemeOAuth2Application(attrMap["@tokenurl"], scopes, extensions)
-			case "@securitydefinitions.oauth2.implicit":
-				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@authorizationurl"}, comments[i+1:])
-				if err != nil {
-					return err
-				}
-				securityMap[value] = securitySchemeOAuth2Implicit(attrMap["@authorizationurl"], scopes, extensions)
-			case "@securitydefinitions.oauth2.password":
-				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
-				if err != nil {
-					return err
-				}
-				securityMap[value] = securitySchemeOAuth2Password(attrMap["@tokenurl"], scopes, extensions)
-			case "@securitydefinitions.oauth2.accesscode":
-				attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl", "@authorizationurl"}, comments[i+1:])
-				if err != nil {
-					return err
-				}
-				securityMap[value] = securitySchemeOAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"], scopes, extensions)
-			case "@query.collection.format":
-				parser.collectionFormatInQuery = value
-			default:
-				prefixExtension := "@x-"
-				if len(attribute) > 5 { // Prefix extension + 1 char + 1 space  + 1 char
-					if attribute[:len(prefixExtension)] == prefixExtension {
-						extExistsInSecurityDef := false
-						// for each security definition
-						for _, v := range securityMap {
-							// check if extension exists
-							_, extExistsInSecurityDef = v.VendorExtensible.Extensions.GetString(attribute[1:])
-							// if it exists in at least one, then we stop iterating
-							if extExistsInSecurityDef {
-								break
-							}
-						}
-						// if it is present on security def, don't add it again
-						if extExistsInSecurityDef {
-							break
-						}
-
-						var valueJSON interface{}
-						split := strings.SplitAfter(commentLine, attribute+" ")
-						if len(split) < 2 {
-							return fmt.Errorf("annotation %s need a value", attribute)
-						}
-						extensionName := "x-" + strings.SplitAfter(attribute, prefixExtension)[1]
-						if err := json.Unmarshal([]byte(split[1]), &valueJSON); err != nil {
-							return fmt.Errorf("annotation %s need a valid json value", attribute)
-						}
-
-						if strings.Contains(extensionName, "logo") {
-							parser.swagger.Info.Extensions.Add(extensionName, valueJSON)
-						} else {
-							parser.swagger.AddExtension(extensionName, valueJSON)
-						}
-					}
-				}
-			}
-			previousAttribute = attribute
+		err := parseGeneralAPI(parser, comments)
+		if err != nil {
+			return err
 		}
 	}
 
-	if len(securityMap) > 0 {
-		parser.swagger.SecurityDefinitions = securityMap
+	return nil
+}
+
+func parseGeneralAPI(parser *Parser, comments []string) error {
+	previousAttribute := ""
+
+	// parsing classic meta data model
+	for i, commentLine := range comments {
+		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+		value := strings.TrimSpace(commentLine[len(attribute):])
+		multilineBlock := false
+		if previousAttribute == attribute {
+			multilineBlock = true
+		}
+		switch attribute {
+		case "@version":
+			parser.swagger.Info.Version = value
+		case "@title":
+			parser.swagger.Info.Title = value
+		case "@description":
+			if multilineBlock {
+				parser.swagger.Info.Description += "\n" + value
+
+				continue
+			}
+			parser.swagger.Info.Description = value
+		case "@description.markdown":
+			commentInfo, err := getMarkdownForTag("api", parser.markdownFileDir)
+			if err != nil {
+				return err
+			}
+			parser.swagger.Info.Description = string(commentInfo)
+		case "@termsofservice":
+			parser.swagger.Info.TermsOfService = value
+		case "@contact.name":
+			parser.swagger.Info.Contact.Name = value
+		case "@contact.email":
+			parser.swagger.Info.Contact.Email = value
+		case "@contact.url":
+			parser.swagger.Info.Contact.URL = value
+		case "@license.name":
+			parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
+			parser.swagger.Info.License.Name = value
+		case "@license.url":
+			parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
+			parser.swagger.Info.License.URL = value
+		case "@host":
+			parser.swagger.Host = value
+		case "@basepath":
+			parser.swagger.BasePath = value
+		case "@schemes":
+			parser.swagger.Schemes = getSchemes(commentLine)
+		case "@tag.name":
+			parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
+				TagProps: spec.TagProps{
+					Name: value,
+				},
+			})
+		case "@tag.description":
+			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+			tag.TagProps.Description = value
+			replaceLastTag(parser.swagger.Tags, tag)
+		case "@tag.description.markdown":
+			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+			commentInfo, err := getMarkdownForTag(tag.TagProps.Name, parser.markdownFileDir)
+			if err != nil {
+				return err
+			}
+			tag.TagProps.Description = string(commentInfo)
+			replaceLastTag(parser.swagger.Tags, tag)
+		case "@tag.docs.url":
+			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+			tag.TagProps.ExternalDocs = &spec.ExternalDocumentation{
+				URL: value,
+			}
+			replaceLastTag(parser.swagger.Tags, tag)
+		case "@tag.docs.description":
+			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+			if tag.TagProps.ExternalDocs == nil {
+				return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
+			}
+			tag.TagProps.ExternalDocs.Description = value
+			replaceLastTag(parser.swagger.Tags, tag)
+		case "@securitydefinitions.basic":
+			parser.swagger.SecurityDefinitions[value] = spec.BasicAuth()
+		case "@securitydefinitions.apikey":
+			attrMap, _, _, err := extractSecurityAttribute(attribute, []string{"@in", "@name"}, comments[i+1:])
+			if err != nil {
+				return err
+			}
+			parser.swagger.SecurityDefinitions[value] = spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
+		case "@securitydefinitions.oauth2.application":
+			attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
+			if err != nil {
+				return err
+			}
+			parser.swagger.SecurityDefinitions[value] = securitySchemeOAuth2Application(attrMap["@tokenurl"], scopes, extensions)
+		case "@securitydefinitions.oauth2.implicit":
+			attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@authorizationurl"}, comments[i+1:])
+			if err != nil {
+				return err
+			}
+			parser.swagger.SecurityDefinitions[value] = securitySchemeOAuth2Implicit(attrMap["@authorizationurl"], scopes, extensions)
+		case "@securitydefinitions.oauth2.password":
+			attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl"}, comments[i+1:])
+			if err != nil {
+				return err
+			}
+			parser.swagger.SecurityDefinitions[value] = securitySchemeOAuth2Password(attrMap["@tokenurl"], scopes, extensions)
+		case "@securitydefinitions.oauth2.accesscode":
+			attrMap, scopes, extensions, err := extractSecurityAttribute(attribute, []string{"@tokenurl", "@authorizationurl"}, comments[i+1:])
+			if err != nil {
+				return err
+			}
+			parser.swagger.SecurityDefinitions[value] = securitySchemeOAuth2AccessToken(attrMap["@authorizationurl"], attrMap["@tokenurl"], scopes, extensions)
+		case "@query.collection.format":
+			parser.collectionFormatInQuery = value
+		default:
+			prefixExtension := "@x-"
+			if len(attribute) > 5 { // Prefix extension + 1 char + 1 space  + 1 char
+				if attribute[:len(prefixExtension)] == prefixExtension {
+					extExistsInSecurityDef := false
+					// for each security definition
+					for _, v := range parser.swagger.SecurityDefinitions {
+						// check if extension exists
+						_, extExistsInSecurityDef = v.VendorExtensible.Extensions.GetString(attribute[1:])
+						// if it exists in at least one, then we stop iterating
+						if extExistsInSecurityDef {
+							break
+						}
+					}
+					// if it is present on security def, don't add it again
+					if extExistsInSecurityDef {
+						break
+					}
+
+					var valueJSON interface{}
+					split := strings.SplitAfter(commentLine, attribute+" ")
+					if len(split) < 2 {
+						return fmt.Errorf("annotation %s need a value", attribute)
+					}
+					extensionName := "x-" + strings.SplitAfter(attribute, prefixExtension)[1]
+					if err := json.Unmarshal([]byte(split[1]), &valueJSON); err != nil {
+						return fmt.Errorf("annotation %s need a valid json value", attribute)
+					}
+
+					if strings.Contains(extensionName, "logo") {
+						parser.swagger.Info.Extensions.Add(extensionName, valueJSON)
+					} else {
+						parser.swagger.AddExtension(extensionName, valueJSON)
+					}
+				}
+			}
+		}
+		previousAttribute = attribute
 	}
 
 	return nil
@@ -474,11 +484,7 @@ func extractSecurityAttribute(context string, search []string, lines []string) (
 			return nil, nil, nil, err
 		}
 		if isExists {
-			scopScheme, err := getScopeScheme(securityAttr)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			scopes[scopScheme] = v[len(securityAttr):]
+			scopes[securityAttr[len(scopeAttrPrefix):]] = v[len(securityAttr):]
 		}
 		if strings.HasPrefix(securityAttr, "@x-") {
 			// Add the custom attribute without the @
@@ -583,26 +589,17 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 	return nil, fmt.Errorf("Unable to find markdown file for tag %s in the given directory", tagName)
 }
 
-func getScopeScheme(scope string) (string, error) {
-	scopeValue := scope[strings.Index(scope, "@scope."):]
-	if scopeValue == "" {
-		return "", fmt.Errorf("@scope is empty")
-	}
-
-	return scope[len("@scope."):], nil
-}
-
 func isExistsScope(scope string) (bool, error) {
 	s := strings.Fields(scope)
 	for _, v := range s {
-		if strings.Contains(v, "@scope.") {
+		if strings.Contains(v, scopeAttrPrefix) {
 			if strings.Contains(v, ",") {
 				return false, fmt.Errorf("@scope can't use comma(,) get=" + v)
 			}
 		}
 	}
 
-	return strings.Contains(scope, "@scope."), nil
+	return strings.Contains(scope, scopeAttrPrefix), nil
 }
 
 // getSchemes parses swagger schemes for given commentLine.
