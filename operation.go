@@ -322,7 +322,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
 
-	if err := operation.parseAndExtractionParamAttribute(commentLine, objectType, refType, &param); err != nil {
+	err := operation.parseAndExtractionParamAttribute(commentLine, objectType, refType, &param)
+	if err != nil {
 		return err
 	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)

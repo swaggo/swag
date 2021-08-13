@@ -1001,6 +1001,29 @@ func TestParseParamCommentQueryArray(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+// Test TestParseParamCommentDefaultValue Query Params
+func TestParseParamCommentDefaultValue(t *testing.T) {
+	operation := NewOperation(nil)
+	err := operation.ParseComment(`@Param names query string true "Users List" default(test)`, nil)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "string",
+            "default": "test",
+            "description": "Users List",
+            "name": "names",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+
+}
+
 // Test ParseParamComment Query Params
 func TestParseParamCommentQueryArrayFormat(t *testing.T) {
 	comment := `@Param names query []string true "Users List" collectionFormat(multi)`
@@ -1733,6 +1756,13 @@ func TestParseExtentions(t *testing.T) {
 		b, _ := json.MarshalIndent(operation, "", "    ")
 		assert.Equal(t, expected, string(b))
 	}
+}
+
+func TestFindInSlice(t *testing.T) {
+	assert.True(t, findInSlice([]string{"one", "two", "tree"}, "one"))
+	assert.True(t, findInSlice([]string{"tree", "two", "one"}, "one"))
+	assert.True(t, findInSlice([]string{"two", "one", "tree"}, "one"))
+	assert.False(t, findInSlice([]string{"one", "two", "tree"}, "four"))
 }
 
 func TestParseResponseHeaderComment(t *testing.T) {
