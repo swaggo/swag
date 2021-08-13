@@ -800,7 +800,7 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 	err = operation.ParseComment(comment, nil)
 	assert.Error(t, err, "ParseComment should not fail")
 
-	comment = `@Header 1.1 {string} Token "qwerty"`
+	comment = `@Header 200,asdsd {string} Token "qwerty"`
 	err = operation.ParseComment(comment, nil)
 	assert.Error(t, err, "ParseComment should not fail")
 
