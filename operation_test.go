@@ -1787,7 +1787,7 @@ func TestParseObjectSchema(t *testing.T) {
 	operation.parser = New()
 	operation.parser.packages = &PackagesDefinitions{
 		uniqueDefinitions: map[string]*TypeSpecDef{
-			"model.User": &TypeSpecDef{
+			"model.User": {
 				File: &ast.File{
 					Name: &ast.Ident{
 						Name: "user.go",
