@@ -135,7 +135,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 }
 
 // ParseCodeSample godoc.
-func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainder string) error {
+func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) error {
 	if lineRemainder == "file" {
 		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
 		if err != nil {
@@ -143,7 +143,8 @@ func (operation *Operation) ParseCodeSample(attribute, commentLine, lineRemainde
 		}
 
 		var valueJSON interface{}
-		if err := json.Unmarshal(data, &valueJSON); err != nil {
+		err = json.Unmarshal(data, &valueJSON)
+		if err != nil {
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
@@ -176,7 +177,8 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 		}
 
 		var valueJSON interface{}
-		if err := json.Unmarshal([]byte(lineRemainder), &valueJSON); err != nil {
+		err := json.Unmarshal([]byte(lineRemainder), &valueJSON)
+		if err != nil {
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
@@ -188,6 +190,16 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 }
 
 var paramPattern = regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
+
+func findInSlice(arr []string, target string) bool {
+	for _, str := range arr {
+		if str == target {
+			return true
+		}
+	}
+
+	return false
+}
 
 // ParseParamComment parses params return []string of param properties
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
@@ -248,15 +260,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if len(schema.Properties) == 0 {
 				return nil
 			}
-			find := func(arr []string, target string) bool {
-				for _, str := range arr {
-					if str == target {
-						return true
-					}
-				}
 
-				return false
-			}
 			items := schema.Properties.ToOrderedSchemaItems()
 			for _, item := range items {
 				name := item.Name
@@ -269,7 +273,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					prop.Items.Schema != nil &&
 					len(prop.Items.Schema.Type) > 0 &&
 					IsSimplePrimitiveType(prop.Items.Schema.Type[0]):
-					param = createParameter(paramType, prop.Description, name, prop.Type[0], find(schema.Required, name))
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], findInSlice(schema.Required, name))
 					param.SimpleSchema.Type = prop.Type[0]
 					if operation.parser != nil && operation.parser.collectionFormatInQuery != "" && param.CollectionFormat == "" {
 						param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
@@ -280,7 +284,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 						},
 					}
 				case IsSimplePrimitiveType(prop.Type[0]):
-					param = createParameter(paramType, prop.Description, name, prop.Type[0], find(schema.Required, name))
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], findInSlice(schema.Required, name))
 				default:
 					Println(fmt.Sprintf("skip field [%s] in %s is not supported type for %s", name, refType, paramType))
 
@@ -318,7 +322,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
 
-	if err := operation.parseAndExtractionParamAttribute(commentLine, objectType, refType, &param); err != nil {
+	err := operation.parseAndExtractionParamAttribute(commentLine, objectType, refType, &param)
+	if err != nil {
 		return err
 	}
 	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
@@ -495,9 +500,9 @@ func defineType(schemaType string, value string) (interface{}, error) {
 		}
 
 		return v, nil
+	default:
+		return nil, fmt.Errorf("%s is unsupported type in enum value %s", schemaType, value)
 	}
-
-	return nil, fmt.Errorf("%s is unsupported type in enum value %s", schemaType, value)
 }
 
 // ParseTagsComment parses comment for given `tag` comment string.
@@ -529,13 +534,12 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 
 			continue
 		}
-		if aliasMimeType, ok := mimeTypeAliases[typeName]; ok {
-			*typeList = append(*typeList, aliasMimeType)
-
-			continue
+		aliasMimeType, ok := mimeTypeAliases[typeName]
+		if !ok {
+			return fmt.Errorf(format, typeName)
 		}
 
-		return fmt.Errorf(format, typeName)
+		*typeList = append(*typeList, aliasMimeType)
 	}
 
 	return nil
@@ -545,9 +549,8 @@ var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]*)[[:blank:]]+\[(\w+)]
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
-	var matches []string
-
-	if matches = routerPattern.FindStringSubmatch(commentLine); len(matches) != 3 {
+	matches := routerPattern.FindStringSubmatch(commentLine)
+	if len(matches) != 3 {
 		return fmt.Errorf("can not parse router comment \"%s\"", commentLine)
 	}
 	path := matches[1]
@@ -572,8 +575,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 		scopes := securitySource[l+1 : r]
 		var s []string
 		for _, scope := range strings.Split(scopes, ",") {
-			scope = strings.TrimSpace(scope)
-			s = append(s, scope)
+			s = append(s, strings.TrimSpace(scope))
 		}
 		securityKey := securitySource[0:l]
 		securityMap := map[string][]string{}
@@ -731,7 +733,8 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	fields := parseFields(matches[2])
 	props := map[string]spec.Schema{}
 	for _, field := range fields {
-		if matches := strings.SplitN(field, "=", 2); len(matches) == 2 {
+		matches := strings.SplitN(field, "=", 2)
+		if len(matches) == 2 {
 			schema, err := operation.parseObjectSchema(matches[1], astFile)
 			if err != nil {
 				return nil, err
@@ -777,9 +780,8 @@ func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, ast
 
 // ParseResponseComment parses comment for given `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
-	var matches []string
-
-	if matches = responsePattern.FindStringSubmatch(commentLine); len(matches) != 5 {
+	matches := responsePattern.FindStringSubmatch(commentLine)
+	if len(matches) != 5 {
 		err := operation.ParseEmptyResponseComment(commentLine)
 		if err != nil {
 			return operation.ParseEmptyResponseOnly(commentLine)
@@ -789,9 +791,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	responseDescription := strings.Trim(matches[4], "\"")
-	schemaType := strings.Trim(matches[2], "{}")
-	refType := matches[3]
-	schema, err := operation.parseAPIObjectSchema(schemaType, refType, astFile)
+	schema, err := operation.parseAPIObjectSchema(strings.Trim(matches[2], "{}"), matches[3], astFile)
 	if err != nil {
 		return err
 	}
@@ -800,27 +800,29 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		if strings.EqualFold(codeStr, "default") {
 			operation.DefaultResponse().Schema = schema
 			operation.DefaultResponse().Description = responseDescription
-		} else if code, err := strconv.Atoi(codeStr); err == nil {
-			resp := &spec.Response{
-				ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
-			}
-			if resp.Description == "" {
-				resp.Description = http.StatusText(code)
-			}
-			operation.AddResponse(code, resp)
-		} else {
+
+			continue
+		}
+		code, err := strconv.Atoi(codeStr)
+		if err != nil {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
+		resp := &spec.Response{
+			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
+		}
+		if resp.Description == "" {
+			resp.Description = http.StatusText(code)
+		}
+		operation.AddResponse(code, resp)
 	}
 
 	return nil
 }
 
-// ParseResponseHeaderComment parses comment for gived `response header` comment string.
-func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFile *ast.File) error {
-	var matches []string
-
-	if matches = responsePattern.FindStringSubmatch(commentLine); len(matches) != 5 {
+// ParseResponseHeaderComment parses comment for given `response header` comment string.
+func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *ast.File) error {
+	matches := responsePattern.FindStringSubmatch(commentLine)
+	if len(matches) != 5 {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
@@ -862,22 +864,22 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, astFi
 
 			continue
 		}
-		if code, err := strconv.Atoi(codeStr); err == nil {
-			if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
-				if response, responseExist := operation.Responses.StatusCodeResponses[code]; responseExist {
-					if response.Headers == nil {
-						response.Headers = make(map[string]spec.Header)
-					}
-					response.Headers[headerKey] = header
 
-					operation.Responses.StatusCodeResponses[code] = response
-				}
-			}
-
-			continue
+		code, err := strconv.Atoi(codeStr)
+		if err != nil {
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
+		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
+			response, responseExist := operation.Responses.StatusCodeResponses[code]
+			if responseExist {
+				if response.Headers == nil {
+					response.Headers = make(map[string]spec.Header)
+				}
+				response.Headers[headerKey] = header
 
-		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+				operation.Responses.StatusCodeResponses[code] = response
+			}
+		}
 	}
 
 	return nil
@@ -887,9 +889,8 @@ var emptyResponsePattern = regexp.MustCompile(`([\w,]+)[\s]+"(.*)"`)
 
 // ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok".
 func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
-	var matches []string
-
-	if matches = emptyResponsePattern.FindStringSubmatch(commentLine); len(matches) != 3 {
+	matches := emptyResponsePattern.FindStringSubmatch(commentLine)
+	if len(matches) != 3 {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
@@ -901,15 +902,14 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 			continue
 		}
 
-		if code, err := strconv.Atoi(codeStr); err == nil {
-			var response spec.Response
-			response.Description = responseDescription
-			operation.AddResponse(code, &response)
-
-			continue
+		code, err := strconv.Atoi(codeStr)
+		if err != nil {
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 
-		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+		var response spec.Response
+		response.Description = responseDescription
+		operation.AddResponse(code, &response)
 	}
 
 	return nil
@@ -923,15 +923,14 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 
 			continue
 		}
-		if code, err := strconv.Atoi(codeStr); err == nil {
-			var response spec.Response
-			// response.Description = http.StatusText(code)
-			operation.AddResponse(code, &response)
-
-			continue
+		code, err := strconv.Atoi(codeStr)
+		if err != nil {
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 
-		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+		var response spec.Response
+		// response.Description = http.StatusText(code)
+		operation.AddResponse(code, &response)
 	}
 
 	return nil

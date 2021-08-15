@@ -308,6 +308,155 @@ func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
 }
 
+func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
+	parser := New()
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@tag.name Test",
+		"@tag.docs.description Best example documentation"}))
+
+	parser = New()
+	err := parseGeneralAPI(parser, []string{
+		"@tag.name test",
+		"@tag.description A test Tag",
+		"@tag.docs.url https://example.com",
+		"@tag.docs.description Best example documentation"})
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(parser.swagger.Tags, "", "    ")
+	expected := `[
+    {
+        "description": "A test Tag",
+        "name": "test",
+        "externalDocs": {
+            "description": "Best example documentation",
+            "url": "https://example.com"
+        }
+    }
+]`
+	assert.Equal(t, expected, string(b))
+
+}
+
+func TestParser_ParseGeneralAPISecurity(t *testing.T) {
+	parser := New()
+
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.apikey ApiKey"}))
+
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.apikey ApiKey",
+		"@in header"}))
+
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.apikey ApiKey",
+		"@name X-API-KEY"}))
+
+	err := parseGeneralAPI(parser, []string{
+		"@securitydefinitions.apikey ApiKey",
+		"@in header",
+		"@name X-API-KEY"})
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
+	expected := `{
+    "ApiKey": {
+        "type": "apiKey",
+        "name": "X-API-KEY",
+        "in": "header"
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+	parser = New()
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.application OAuth2Application"}))
+
+	err = parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.application OAuth2Application",
+		"@tokenUrl https://example.com/oauth/token"})
+	assert.NoError(t, err)
+	b, _ = json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
+	expected = `{
+    "OAuth2Application": {
+        "type": "oauth2",
+        "flow": "application",
+        "tokenUrl": "https://example.com/oauth/token"
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+	parser = New()
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.implicit OAuth2Implicit"}))
+
+	err = parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.implicit OAuth2Implicit",
+		"@authorizationurl https://example.com/oauth/authorize"})
+	assert.NoError(t, err)
+	b, _ = json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
+	expected = `{
+    "OAuth2Implicit": {
+        "type": "oauth2",
+        "flow": "implicit",
+        "authorizationUrl": "https://example.com/oauth/authorize"
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+	parser = New()
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.password OAuth2Password"}))
+
+	err = parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.password OAuth2Password",
+		"@tokenUrl https://example.com/oauth/token"})
+	assert.NoError(t, err)
+	b, _ = json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
+	expected = `{
+    "OAuth2Password": {
+        "type": "oauth2",
+        "flow": "password",
+        "tokenUrl": "https://example.com/oauth/token"
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+	parser = New()
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode"}))
+
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+		"@tokenUrl https://example.com/oauth/token"}))
+
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+		"@authorizationurl https://example.com/oauth/authorize"}))
+
+	err = parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+		"@tokenUrl https://example.com/oauth/token",
+		"@authorizationurl https://example.com/oauth/authorize"})
+	assert.NoError(t, err)
+	b, _ = json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
+	expected = `{
+    "OAuth2AccessCode": {
+        "type": "oauth2",
+        "flow": "accessCode",
+        "authorizationUrl": "https://example.com/oauth/authorize",
+        "tokenUrl": "https://example.com/oauth/token"
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+	assert.Error(t, parseGeneralAPI(parser, []string{
+		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+		"@tokenUrl https://example.com/oauth/token",
+		"@authorizationurl https://example.com/oauth/authorize",
+		"@scope.read,write Multiple scope"}))
+
+}
+
 func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "testdata/pet"
 

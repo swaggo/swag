@@ -2,6 +2,7 @@ package swag
 
 import (
 	"encoding/json"
+	"go/ast"
 	goparser "go/parser"
 	"go/token"
 	"testing"
@@ -798,6 +799,11 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 	comment = `@Header 200 "Mallformed"`
 	err = operation.ParseComment(comment, nil)
 	assert.Error(t, err, "ParseComment should not fail")
+
+	comment = `@Header 200,asdsd {string} Token "qwerty"`
+	err = operation.ParseComment(comment, nil)
+	assert.Error(t, err, "ParseComment should not fail")
+
 }
 
 func TestParseResponseCommentWithHeaderForCodes(t *testing.T) {
@@ -998,6 +1004,29 @@ func TestParseParamCommentQueryArray(t *testing.T) {
     ]
 }`
 	assert.Equal(t, expected, string(b))
+}
+
+// Test TestParseParamCommentDefaultValue Query Params
+func TestParseParamCommentDefaultValue(t *testing.T) {
+	operation := NewOperation(nil)
+	err := operation.ParseComment(`@Param names query string true "Users List" default(test)`, nil)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "type": "string",
+            "default": "test",
+            "description": "Users List",
+            "name": "names",
+            "in": "query",
+            "required": true
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+
 }
 
 // Test ParseParamComment Query Params
@@ -1734,6 +1763,89 @@ func TestParseExtentions(t *testing.T) {
 	}
 }
 
+func TestFindInSlice(t *testing.T) {
+	assert.True(t, findInSlice([]string{"one", "two", "tree"}, "one"))
+	assert.True(t, findInSlice([]string{"tree", "two", "one"}, "one"))
+	assert.True(t, findInSlice([]string{"two", "one", "tree"}, "one"))
+	assert.False(t, findInSlice([]string{"one", "two", "tree"}, "four"))
+}
+
+func TestParseResponseHeaderComment(t *testing.T) {
+	operation := NewOperation(nil)
+	operation.Responses = &spec.Responses{}
+	err := operation.ParseResponseComment(`default {string} string "other error"`, nil)
+	assert.NoError(t, err)
+	err = operation.ParseResponseHeaderComment(`all {string} Token "qwerty"`, nil)
+	assert.NoError(t, err)
+}
+
+func TestParseObjectSchema(t *testing.T) {
+	operation := NewOperation(nil)
+
+	schema, err := operation.parseObjectSchema("interface{}", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, PrimitiveSchema(OBJECT))
+
+	schema, err = operation.parseObjectSchema("int", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, PrimitiveSchema(INTEGER))
+
+	schema, err = operation.parseObjectSchema("[]string", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, spec.ArrayProperty(PrimitiveSchema(STRING)))
+
+	schema, err = operation.parseObjectSchema("[]int", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, spec.ArrayProperty(PrimitiveSchema(INTEGER)))
+
+	schema, err = operation.parseObjectSchema("[]bleah", nil)
+	assert.Error(t, err)
+
+	schema, err = operation.parseObjectSchema("map[]string", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, spec.MapProperty(PrimitiveSchema(STRING)))
+
+	schema, err = operation.parseObjectSchema("map[]int", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, spec.MapProperty(PrimitiveSchema(INTEGER)))
+
+	schema, err = operation.parseObjectSchema("map[]interface{}", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, spec.MapProperty(nil))
+
+	schema, err = operation.parseObjectSchema("map[string", nil)
+	assert.Error(t, err)
+
+	schema, err = operation.parseObjectSchema("map[]bleah", nil)
+	assert.Error(t, err)
+
+	operation.parser = New()
+	operation.parser.packages = &PackagesDefinitions{
+		uniqueDefinitions: map[string]*TypeSpecDef{
+			"model.User": {
+				File: &ast.File{
+					Name: &ast.Ident{
+						Name: "user.go",
+					},
+				},
+				TypeSpec: &ast.TypeSpec{
+					Name: &ast.Ident{
+						Name: "User",
+					},
+				},
+			},
+		},
+	}
+	schema, err = operation.parseObjectSchema("model.User", nil)
+	assert.NoError(t, err)
+
+	operation.parser = nil
+	schema, err = operation.parseObjectSchema("user.Model", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, RefSchema("user.Model"))
+
+}
+
 func TestParseCodeSamples(t *testing.T) {
 	t.Run("Find sample by file", func(t *testing.T) {
 		comment := `@x-codeSamples file`
@@ -1755,6 +1867,15 @@ func TestParseCodeSamples(t *testing.T) {
 		assert.Equal(t, expected, string(b))
 	})
 
+	t.Run("With broken file sample", func(t *testing.T) {
+		comment := `@x-codeSamples file`
+		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
+		operation.Summary = "broken"
+
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err, "no error should be thrown")
+	})
+
 	t.Run("Example file not found", func(t *testing.T) {
 		comment := `@x-codeSamples file`
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
@@ -1762,5 +1883,14 @@ func TestParseCodeSamples(t *testing.T) {
 
 		err := operation.ParseComment(comment, nil)
 		assert.Error(t, err, "error was expected, as file does not exist")
+	})
+
+	t.Run("Without line reminder", func(t *testing.T) {
+		comment := `@x-codeSamples`
+		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
+		operation.Summary = "example"
+
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err, "no error should be thrown")
 	})
 }
