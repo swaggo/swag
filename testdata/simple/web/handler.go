@@ -53,7 +53,7 @@ type CrossAlias cross.Cross
 
 type Pet2 struct {
 	ID         int        `json:"id"`
-	MiddleName *string    `json:"middlename" extensions:"x-nullable,x-abc=def"`
+	MiddleName *string    `json:"middlename" extensions:"x-nullable,x-abc=def,!x-omitempty"`
 	DeletedAt  *time.Time `json:"deleted_at"`
 }
 

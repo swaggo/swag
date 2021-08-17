@@ -656,7 +656,7 @@ type Account struct {
 
 ```go
 type Account struct {
-    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def"` // 扩展字段必须以"x-"开头
+    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def,!x-omitempty"` // 扩展字段必须以"x-"开头
 }
 ```
 
@@ -669,7 +669,8 @@ type Account struct {
         "id": {
             "type": "string",
             "x-nullable": true,
-            "x-abc": "def"
+            "x-abc": "def",
+            "x-omitempty": false
         }
     }
 }

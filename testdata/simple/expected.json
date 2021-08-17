@@ -600,7 +600,8 @@
         "middlename": {
           "type": "string",
           "x-abc": "def",
-          "x-nullable": true
+          "x-nullable": true,
+          "x-omitempty": false
         }
       }
     },
