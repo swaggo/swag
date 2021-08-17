@@ -449,9 +449,9 @@
             },
             "photo_urls": {
               "type": "array",
-              "format": "url",
               "items": {
-                "type": "string"
+                "type": "string",
+                "format": "url"
               },
               "example": [
                 "http://test/image/1.jpg",

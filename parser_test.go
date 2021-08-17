@@ -764,9 +764,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                         },
                         "photo_urls": {
                             "type": "array",
-                            "format": "url",
                             "items": {
-                                "type": "string"
+                                "type": "string",
+                                "format": "url"
                             },
                             "example": [
                                 "http://test/image/1.jpg",
@@ -1240,9 +1240,9 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                         },
                         "photoURLs": {
                             "type": "array",
-                            "format": "url",
                             "items": {
-                                "type": "string"
+                                "type": "string",
+                                "format": "url"
                             },
                             "example": [
                                 "http://test/image/1.jpg",
@@ -2718,6 +2718,14 @@ func TestParseJSONFieldString(t *testing.T) {
                     "description": "boolean as a string",
                     "type": "string",
                     "example": "true"
+                },
+                "uuids": {
+                    "description": "string array with format",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "format": "uuid"
+                    }
                 }
             }
         }
