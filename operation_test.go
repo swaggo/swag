@@ -12,6 +12,8 @@ import (
 )
 
 func TestParseEmptyComment(t *testing.T) {
+	t.Parallel()
+
 	operation := NewOperation(nil)
 	err := operation.ParseComment("//", nil)
 
@@ -19,6 +21,8 @@ func TestParseEmptyComment(t *testing.T) {
 }
 
 func TestParseTagsComment(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "tags": [
         "pet",
@@ -35,6 +39,8 @@ func TestParseTagsComment(t *testing.T) {
 }
 
 func TestParseAcceptComment(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "consumes": [
         "application/json",
@@ -63,6 +69,8 @@ func TestParseAcceptComment(t *testing.T) {
 }
 
 func TestParseAcceptCommentErr(t *testing.T) {
+	t.Parallel()
+
 	comment := `/@Accept unknown`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -70,6 +78,8 @@ func TestParseAcceptCommentErr(t *testing.T) {
 }
 
 func TestParseProduceComment(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "produces": [
         "application/json",
@@ -96,13 +106,16 @@ func TestParseProduceComment(t *testing.T) {
 }
 
 func TestParseProduceCommentErr(t *testing.T) {
-	comment := `/@Produce foo`
+	t.Parallel()
+
 	operation := new(Operation)
-	err := operation.ParseComment(comment, nil)
+	err := operation.ParseComment("/@Produce foo", nil)
 	assert.Error(t, err)
 }
 
 func TestParseRouterComment(t *testing.T) {
+	t.Parallel()
+
 	comment := `/@Router /customer/get-wishlist/{wishlist_id} [get]`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -113,6 +126,8 @@ func TestParseRouterComment(t *testing.T) {
 }
 
 func TestParseRouterMultipleComments(t *testing.T) {
+	t.Parallel()
+
 	comment := `/@Router /customer/get-wishlist/{wishlist_id} [get]`
 	anotherComment := `/@Router /customer/get-the-wishlist/{wishlist_id} [post]`
 	operation := NewOperation(nil)
@@ -131,6 +146,8 @@ func TestParseRouterMultipleComments(t *testing.T) {
 }
 
 func TestParseRouterOnlySlash(t *testing.T) {
+	t.Parallel()
+
 	comment := `// @Router / [get]`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -141,6 +158,8 @@ func TestParseRouterOnlySlash(t *testing.T) {
 }
 
 func TestParseRouterCommentWithPlusSign(t *testing.T) {
+	t.Parallel()
+
 	comment := `/@Router /customer/get-wishlist/{proxy+} [post]`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -151,6 +170,8 @@ func TestParseRouterCommentWithPlusSign(t *testing.T) {
 }
 
 func TestParseRouterCommentWithColonSign(t *testing.T) {
+	t.Parallel()
+
 	comment := `/@Router /customer/get-wishlist/{wishlist_id}:move [post]`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -161,6 +182,8 @@ func TestParseRouterCommentWithColonSign(t *testing.T) {
 }
 
 func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {
+	t.Parallel()
+
 	comment := `/@Router :customer/get-wishlist/{wishlist_id}:move [post]`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -168,6 +191,8 @@ func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {
 }
 
 func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
+	t.Parallel()
+
 	comment := `/@Router /api/{id}|,*[get`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -175,6 +200,8 @@ func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
 }
 
 func TestParseRouterCommentMethodMissingErr(t *testing.T) {
+	t.Parallel()
+
 	comment := `/@Router /customer/get-wishlist/{wishlist_id}`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -182,6 +209,8 @@ func TestParseRouterCommentMethodMissingErr(t *testing.T) {
 }
 
 func TestParseResponseCommentWithObjectType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200`
 	operation := NewOperation(nil)
 	operation.parser.addTestType("model.OrderRow")
@@ -208,6 +237,8 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} model.CommonHeader{data=string,data2=int} "Error message, if code != 200`
 	operation := NewOperation(nil)
 
@@ -250,6 +281,8 @@ func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} model.CommonHeader{data=[]string,data2=[]int} "Error message, if code != 200`
 	operation := NewOperation(nil)
 
@@ -298,6 +331,8 @@ func TestParseResponseCommentWithNestedPrimitiveArrayType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedObjectType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} model.CommonHeader{data=model.Payload,data2=model.Payload2} "Error message, if code != 200`
 	operation := NewOperation(nil)
 	operation.parser.addTestType("model.CommonHeader")
@@ -341,6 +376,8 @@ func TestParseResponseCommentWithNestedObjectType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedArrayObjectType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} model.CommonHeader{data=[]model.Payload,data2=[]model.Payload2} "Error message, if code != 200`
 	operation := NewOperation(nil)
 
@@ -391,6 +428,8 @@ func TestParseResponseCommentWithNestedArrayObjectType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedFields(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} model.CommonHeader{data1=int,data2=[]int,data3=model.Payload,data4=[]model.Payload} "Error message, if code != 200`
 	operation := NewOperation(nil)
 
@@ -446,6 +485,8 @@ func TestParseResponseCommentWithNestedFields(t *testing.T) {
 }
 
 func TestParseResponseCommentWithDeepNestedFields(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} model.CommonHeader{data1=int,data2=[]int,data3=model.Payload{data1=int,data2=model.DeepPayload},data4=[]model.Payload{data1=[]int,data2=[]model.DeepPayload}} "Error message, if code != 200`
 	operation := NewOperation(nil)
 
@@ -537,6 +578,8 @@ func TestParseResponseCommentWithDeepNestedFields(t *testing.T) {
 }
 
 func TestParseResponseCommentWithNestedArrayMapFields(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} []map[string]model.CommonHeader{data1=[]map[string]model.Payload,data2=map[string][]int} "Error message, if code != 200`
 	operation := NewOperation(nil)
 
@@ -597,6 +640,8 @@ func TestParseResponseCommentWithNestedArrayMapFields(t *testing.T) {
 }
 
 func TestParseResponseCommentWithObjectTypeInSameFile(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} testOwner "Error message, if code != 200"`
 	operation := NewOperation(nil)
 
@@ -636,6 +681,8 @@ func TestParseResponseCommentWithObjectTypeAnonymousField(t *testing.T) {
 }
 
 func TestParseResponseCommentWithObjectTypeErr(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200"`
 	operation := NewOperation(nil)
 
@@ -646,6 +693,8 @@ func TestParseResponseCommentWithObjectTypeErr(t *testing.T) {
 }
 
 func TestParseResponseCommentWithArrayType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {array} model.OrderRow "Error message, if code != 200`
 	operation := NewOperation(nil)
 	operation.parser.addTestType("model.OrderRow")
@@ -675,6 +724,8 @@ func TestParseResponseCommentWithArrayType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithBasicType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 {string} string "it's ok'"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -695,6 +746,8 @@ func TestParseResponseCommentWithBasicType(t *testing.T) {
 }
 
 func TestParseResponseCommentWithBasicTypeAndCodes(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200,201,default {string} string "it's ok"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -727,6 +780,8 @@ func TestParseResponseCommentWithBasicTypeAndCodes(t *testing.T) {
 }
 
 func TestParseEmptyResponseComment(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200 "it is ok"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -745,6 +800,8 @@ func TestParseEmptyResponseComment(t *testing.T) {
 }
 
 func TestParseEmptyResponseCommentWithCodes(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200,201,default "it is ok"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -769,13 +826,13 @@ func TestParseEmptyResponseCommentWithCodes(t *testing.T) {
 }
 
 func TestParseResponseCommentWithHeader(t *testing.T) {
-	comment := `@Success 200 "it's ok"`
+	t.Parallel()
+
 	operation := NewOperation(nil)
-	err := operation.ParseComment(comment, nil)
+	err := operation.ParseComment(`@Success 200 "it's ok"`, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
 
-	comment = `@Header 200 {string} Token "qwerty"`
-	err = operation.ParseComment(comment, nil)
+	err = operation.ParseComment(`@Header 200 {string} Token "qwerty"`, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
 
 	b, err := json.MarshalIndent(operation, "", "    ")
@@ -796,17 +853,17 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 
-	comment = `@Header 200 "Mallformed"`
-	err = operation.ParseComment(comment, nil)
+	err = operation.ParseComment(`@Header 200 "Mallformed"`, nil)
 	assert.Error(t, err, "ParseComment should not fail")
 
-	comment = `@Header 200,asdsd {string} Token "qwerty"`
-	err = operation.ParseComment(comment, nil)
+	err = operation.ParseComment(`@Header 200,asdsd {string} Token "qwerty"`, nil)
 	assert.Error(t, err, "ParseComment should not fail")
 
 }
 
 func TestParseResponseCommentWithHeaderForCodes(t *testing.T) {
+	t.Parallel()
+
 	operation := NewOperation(nil)
 
 	comment := `@Success 200,201,default "it's ok"`
@@ -875,9 +932,10 @@ func TestParseResponseCommentWithHeaderForCodes(t *testing.T) {
 }
 
 func TestParseEmptyResponseOnlyCode(t *testing.T) {
-	comment := `@Success 200`
+	t.Parallel()
+
 	operation := NewOperation(nil)
-	err := operation.ParseComment(comment, nil)
+	err := operation.ParseComment(`@Success 200`, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
 
 	b, _ := json.MarshalIndent(operation, "", "    ")
@@ -893,6 +951,8 @@ func TestParseEmptyResponseOnlyCode(t *testing.T) {
 }
 
 func TestParseEmptyResponseOnlyCodes(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Success 200,201,default`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -917,6 +977,8 @@ func TestParseEmptyResponseOnlyCodes(t *testing.T) {
 }
 
 func TestParseResponseCommentParamMissing(t *testing.T) {
+	t.Parallel()
+
 	operation := NewOperation(nil)
 
 	paramLenErrComment := `@Success notIntCode`
@@ -934,6 +996,8 @@ func TestParseResponseCommentParamMissing(t *testing.T) {
 
 // Test ParseParamComment
 func TestParseParamCommentByPathType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id path int true "Some ID"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -956,6 +1020,8 @@ func TestParseParamCommentByPathType(t *testing.T) {
 
 // Test ParseParamComment Query Params
 func TestParseParamCommentBodyArray(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param names body []string true "Users List"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -981,11 +1047,21 @@ func TestParseParamCommentBodyArray(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+// Test ParseParamComment header Params
+func TestParseParamCommentHeaderArray(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param names header []string true "Users List"`
+	operation := NewOperation(nil)
+	assert.Error(t, operation.ParseComment(comment, nil))
+}
+
 // Test ParseParamComment Query Params
 func TestParseParamCommentQueryArray(t *testing.T) {
-	comment := `@Param names query []string true "Users List"`
+	t.Parallel()
+
 	operation := NewOperation(nil)
-	err := operation.ParseComment(comment, nil)
+	err := operation.ParseComment(`@Param names query []string true "Users List"`, nil)
 
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(operation, "", "    ")
@@ -1004,10 +1080,15 @@ func TestParseParamCommentQueryArray(t *testing.T) {
     ]
 }`
 	assert.Equal(t, expected, string(b))
+
+	err = operation.ParseComment(`@Param names query []model.User true "Users List"`, nil)
+	assert.Error(t, err)
 }
 
 // Test TestParseParamCommentDefaultValue Query Params
 func TestParseParamCommentDefaultValue(t *testing.T) {
+	t.Parallel()
+
 	operation := NewOperation(nil)
 	err := operation.ParseComment(`@Param names query string true "Users List" default(test)`, nil)
 	assert.NoError(t, err)
@@ -1031,6 +1112,8 @@ func TestParseParamCommentDefaultValue(t *testing.T) {
 
 // Test ParseParamComment Query Params
 func TestParseParamCommentQueryArrayFormat(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param names query []string true "Users List" collectionFormat(multi)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1056,6 +1139,8 @@ func TestParseParamCommentQueryArrayFormat(t *testing.T) {
 }
 
 func TestParseParamCommentByID(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param unsafe_id[lte] query int true "Unsafe query param"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1077,6 +1162,8 @@ func TestParseParamCommentByID(t *testing.T) {
 }
 
 func TestParseParamCommentByQueryType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id query int true "Some ID"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1098,6 +1185,8 @@ func TestParseParamCommentByQueryType(t *testing.T) {
 }
 
 func TestParseParamCommentByBodyType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id body model.OrderRow true "Some ID"`
 	operation := NewOperation(nil)
 
@@ -1123,6 +1212,8 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 }
 
 func TestParseParamCommentByBodyTypeWithDeepNestedFields(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param body body model.CommonHeader{data=string,data2=int} true "test deep"`
 	operation := NewOperation(nil)
 
@@ -1168,6 +1259,8 @@ func TestParseParamCommentByBodyTypeWithDeepNestedFields(t *testing.T) {
 }
 
 func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id body []int true "Some ID"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1194,6 +1287,8 @@ func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
 }
 
 func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFields(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param body body []model.CommonHeader{data=string,data2=int} true "test deep"`
 	operation := NewOperation(nil)
 	operation.parser.addTestType("model.CommonHeader")
@@ -1241,6 +1336,8 @@ func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFields(t *te
 }
 
 func TestParseParamCommentByBodyTypeErr(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id body model.OrderRow true "Some ID"`
 	operation := NewOperation(nil)
 	operation.parser.addTestType("model.notexist")
@@ -1250,6 +1347,8 @@ func TestParseParamCommentByBodyTypeErr(t *testing.T) {
 }
 
 func TestParseParamCommentByFormDataType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param file formData file true "this is a test file"`
 	operation := NewOperation(nil)
 
@@ -1272,6 +1371,8 @@ func TestParseParamCommentByFormDataType(t *testing.T) {
 }
 
 func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param file formData uint64 true "this is a test file"`
 	operation := NewOperation(nil)
 
@@ -1294,6 +1395,8 @@ func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
 }
 
 func TestParseParamCommentByNotSupportedType(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id not_supported int true "Some ID"`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1302,6 +1405,8 @@ func TestParseParamCommentByNotSupportedType(t *testing.T) {
 }
 
 func TestParseParamCommentNotMatch(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id body mock true`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1310,6 +1415,8 @@ func TestParseParamCommentNotMatch(t *testing.T) {
 }
 
 func TestParseParamCommentByEnums(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id query string true "Some ID" Enums(A, B, C)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1421,6 +1528,8 @@ func TestParseParamCommentByEnums(t *testing.T) {
 }
 
 func TestParseParamCommentByMaxLength(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id query string true "Some ID" MaxLength(10)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1449,6 +1558,8 @@ func TestParseParamCommentByMaxLength(t *testing.T) {
 }
 
 func TestParseParamCommentByMinLength(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id query string true "Some ID" MinLength(10)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1477,6 +1588,8 @@ func TestParseParamCommentByMinLength(t *testing.T) {
 }
 
 func TestParseParamCommentByMinimum(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id query int true "Some ID" Minimum(10)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1508,6 +1621,8 @@ func TestParseParamCommentByMinimum(t *testing.T) {
 }
 
 func TestParseParamCommentByMaximum(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id query int true "Some ID" Maximum(10)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1540,6 +1655,8 @@ func TestParseParamCommentByMaximum(t *testing.T) {
 }
 
 func TestParseParamCommentByDefault(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param some_id query int true "Some ID" Default(10)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1562,6 +1679,8 @@ func TestParseParamCommentByDefault(t *testing.T) {
 }
 
 func TestParseParamArrayWithEnums(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Param field query []string true "An enum collection" collectionFormat(csv) enums(also,valid)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1591,6 +1710,8 @@ func TestParseParamArrayWithEnums(t *testing.T) {
 }
 
 func TestParseIdComment(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Id myOperationId`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1600,24 +1721,32 @@ func TestParseIdComment(t *testing.T) {
 }
 
 func TestFindTypeDefCoreLib(t *testing.T) {
+	t.Parallel()
+
 	spec, err := findTypeDef("net/http", "Request")
 	assert.NoError(t, err)
 	assert.NotNil(t, spec)
 }
 
 func TestFindTypeDefExternalPkg(t *testing.T) {
+	t.Parallel()
+
 	spec, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
 	assert.NoError(t, err)
 	assert.NotNil(t, spec)
 }
 
 func TestFindTypeDefInvalidPkg(t *testing.T) {
+	t.Parallel()
+
 	spec, err := findTypeDef("does-not-exist", "foo")
 	assert.Error(t, err)
 	assert.Nil(t, spec)
 }
 
 func TestParseSecurityComment(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Security OAuth2Implicit[read, write]`
 	operation := NewOperation(nil)
 
@@ -1639,6 +1768,8 @@ func TestParseSecurityComment(t *testing.T) {
 }
 
 func TestParseMultiDescription(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Description line one`
 	operation := NewOperation(nil)
 
@@ -1660,6 +1791,8 @@ func TestParseMultiDescription(t *testing.T) {
 }
 
 func TestParseDescriptionMarkdown(t *testing.T) {
+	t.Parallel()
+
 	operation := NewOperation(nil)
 	operation.parser.markdownFileDir = "example/markdown"
 
@@ -1675,6 +1808,8 @@ func TestParseDescriptionMarkdown(t *testing.T) {
 }
 
 func TestParseSummary(t *testing.T) {
+	t.Parallel()
+
 	comment := `@summary line one`
 	operation := NewOperation(nil)
 
@@ -1687,6 +1822,8 @@ func TestParseSummary(t *testing.T) {
 }
 
 func TestParseDeprecationDescription(t *testing.T) {
+	t.Parallel()
+
 	comment := `@Deprecated`
 	operation := NewOperation(nil)
 
@@ -1699,6 +1836,7 @@ func TestParseDeprecationDescription(t *testing.T) {
 }
 
 func TestParseExtentions(t *testing.T) {
+	t.Parallel()
 	// Fail if there are no args for attributes.
 	{
 		comment := `@x-amazon-apigateway-integration`
@@ -1764,6 +1902,8 @@ func TestParseExtentions(t *testing.T) {
 }
 
 func TestFindInSlice(t *testing.T) {
+	t.Parallel()
+
 	assert.True(t, findInSlice([]string{"one", "two", "tree"}, "one"))
 	assert.True(t, findInSlice([]string{"tree", "two", "one"}, "one"))
 	assert.True(t, findInSlice([]string{"two", "one", "tree"}, "one"))
@@ -1771,6 +1911,8 @@ func TestFindInSlice(t *testing.T) {
 }
 
 func TestParseResponseHeaderComment(t *testing.T) {
+	t.Parallel()
+
 	operation := NewOperation(nil)
 	operation.Responses = &spec.Responses{}
 	err := operation.ParseResponseComment(`default {string} string "other error"`, nil)
@@ -1780,6 +1922,8 @@ func TestParseResponseHeaderComment(t *testing.T) {
 }
 
 func TestParseObjectSchema(t *testing.T) {
+	t.Parallel()
+
 	operation := NewOperation(nil)
 
 	schema, err := operation.parseObjectSchema("interface{}", nil)
@@ -1847,6 +1991,8 @@ func TestParseObjectSchema(t *testing.T) {
 }
 
 func TestParseCodeSamples(t *testing.T) {
+	t.Parallel()
+
 	t.Run("Find sample by file", func(t *testing.T) {
 		comment := `@x-codeSamples file`
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
