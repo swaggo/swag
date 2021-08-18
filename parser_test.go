@@ -20,7 +20,6 @@ const defaultParseDepth = 100
 const mainAPIFile = "main.go"
 
 func TestNew(t *testing.T) {
-	swagMode = test
 	New()
 }
 
