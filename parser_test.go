@@ -2,6 +2,7 @@ package swag
 
 import (
 	"encoding/json"
+	"go/ast"
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
@@ -19,23 +20,28 @@ const defaultParseDepth = 100
 const mainAPIFile = "main.go"
 
 func TestNew(t *testing.T) {
-	swagMode = test
 	New()
 }
 
 func TestSetMarkdownFileDirectory(t *testing.T) {
+	t.Parallel()
+
 	expected := "docs/markdown"
 	p := New(SetMarkdownFileDirectory(expected))
 	assert.Equal(t, expected, p.markdownFileDir)
 }
 
 func TestSetCodeExamplesDirectory(t *testing.T) {
+	t.Parallel()
+
 	expected := "docs/examples"
 	p := New(SetCodeExamplesDirectory(expected))
 	assert.Equal(t, expected, p.codeExampleFilesDir)
 }
 
 func TestSetStrict(t *testing.T) {
+	t.Parallel()
+
 	p := New()
 	assert.Equal(t, false, p.Strict)
 
@@ -44,6 +50,8 @@ func TestSetStrict(t *testing.T) {
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "schemes": [
         "http",
@@ -141,6 +149,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 }
 
 func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -222,8 +232,10 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 }
 
 func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
-	// should be return an error because extension value is not a valid json
-	func() {
+	// should return an error because extension value is not a valid json
+	t.Run("Test invalid extension value", func(t *testing.T) {
+		t.Parallel()
+
 		expected := "annotation @x-google-endpoints need a valid json value"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
@@ -232,10 +244,12 @@ func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
 		if assert.Error(t, err) {
 			assert.Equal(t, expected, err.Error())
 		}
-	}()
+	})
 
-	// should be return an error because extension don't have a value
-	func() {
+	// should return an error because extension don't have a value
+	t.Run("Test missing extension value", func(t *testing.T) {
+		t.Parallel()
+
 		expected := "annotation @x-google-endpoints need a value"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
@@ -244,10 +258,12 @@ func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
 		if assert.Error(t, err) {
 			assert.Equal(t, expected, err.Error())
 		}
-	}()
+	})
 }
 
 func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -271,6 +287,8 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 }
 
 func TestParser_ParseGeneralAPIInfoMarkdown(t *testing.T) {
+	t.Parallel()
+
 	p := New(SetMarkdownFileDirectory("testdata"))
 	mainAPIFile := "testdata/markdown.go"
 	err := p.ParseGeneralAPIInfo(mainAPIFile)
@@ -302,27 +320,46 @@ func TestParser_ParseGeneralAPIInfoMarkdown(t *testing.T) {
 }
 
 func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
+	t.Parallel()
+
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
 	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
 }
 
-func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
+func TestParser_ParseGeneralAPIInfoCollectionFromat(t *testing.T) {
+	t.Parallel()
+
 	parser := New()
-	assert.Error(t, parseGeneralAPI(parser, []string{
+	assert.NoError(t, parseGeneralAPIInfo(parser, []string{
+		"@query.collection.format csv",
+	}))
+	assert.Equal(t, parser.collectionFormatInQuery, "csv")
+
+	assert.NoError(t, parseGeneralAPIInfo(parser, []string{
+		"@query.collection.format tsv",
+	}))
+	assert.Equal(t, parser.collectionFormatInQuery, "tsv")
+}
+
+func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
+	t.Parallel()
+
+	parser := New()
+	assert.Error(t, parseGeneralAPIInfo(parser, []string{
 		"@tag.name Test",
 		"@tag.docs.description Best example documentation"}))
 
 	parser = New()
-	err := parseGeneralAPI(parser, []string{
+	err := parseGeneralAPIInfo(parser, []string{
 		"@tag.name test",
 		"@tag.description A test Tag",
 		"@tag.docs.url https://example.com",
 		"@tag.docs.description Best example documentation"})
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(parser.swagger.Tags, "", "    ")
+	b, _ := json.MarshalIndent(parser.GetSwagger().Tags, "", "    ")
 	expected := `[
     {
         "description": "A test Tag",
@@ -338,108 +375,125 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
 }
 
 func TestParser_ParseGeneralAPISecurity(t *testing.T) {
-	parser := New()
+	t.Run("ApiKey", func(t *testing.T) {
+		t.Parallel()
 
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.apikey ApiKey"}))
+		parser := New()
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.apikey ApiKey"}))
 
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.apikey ApiKey",
-		"@in header"}))
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.apikey ApiKey",
+			"@in header"}))
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.apikey ApiKey",
+			"@name X-API-KEY"}))
 
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.apikey ApiKey",
-		"@name X-API-KEY"}))
+		err := parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.apikey ApiKey",
+			"@in header",
+			"@name X-API-KEY"})
+		assert.NoError(t, err)
 
-	err := parseGeneralAPI(parser, []string{
-		"@securitydefinitions.apikey ApiKey",
-		"@in header",
-		"@name X-API-KEY"})
-	assert.NoError(t, err)
-
-	b, _ := json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
-	expected := `{
+		b, _ := json.MarshalIndent(parser.GetSwagger().SecurityDefinitions, "", "    ")
+		expected := `{
     "ApiKey": {
         "type": "apiKey",
         "name": "X-API-KEY",
         "in": "header"
     }
 }`
-	assert.Equal(t, expected, string(b))
+		assert.Equal(t, expected, string(b))
+	})
 
-	parser = New()
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.application OAuth2Application"}))
+	t.Run("OAuth2Application", func(t *testing.T) {
+		t.Parallel()
 
-	err = parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.application OAuth2Application",
-		"@tokenUrl https://example.com/oauth/token"})
-	assert.NoError(t, err)
-	b, _ = json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
-	expected = `{
+		parser := New()
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.application OAuth2Application"}))
+
+		err := parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.application OAuth2Application",
+			"@tokenUrl https://example.com/oauth/token"})
+		assert.NoError(t, err)
+		b, _ := json.MarshalIndent(parser.GetSwagger().SecurityDefinitions, "", "    ")
+		expected := `{
     "OAuth2Application": {
         "type": "oauth2",
         "flow": "application",
         "tokenUrl": "https://example.com/oauth/token"
     }
 }`
-	assert.Equal(t, expected, string(b))
+		assert.Equal(t, expected, string(b))
+	})
 
-	parser = New()
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.implicit OAuth2Implicit"}))
+	t.Run("OAuth2Implicit", func(t *testing.T) {
+		t.Parallel()
 
-	err = parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.implicit OAuth2Implicit",
-		"@authorizationurl https://example.com/oauth/authorize"})
-	assert.NoError(t, err)
-	b, _ = json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
-	expected = `{
+		parser := New()
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.implicit OAuth2Implicit"}))
+
+		err := parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.implicit OAuth2Implicit",
+			"@authorizationurl https://example.com/oauth/authorize"})
+		assert.NoError(t, err)
+		b, _ := json.MarshalIndent(parser.GetSwagger().SecurityDefinitions, "", "    ")
+		expected := `{
     "OAuth2Implicit": {
         "type": "oauth2",
         "flow": "implicit",
         "authorizationUrl": "https://example.com/oauth/authorize"
     }
 }`
-	assert.Equal(t, expected, string(b))
+		assert.Equal(t, expected, string(b))
+	})
 
-	parser = New()
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.password OAuth2Password"}))
+	t.Run("OAuth2Password", func(t *testing.T) {
+		t.Parallel()
 
-	err = parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.password OAuth2Password",
-		"@tokenUrl https://example.com/oauth/token"})
-	assert.NoError(t, err)
-	b, _ = json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
-	expected = `{
+		parser := New()
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.password OAuth2Password"}))
+
+		err := parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.password OAuth2Password",
+			"@tokenUrl https://example.com/oauth/token"})
+		assert.NoError(t, err)
+		b, _ := json.MarshalIndent(parser.GetSwagger().SecurityDefinitions, "", "    ")
+		expected := `{
     "OAuth2Password": {
         "type": "oauth2",
         "flow": "password",
         "tokenUrl": "https://example.com/oauth/token"
     }
 }`
-	assert.Equal(t, expected, string(b))
+		assert.Equal(t, expected, string(b))
+	})
 
-	parser = New()
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode"}))
+	t.Run("OAuth2AccessCode", func(t *testing.T) {
+		t.Parallel()
 
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
-		"@tokenUrl https://example.com/oauth/token"}))
+		parser := New()
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.accessCode OAuth2AccessCode"}))
 
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
-		"@authorizationurl https://example.com/oauth/authorize"}))
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+			"@tokenUrl https://example.com/oauth/token"}))
 
-	err = parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
-		"@tokenUrl https://example.com/oauth/token",
-		"@authorizationurl https://example.com/oauth/authorize"})
-	assert.NoError(t, err)
-	b, _ = json.MarshalIndent(parser.swagger.SecurityDefinitions, "", "    ")
-	expected = `{
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+			"@authorizationurl https://example.com/oauth/authorize"}))
+
+		err := parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+			"@tokenUrl https://example.com/oauth/token",
+			"@authorizationurl https://example.com/oauth/authorize"})
+		assert.NoError(t, err)
+		b, _ := json.MarshalIndent(parser.GetSwagger().SecurityDefinitions, "", "    ")
+		expected := `{
     "OAuth2AccessCode": {
         "type": "oauth2",
         "flow": "accessCode",
@@ -447,17 +501,20 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
         "tokenUrl": "https://example.com/oauth/token"
     }
 }`
-	assert.Equal(t, expected, string(b))
+		assert.Equal(t, expected, string(b))
 
-	assert.Error(t, parseGeneralAPI(parser, []string{
-		"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
-		"@tokenUrl https://example.com/oauth/token",
-		"@authorizationurl https://example.com/oauth/authorize",
-		"@scope.read,write Multiple scope"}))
+		assert.Error(t, parseGeneralAPIInfo(parser, []string{
+			"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+			"@tokenUrl https://example.com/oauth/token",
+			"@authorizationurl https://example.com/oauth/authorize",
+			"@scope.read,write Multiple scope"}))
+	})
 
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/pet"
 
 	p := New()
@@ -468,6 +525,8 @@ func TestGetAllGoFileInfo(t *testing.T) {
 }
 
 func TestParser_ParseType(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/simple/"
 
 	p := New()
@@ -483,12 +542,16 @@ func TestParser_ParseType(t *testing.T) {
 }
 
 func TestGetSchemes(t *testing.T) {
+	t.Parallel()
+
 	schemes := getSchemes("@schemes http https")
 	expectedSchemes := []string{"http", "https"}
 	assert.Equal(t, expectedSchemes, schemes)
 }
 
 func TestParseSimpleApi1(t *testing.T) {
+	t.Parallel()
+
 	expected, err := ioutil.ReadFile("testdata/simple/expected.json")
 	assert.NoError(t, err)
 	searchDir := "testdata/simple"
@@ -502,6 +565,8 @@ func TestParseSimpleApi1(t *testing.T) {
 }
 
 func TestParseSimpleApi_ForSnakecase(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -984,6 +1049,8 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
 }
 
 func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -1438,6 +1505,8 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
 }
 
 func TestParseStructComment(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -1525,6 +1594,8 @@ func TestParseStructComment(t *testing.T) {
 }
 
 func TestParseNonExportedJSONFields(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -1598,6 +1669,8 @@ func TestParseNonExportedJSONFields(t *testing.T) {
 }
 
 func TestParsePetApi(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "schemes": [
         "http",
@@ -1630,6 +1703,8 @@ func TestParsePetApi(t *testing.T) {
 }
 
 func TestParseModelAsTypeAlias(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -1699,6 +1774,8 @@ func TestParseModelAsTypeAlias(t *testing.T) {
 }
 
 func TestParseComposition(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/composition"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -1714,6 +1791,8 @@ func TestParseComposition(t *testing.T) {
 }
 
 func TestParseImportAliases(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/alias_import"
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -1728,6 +1807,8 @@ func TestParseImportAliases(t *testing.T) {
 }
 
 func TestParseNested(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/nested"
 	p := New()
 	p.ParseDependency = true
@@ -1742,6 +1823,8 @@ func TestParseNested(t *testing.T) {
 }
 
 func TestParseDuplicated(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/duplicated"
 	p := New()
 	p.ParseDependency = true
@@ -1750,6 +1833,8 @@ func TestParseDuplicated(t *testing.T) {
 }
 
 func TestParseDuplicatedOtherMethods(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/duplicated2"
 	p := New()
 	p.ParseDependency = true
@@ -1758,6 +1843,8 @@ func TestParseDuplicatedOtherMethods(t *testing.T) {
 }
 
 func TestParseConflictSchemaName(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/conflict_name"
 	p := New()
 	p.ParseDependency = true
@@ -1770,6 +1857,8 @@ func TestParseConflictSchemaName(t *testing.T) {
 }
 
 func TestParser_ParseStructArrayObject(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package api
 
@@ -1838,6 +1927,8 @@ func Test(){
 }
 
 func TestParser_ParseEmbededStruct(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package api
 
@@ -1906,6 +1997,8 @@ type ResponseWrapper struct {
 }
 
 func TestParser_ParseStructPointerMembers(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package api
 
@@ -1965,6 +2058,8 @@ func Test(){
 }
 
 func TestParser_ParseStructMapMember(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package api
 
@@ -2091,6 +2186,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2107,6 +2204,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiGet(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2130,6 +2229,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiPOST(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2153,6 +2254,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiDELETE(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2176,6 +2279,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiPUT(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2199,6 +2304,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiPATCH(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2222,6 +2329,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiHead(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2245,6 +2354,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiOptions(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2268,6 +2379,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiMultipleRoutesForSameFunction(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2297,6 +2410,8 @@ func Test(){
 }
 
 func TestParser_ParseRouterApiMultiple(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2357,6 +2472,8 @@ func Test3(){
 // }
 
 func TestParser_ParseRouterApiDuplicateRoute(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package test
 
@@ -2380,6 +2497,8 @@ func Test2(){
 }
 
 func TestApiParseTag(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/tags"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
@@ -2408,6 +2527,8 @@ func TestApiParseTag(t *testing.T) {
 }
 
 func TestApiParseTag_NonExistendTag(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/tags_nonexistend_tag"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
@@ -2416,6 +2537,8 @@ func TestApiParseTag_NonExistendTag(t *testing.T) {
 }
 
 func TestParseTagMarkdownDescription(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/tags"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
@@ -2435,6 +2558,8 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 }
 
 func TestParseApiMarkdownDescription(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/tags"
 	p := New(SetMarkdownFileDirectory(searchDir))
 	p.PropNamingStrategy = PascalCase
@@ -2449,6 +2574,8 @@ func TestParseApiMarkdownDescription(t *testing.T) {
 }
 
 func TestIgnoreInvalidPkg(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/deps_having_invalid_pkg"
 	p := New()
 	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
@@ -2457,6 +2584,8 @@ func TestIgnoreInvalidPkg(t *testing.T) {
 }
 
 func TestFixes432(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/fixes-432"
 	mainAPIFile := "cmd/main.go"
 
@@ -2467,6 +2596,8 @@ func TestFixes432(t *testing.T) {
 }
 
 func TestParseOutsideDependencies(t *testing.T) {
+	t.Parallel()
+
 	searchDir := "testdata/pare_outside_dependencies"
 	mainAPIFile := "cmd/main.go"
 
@@ -2478,6 +2609,8 @@ func TestParseOutsideDependencies(t *testing.T) {
 }
 
 func TestParseStructParamCommentByQueryType(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package main
 
@@ -2549,6 +2682,8 @@ func Fun()  {
 }
 
 func TestParseRenamedStructDefinition(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package main
 
@@ -2594,6 +2729,8 @@ func Fun()  {
 }
 
 func TestPackagesDefinitions_CollectAstFileInit(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package main
 
@@ -2617,6 +2754,8 @@ func Fun()  {
 }
 
 func TestCollectAstFileMultipleTimes(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package main
 
@@ -2640,6 +2779,8 @@ func Fun()  {
 }
 
 func TestParseJSONFieldString(t *testing.T) {
+	t.Parallel()
+
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -2741,6 +2882,8 @@ func TestParseJSONFieldString(t *testing.T) {
 }
 
 func TestParseSwaggerignoreForEmbedded(t *testing.T) {
+	t.Parallel()
+
 	src := `
 package main
 
@@ -2784,63 +2927,369 @@ func Fun()  {
 }
 
 func TestDefineTypeOfExample(t *testing.T) {
-	var example interface{}
-	var err error
 
-	example, err = defineTypeOfExample("string", "", "example")
-	assert.NoError(t, err)
-	assert.Equal(t, example.(string), "example")
+	t.Run("String type", func(t *testing.T) {
+		t.Parallel()
 
-	example, err = defineTypeOfExample("number", "", "12.34")
-	assert.NoError(t, err)
-	assert.Equal(t, example.(float64), 12.34)
+		example, err := defineTypeOfExample("string", "", "example")
+		assert.NoError(t, err)
+		assert.Equal(t, example.(string), "example")
+	})
 
-	example, err = defineTypeOfExample("boolean", "", "true")
-	assert.NoError(t, err)
-	assert.Equal(t, example.(bool), true)
+	t.Run("Number type", func(t *testing.T) {
+		t.Parallel()
 
-	example, err = defineTypeOfExample("array", "", "one,two,three")
-	assert.Error(t, err)
-	assert.Nil(t, example)
+		example, err := defineTypeOfExample("number", "", "12.34")
+		assert.NoError(t, err)
+		assert.Equal(t, example.(float64), 12.34)
 
-	example, err = defineTypeOfExample("array", "string", "one,two,three")
-	assert.NoError(t, err)
-	arr := []string{}
+		_, err = defineTypeOfExample("number", "", "two")
+		assert.Error(t, err)
+	})
 
-	for _, v := range example.([]interface{}) {
-		arr = append(arr, v.(string))
-	}
+	t.Run("Integer type", func(t *testing.T) {
+		t.Parallel()
 
-	assert.Equal(t, arr, []string{"one", "two", "three"})
+		example, err := defineTypeOfExample("integer", "", "12")
+		assert.NoError(t, err)
+		assert.Equal(t, example.(int), 12)
 
-	example, err = defineTypeOfExample("object", "", "key_one:one,key_two:two,key_three:three")
-	assert.Error(t, err)
-	assert.Nil(t, example)
+		_, err = defineTypeOfExample("integer", "", "two")
+		assert.Error(t, err)
+	})
 
-	example, err = defineTypeOfExample("object", "string", "key_one,key_two,key_three")
-	assert.Error(t, err)
-	assert.Nil(t, example)
+	t.Run("Boolean type", func(t *testing.T) {
+		t.Parallel()
 
-	example, err = defineTypeOfExample("object", "oops", "key_one:one,key_two:two,key_three:three")
-	assert.Error(t, err)
-	assert.Nil(t, example)
+		example, err := defineTypeOfExample("boolean", "", "true")
+		assert.NoError(t, err)
+		assert.Equal(t, example.(bool), true)
 
-	example, err = defineTypeOfExample("object", "string", "key_one:one,key_two:two,key_three:three")
-	assert.NoError(t, err)
-	obj := map[string]string{}
+		_, err = defineTypeOfExample("boolean", "", "!true")
+		assert.Error(t, err)
+	})
 
-	for k, v := range example.(map[string]interface{}) {
-		obj[k] = v.(string)
-	}
+	t.Run("Array type", func(t *testing.T) {
+		t.Parallel()
 
-	assert.Equal(t, obj, map[string]string{"key_one": "one", "key_two": "two", "key_three": "three"})
+		example, err := defineTypeOfExample("array", "", "one,two,three")
+		assert.Error(t, err)
+		assert.Nil(t, example)
 
-	example, err = defineTypeOfExample("oops", "", "")
-	assert.Error(t, err)
-	assert.Nil(t, example)
+		example, err = defineTypeOfExample("array", "string", "one,two,three")
+		assert.NoError(t, err)
+		arr := []string{}
+
+		for _, v := range example.([]interface{}) {
+			arr = append(arr, v.(string))
+		}
+
+		assert.Equal(t, arr, []string{"one", "two", "three"})
+	})
+
+	t.Run("Object type", func(t *testing.T) {
+		t.Parallel()
+
+		example, err := defineTypeOfExample("object", "", "key_one:one,key_two:two,key_three:three")
+		assert.Error(t, err)
+		assert.Nil(t, example)
+
+		example, err = defineTypeOfExample("object", "string", "key_one,key_two,key_three")
+		assert.Error(t, err)
+		assert.Nil(t, example)
+
+		example, err = defineTypeOfExample("object", "oops", "key_one:one,key_two:two,key_three:three")
+		assert.Error(t, err)
+		assert.Nil(t, example)
+
+		example, err = defineTypeOfExample("object", "string", "key_one:one,key_two:two,key_three:three")
+		assert.NoError(t, err)
+		obj := map[string]string{}
+
+		for k, v := range example.(map[string]interface{}) {
+			obj[k] = v.(string)
+		}
+
+		assert.Equal(t, obj, map[string]string{"key_one": "one", "key_two": "two", "key_three": "three"})
+	})
+
+	t.Run("Invalid type", func(t *testing.T) {
+		t.Parallel()
+
+		example, err := defineTypeOfExample("oops", "", "")
+		assert.Error(t, err)
+		assert.Nil(t, example)
+	})
+}
+
+func TestParseFieldTag(t *testing.T) {
+
+	t.Run("Example tag", func(t *testing.T) {
+		t.Parallel()
+
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" example:"one"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType:   "string",
+			exampleValue: "one",
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" example:"one"`,
+				},
+			},
+			[]string{"float"})
+		assert.Error(t, err)
+	})
+
+	t.Run("Format tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" format:"csv"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			formatType: "csv",
+		}, field)
+	})
+
+	t.Run("Required tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" binding:"required"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			isRequired: true,
+		}, field)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			isRequired: true,
+		}, field)
+
+	})
+
+	t.Run("Extensions tag", func(t *testing.T) {
+
+	})
+
+	t.Run("Enums tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" enums:"a,b,c"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			enums:      []interface{}{"a", "b", "c"},
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" enums:"a,b,c"`,
+				},
+			},
+			[]string{"float"})
+		assert.Error(t, err)
+	})
+
+	t.Run("Default tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" default:"pass"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType:   "string",
+			defaultValue: "pass",
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" default:"pass"`,
+				},
+			},
+			[]string{"float"})
+		assert.Error(t, err)
+	})
+
+	t.Run("Numeric value", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" maximum:"1"`,
+				},
+			},
+			[]string{"integer"})
+		assert.NoError(t, err)
+		max := float64(1)
+		assert.Equal(t, &structField{
+			schemaType: "integer",
+			maximum:    &max,
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" maximum:"one"`,
+				},
+			},
+			[]string{"integer"})
+		assert.Error(t, err)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" maximum:"1"`,
+				},
+			},
+			[]string{"number"})
+		assert.NoError(t, err)
+		max = float64(1)
+		assert.Equal(t, &structField{
+			schemaType: "number",
+			maximum:    &max,
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" maximum:"one"`,
+				},
+			},
+			[]string{"number"})
+		assert.Error(t, err)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" minimum:"1"`,
+				},
+			},
+			[]string{"integer"})
+		assert.NoError(t, err)
+		min := float64(1)
+		assert.Equal(t, &structField{
+			schemaType: "integer",
+			minimum:    &min,
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" minimum:"one"`,
+				},
+			},
+			[]string{"integer"})
+		assert.Error(t, err)
+
+	})
+
+	t.Run("String value", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" maxLength:"1"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		max := int64(1)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			maxLength:  &max,
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" maxLength:"one"`,
+				},
+			},
+			[]string{"string"})
+		assert.Error(t, err)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" minLength:"1"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		min := int64(1)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			minLength:  &min,
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" minLength:"one"`,
+				},
+			},
+			[]string{"string"})
+		assert.Error(t, err)
+	})
 }
 
 func TestSetRouteMethodOp(t *testing.T) {
+	t.Parallel()
+
 	op := spec.NewOperation("dummy")
 
 	// choosing to test each method explicitly instead of table driven to avoid reliance on helpers
@@ -2875,6 +3324,8 @@ func TestSetRouteMethodOp(t *testing.T) {
 }
 
 func TestHasRouteMethodOp(t *testing.T) {
+	t.Parallel()
+
 	pathItem := spec.PathItem{}
 
 	// assert that an invalid http method produces false
@@ -2913,6 +3364,8 @@ func (fs *mockFS) IsDir() bool {
 }
 
 func TestParser_Skip(t *testing.T) {
+	t.Parallel()
+
 	parser := New()
 	parser.ParseVendor = true
 

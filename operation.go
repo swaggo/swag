@@ -632,9 +632,11 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 
 	for i := range pkgInfo.Files {
 		for _, astDeclaration := range pkgInfo.Files[i].Decls {
-			if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
+			generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
+			if ok && generalDeclaration.Tok == token.TYPE {
 				for _, astSpec := range generalDeclaration.Specs {
-					if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
+					typeSpec, ok := astSpec.(*ast.TypeSpec)
+					if ok {
 						if typeSpec.Name.String() == typeName {
 							return typeSpec, nil
 						}
@@ -771,8 +773,6 @@ func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, ast
 		}
 
 		return spec.ArrayProperty(schema), nil
-	case PRIMITIVE:
-		return PrimitiveSchema(refType), nil
 	default:
 		return PrimitiveSchema(schemaType), nil
 	}
