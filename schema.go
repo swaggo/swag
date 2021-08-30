@@ -26,6 +26,8 @@ const (
 	STRING = "string"
 	// FUNC func.
 	FUNC = "func"
+	// NIL nil
+	NIL = "nil"
 )
 
 // CheckSchemaType checks if typeName is not a name of primitive type.
