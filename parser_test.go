@@ -881,9 +881,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                         "type": "string"
                     }
                 },
-                "data": {
-                    "type": "object"
-                },
+                "data": {},
                 "decimal": {
                     "type": "number"
                 },
@@ -1341,9 +1339,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                         }
                     }
                 },
-                "data": {
-                    "type": "object"
-                },
+                "data": {},
                 "decimal": {
                     "type": "number"
                 },
@@ -1964,9 +1960,7 @@ type ResponseWrapper struct {
                "type": "string"
             }
          },
-         "result": {
-            "type": "object"
-         },
+         "result": {},
          "status": {
             "type": "string"
          }

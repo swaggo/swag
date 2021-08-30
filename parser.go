@@ -871,6 +871,10 @@ func fullTypeName(pkgName, typeName string) string {
 // given name and package, and returns swagger schema for it.
 func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool) (*spec.Schema, error) {
 	switch expr := typeExpr.(type) {
+	// type Foo interface{}
+	case *ast.InterfaceType:
+		return &spec.Schema{}, nil
+
 	// type Foo struct {...}
 	case *ast.StructType:
 		return parser.parseStruct(file, expr.Fields)
@@ -907,6 +911,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 		}
 
 		return spec.MapProperty(schema), nil
+
 	case *ast.FuncType:
 		return nil, ErrFuncTypeField
 	// ...
@@ -1323,7 +1328,7 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 		return []string{schema.Type[0]}
 	}
 
-	return nil
+	return []string{ANY}
 }
 
 func replaceLastTag(slice []spec.Tag, element spec.Tag) {
