@@ -60,6 +60,50 @@ func TestSetDebugger(t *testing.T) {
 	assert.Equal(t, p.debug, logger)
 }
 
+func TestParser_ParseDefinition(t *testing.T) {
+	p := New()
+
+	// Parsing existing type
+	definition := &TypeSpecDef{
+		PkgPath: "github.com/swagger/swag",
+		File: &ast.File{
+			Name: &ast.Ident{
+				Name: "swag",
+			},
+		},
+		TypeSpec: &ast.TypeSpec{
+			Name: &ast.Ident{
+				Name: "Test",
+			},
+		},
+	}
+
+	expected := &Schema{}
+	p.parsedSchemas[definition] = expected
+
+	schema, err := p.ParseDefinition(definition)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, schema)
+
+	// Parsing *ast.FuncType
+	definition = &TypeSpecDef{
+		PkgPath: "github.com/swagger/swag/model",
+		File: &ast.File{
+			Name: &ast.Ident{
+				Name: "model",
+			},
+		},
+		TypeSpec: &ast.TypeSpec{
+			Name: &ast.Ident{
+				Name: "Test",
+			},
+			Type: &ast.FuncType{},
+		},
+	}
+	_, err = p.ParseDefinition(definition)
+	assert.Error(t, err)
+}
+
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
 	t.Parallel()
 
