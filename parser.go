@@ -103,10 +103,11 @@ type Parser struct {
 	excludes map[string]bool
 
 	// debugging output goes here
-	debug Logger
+	debug Debugger
 }
 
-type Logger interface {
+// Debugger is the interface that wraps the basic Printf method.
+type Debugger interface {
 	Printf(format string, v ...interface{})
 }
 
@@ -183,7 +184,8 @@ func SetStrict(strict bool) func(*Parser) {
 	}
 }
 
-func SetDebugger(logger Logger) func(parser *Parser) {
+// SetDebugger allows the use of user-defined implementations.
+func SetDebugger(logger Debugger) func(parser *Parser) {
 	return func(p *Parser) {
 		p.debug = logger
 	}
