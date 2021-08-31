@@ -1754,6 +1754,58 @@ func TestParseParamArrayWithEnums(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseAndExtractionParamAttribute(t *testing.T) {
+	t.Parallel()
+
+	op := NewOperation(nil)
+	numberParam := spec.Parameter{}
+	err := op.parseAndExtractionParamAttribute(
+		" default(1) maximum(100) minimum(0) format(csv)",
+		"",
+		NUMBER,
+		&numberParam,
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, float64(0), *numberParam.Minimum)
+	assert.Equal(t, float64(100), *numberParam.Maximum)
+	assert.Equal(t, "csv", numberParam.SimpleSchema.Format)
+	assert.Equal(t, float64(1), numberParam.Default)
+
+	err = op.parseAndExtractionParamAttribute(" minlength(1)", "", NUMBER, nil)
+	assert.Error(t, err)
+
+	err = op.parseAndExtractionParamAttribute(" maxlength(1)", "", NUMBER, nil)
+	assert.Error(t, err)
+
+	stringParam := spec.Parameter{}
+	err = op.parseAndExtractionParamAttribute(
+		" default(test) maxlength(100) minlength(0) format(csv)",
+		"",
+		STRING,
+		&stringParam,
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), *stringParam.MinLength)
+	assert.Equal(t, int64(100), *stringParam.MaxLength)
+	assert.Equal(t, "csv", stringParam.SimpleSchema.Format)
+	err = op.parseAndExtractionParamAttribute(" minimum(0)", "", STRING, nil)
+	assert.Error(t, err)
+
+	err = op.parseAndExtractionParamAttribute(" maximum(0)", "", STRING, nil)
+	assert.Error(t, err)
+
+	arrayParram := spec.Parameter{}
+	err = op.parseAndExtractionParamAttribute(" collectionFormat(tsv)", ARRAY, STRING, &arrayParram)
+	assert.Equal(t, "tsv", arrayParram.CollectionFormat)
+	assert.NoError(t, err)
+
+	err = op.parseAndExtractionParamAttribute(" collectionFormat(tsv)", STRING, STRING, nil)
+	assert.Error(t, err)
+
+	err = op.parseAndExtractionParamAttribute(" default(0)", "", ARRAY, nil)
+	assert.NoError(t, err)
+}
+
 func TestParseIdComment(t *testing.T) {
 	t.Parallel()
 
