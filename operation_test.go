@@ -208,6 +208,51 @@ func TestParseRouterCommentMethodMissingErr(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestParseResponseSuccessCommentWithEmptyResponse(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {object} nil "An empty response"`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.Equal(t, `An empty response`, response.Description)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "An empty response"
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+}
+
+func TestParseResponseFailureCommentWithEmptyResponse(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Failure 500 {object} nil`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "responses": {
+        "500": {
+            "description": "Internal Server Error"
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+
+}
+
 func TestParseResponseCommentWithObjectType(t *testing.T) {
 	t.Parallel()
 

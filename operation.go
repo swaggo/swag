@@ -656,6 +656,8 @@ var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
+	case refType == NIL:
+		return nil, nil
 	case refType == "interface{}":
 		return PrimitiveSchema(OBJECT), nil
 	case IsGolangPrimitiveType(refType):
