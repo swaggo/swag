@@ -1,11 +1,13 @@
 package swag
 
 import (
+	"bytes"
 	"encoding/json"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -47,6 +49,15 @@ func TestSetStrict(t *testing.T) {
 
 	p = New(SetStrict(true))
 	assert.Equal(t, true, p.Strict)
+}
+
+func TestSetDebugger(t *testing.T) {
+	t.Parallel()
+
+	logger := log.New(&bytes.Buffer{}, "", log.LstdFlags)
+
+	p := New(SetDebugger(logger))
+	assert.Equal(t, p.debug, logger)
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
