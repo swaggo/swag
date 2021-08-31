@@ -3435,3 +3435,33 @@ func TestParser_Skip(t *testing.T) {
 	assert.Error(t, parser.Skip("admin/models", &mockFS{IsDirectory: true}))
 	assert.Error(t, parser.Skip("admin/release", &mockFS{IsDirectory: true}))
 }
+
+func TestGetFieldType(t *testing.T) {
+	t.Parallel()
+
+	field, err := getFieldType(&ast.Ident{Name: "User"})
+	assert.NoError(t, err)
+	assert.Equal(t, "User", field)
+
+	_, err = getFieldType(&ast.FuncType{})
+	assert.Error(t, err)
+
+	field, err = getFieldType(&ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}})
+	assert.NoError(t, err)
+	assert.Equal(t, "models.User", field)
+
+	_, err = getFieldType(&ast.SelectorExpr{X: &ast.FuncType{}, Sel: &ast.Ident{Name: "User"}})
+	assert.Error(t, err)
+
+	field, err = getFieldType(&ast.StarExpr{X: &ast.Ident{Name: "User"}})
+	assert.NoError(t, err)
+	assert.Equal(t, "User", field)
+
+	field, err = getFieldType(&ast.StarExpr{X: &ast.FuncType{}})
+	assert.Error(t, err)
+
+	field, err = getFieldType(&ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
+	assert.NoError(t, err)
+	assert.Equal(t, "models.User", field)
+
+}
