@@ -488,9 +488,7 @@
             }
           }
         },
-        "data": {
-          "type": "object"
-        },
+        "data": {},
         "decimal": {
           "type": "number"
         },

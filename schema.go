@@ -26,6 +26,8 @@ const (
 	STRING = "string"
 	// FUNC func.
 	FUNC = "func"
+	// ANY any
+	ANY = "any"
 	// NIL nil
 	NIL = "nil"
 )
