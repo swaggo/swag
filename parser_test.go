@@ -518,7 +518,7 @@ func TestGetAllGoFileInfo(t *testing.T) {
 	searchDir := "testdata/pet"
 
 	p := New()
-	err := p.getAllGoFileInfo("testdata", searchDir)
+	err := p.getAllGoFileInfo("testdata", searchDir, 0)
 
 	assert.NoError(t, err)
 	assert.Equal(t, 2, len(p.packages.files))
@@ -530,7 +530,7 @@ func TestParser_ParseType(t *testing.T) {
 	searchDir := "testdata/simple/"
 
 	p := New()
-	err := p.getAllGoFileInfo("testdata", searchDir)
+	err := p.getAllGoFileInfo("testdata", searchDir, 0)
 	assert.NoError(t, err)
 
 	_, err = p.packages.ParseTypes()
@@ -1909,7 +1909,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.CollectAstFile("api", "api/api.go", f, 0)
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -1972,11 +1972,11 @@ type ResponseWrapper struct {
 
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
-	parser.packages.CollectAstFile("api", "api/api.go", f)
+	parser.packages.CollectAstFile("api", "api/api.go", f, 0)
 
 	f2, err := goparser.ParseFile(token.NewFileSet(), "", restsrc, goparser.ParseComments)
 	assert.NoError(t, err)
-	parser.packages.CollectAstFile("rest", "rest/rest.go", f2)
+	parser.packages.CollectAstFile("rest", "rest/rest.go", f2, 0)
 
 	_, err = parser.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2039,7 +2039,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.CollectAstFile("api", "api/api.go", f, 0)
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2166,7 +2166,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.CollectAstFile("api", "api/api.go", f, 0)
 
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2663,7 +2663,7 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.CollectAstFile("api", "api/api.go", f, 0)
 
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2701,7 +2701,7 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.CollectAstFile("api", "api/api.go", f, 0)
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2742,7 +2742,7 @@ func Fun()  {
 	pkgs.packages = nil
 	pkgs.files = nil
 
-	pkgs.CollectAstFile("api", "api/api.go", f)
+	pkgs.CollectAstFile("api", "api/api.go", f, 0)
 	assert.NotNil(t, pkgs.packages)
 	assert.NotNil(t, pkgs.files)
 }
@@ -2762,13 +2762,13 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.CollectAstFile("api", "api/api.go", f, 0)
 	assert.NotNil(t, p.packages.files[f])
 
 	astFileInfo := p.packages.files[f]
 
 	// if we collect the same again nothing should happen
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.CollectAstFile("api", "api/api.go", f, 0)
 	assert.Equal(t, astFileInfo, p.packages.files[f])
 }
 
@@ -2901,7 +2901,7 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	p.packages.CollectAstFile("api", "api/api.go", f, 0)
 	p.packages.ParseTypes()
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
