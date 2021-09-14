@@ -8,3 +8,8 @@ import (
 // @Router /testapi/endpoint [get]
 func Function(w http.ResponseWriter, r *http.Request) {
 }
+
+// @Description route1
+// @Router /testapi/route1 [get]
+func Function(w http.ResponseWriter, r *http.Request) {
+}

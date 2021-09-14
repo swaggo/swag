@@ -3386,30 +3386,46 @@ func TestParser_duplicateRouteOrder(t *testing.T) {
 	for _, td := range []struct {
 		title     string
 		searchDir []string
-		expected  string
+		expected  map[string]string // path , description
 	}{
 		{
 			title:     "The beginning of the option specification has priority",
 			searchDir: []string{"testdata/duplicate_route1", "testdata/duplicate_route2"},
-			expected:  "duplicate_route1",
+			expected: map[string]string{
+				"/testapi/endpoint": "duplicate_route1",
+				"/testapi/route1":   "route1",
+				"/testapi/route2":   "route2",
+			},
 		},
 		{
 			title:     "The beginning of the option specification has priority(reverce)",
 			searchDir: []string{"testdata/duplicate_route2", "testdata/duplicate_route1"},
-			expected:  "duplicate_route2",
+			expected: map[string]string{
+				"/testapi/endpoint": "duplicate_route2",
+				"/testapi/route1":   "route1",
+				"/testapi/route2":   "route2",
+				"/testapi/route3":   "route3",
+			},
 		},
 		{
 			title:     "Dependent source takes precedence over dependency",
 			searchDir: []string{"testdata/duplicate_route2"},
-			expected:  "duplicate_route2",
+			expected: map[string]string{
+				"/testapi/endpoint": "duplicate_route2",
+				"/testapi/route2":   "route2",
+				"/testapi/route3":   "route3",
+			},
 		},
 		{
 			title:     "Additional test",
 			searchDir: []string{"testdata/duplicate_route3"},
-			expected:  "duplicate_route3",
+			expected: map[string]string{
+				"/testapi/endpoint": "duplicate_route3",
+				"/testapi/route3":   "route3",
+			},
 		},
 	} {
-		t.Run("Square:"+td.title, func(t *testing.T) {
+		t.Run(td.title, func(t *testing.T) {
 			t.Parallel()
 			p := New()
 			p.ParseDependency = true
@@ -3418,7 +3434,17 @@ func TestParser_duplicateRouteOrder(t *testing.T) {
 				t.Fatal(err)
 			}
 			swagger := p.GetSwagger()
-			assert.Equal(t, swagger.Paths.Paths["/testapi/endpoint"].Get.Description, td.expected)
+			actual := make(map[string]string)
+			for path := range td.expected {
+				a, ok := swagger.Paths.Paths[path]
+				if ok {
+					ag := a.Get
+					if ag != nil {
+						actual[path] = swagger.Paths.Paths[path].Get.Description
+					}
+				}
+			}
+			assert.Equal(t, td.expected, actual)
 		})
 	}
 }

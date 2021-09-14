@@ -10,3 +10,8 @@ import (
 // @Router /testapi/endpoint [get]
 func Function(w http.ResponseWriter, r *http.Request) {
 }
+
+// @Description route2
+// @Router /testapi/route2 [get]
+func Function(w http.ResponseWriter, r *http.Request) {
+}
