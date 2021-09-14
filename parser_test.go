@@ -3380,3 +3380,45 @@ func TestParser_Skip(t *testing.T) {
 	assert.Error(t, parser.Skip("admin/models", &mockFS{IsDirectory: true}))
 	assert.Error(t, parser.Skip("admin/release", &mockFS{IsDirectory: true}))
 }
+
+func TestParser_duplicateRouteOrder(t *testing.T) {
+	t.Parallel()
+	for _, td := range []struct {
+		title     string
+		searchDir []string
+		expected  string
+	}{
+		{
+			title:     "The beginning of the option specification has priority",
+			searchDir: []string{"testdata/duplicate_route1", "testdata/duplicate_route2"},
+			expected:  "duplicate_route1",
+		},
+		{
+			title:     "The beginning of the option specification has priority(reverce)",
+			searchDir: []string{"testdata/duplicate_route2", "testdata/duplicate_route1"},
+			expected:  "duplicate_route2",
+		},
+		{
+			title:     "Dependent source takes precedence over dependency",
+			searchDir: []string{"testdata/duplicate_route2"},
+			expected:  "duplicate_route2",
+		},
+		{
+			title:     "Additional test",
+			searchDir: []string{"testdata/duplicate_route3"},
+			expected:  "duplicate_route3",
+		},
+	} {
+		t.Run("Square:"+td.title, func(t *testing.T) {
+			t.Parallel()
+			p := New()
+			p.ParseDependency = true
+
+			if err := p.ParseAPIMultiSearchDir(td.searchDir, "main.go", defaultParseDepth); err != nil {
+				t.Fatal(err)
+			}
+			swagger := p.GetSwagger()
+			assert.Equal(t, swagger.Paths.Paths["/testapi/endpoint"].Get.Description, td.expected)
+		})
+	}
+}
