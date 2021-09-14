@@ -45,6 +45,9 @@ type AstFileInfo struct {
 
 	// PackagePath package import path of the ast.File
 	PackagePath string
+
+	// Order
+	Order int
 }
 
 // PackageDefinitions files and definition in a package.

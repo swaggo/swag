@@ -181,7 +181,7 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth 
 
 // ParseAPIMultiSearchDir is like ParseAPI but for multiple search dirs.
 func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile string, parseDepth int) error {
-	for _, searchDir := range searchDirs {
+	for i, searchDir := range searchDirs {
 		Printf("Generate general API Info, search dir:%s", searchDir)
 
 		packageDir, err := getPkgName(searchDir)
@@ -189,7 +189,7 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 			Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
 		}
 
-		err = parser.getAllGoFileInfo(packageDir, searchDir)
+		err = parser.getAllGoFileInfo(packageDir, searchDir, i)
 		if err != nil {
 			return err
 		}
@@ -216,7 +216,7 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		}
 
 		for i := 0; i < len(t.Root.Deps); i++ {
-			err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i])
+			err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i], len(searchDirs))
 			if err != nil {
 				return err
 			}
@@ -639,11 +639,11 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 						return err
 					}
 					Printf("warning: %s\n", err)
+				} else {
+					setRouteMethodOp(&pathItem, routeProperties.HTTPMethod, &operation.Operation)
+
+					parser.swagger.Paths.Paths[routeProperties.Path] = pathItem
 				}
-
-				setRouteMethodOp(&pathItem, routeProperties.HTTPMethod, &operation.Operation)
-
-				parser.swagger.Paths.Paths[routeProperties.Path] = pathItem
 			}
 		}
 	}
@@ -1464,7 +1464,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 }
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
-func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
+func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string, order int) error {
 	return filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
 		if err := parser.Skip(path, f); err != nil {
 			return err
@@ -1477,11 +1477,11 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 			return err
 		}
 
-		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil)
+		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil, order)
 	})
 }
 
-func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
+func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg, order int) error {
 	ignoreInternal := pkg.Internal && !parser.ParseInternal
 	if ignoreInternal || !pkg.Resolved { // ignored internal and not resolved dependencies
 		return nil
@@ -1503,13 +1503,13 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		}
 
 		path := filepath.Join(srcDir, f.Name())
-		if err := parser.parseFile(pkg.Name, path, nil); err != nil {
+		if err := parser.parseFile(pkg.Name, path, nil, order); err != nil {
 			return err
 		}
 	}
 
 	for i := 0; i < len(pkg.Deps); i++ {
-		if err := parser.getAllGoFileInfoFromDeps(&pkg.Deps[i]); err != nil {
+		if err := parser.getAllGoFileInfoFromDeps(&pkg.Deps[i], order); err != nil {
 			return err
 		}
 	}
@@ -1517,7 +1517,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 	return nil
 }
 
-func (parser *Parser) parseFile(packageDir, path string, src interface{}) error {
+func (parser *Parser) parseFile(packageDir, path string, src interface{}, order int) error {
 	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
 		return nil
 	}
@@ -1528,7 +1528,7 @@ func (parser *Parser) parseFile(packageDir, path string, src interface{}) error 
 		return fmt.Errorf("ParseFile error:%+v", err)
 	}
 
-	err = parser.packages.CollectAstFile(packageDir, path, astFile)
+	err = parser.packages.CollectAstFile(packageDir, path, astFile, order)
 	if err != nil {
 		return err
 	}

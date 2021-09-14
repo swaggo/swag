@@ -25,7 +25,7 @@ func NewPackagesDefinitions() *PackagesDefinitions {
 }
 
 // CollectAstFile collect ast.file.
-func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile *ast.File) error {
+func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile *ast.File, order int) error {
 	if pkgs.files == nil {
 		pkgs.files = make(map[*ast.File]*AstFileInfo)
 	}
@@ -64,6 +64,7 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 		File:        astFile,
 		Path:        path,
 		PackagePath: packageDir,
+		Order:       order,
 	}
 
 	return nil
@@ -77,6 +78,9 @@ func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *a
 	}
 
 	sort.Slice(sortedFiles, func(i, j int) bool {
+		if sortedFiles[i].Order != sortedFiles[j].Order {
+			return sortedFiles[i].Order < sortedFiles[j].Order
+		}
 		return strings.Compare(sortedFiles[i].Path, sortedFiles[j].Path) < 0
 	})
 
