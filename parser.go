@@ -964,6 +964,7 @@ type structField struct {
 	exampleValue interface{}
 	maximum      *float64
 	minimum      *float64
+	multipleOf   *float64
 	maxLength    *int64
 	minLength    *int64
 	enums        []interface{}
@@ -1055,6 +1056,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	}
 	eleSchema.Maximum = structField.maximum
 	eleSchema.Minimum = structField.minimum
+	eleSchema.MultipleOf = structField.multipleOf
 	eleSchema.MaxLength = structField.maxLength
 	eleSchema.MinLength = structField.minLength
 	eleSchema.Enum = structField.enums
@@ -1247,6 +1249,12 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 			return nil, err
 		}
 		structField.minimum = minimum
+
+		multipleOf, err := getFloatTag(structTag, "multipleOf")
+		if err != nil {
+			return nil, err
+		}
+		structField.multipleOf = multipleOf
 	}
 	if structField.schemaType == STRING || structField.arrayType == STRING {
 		maxLength, err := getIntTag(structTag, "maxLength")
