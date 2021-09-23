@@ -1,11 +1,13 @@
 package swag
 
 import (
+	"bytes"
 	"encoding/json"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -47,6 +49,59 @@ func TestSetStrict(t *testing.T) {
 
 	p = New(SetStrict(true))
 	assert.Equal(t, true, p.Strict)
+}
+
+func TestSetDebugger(t *testing.T) {
+	t.Parallel()
+
+	logger := log.New(&bytes.Buffer{}, "", log.LstdFlags)
+
+	p := New(SetDebugger(logger))
+	assert.Equal(t, p.debug, logger)
+}
+
+func TestParser_ParseDefinition(t *testing.T) {
+	p := New()
+
+	// Parsing existing type
+	definition := &TypeSpecDef{
+		PkgPath: "github.com/swagger/swag",
+		File: &ast.File{
+			Name: &ast.Ident{
+				Name: "swag",
+			},
+		},
+		TypeSpec: &ast.TypeSpec{
+			Name: &ast.Ident{
+				Name: "Test",
+			},
+		},
+	}
+
+	expected := &Schema{}
+	p.parsedSchemas[definition] = expected
+
+	schema, err := p.ParseDefinition(definition)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, schema)
+
+	// Parsing *ast.FuncType
+	definition = &TypeSpecDef{
+		PkgPath: "github.com/swagger/swag/model",
+		File: &ast.File{
+			Name: &ast.Ident{
+				Name: "model",
+			},
+		},
+		TypeSpec: &ast.TypeSpec{
+			Name: &ast.Ident{
+				Name: "Test",
+			},
+			Type: &ast.FuncType{},
+		},
+	}
+	_, err = p.ParseDefinition(definition)
+	assert.Error(t, err)
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -3379,4 +3434,34 @@ func TestParser_Skip(t *testing.T) {
 	assert.NoError(t, parser.Skip("admin/service", &mockFS{IsDirectory: true}))
 	assert.Error(t, parser.Skip("admin/models", &mockFS{IsDirectory: true}))
 	assert.Error(t, parser.Skip("admin/release", &mockFS{IsDirectory: true}))
+}
+
+func TestGetFieldType(t *testing.T) {
+	t.Parallel()
+
+	field, err := getFieldType(&ast.Ident{Name: "User"})
+	assert.NoError(t, err)
+	assert.Equal(t, "User", field)
+
+	_, err = getFieldType(&ast.FuncType{})
+	assert.Error(t, err)
+
+	field, err = getFieldType(&ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}})
+	assert.NoError(t, err)
+	assert.Equal(t, "models.User", field)
+
+	_, err = getFieldType(&ast.SelectorExpr{X: &ast.FuncType{}, Sel: &ast.Ident{Name: "User"}})
+	assert.Error(t, err)
+
+	field, err = getFieldType(&ast.StarExpr{X: &ast.Ident{Name: "User"}})
+	assert.NoError(t, err)
+	assert.Equal(t, "User", field)
+
+	field, err = getFieldType(&ast.StarExpr{X: &ast.FuncType{}})
+	assert.Error(t, err)
+
+	field, err = getFieldType(&ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
+	assert.NoError(t, err)
+	assert.Equal(t, "models.User", field)
+
 }

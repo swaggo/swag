@@ -9,6 +9,7 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -100,6 +101,14 @@ type Parser struct {
 
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]bool
+
+	// debugging output goes here
+	debug Debugger
+}
+
+// Debugger is the interface that wraps the basic Printf method.
+type Debugger interface {
+	Printf(format string, v ...interface{})
 }
 
 // New creates a new Parser with default properties.
@@ -126,6 +135,7 @@ func New(options ...func(*Parser)) *Parser {
 			},
 		},
 		packages:           NewPackagesDefinitions(),
+		debug:              log.New(os.Stdout, "", log.LstdFlags),
 		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
 		outputSchemas:      make(map[*TypeSpecDef]*Schema),
 		existSchemaNames:   make(map[string]*Schema),
@@ -174,6 +184,13 @@ func SetStrict(strict bool) func(*Parser) {
 	}
 }
 
+// SetDebugger allows the use of user-defined implementations.
+func SetDebugger(logger Debugger) func(parser *Parser) {
+	return func(p *Parser) {
+		p.debug = logger
+	}
+}
+
 // ParseAPI parses general api info for given searchDir and mainAPIFile.
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth int) error {
 	return parser.ParseAPIMultiSearchDir([]string{searchDir}, mainAPIFile, parseDepth)
@@ -182,11 +199,11 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth 
 // ParseAPIMultiSearchDir is like ParseAPI but for multiple search dirs.
 func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile string, parseDepth int) error {
 	for _, searchDir := range searchDirs {
-		Printf("Generate general API Info, search dir:%s", searchDir)
+		parser.debug.Printf("Generate general API Info, search dir:%s", searchDir)
 
 		packageDir, err := getPkgName(searchDir)
 		if err != nil {
-			Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
+			parser.debug.Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
 		}
 
 		err = parser.getAllGoFileInfo(packageDir, searchDir)
@@ -638,7 +655,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 					if parser.Strict {
 						return err
 					}
-					Printf("warning: %s\n", err)
+					parser.debug.Printf("warning: %s\n", err)
 				}
 
 				setRouteMethodOp(&pathItem, routeProperties.HTTPMethod, &operation.Operation)
@@ -824,13 +841,13 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	schema, ok := parser.parsedSchemas[typeSpecDef]
 	if ok {
-		Println("Skipping '" + typeName + "', already parsed.")
+		parser.debug.Printf("Skipping '%s', already parsed.", typeName)
 
 		return schema, nil
 	}
 
 	if parser.isInStructStack(typeSpecDef) {
-		Println("Skipping '" + typeName + "', recursion detected.")
+		parser.debug.Printf("Skipping '%s', recursion detected.", typeName)
 
 		return &Schema{
 				Name:    refTypeName,
@@ -841,14 +858,19 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	}
 	parser.structStack = append(parser.structStack, typeSpecDef)
 
-	Println("Generating " + typeName)
+	parser.debug.Printf("Generating %s", typeName)
 
 	definition, err := parser.parseTypeExpr(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
 	if err != nil {
 		return nil, err
 	}
-	s := &Schema{Name: refTypeName, PkgPath: typeSpecDef.PkgPath, Schema: definition}
-	parser.parsedSchemas[typeSpecDef] = s
+
+	s := Schema{
+		Name:    refTypeName,
+		PkgPath: typeSpecDef.PkgPath,
+		Schema:  definition,
+	}
+	parser.parsedSchemas[typeSpecDef] = &s
 
 	// update an empty schema as a result of recursion
 	s2, ok := parser.outputSchemas[typeSpecDef]
@@ -856,7 +878,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		parser.swagger.Definitions[s2.Name] = *definition
 	}
 
-	return s, nil
+	return &s, nil
 }
 
 func fullTypeName(pkgName, typeName string) string {
@@ -916,7 +938,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 		return nil, ErrFuncTypeField
 	// ...
 	default:
-		Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
+		parser.debug.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}
 
 	return PrimitiveSchema(OBJECT), nil

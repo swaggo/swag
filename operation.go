@@ -286,7 +286,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				case IsSimplePrimitiveType(prop.Type[0]):
 					param = createParameter(paramType, prop.Description, name, prop.Type[0], findInSlice(schema.Required, name))
 				default:
-					Println(fmt.Sprintf("skip field [%s] in %s is not supported type for %s", name, refType, paramType))
+					operation.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 
 					continue
 				}
