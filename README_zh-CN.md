@@ -292,7 +292,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 swag init
 ```
 
-4. 运行程序，然后在浏览器中访问 http://localhost:8080/swagger/index.html。将看到Swagger 2.0 Api文档，如下所示：
+4. 运行程序，然后在浏览器中访问 http://localhost:8080/swagger/index.html 。将看到Swagger 2.0 Api文档，如下所示：
 
 ![swagger_index.html](https://raw.githubusercontent.com/swaggo/swag/master/assets/swagger-image.png)
 
