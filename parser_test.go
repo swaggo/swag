@@ -980,6 +980,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "multipleOf": 0.01,
                     "example": 3.25
                 },
                 "status": {
@@ -1435,6 +1436,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "multipleOf": 0.01,
                     "example": 3.25
                 },
                 "status": {
@@ -3254,6 +3256,29 @@ func TestParseFieldTag(t *testing.T) {
 			&ast.Field{
 				Tag: &ast.BasicLit{
 					Value: `json:"test" maximum:"one"`,
+				},
+			},
+			[]string{"number"})
+		assert.Error(t, err)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" multipleOf:"1"`,
+				},
+			},
+			[]string{"number"})
+		assert.NoError(t, err)
+		multipleOf := float64(1)
+		assert.Equal(t, &structField{
+			schemaType: "number",
+			multipleOf: &multipleOf,
+		}, field)
+
+		_, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" multipleOf:"one"`,
 				},
 			},
 			[]string{"number"})
