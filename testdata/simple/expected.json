@@ -556,6 +556,7 @@
           "type": "number",
           "maximum": 1000,
           "minimum": 1,
+          "multipleOf": 0.01,
           "example": 3.25
         },
         "status": {

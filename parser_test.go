@@ -980,6 +980,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "multipleOf": 0.01,
                     "example": 3.25
                 },
                 "status": {
@@ -1435,6 +1436,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "multipleOf": 0.01,
                     "example": 3.25
                 },
                 "status": {
