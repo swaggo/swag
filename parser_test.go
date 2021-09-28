@@ -398,6 +398,19 @@ func TestParser_ParseGeneralAPIInfoCollectionFromat(t *testing.T) {
 	assert.Equal(t, parser.collectionFormatInQuery, "tsv")
 }
 
+func TestParser_ParseGeneralAPITagGroups(t *testing.T) {
+	t.Parallel()
+
+	parser := New()
+	assert.NoError(t, parseGeneralAPIInfo(parser, []string{
+		"@x-taggroups [{\"name\":\"General\",\"tags\":[\"lanes\",\"video-recommendations\"]}]",
+	}))
+
+	expected := []interface{}{map[string]interface{}{"name": "General", "tags": []interface{}{"lanes", "video-recommendations"}}}
+	assert.Equal(t, parser.swagger.Extensions["x-taggroups"], expected)
+
+}
+
 func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
 	t.Parallel()
 
