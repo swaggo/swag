@@ -221,7 +221,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		refType = strings.TrimPrefix(refType, "[]")
 		refType = TransToValidSchemeType(refType)
 	} else if IsPrimitiveType(refType) ||
-		paramType == "formData" && refType == "file" {
+		(paramType == "formData" || paramType == "form") && refType == "file" {
 		objectType = PRIMITIVE
 	}
 
@@ -237,7 +237,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		case ARRAY, OBJECT:
 			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
 		}
-	case "query", "formData":
+	case "query", "formData", "form":
 		switch objectType {
 		case ARRAY:
 			if !IsPrimitiveType(refType) {
