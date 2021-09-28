@@ -403,11 +403,11 @@ func TestParser_ParseGeneralAPITagGroups(t *testing.T) {
 
 	parser := New()
 	assert.NoError(t, parseGeneralAPIInfo(parser, []string{
-		"@x-taggroups [{\"name\":\"General\",\"tags\":[\"lanes\",\"video-recommendations\"]}]",
+		"@x-tagGroups [{\"name\":\"General\",\"tags\":[\"lanes\",\"video-recommendations\"]}]",
 	}))
 
 	expected := []interface{}{map[string]interface{}{"name": "General", "tags": []interface{}{"lanes", "video-recommendations"}}}
-	assert.Equal(t, parser.swagger.Extensions["x-taggroups"], expected)
+	assert.Equal(t, parser.swagger.Extensions["x-tagGroups"], expected)
 
 }
 
