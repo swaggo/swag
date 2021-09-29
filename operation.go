@@ -109,9 +109,9 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		operation.ID = lineRemainder
 	case "@tags":
 		operation.ParseTagsComment(lineRemainder)
-	case "@accept":
+	case acceptAttr:
 		err = operation.ParseAcceptComment(lineRemainder)
-	case "@produce":
+	case produceAttr:
 		err = operation.ParseProduceComment(lineRemainder)
 	case "@param":
 		err = operation.ParseParamComment(lineRemainder, astFile)
