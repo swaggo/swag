@@ -380,10 +380,10 @@ func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 	p := New()
-	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
+	assert.Error(t, p.ParseGeneralAPIInfo("testdata/missing.go"))
 }
 
-func TestParser_ParseGeneralAPIInfoCollectionFromat(t *testing.T) {
+func TestParser_ParseGeneralAPIInfoCollectionFormat(t *testing.T) {
 	t.Parallel()
 
 	parser := New()
@@ -408,7 +408,6 @@ func TestParser_ParseGeneralAPITagGroups(t *testing.T) {
 
 	expected := []interface{}{map[string]interface{}{"name": "General", "tags": []interface{}{"lanes", "video-recommendations"}}}
 	assert.Equal(t, parser.swagger.Extensions["x-tagGroups"], expected)
-
 }
 
 func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
@@ -439,7 +438,6 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
     }
 ]`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParser_ParseGeneralAPISecurity(t *testing.T) {
@@ -577,7 +575,6 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
 			"@authorizationurl https://example.com/oauth/authorize",
 			"@scope.read,write Multiple scope"}))
 	})
-
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
@@ -1979,7 +1976,8 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	err = p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2042,11 +2040,13 @@ type ResponseWrapper struct {
 
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
-	parser.packages.CollectAstFile("api", "api/api.go", f)
+	err = parser.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
 
 	f2, err := goparser.ParseFile(token.NewFileSet(), "", restsrc, goparser.ParseComments)
 	assert.NoError(t, err)
-	parser.packages.CollectAstFile("rest", "rest/rest.go", f2)
+	err = parser.packages.CollectAstFile("rest", "rest/rest.go", f2)
+	assert.NoError(t, err)
 
 	_, err = parser.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2109,7 +2109,9 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	err = p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
+
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2236,7 +2238,8 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	err = p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
 
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2733,7 +2736,8 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	err = p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
 
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2771,7 +2775,9 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	err = p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
+
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2812,7 +2818,8 @@ func Fun()  {
 	pkgs.packages = nil
 	pkgs.files = nil
 
-	pkgs.CollectAstFile("api", "api/api.go", f)
+	err = pkgs.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
 	assert.NotNil(t, pkgs.packages)
 	assert.NotNil(t, pkgs.files)
 }
@@ -2832,13 +2839,15 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	err = p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
 	assert.NotNil(t, p.packages.files[f])
 
 	astFileInfo := p.packages.files[f]
 
 	// if we collect the same again nothing should happen
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	err = p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
 	assert.Equal(t, astFileInfo, p.packages.files[f])
 }
 
@@ -2971,8 +2980,12 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
-	p.packages.ParseTypes()
+	err = p.packages.CollectAstFile("api", "api/api.go", f)
+	assert.NoError(t, err)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
@@ -3042,7 +3055,7 @@ func TestDefineTypeOfExample(t *testing.T) {
 
 		example, err = defineTypeOfExample("array", "string", "one,two,three")
 		assert.NoError(t, err)
-		arr := []string{}
+		var arr []string
 
 		for _, v := range example.([]interface{}) {
 			arr = append(arr, v.(string))
@@ -3495,11 +3508,10 @@ func TestGetFieldType(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "User", field)
 
-	field, err = getFieldType(&ast.StarExpr{X: &ast.FuncType{}})
+	_, err = getFieldType(&ast.StarExpr{X: &ast.FuncType{}})
 	assert.Error(t, err)
 
 	field, err = getFieldType(&ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
 	assert.NoError(t, err)
 	assert.Equal(t, "models.User", field)
-
 }

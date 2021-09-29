@@ -273,7 +273,7 @@ func getPkgName(searchDir string) (string, error) {
 
 	outStr, _ := stdout.String(), stderr.String()
 
-	if outStr[0] == '_' { // will shown like _/{GOPATH}/src/{YOUR_PACKAGE} when NOT enable GO MODULE.
+	if outStr[0] == '_' { // will be shown like _/{GOPATH}/src/{YOUR_PACKAGE} when NOT enable GO MODULE.
 		outStr = strings.TrimPrefix(outStr, "_"+build.Default.GOPATH+"/src/")
 	}
 	f := strings.Split(outStr, "\n")
@@ -492,8 +492,8 @@ func parseSecAttr(context string, search []string, lines []string) (map[string]s
 	extensions := map[string]interface{}{}
 	for _, v := range lines {
 		securityAttr := strings.ToLower(strings.Split(v, " ")[0])
-		for _, findterm := range search {
-			if securityAttr == findterm {
+		for _, term := range search {
+			if securityAttr == term {
 				attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
 
 				continue
@@ -652,7 +652,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 					pathItem = spec.PathItem{}
 				}
 
-				// check if we already have a operation for this path and method
+				// check if we already have an operation for this path and method
 				if hasRouteMethodOp(pathItem, routeProperties.HTTPMethod) {
 					err := fmt.Errorf("route %s %s is declared multiple times", routeProperties.HTTPMethod, routeProperties.Path)
 					if parser.Strict {
@@ -1231,7 +1231,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 				structField.extensions[parts[0]] = parts[1]
 			} else {
 				if len(parts[0]) > 0 && string(parts[0][0]) == "!" {
-					structField.extensions[string(parts[0][1:])] = false
+					structField.extensions[parts[0][1:]] = false
 				} else {
 					structField.extensions[parts[0]] = true
 				}
@@ -1365,8 +1365,7 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 }
 
 func replaceLastTag(slice []spec.Tag, element spec.Tag) {
-	slice = slice[:len(slice)-1]
-	slice = append(slice, element)
+	slice = append(slice[:len(slice)-1], element)
 }
 
 func getFloatTag(structTag reflect.StructTag, tagName string) (*float64, error) {
@@ -1525,7 +1524,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 	srcDir := pkg.Raw.Dir
-	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contains sub dir files)
+	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(skipping sub-dirs)
 	if err != nil {
 		return err
 	}
