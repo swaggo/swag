@@ -318,13 +318,13 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 
 	// parsing classic meta data model
 	for i, commentLine := range comments {
-		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+		attribute := strings.Split(commentLine, " ")[0]
 		value := strings.TrimSpace(commentLine[len(attribute):])
 		multilineBlock := false
 		if previousAttribute == attribute {
 			multilineBlock = true
 		}
-		switch attribute {
+		switch strings.ToLower(attribute) {
 		case "@version":
 			parser.swagger.Info.Version = value
 		case "@title":
@@ -460,7 +460,10 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 				if strings.Contains(extensionName, "logo") {
 					parser.swagger.Info.Extensions.Add(extensionName, valueJSON)
 				} else {
-					parser.swagger.AddExtension(extensionName, valueJSON)
+					if parser.swagger.Extensions == nil {
+						parser.swagger.Extensions = make(map[string]interface{})
+					}
+					parser.swagger.Extensions[attribute[1:]] = valueJSON
 				}
 			}
 		}
