@@ -13,7 +13,7 @@ var (
 	swag      Swagger
 )
 
-// Swagger is a interface to read swagger document.
+// Swagger is an interface to read swagger document.
 type Swagger interface {
 	ReadDoc() string
 }

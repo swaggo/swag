@@ -25,13 +25,13 @@ func NewPackagesDefinitions() *PackagesDefinitions {
 }
 
 // CollectAstFile collect ast.file.
-func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile *ast.File) error {
-	if pkgs.files == nil {
-		pkgs.files = make(map[*ast.File]*AstFileInfo)
+func (pkgDef *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile *ast.File) error {
+	if pkgDef.files == nil {
+		pkgDef.files = make(map[*ast.File]*AstFileInfo)
 	}
 
-	if pkgs.packages == nil {
-		pkgs.packages = make(map[string]*PackageDefinitions)
+	if pkgDef.packages == nil {
+		pkgDef.packages = make(map[string]*PackageDefinitions)
 	}
 
 	// return without storing the file if we lack a packageDir
@@ -44,7 +44,7 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 		return err
 	}
 
-	pd, ok := pkgs.packages[packageDir]
+	pd, ok := pkgDef.packages[packageDir]
 	if ok {
 		// return without storing the file if it already exists
 		_, exists := pd.Files[path]
@@ -53,14 +53,14 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 		}
 		pd.Files[path] = astFile
 	} else {
-		pkgs.packages[packageDir] = &PackageDefinitions{
+		pkgDef.packages[packageDir] = &PackageDefinitions{
 			Name:            astFile.Name.Name,
 			Files:           map[string]*ast.File{path: astFile},
 			TypeDefinitions: make(map[string]*TypeSpecDef),
 		}
 	}
 
-	pkgs.files[astFile] = &AstFileInfo{
+	pkgDef.files[astFile] = &AstFileInfo{
 		File:        astFile,
 		Path:        path,
 		PackagePath: packageDir,
@@ -70,9 +70,9 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 }
 
 // RangeFiles for range the collection of ast.File in alphabetic order.
-func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *ast.File) error) error {
-	sortedFiles := make([]*AstFileInfo, 0, len(pkgs.files))
-	for _, info := range pkgs.files {
+func (pkgDef *PackagesDefinitions) RangeFiles(handle func(filename string, file *ast.File) error) error {
+	sortedFiles := make([]*AstFileInfo, 0, len(pkgDef.files))
+	for _, info := range pkgDef.files {
 		sortedFiles = append(sortedFiles, info)
 	}
 
@@ -92,9 +92,9 @@ func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *a
 
 // ParseTypes parse types
 // @Return parsed definitions.
-func (pkgs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, error) {
+func (pkgDef *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, error) {
 	parsedSchemas := make(map[*TypeSpecDef]*Schema)
-	for astFile, info := range pkgs.files {
+	for astFile, info := range pkgDef.files {
 		for _, astDeclaration := range astFile.Decls {
 			generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
 			if ok && generalDeclaration.Tok == token.TYPE {
@@ -116,23 +116,23 @@ func (pkgs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, error) 
 							}
 						}
 
-						if pkgs.uniqueDefinitions == nil {
-							pkgs.uniqueDefinitions = make(map[string]*TypeSpecDef)
+						if pkgDef.uniqueDefinitions == nil {
+							pkgDef.uniqueDefinitions = make(map[string]*TypeSpecDef)
 						}
 
 						fullName := typeSpecDef.FullName()
-						anotherTypeDef, ok := pkgs.uniqueDefinitions[fullName]
+						anotherTypeDef, ok := pkgDef.uniqueDefinitions[fullName]
 						if ok {
 							if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
 								continue
 							} else {
-								delete(pkgs.uniqueDefinitions, fullName)
+								delete(pkgDef.uniqueDefinitions, fullName)
 							}
 						} else {
-							pkgs.uniqueDefinitions[fullName] = typeSpecDef
+							pkgDef.uniqueDefinitions[fullName] = typeSpecDef
 						}
 
-						pkgs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
+						pkgDef.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
 					}
 				}
 			}
@@ -142,11 +142,11 @@ func (pkgs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, error) 
 	return parsedSchemas, nil
 }
 
-func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *TypeSpecDef {
-	if pkgs.packages == nil {
+func (pkgDef *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *TypeSpecDef {
+	if pkgDef.packages == nil {
 		return nil
 	}
-	pd, found := pkgs.packages[pkgPath]
+	pd, found := pkgDef.packages[pkgPath]
 	if found {
 		typeSpec, ok := pd.TypeDefinitions[typeName]
 		if ok {
@@ -157,11 +157,11 @@ func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *
 	return nil
 }
 
-// findPackagePathFromImports finds out the package path of a package via ranging imports of a ast.File
+// findPackagePathFromImports finds out the package path of a package via ranging imports of an ast.File
 // @pkg the name of the target package
 // @file current ast.File in which to search imports
 // @return the package path of a package of @pkg.
-func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File) string {
+func (pkgDef *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File) string {
 	if file == nil {
 		return ""
 	}
@@ -184,9 +184,9 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 
 			continue
 		}
-		if pkgs.packages != nil {
+		if pkgDef.packages != nil {
 			path := strings.Trim(imp.Path.Value, `"`)
-			pd, ok := pkgs.packages[path]
+			pd, ok := pkgDef.packages[path]
 			if ok {
 				if pd.Name == pkg {
 					return path
@@ -196,14 +196,14 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 	}
 
 	// match unnamed package
-	if hasAnonymousPkg && pkgs.packages != nil {
+	if hasAnonymousPkg && pkgDef.packages != nil {
 		for _, imp := range file.Imports {
 			if imp.Name == nil {
 				continue
 			}
 			if imp.Name.Name == "_" {
 				path := strings.Trim(imp.Path.Value, `"`)
-				pd, ok := pkgs.packages[path]
+				pd, ok := pkgDef.packages[path]
 				if ok {
 					if pd.Name == pkg {
 						return path
@@ -217,15 +217,15 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 }
 
 // FindTypeSpec finds out TypeSpecDef of a type by typeName
-// @typeName the name of the target type, if it starts with a package name, find its own package path from imports on top of @file
+// @typeName the name of the target type, if it starts with a package name, find its own package path from imports on top of file
 // @file the ast.file in which @typeName is used
 // @pkgPath the package path of @file.
-func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *TypeSpecDef {
+func (pkgDef *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *TypeSpecDef {
 	if IsGolangPrimitiveType(typeName) {
 		return nil
 	}
 	if file == nil { // for test
-		return pkgs.uniqueDefinitions[typeName]
+		return pkgDef.uniqueDefinitions[typeName]
 	}
 
 	parts := strings.Split(typeName, ".")
@@ -243,33 +243,33 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *
 		}
 
 		if !isAliasPkgName(file, parts[0]) {
-			typeDef, ok := pkgs.uniqueDefinitions[typeName]
+			typeDef, ok := pkgDef.uniqueDefinitions[typeName]
 			if ok {
 				return typeDef
 			}
 		}
 
-		pkgPath := pkgs.findPackagePathFromImports(parts[0], file)
+		pkgPath := pkgDef.findPackagePathFromImports(parts[0], file)
 		if len(pkgPath) == 0 && parts[0] == file.Name.Name {
-			pkgPath = pkgs.files[file].PackagePath
+			pkgPath = pkgDef.files[file].PackagePath
 		}
 
-		return pkgs.findTypeSpec(pkgPath, parts[1])
+		return pkgDef.findTypeSpec(pkgPath, parts[1])
 	}
 
-	typeDef, ok := pkgs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
+	typeDef, ok := pkgDef.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
 	if ok {
 		return typeDef
 	}
 
-	typeDef = pkgs.findTypeSpec(pkgs.files[file].PackagePath, typeName)
+	typeDef = pkgDef.findTypeSpec(pkgDef.files[file].PackagePath, typeName)
 	if typeDef != nil {
 		return typeDef
 	}
 
 	for _, imp := range file.Imports {
 		if imp.Name != nil && imp.Name.Name == "." {
-			typeDef := pkgs.findTypeSpec(strings.Trim(imp.Path.Value, `"`), typeName)
+			typeDef := pkgDef.findTypeSpec(strings.Trim(imp.Path.Value, `"`), typeName)
 			if typeDef != nil {
 				return typeDef
 			}

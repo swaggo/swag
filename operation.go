@@ -148,7 +148,7 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
-		// don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongly
+		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
 		operation.Extensions[attribute[1:]] = valueJSON
 
 		return nil
@@ -182,7 +182,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
-		// don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongly
+		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
 		operation.Extensions[attribute[1:]] = valueJSON
 	}
 
@@ -563,9 +563,9 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]*)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w./\-{}+:]*)[[:blank:]]+\[(\w+)]`)
 
-// ParseRouterComment parses comment for gived `router` comment string.
+// ParseRouterComment parses comment for given `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
 	matches := routerPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 3 {
@@ -583,7 +583,7 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	return nil
 }
 
-// ParseSecurityComment parses comment for gived `security` comment string.
+// ParseSecurityComment parses comment for given `security` comment string.
 func (operation *Operation) ParseSecurityComment(commentLine string) error {
 	securitySource := commentLine[strings.Index(commentLine, "@Security")+1:]
 	l := strings.Index(securitySource, "[")
@@ -667,10 +667,10 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type spec not found")
 }
 
-var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
+var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w{}]+)[\s]+([\w\-./{}=,\[\]]+)[^"]*(.*)?`)
 
 // ResponseType{data1=Type1,data2=Type2}.
-var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
+var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
@@ -977,7 +977,7 @@ func (operation *Operation) AddResponse(code int, response *spec.Response) {
 	operation.Responses.StatusCodeResponses[code] = *response
 }
 
-// createParameter returns swagger spec.Parameter for gived  paramType, description, paramName, schemaType, required.
+// createParameter returns swagger spec.Parameter for given  paramType, description, paramName, schemaType, required.
 func createParameter(paramType, description, paramName, schemaType string, required bool) spec.Parameter {
 	// //five possible parameter types. 	query, path, body, header, form
 	paramProps := spec.ParamProps{

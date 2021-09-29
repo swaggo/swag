@@ -65,7 +65,6 @@ func TestParseAcceptComment(t *testing.T) {
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(operation, "", "    ")
 	assert.JSONEq(t, expected, string(b))
-
 }
 
 func TestParseAcceptCommentErr(t *testing.T) {
@@ -229,7 +228,6 @@ func TestParseResponseSuccessCommentWithEmptyResponse(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParseResponseFailureCommentWithEmptyResponse(t *testing.T) {
@@ -250,7 +248,6 @@ func TestParseResponseFailureCommentWithEmptyResponse(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParseResponseCommentWithObjectType(t *testing.T) {
@@ -529,7 +526,7 @@ func TestParseResponseCommentWithNestedFields(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
-func TestParseResponseCommentWithDeepNestedFields(t *testing.T) {
+func TestParseCommentWithDeepNestedFields(t *testing.T) {
 	t.Parallel()
 
 	comment := `@Success 200 {object} model.CommonHeader{data1=int,data2=[]int,data3=model.Payload{data1=int,data2=model.DeepPayload},data4=[]model.Payload{data1=[]int,data2=[]model.DeepPayload}} "Error message, if code != 200`
@@ -731,7 +728,7 @@ func TestParseResponseCommentWithObjectTypeErr(t *testing.T) {
 	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200"`
 	operation := NewOperation(nil)
 
-	operation.parser.addTestType("model.notexist")
+	operation.parser.addTestType("model.fake")
 
 	err := operation.ParseComment(comment, nil)
 	assert.Error(t, err)
@@ -765,7 +762,6 @@ func TestParseResponseCommentWithArrayType(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParseResponseCommentWithBasicType(t *testing.T) {
@@ -898,12 +894,11 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 
-	err = operation.ParseComment(`@Header 200 "Mallformed"`, nil)
+	err = operation.ParseComment(`@Header 200 "Malformed"`, nil)
 	assert.Error(t, err, "ParseComment should not fail")
 
-	err = operation.ParseComment(`@Header 200,asdsd {string} Token "qwerty"`, nil)
+	err = operation.ParseComment(`@Header 200,word {string} Token "qwerty"`, nil)
 	assert.Error(t, err, "ParseComment should not fail")
-
 }
 
 func TestParseResponseCommentWithHeaderForCodes(t *testing.T) {
@@ -971,7 +966,7 @@ func TestParseResponseCommentWithHeaderForCodes(t *testing.T) {
 }`
 	assert.Equal(t, expected, string(b))
 
-	comment = `@Header 200 "Mallformed"`
+	comment = `@Header 200 "Malformed"`
 	err = operation.ParseComment(comment, nil)
 	assert.Error(t, err, "ParseComment should not fail")
 }
@@ -1152,7 +1147,6 @@ func TestParseParamCommentDefaultValue(t *testing.T) {
     ]
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 // Test ParseParamComment Query Params
@@ -1385,7 +1379,7 @@ func TestParseParamCommentByBodyTypeErr(t *testing.T) {
 
 	comment := `@Param some_id body model.OrderRow true "Some ID"`
 	operation := NewOperation(nil)
-	operation.parser.addTestType("model.notexist")
+	operation.parser.addTestType("model.fake")
 	err := operation.ParseComment(comment, nil)
 
 	assert.Error(t, err)
@@ -1598,7 +1592,7 @@ func TestParseParamCommentByMaxLength(t *testing.T) {
 	comment = `@Param some_id query int true "Some ID" MaxLength(10)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 
-	comment = `@Param some_id query string true "Some ID" MaxLength(Goopher)`
+	comment = `@Param some_id query string true "Some ID" MaxLength(Gopher)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 }
 
@@ -1628,7 +1622,7 @@ func TestParseParamCommentByMinLength(t *testing.T) {
 	comment = `@Param some_id query int true "Some ID" MinLength(10)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 
-	comment = `@Param some_id query string true "Some ID" MinLength(Goopher)`
+	comment = `@Param some_id query string true "Some ID" MinLength(Gopher)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 }
 
@@ -1661,7 +1655,7 @@ func TestParseParamCommentByMinimum(t *testing.T) {
 	comment = `@Param some_id query string true "Some ID" Minimum(10)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 
-	comment = `@Param some_id query integer true "Some ID" Minimum(Goopher)`
+	comment = `@Param some_id query integer true "Some ID" Minimum(Gopher)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 }
 
@@ -1694,9 +1688,8 @@ func TestParseParamCommentByMaximum(t *testing.T) {
 	comment = `@Param some_id query string true "Some ID" Maximum(10)`
 	assert.Error(t, operation.ParseComment(comment, nil))
 
-	comment = `@Param some_id query integer true "Some ID" Maximum(Goopher)`
+	comment = `@Param some_id query integer true "Some ID" Maximum(Gopher)`
 	assert.Error(t, operation.ParseComment(comment, nil))
-
 }
 
 func TestParseParamCommentByDefault(t *testing.T) {
@@ -1794,9 +1787,9 @@ func TestParseAndExtractionParamAttribute(t *testing.T) {
 	err = op.parseAndExtractionParamAttribute(" maximum(0)", "", STRING, nil)
 	assert.Error(t, err)
 
-	arrayParram := spec.Parameter{}
-	err = op.parseAndExtractionParamAttribute(" collectionFormat(tsv)", ARRAY, STRING, &arrayParram)
-	assert.Equal(t, "tsv", arrayParram.CollectionFormat)
+	arrayParam := spec.Parameter{}
+	err = op.parseAndExtractionParamAttribute(" collectionFormat(tsv)", ARRAY, STRING, &arrayParam)
+	assert.Equal(t, "tsv", arrayParam.CollectionFormat)
 	assert.NoError(t, err)
 
 	err = op.parseAndExtractionParamAttribute(" collectionFormat(tsv)", STRING, STRING, nil)
@@ -1844,25 +1837,25 @@ func TestParseIdComment(t *testing.T) {
 func TestFindTypeDefCoreLib(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("net/http", "Request")
+	res, err := findTypeDef("net/http", "Request")
 	assert.NoError(t, err)
-	assert.NotNil(t, spec)
+	assert.NotNil(t, res)
 }
 
 func TestFindTypeDefExternalPkg(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
+	res, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
 	assert.NoError(t, err)
-	assert.NotNil(t, spec)
+	assert.NotNil(t, res)
 }
 
 func TestFindTypeDefInvalidPkg(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("does-not-exist", "foo")
+	res, err := findTypeDef("does-not-exist", "foo")
 	assert.Error(t, err)
-	assert.Nil(t, spec)
+	assert.Nil(t, res)
 }
 
 func TestParseSecurityComment(t *testing.T) {
@@ -2063,7 +2056,7 @@ func TestParseObjectSchema(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.ArrayProperty(PrimitiveSchema(INTEGER)))
 
-	schema, err = operation.parseObjectSchema("[]bleah", nil)
+	_, err = operation.parseObjectSchema("[]null", nil)
 	assert.Error(t, err)
 
 	schema, err = operation.parseObjectSchema("map[]string", nil)
@@ -2078,10 +2071,10 @@ func TestParseObjectSchema(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.MapProperty(nil))
 
-	schema, err = operation.parseObjectSchema("map[string", nil)
+	_, err = operation.parseObjectSchema("map[string", nil)
 	assert.Error(t, err)
 
-	schema, err = operation.parseObjectSchema("map[]bleah", nil)
+	_, err = operation.parseObjectSchema("map[]fake", nil)
 	assert.Error(t, err)
 
 	operation.parser = New()
@@ -2101,14 +2094,13 @@ func TestParseObjectSchema(t *testing.T) {
 			},
 		},
 	}
-	schema, err = operation.parseObjectSchema("model.User", nil)
+	_, err = operation.parseObjectSchema("model.User", nil)
 	assert.NoError(t, err)
 
 	operation.parser = nil
 	schema, err = operation.parseObjectSchema("user.Model", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, RefSchema("user.Model"))
-
 }
 
 func TestParseCodeSamples(t *testing.T) {
@@ -2146,7 +2138,7 @@ func TestParseCodeSamples(t *testing.T) {
 	t.Run("Example file not found", func(t *testing.T) {
 		comment := `@x-codeSamples file`
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
-		operation.Summary = "exampel"
+		operation.Summary = "missing"
 
 		err := operation.ParseComment(comment, nil)
 		assert.Error(t, err, "error was expected, as file does not exist")

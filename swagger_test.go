@@ -9,24 +9,24 @@ import (
 var doc = `{
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server Petstore server.",
+        "description": "This is a sample server PetStore server.",
         "title": "Swagger Example API",
-        "termsOfService": "http://swagger.io/terms/",
+        "termsOfService": "https://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support",
+            "url": "https://www.swagger.io/support",
             "email": "support@swagger.io"
         },
         "license": {
             "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
         },
         "version": "1.0"
     },
-    "host": "petstore.swagger.io",
+    "host": "pet.store.swagger.io",
     "basePath": "/v2",
     "paths": {
-        "/testapi/get-string-by-int/{some_id}": {
+        "/get/string-by-int/{some_id}": {
             "get": {
                 "description": "get string by ID",
                 "consumes": [
@@ -71,7 +71,7 @@ var doc = `{
                 }
             }
         },
-        "/testapi/get-struct-array-by-string/{some_id}": {
+        "/get/struct-array-by-string/{some_id}": {
             "get": {
                 "description": "get struct array by ID",
                 "consumes": [
@@ -176,7 +176,7 @@ func TestNilRegister(t *testing.T) {
 	})
 }
 
-func TestCalledTwicelRegister(t *testing.T) {
+func TestCalledRegisterTwice(t *testing.T) {
 	setup()
 	assert.Panics(t, func() {
 		Register(Name, &s{})
