@@ -339,6 +339,8 @@ swag init
 | license.url             | 用于API的许可证的URL。 必须采用网址格式。                                                       | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
 | host                    | 运行API的主机（主机名或IP地址）。                                                               | // @host localhost:8080                                         |
 | BasePath                | 运行API的基本路径。                                                                             | // @BasePath /api/v1                                            |
+| accept                  | API可以使用的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  | // @accept json |
+| produce                 | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  | // @produce json |
 | query.collection.format | 请求URI query里数组参数的默认格式：csv，multi，pipes，tsv，ssv。 如果未设置，则默认为csv。 | // @query.collection.format multi                               |
 | schemes                 | 用空格分隔的请求的传输协议。                                                                    | // @schemes http https                                          |
 | x-name                  | 扩展的键必须以x-开头，并且只能使用json值                                                        | // @x-example-key {"key": "value"}                              |
