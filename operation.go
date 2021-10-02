@@ -346,6 +346,8 @@ var regexAttributes = map[string]*regexp.Regexp{
 	"maxlength": regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
 	// for format(email)
 	"format": regexp.MustCompile(`(?i)\s+format\(.*\)`),
+	// for extensions(x-example=test)
+	"extensions": regexp.MustCompile(`(?i)\s+extensions\(.*\)`),
 	// for collectionFormat(csv)
 	"collectionFormat": regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
 }
@@ -395,6 +397,9 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			param.MinLength = &n
 		case "format":
 			param.Format = attr
+		case "extensions":
+			param.Extensions = map[string]interface{}{}
+			setExtensionParam(attr, param)
 		case "collectionFormat":
 			n, err := setCollectionFormatParam(attrKey, objectType, attr, commentLine)
 			if err != nil {
@@ -402,6 +407,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			}
 			param.CollectionFormat = n
 		}
+
 	}
 
 	return nil
@@ -462,6 +468,18 @@ func setEnumParam(attr, objectType, schemaType string, param *spec.Parameter) er
 		}
 	}
 
+	return nil
+}
+
+func setExtensionParam(attr string, param *spec.Parameter) error {
+	for _, val := range strings.Split(attr, ",") {
+		parts := strings.SplitN(val, "=", 2)
+		if len(parts) == 2 {
+			param.Extensions.Add(parts[0], parts[1])
+		} else {
+			param.Extensions.Add(parts[0], true)
+		}
+	}
 	return nil
 }
 
