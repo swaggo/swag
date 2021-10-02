@@ -36,7 +36,7 @@ func New() *Gen {
 
 // Config presents Gen configurations.
 type Config struct {
-	// SearchDir the swag would be parse
+	// SearchDir the swag would be parse,comma separated if multiple
 	SearchDir string
 
 	// excludes dirs and files in SearchDir,comma separated
@@ -60,6 +60,9 @@ type Config struct {
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
 
+	// Strict whether swag should error or warn when it detects cases which are most likely user errors
+	Strict bool
+
 	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
 	MarkdownFilesDir string
 
@@ -75,20 +78,24 @@ type Config struct {
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
-	if _, err := os.Stat(config.SearchDir); os.IsNotExist(err) {
-		return fmt.Errorf("dir: %s is not exist", config.SearchDir)
+	searchDirs := strings.Split(config.SearchDir, ",")
+	for _, searchDir := range searchDirs {
+		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
+			return fmt.Errorf("dir: %s does not exist", searchDir)
+		}
 	}
 
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
-		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir))
+		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
+		swag.SetStrict(config.Strict))
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
 
-	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile, config.ParseDepth); err != nil {
+	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
 	}
 	swagger := p.GetSwagger()
@@ -187,7 +194,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 			Info: &spec.Info{
 				VendorExtensible: swagger.Info.VendorExtensible,
 				InfoProps: spec.InfoProps{
-					Description:    "{{.Description}}",
+					Description:    "{{escape .Description}}",
 					Title:          "{{.Title}}",
 					TermsOfService: swagger.Info.TermsOfService,
 					Contact:        swagger.Info.Contact,
@@ -277,7 +284,7 @@ type swaggerInfo struct {
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = swaggerInfo{
 	Version:     {{ printf "%q" .Version}},
- 	Host:        {{ printf "%q" .Host}},
+	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},
 	Schemes:     []string{ {{ range $index, $schema := .Schemes}}{{if gt $index 0}},{{end}}{{printf "%q" $schema}}{{end}} },
 	Title:       {{ printf "%q" .Title}},
@@ -294,6 +301,13 @@ func (s *s) ReadDoc() string {
 		"marshal": func(v interface{}) string {
 			a, _ := json.Marshal(v)
 			return string(a)
+		},
+		"escape": func(v interface{}) string {
+			// escape tabs
+			str := strings.Replace(v.(string), "\t", "\\t", -1)
+			// replace " with \", and if that results in \\", replace that with \\\"
+			str = strings.Replace(str, "\"", "\\\"", -1)
+			return strings.Replace(str, "\\\\\"", "\\\\\\\"", -1)
 		},
 	}).Parse(doc)
 	if err != nil {

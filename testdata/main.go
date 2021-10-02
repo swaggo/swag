@@ -31,6 +31,7 @@ package main
 // @authorizationurl https://example.com/oauth/authorize
 // @scope.write Grants write access
 // @scope.admin Grants read and write access to administrative information
+// @x-google-audiences some_audience.google.com
 
 // @securitydefinitions.oauth2.password OAuth2Password
 // @tokenUrl https://example.com/oauth/token

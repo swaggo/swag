@@ -36,7 +36,7 @@ var initFlags = []cli.Flag{
 		Name:    searchDirFlag,
 		Aliases: []string{"d"},
 		Value:   "./",
-		Usage:   "Directory you want to parse",
+		Usage:   "Directories you want to parse,comma separated and general-info file must be in the first one",
 	},
 	&cli.StringFlag{
 		Name:  excludeFlag,

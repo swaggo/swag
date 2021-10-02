@@ -25,7 +25,7 @@ type Pet struct {
 	Pets      *[]Pet2
 	Pets2     []*Pet2
 	Status    string
-	Price     float32 `example:"3.25"`
+	Price     float32 `example:"3.25" multipleOf:"0.01"`
 	IsAlive   bool    `example:"true"`
 	Data      interface{}
 	Hidden    string `json:"-"`

@@ -1,14 +1,18 @@
 package gen
 
 import (
+	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"plugin"
 	"testing"
 
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGen_Build(t *testing.T) {
@@ -83,6 +87,55 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 	}
 }
 
+func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
+	searchDir := "../testdata/quotes"
+	config := &Config{
+		SearchDir:        searchDir,
+		MainAPIFile:      "./main.go",
+		OutputDir:        "../testdata/quotes/docs",
+		MarkdownFilesDir: searchDir,
+	}
+
+	require.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+	}
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/quotes")
+	cmd.Dir = config.SearchDir
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatal(err, string(output))
+	}
+	p, err := plugin.Open(filepath.Join(config.SearchDir, "quotes.so"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("quotes.so")
+
+	readDoc, err := p.Lookup("ReadDoc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	jsonOutput := []byte(readDoc.(func() string)())
+	var jsonDoc interface{}
+	if err := json.Unmarshal(jsonOutput, &jsonDoc); err != nil {
+		t.Fatal(err, string(jsonOutput))
+	}
+	expectedJSON, err := ioutil.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, expectedJSON, jsonOutput)
+}
+
 func TestGen_jsonIndent(t *testing.T) {
 	searchDir := "../testdata/simple"
 
@@ -136,7 +189,7 @@ func TestGen_SearchDirIsNotExist(t *testing.T) {
 		OutputDir:          swaggerConfDir,
 		PropNamingStrategy: propNamingStrategy,
 	}
-	assert.EqualError(t, New().Build(config), "dir: ../isNotExistDir is not exist")
+	assert.EqualError(t, New().Build(config), "dir: ../isNotExistDir does not exist")
 }
 
 func TestGen_MainAPiNotExist(t *testing.T) {
@@ -369,4 +422,23 @@ func TestGen_cgoImports(t *testing.T) {
 		}
 		os.Remove(expectedFile)
 	}
+}
+
+func TestGen_duplicateRoute(t *testing.T) {
+	searchDir := "../testdata/duplicate_route"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/duplicate_route/docs",
+		PropNamingStrategy: "",
+		ParseDependency:    true,
+	}
+	err := New().Build(config)
+	assert.NoError(t, err)
+
+	// with Strict enabled should cause an error instead of warning about the duplicate route
+	config.Strict = true
+	err = New().Build(config)
+	assert.EqualError(t, err, "route GET /testapi/endpoint is declared multiple times")
 }

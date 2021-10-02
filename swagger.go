@@ -37,5 +37,6 @@ func ReadDoc() (string, error) {
 	if swag != nil {
 		return swag.ReadDoc(), nil
 	}
+
 	return "", errors.New("not yet registered swag")
 }

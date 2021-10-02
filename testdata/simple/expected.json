@@ -449,9 +449,9 @@
             },
             "photo_urls": {
               "type": "array",
-              "format": "url",
               "items": {
-                "type": "string"
+                "type": "string",
+                "format": "url"
               },
               "example": [
                 "http://test/image/1.jpg",
@@ -488,9 +488,7 @@
             }
           }
         },
-        "data": {
-          "type": "object"
-        },
+        "data": {},
         "decimal": {
           "type": "number"
         },
@@ -558,6 +556,7 @@
           "type": "number",
           "maximum": 1000,
           "minimum": 1,
+          "multipleOf": 0.01,
           "example": 3.25
         },
         "status": {
@@ -600,7 +599,8 @@
         "middlename": {
           "type": "string",
           "x-abc": "def",
-          "x-nullable": true
+          "x-nullable": true,
+          "x-omitempty": false
         }
       }
     },

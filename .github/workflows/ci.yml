@@ -1,9 +1,16 @@
-on: push
+name: build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
 jobs:
   test:
     strategy:
       matrix:
-        go: [ '1.13.x', '1.14.x' ]
+        go: [ '1.13.x', '1.14.x', '1.15.x' ]
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -38,3 +45,6 @@ jobs:
         run: make test
         env:
           GOPATH: ${{ runner.workspace }}
+      - name: coverage
+        working-directory: ./src/github.com/${{ github.repository }}
+        run: bash <(curl -s https://codecov.io/bash)
