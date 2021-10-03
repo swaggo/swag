@@ -383,6 +383,72 @@ func TestParser_ParseGeneralApiInfoFailed(t *testing.T) {
 	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
 }
 
+func TestParser_ParseAcceptComment(t *testing.T) {
+	t.Parallel()
+
+	expected := []string{
+		"application/json",
+		"text/xml",
+		"text/plain",
+		"text/html",
+		"multipart/form-data",
+		"application/x-www-form-urlencoded",
+		"application/vnd.api+json",
+		"application/x-json-stream",
+		"application/octet-stream",
+		"image/png",
+		"image/jpeg",
+		"image/gif",
+		"application/xhtml+xml",
+		"application/health+json",
+	}
+
+	comment := `@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+
+	parser := New()
+	assert.NoError(t, parseGeneralAPIInfo(parser, []string{comment}))
+	assert.Equal(t, parser.swagger.Consumes, expected)
+
+	assert.Error(t, parseGeneralAPIInfo(parser, []string{`@Accept cookies,candies`}))
+
+	parser = New()
+	assert.NoError(t, parser.ParseAcceptComment(comment[len(acceptAttr)+1:]))
+	assert.Equal(t, parser.swagger.Consumes, expected)
+}
+
+func TestParser_ParseProduceComment(t *testing.T) {
+	t.Parallel()
+
+	expected := []string{
+		"application/json",
+		"text/xml",
+		"text/plain",
+		"text/html",
+		"multipart/form-data",
+		"application/x-www-form-urlencoded",
+		"application/vnd.api+json",
+		"application/x-json-stream",
+		"application/octet-stream",
+		"image/png",
+		"image/jpeg",
+		"image/gif",
+		"application/xhtml+xml",
+		"application/health+json",
+	}
+
+	comment := `@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+
+	parser := New()
+	assert.NoError(t, parseGeneralAPIInfo(parser, []string{comment}))
+	assert.Equal(t, parser.swagger.Produces, expected)
+
+	assert.Error(t, parseGeneralAPIInfo(parser, []string{`@Produce cookies,candies`}))
+
+	parser = New()
+	assert.NoError(t, parser.ParseProduceComment(comment[len(produceAttr)+1:]))
+	assert.Equal(t, parser.swagger.Produces, expected)
+}
+
 func TestParser_ParseGeneralAPIInfoCollectionFromat(t *testing.T) {
 	t.Parallel()
 
