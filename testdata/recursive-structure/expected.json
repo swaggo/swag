@@ -1,0 +1,97 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/",
+    "paths": {
+        "/Resource/{ID}": {
+            "get": {
+                "description": "get resource",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "resource"
+                ],
+                "summary": "get",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "access token sent using Bearer prefix",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "ID",
+                        "name": "ID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Resource"
+                        }
+                    },
+                    "400": {
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.Element": {
+            "type": "object",
+            "properties": {
+                "extension": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/main.Extension"
+                    }
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Extension": {
+            "type": "object",
+            "allOf": [
+                {
+                    "$ref": "#/definitions/main.Element"
+                }
+            ],
+            "properties": {
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Resource": {
+            "type": "object",
+            "allOf": [
+                {
+                    "$ref": "#/definitions/main.Element"
+                }
+            ]
+        }
+    }
+}

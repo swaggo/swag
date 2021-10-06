@@ -972,7 +972,23 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
 	required := make([]string, 0)
 	properties := make(map[string]spec.Schema)
+	allOf := make([]spec.Schema, 0)
 	for _, field := range fields.List {
+		if len(field.Names) == 0 {
+			typeName, err := getFieldType(field.Type)
+			if err != nil {
+				return nil, err
+			}
+			_, err = parser.getTypeSchema(typeName, file, true)
+			if err != nil {
+				if err == ErrFuncTypeField || err == ErrRecursiveParseStruct {
+					continue
+				}
+				return nil, err
+			}
+			allOf = append(allOf, *RefSchema(fmt.Sprintf("%s.%s", file.Name.Name, field.Type)))
+			continue
+		}
 		fieldProps, requiredFromAnon, err := parser.parseStructField(file, field)
 		if err != nil {
 			if err == ErrFuncTypeField {
@@ -997,6 +1013,7 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 			Type:       []string{OBJECT},
 			Properties: properties,
 			Required:   required,
+			AllOf:      allOf,
 		},
 	}, nil
 }

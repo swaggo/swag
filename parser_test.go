@@ -1974,6 +1974,22 @@ func TestParseDuplicatedOtherMethods(t *testing.T) {
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
+func TestParseRecursiveStructure(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/recursive-structure"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParseConflictSchemaName(t *testing.T) {
 	t.Parallel()
 
