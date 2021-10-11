@@ -74,10 +74,18 @@ type Config struct {
 
 	// ParseDepth dependency parse depth
 	ParseDepth int
+
+	// InstanceName is used to get distinct names for different swagger documents in the
+	// same project. The default value is "swagger".
+	InstanceName string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
+	if config.InstanceName == "" {
+		config.InstanceName = swag.Name
+	}
+
 	searchDirs := strings.Split(config.SearchDir, ",")
 	for _, searchDir := range searchDirs {
 		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
@@ -233,6 +241,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 		Title         string
 		Description   string
 		Version       string
+		InstanceName  string
 	}{
 		Timestamp:     time.Now(),
 		GeneratedTime: config.GeneratedTime,
@@ -244,6 +253,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 		Title:         swagger.Info.Title,
 		Description:   swagger.Info.Description,
 		Version:       swagger.Info.Version,
+		InstanceName:  config.InstanceName,
 	})
 	if err != nil {
 		return err
@@ -323,6 +333,6 @@ func (s *s) ReadDoc() string {
 }
 
 func init() {
-	swag.Register(swag.Name, &s{})
+	swag.Register({{ printf "%q" .InstanceName }}, &s{})
 }
 `
