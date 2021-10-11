@@ -58,7 +58,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(expectedCode), "swag.Register(swag.Name, &s{})") {
+	if !strings.Contains(string(expectedCode), "swag.Register(\"swagger\", &s{})") {
 		t.Fatal(errors.New("generated go code does not contain the correct default registration sequence"))
 	}
 

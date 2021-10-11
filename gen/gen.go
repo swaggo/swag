@@ -82,11 +82,10 @@ type Config struct {
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
-	instanceName := "swag.Name"
-	if config.InstanceName != "" {
-		instanceName = fmt.Sprintf("%q", config.InstanceName) // use a quoted string
+	if config.InstanceName == "" {
+		config.InstanceName = swag.Name
 	}
-	config.InstanceName = instanceName
+
 	searchDirs := strings.Split(config.SearchDir, ",")
 	for _, searchDir := range searchDirs {
 		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
@@ -334,6 +333,6 @@ func (s *s) ReadDoc() string {
 }
 
 func init() {
-	swag.Register({{ .InstanceName }}, &s{})
+	swag.Register({{ printf "%q" .InstanceName }}, &s{})
 }
 `
