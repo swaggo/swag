@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"plugin"
+	"strings"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -36,6 +37,53 @@ func TestGen_Build(t *testing.T) {
 			t.Fatal(err)
 		}
 		os.Remove(expectedFile)
+	}
+}
+
+func TestGen_BuildRegistrationName(t *testing.T) {
+	searchDir := "../testdata/simple"
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		PropNamingStrategy: "",
+	}
+	assert.NoError(t, New().Build(config))
+
+	goSourceFile := filepath.Join(config.OutputDir, "docs.go")
+
+	// Validate default registration name
+	expectedCode, err := ioutil.ReadFile(goSourceFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(expectedCode), "swag.Register(swag.Name, &s{})") {
+		t.Fatal(errors.New("generated go code does not contain the correct default registration sequence"))
+	}
+
+	// Custom name
+	config.RegistrationName = "custom"
+	assert.NoError(t, New().Build(config))
+	expectedCode, err = ioutil.ReadFile(goSourceFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(expectedCode), "swag.Register(\"custom\", &s{})") {
+		t.Fatal(errors.New("generated go code does not contain the correct registration sequence"))
+	}
+
+	// cleanup
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		_ = os.Remove(expectedFile)
 	}
 }
 

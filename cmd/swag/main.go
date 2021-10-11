@@ -23,6 +23,7 @@ const (
 	parseInternalFlag    = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
 	parseDepthFlag       = "parseDepth"
+	registrationNameFlag = "registrationName"
 )
 
 var initFlags = []cli.Flag{
@@ -87,6 +88,12 @@ var initFlags = []cli.Flag{
 		Value: 100,
 		Usage: "Dependency parse depth",
 	},
+	&cli.StringFlag{
+		Name:    registrationNameFlag,
+		Aliases: []string{"reg"},
+		Value:   "",
+		Usage:   "This parameter can be used to name different swagger document instances. It is optional.",
+	},
 }
 
 func initAction(c *cli.Context) error {
@@ -111,6 +118,7 @@ func initAction(c *cli.Context) error {
 		GeneratedTime:       c.Bool(generatedTimeFlag),
 		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
 		ParseDepth:          c.Int(parseDepthFlag),
+		RegistrationName:    c.String(parseDepthFlag),
 	})
 }
 
