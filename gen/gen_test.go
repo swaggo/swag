@@ -40,7 +40,7 @@ func TestGen_Build(t *testing.T) {
 	}
 }
 
-func TestGen_BuildRegistrationName(t *testing.T) {
+func TestGen_BuildInstanceName(t *testing.T) {
 	searchDir := "../testdata/simple"
 
 	config := &Config{
@@ -63,7 +63,7 @@ func TestGen_BuildRegistrationName(t *testing.T) {
 	}
 
 	// Custom name
-	config.RegistrationName = "custom"
+	config.InstanceName = "custom"
 	assert.NoError(t, New().Build(config))
 	expectedCode, err = ioutil.ReadFile(goSourceFile)
 	if err != nil {

@@ -52,9 +52,10 @@ func ReadDoc(optionalName ...string) (string, error) {
 		name = optionalName[0]
 	}
 
-	if swag, ok := swags[name]; !ok {
+	swag, ok := swags[name]
+	if !ok {
 		return "", fmt.Errorf("no swag named \"%s\" was registered", name)
-	} else {
-		return swag.ReadDoc(), nil
 	}
+
+	return swag.ReadDoc(), nil
 }

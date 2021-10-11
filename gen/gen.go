@@ -75,18 +75,18 @@ type Config struct {
 	// ParseDepth dependency parse depth
 	ParseDepth int
 
-	// RegistrationName is used to get distinct names for different swagger documents in the
+	// InstanceName is used to get distinct names for different swagger documents in the
 	// same project. The default value is "swagger".
-	RegistrationName string
+	InstanceName string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
-	if config.RegistrationName == "" {
-		config.RegistrationName = "swag.Name" // use the variable as registration name
-	} else {
-		config.RegistrationName = fmt.Sprintf("%q", config.RegistrationName) // use a quoted string
+	instanceName := "swag.Name"
+	if config.InstanceName != "" {
+		instanceName = fmt.Sprintf("%q", config.InstanceName) // use a quoted string
 	}
+	config.InstanceName = instanceName
 	searchDirs := strings.Split(config.SearchDir, ",")
 	for _, searchDir := range searchDirs {
 		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
@@ -232,29 +232,29 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 
 	buffer := &bytes.Buffer{}
 	err = generator.Execute(buffer, struct {
-		Timestamp        time.Time
-		GeneratedTime    bool
-		Doc              string
-		Host             string
-		PackageName      string
-		BasePath         string
-		Schemes          []string
-		Title            string
-		Description      string
-		Version          string
-		RegistrationName string
+		Timestamp     time.Time
+		GeneratedTime bool
+		Doc           string
+		Host          string
+		PackageName   string
+		BasePath      string
+		Schemes       []string
+		Title         string
+		Description   string
+		Version       string
+		InstanceName  string
 	}{
-		Timestamp:        time.Now(),
-		GeneratedTime:    config.GeneratedTime,
-		Doc:              string(buf),
-		Host:             swagger.Host,
-		PackageName:      packageName,
-		BasePath:         swagger.BasePath,
-		Schemes:          swagger.Schemes,
-		Title:            swagger.Info.Title,
-		Description:      swagger.Info.Description,
-		Version:          swagger.Info.Version,
-		RegistrationName: config.RegistrationName,
+		Timestamp:     time.Now(),
+		GeneratedTime: config.GeneratedTime,
+		Doc:           string(buf),
+		Host:          swagger.Host,
+		PackageName:   packageName,
+		BasePath:      swagger.BasePath,
+		Schemes:       swagger.Schemes,
+		Title:         swagger.Info.Title,
+		Description:   swagger.Info.Description,
+		Version:       swagger.Info.Version,
+		InstanceName:  config.InstanceName,
 	})
 	if err != nil {
 		return err
@@ -334,6 +334,6 @@ func (s *s) ReadDoc() string {
 }
 
 func init() {
-	swag.Register({{ .RegistrationName }}, &s{})
+	swag.Register({{ .InstanceName }}, &s{})
 }
 `
