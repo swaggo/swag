@@ -89,6 +89,7 @@ OPTIONS:
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
    --generatedTime                        Generate timestamp at the top of docs.go, disabled by default (default: false)
    --parseDepth value                     Dependency parse depth (default: 100)
+   --instanceName value                   Set the swagger document instance name (default: "swagger")
    --help, -h                             show help (default: false)
 ```
 
