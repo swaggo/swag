@@ -2,7 +2,10 @@ package swag
 
 import (
 	"go/ast"
+	goparser "go/parser"
 	"go/token"
+	"golang.org/x/tools/go/loader"
+	"os"
 	"strings"
 )
 
@@ -68,47 +71,58 @@ func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *a
 func (pkgs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, error) {
 	parsedSchemas := make(map[*TypeSpecDef]*Schema)
 	for astFile, info := range pkgs.files {
-		for _, astDeclaration := range astFile.Decls {
-			if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
-				for _, astSpec := range generalDeclaration.Specs {
-					if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
-						typeSpecDef := &TypeSpecDef{
-							PkgPath:  info.PackagePath,
-							File:     astFile,
-							TypeSpec: typeSpec,
-						}
+		pkgs.parseTypesFromFile(astFile, info.PackagePath, parsedSchemas)
+	}
+	return parsedSchemas, nil
+}
 
-						if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) {
-							parsedSchemas[typeSpecDef] = &Schema{
-								PkgPath: typeSpecDef.PkgPath,
-								Name:    astFile.Name.Name,
-								Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
-							}
-						}
+func (pkgs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packagePath string, parsedSchemas map[*TypeSpecDef]*Schema) {
+	for _, astDeclaration := range astFile.Decls {
+		if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
+			for _, astSpec := range generalDeclaration.Specs {
+				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
+					typeSpecDef := &TypeSpecDef{
+						PkgPath:  packagePath,
+						File:     astFile,
+						TypeSpec: typeSpec,
+					}
 
-						if pkgs.uniqueDefinitions == nil {
-							pkgs.uniqueDefinitions = make(map[string]*TypeSpecDef)
+					if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) && parsedSchemas != nil {
+						parsedSchemas[typeSpecDef] = &Schema{
+							PkgPath: typeSpecDef.PkgPath,
+							Name:    astFile.Name.Name,
+							Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
 						}
+					}
 
-						fullName := typeSpecDef.FullName()
-						anotherTypeDef, ok := pkgs.uniqueDefinitions[fullName]
-						if ok {
-							if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
-								continue
-							} else {
-								delete(pkgs.uniqueDefinitions, fullName)
-							}
+					if pkgs.uniqueDefinitions == nil {
+						pkgs.uniqueDefinitions = make(map[string]*TypeSpecDef)
+					}
+
+					fullName := typeSpecDef.FullName()
+					anotherTypeDef, ok := pkgs.uniqueDefinitions[fullName]
+					if ok {
+						if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
+							continue
 						} else {
-							pkgs.uniqueDefinitions[fullName] = typeSpecDef
+							delete(pkgs.uniqueDefinitions, fullName)
 						}
+					} else {
+						pkgs.uniqueDefinitions[fullName] = typeSpecDef
+					}
 
+					if pkgs.packages[typeSpecDef.PkgPath] == nil {
+						pkgs.packages[typeSpecDef.PkgPath] = &PackageDefinitions{
+							Name:            astFile.Name.Name,
+							TypeDefinitions: map[string]*TypeSpecDef{typeSpecDef.Name(): typeSpecDef},
+						}
+					} else if _, ok = pkgs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()]; !ok {
 						pkgs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
 					}
 				}
 			}
 		}
 	}
-	return parsedSchemas, nil
 }
 
 func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *TypeSpecDef {
@@ -122,11 +136,43 @@ func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *
 	return nil
 }
 
+func (pkgs *PackagesDefinitions) loadExternalPackage(importPath string) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	conf := loader.Config{
+		ParserMode: goparser.ParseComments,
+		Cwd:        cwd,
+	}
+
+	conf.Import(importPath)
+
+	lprog, err := conf.Load()
+	if err != nil {
+		return err
+	}
+
+	for _, info := range lprog.AllPackages {
+		pkgPath := info.Pkg.Path()
+		if strings.HasPrefix(pkgPath, "vendor/") {
+			pkgPath = pkgPath[7:]
+		}
+		for _, astFile := range info.Files {
+			pkgs.parseTypesFromFile(astFile, pkgPath, nil)
+		}
+	}
+
+	return nil
+}
+
 // findPackagePathFromImports finds out the package path of a package via ranging imports of a ast.File
 // @pkg the name of the target package
 // @file current ast.File in which to search imports
+// @fuzzy search for the package path that the last part matches the @pkg if true
 // @return the package path of a package of @pkg
-func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File) string {
+func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File, fuzzy bool) string {
 	if file == nil {
 		return ""
 	}
@@ -136,6 +182,14 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 	}
 
 	hasAnonymousPkg := false
+
+	matchLastPathPart := func(pkgPath string) bool {
+		paths := strings.Split(pkgPath, "/")
+		if paths[len(paths)-1] == pkg {
+			return true
+		}
+		return false
+	}
 
 	// prior to match named package
 	for _, imp := range file.Imports {
@@ -147,7 +201,11 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 			}
 		} else if pkgs.packages != nil {
 			path := strings.Trim(imp.Path.Value, `"`)
-			if pd, ok := pkgs.packages[path]; ok {
+			if fuzzy {
+				if matchLastPathPart(path) {
+					return path
+				}
+			} else if pd, ok := pkgs.packages[path]; ok {
 				if pd.Name == pkg {
 					return path
 				}
@@ -163,7 +221,11 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 			}
 			if imp.Name.Name == "_" {
 				path := strings.Trim(imp.Path.Value, `"`)
-				if pd, ok := pkgs.packages[path]; ok {
+				if fuzzy {
+					if matchLastPathPart(path) {
+						return path
+					}
+				} else if pd, ok := pkgs.packages[path]; ok {
 					if pd.Name == pkg {
 						return path
 					}
@@ -178,7 +240,7 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 // @typeName the name of the target type, if it starts with a package name, find its own package path from imports on top of @file
 // @file the ast.file in which @typeName is used
 // @pkgPath the package path of @file
-func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *TypeSpecDef {
+func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File, parseDependency bool) *TypeSpecDef {
 	if IsGolangPrimitiveType(typeName) {
 		return nil
 	} else if file == nil { // for test
@@ -206,9 +268,19 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *
 			}
 		}
 
-		pkgPath := pkgs.findPackagePathFromImports(parts[0], file)
-		if len(pkgPath) == 0 && parts[0] == file.Name.Name {
-			pkgPath = pkgs.files[file].PackagePath
+		pkgPath := pkgs.findPackagePathFromImports(parts[0], file, false)
+		if len(pkgPath) == 0 {
+			//check if the current package
+			if parts[0] == file.Name.Name {
+				pkgPath = pkgs.files[file].PackagePath
+			} else if parseDependency {
+				//take it as an external package, needs to be loaded
+				if pkgPath = pkgs.findPackagePathFromImports(parts[0], file, true); len(pkgPath) > 0 {
+					if err := pkgs.loadExternalPackage(pkgPath); err != nil {
+						return nil
+					}
+				}
+			}
 		}
 		return pkgs.findTypeSpec(pkgPath, parts[1])
 	}

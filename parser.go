@@ -159,7 +159,7 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile
 func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) error {
-	Printf("Generate general API Info, search dir:%s", searchDir)
+	Printf("Generate general API Info, search dir: %s", searchDir)
 
 	packageDir, err := getPkgName(searchDir)
 	if err != nil {
@@ -621,7 +621,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return PrimitiveSchema(schemaType), nil
 	}
 
-	typeSpecDef := parser.packages.FindTypeSpec(typeName, file)
+	typeSpecDef := parser.packages.FindTypeSpec(typeName, file, parser.ParseDependency)
 	if typeSpecDef == nil {
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
