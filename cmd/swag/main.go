@@ -62,7 +62,7 @@ var initFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:    parseDependencyFlag,
 		Aliases: []string{"pd"},
-		Usage:   "Parse go files in outside dependency folder, disabled by default",
+		Usage:   "Parse go files inside dependency folder, disabled by default",
 	},
 	&cli.StringFlag{
 		Name:    markdownFilesFlag,
