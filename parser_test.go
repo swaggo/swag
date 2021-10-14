@@ -1996,7 +1996,6 @@ func TestParseExternalModels(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	t.Log(string(b))
 	//ioutil.WriteFile("./testdata/external_models/main/expected.json",b,0777)
 	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
