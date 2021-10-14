@@ -31,31 +31,12 @@
                         "schema": {
                             "$ref": "#/definitions/http.Header"
                         }
-                    },
-                    "404": {
-                        "description": "from external pkg",
-                        "schema": {
-                            "$ref": "#/definitions/external.MyError"
-                        }
                     }
                 }
             }
         }
     },
     "definitions": {
-        "external.MyError": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "description": "The Authors email",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "The Authors name",
-                    "type": "string"
-                }
-            }
-        },
         "http.Header": {
             "type": "object",
             "additionalProperties": {

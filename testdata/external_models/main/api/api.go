@@ -1,7 +1,6 @@
 package api
 
 import (
-	_ "github.com/swaggo/swag/testdata/external_models/external"
 	"net/http"
 )
 
@@ -13,7 +12,6 @@ import (
 // @Produce  json
 // @Success 200 {string} string	"ok"
 // @Failure 400 {object} http.Header "from internal pkg"
-// @Failure 404 {object} external.MyError "from external pkg"
 // @Router /testapi/external_models [get]
 func GetExternalModels(w http.ResponseWriter, r *http.Request) {
 
