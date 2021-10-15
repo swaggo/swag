@@ -313,11 +313,15 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			return nil
 		}
 	case "body":
-		schema, err := operation.parseAPIObjectSchema(objectType, refType, astFile)
-		if err != nil {
-			return err
+		if objectType == PRIMITIVE {
+			param.Schema = PrimitiveSchema(refType)
+		} else {
+			schema, err := operation.parseAPIObjectSchema(objectType, refType, astFile)
+			if err != nil {
+				return err
+			}
+			param.Schema = schema
 		}
-		param.Schema = schema
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
@@ -794,7 +798,7 @@ func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, ast
 
 		return spec.ArrayProperty(schema), nil
 	default:
-		return PrimitiveSchema(refType), nil
+		return PrimitiveSchema(schemaType), nil
 	}
 }
 
