@@ -794,7 +794,7 @@ func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, ast
 
 		return spec.ArrayProperty(schema), nil
 	default:
-		return PrimitiveSchema(schemaType), nil
+		return PrimitiveSchema(refType), nil
 	}
 }
 
