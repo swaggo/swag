@@ -1256,6 +1256,32 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentByBodyTextPlain(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param text body string true "Text to process"`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "parameters": [
+        {
+            "description": "Text to process",
+            "name": "text",
+            "in": "body",
+            "required": true,
+            "schema": {
+                "type": "string"
+            }
+        }
+    ]
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByBodyTypeWithDeepNestedFields(t *testing.T) {
 	t.Parallel()
 
