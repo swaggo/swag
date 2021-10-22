@@ -3056,7 +3056,6 @@ func Fun()  {
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
-	assert.NoError(t, err)
 	teacher, ok := p.swagger.Definitions["Teacher"]
 	assert.True(t, ok)
 
@@ -3452,6 +3451,24 @@ func TestParseFieldTag(t *testing.T) {
 			[]string{"string"})
 		assert.Error(t, err)
 	})
+
+	t.Run("Readonly tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" readonly:"true"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			readOnly:   true,
+		}, field)
+	})
 }
 
 func TestSetRouteMethodOp(t *testing.T) {
@@ -3581,5 +3598,4 @@ func TestGetFieldType(t *testing.T) {
 	field, err = getFieldType(&ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
 	assert.NoError(t, err)
 	assert.Equal(t, "models.User", field)
-
 }

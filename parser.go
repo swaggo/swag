@@ -1090,6 +1090,9 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 
 	schema.Description = structField.desc
 	schema.ReadOnly = structField.readOnly
+	if schema.ReadOnly && !reflect.ValueOf(schema.SchemaProps.Ref).IsZero() {
+		schema.AllOf = []spec.Schema{*RefSchema(strings.TrimPrefix(schema.SchemaProps.Ref.Ref.String(), "#/definitions/"))}
+	}
 	schema.Default = structField.defaultValue
 	schema.Example = structField.exampleValue
 	if structField.schemaType != ARRAY {
