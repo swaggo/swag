@@ -285,7 +285,7 @@ type s struct{}
 
 func (s *s) ReadDoc() string {
 	sInfo := SwaggerInfo
-	sInfo.Description = strings.Replace(sInfo.Description, "\n", "\\n", -1)
+	sInfo.Description = strings.ReplaceAll(sInfo.Description, "\n", "\\n")
 
 	t, err := template.New("swagger_info").Funcs(template.FuncMap{
 		"marshal": func(v interface{}) string {

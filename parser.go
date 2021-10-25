@@ -8,7 +8,6 @@ import (
 	"go/build"
 	goparser "go/parser"
 	"go/token"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -194,7 +193,7 @@ func SetDebugger(logger Debugger) func(parser *Parser) {
 }
 
 // ParseAPI parses general api info for given searchDir and mainAPIFile.
-func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth int) error {
+func (parser *Parser) ParseAPI(searchDir, mainAPIFile string, parseDepth int) error {
 	return parser.ParseAPIMultiSearchDir([]string{searchDir}, mainAPIFile, parseDepth)
 }
 
@@ -508,7 +507,7 @@ func isGeneralAPIComment(comments []string) bool {
 	return true
 }
 
-func parseSecAttr(context string, search []string, lines []string) (map[string]string, map[string]string, map[string]interface{}, error) {
+func parseSecAttr(context string, search, lines []string) (map[string]string, map[string]string, map[string]interface{}, error) {
 	attrMap := map[string]string{}
 	scopes := map[string]string{}
 	extensions := map[string]interface{}{}
@@ -601,8 +600,8 @@ func handleSecuritySchemaExtensions(providedExtensions map[string]interface{}) s
 	return extensions
 }
 
-func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
-	filesInfos, err := ioutil.ReadDir(dirPath)
+func getMarkdownForTag(tagName, dirPath string) ([]byte, error) {
+	filesInfos, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
 	}
@@ -619,7 +618,7 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 
 		if strings.Contains(fileName, tagName) {
 			fullPath := filepath.Join(dirPath, fileName)
-			commentInfo, err := ioutil.ReadFile(fullPath)
+			commentInfo, err := os.ReadFile(fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read markdown file %s error: %s ", fullPath, err)
 			}
@@ -1148,7 +1147,7 @@ func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.
 
 	if field.Tag != nil {
 		// `json:"tag"` -> json:"tag"
-		structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
+		structTag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
 		ignoreTag := structTag.Get("swaggerignore")
 		if strings.EqualFold(ignoreTag, "true") {
 			return "", nil, nil
@@ -1204,7 +1203,7 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 		return structField, nil
 	}
 	// `json:"tag"` -> json:"tag"
-	structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
+	structTag := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
 
 	jsonTag := structTag.Get("json")
 	// json:"name,string" or json:",string"
@@ -1348,8 +1347,8 @@ func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structFi
 }
 
 // GetSchemaTypePath get path of schema type.
-func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string {
-	if schema == nil || depth == 0 {
+func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, d int) []string {
+	if schema == nil || d == 0 {
 		return nil
 	}
 	name := schema.Ref.String()
@@ -1357,7 +1356,7 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
 			name = name[pos+1:]
 			if schema, ok := parser.swagger.Definitions[name]; ok {
-				return parser.GetSchemaTypePath(&schema, depth)
+				return parser.GetSchemaTypePath(&schema, d)
 			}
 		}
 
@@ -1366,17 +1365,17 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 	if len(schema.Type) > 0 {
 		switch schema.Type[0] {
 		case ARRAY:
-			depth--
+			d--
 			s := []string{schema.Type[0]}
 
-			return append(s, parser.GetSchemaTypePath(schema.Items.Schema, depth)...)
+			return append(s, parser.GetSchemaTypePath(schema.Items.Schema, d)...)
 		case OBJECT:
 			if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
 				// for map
-				depth--
+				d--
 				s := []string{schema.Type[0]}
 
-				return append(s, parser.GetSchemaTypePath(schema.AdditionalProperties.Schema, depth)...)
+				return append(s, parser.GetSchemaTypePath(schema.AdditionalProperties.Schema, d)...)
 			}
 		}
 
@@ -1547,7 +1546,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 	srcDir := pkg.Raw.Dir
-	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contains sub dir files)
+	files, err := os.ReadDir(srcDir) // only parsing files in the dir(don't contains sub dir files)
 	if err != nil {
 		return err
 	}

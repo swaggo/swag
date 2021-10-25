@@ -122,21 +122,21 @@ func TransToValidCollectionFormat(format string) string {
 }
 
 // TypeDocName get alias from comment '// @name ', otherwise the original type name to display in doc.
-func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
-	if spec != nil {
-		if spec.Comment != nil {
-			for _, comment := range spec.Comment.List {
+func TypeDocName(pkgName string, ts *ast.TypeSpec) string {
+	if ts != nil {
+		if ts.Comment != nil {
+			for _, comment := range ts.Comment.List {
 				text := strings.TrimSpace(comment.Text)
 				text = strings.TrimLeft(text, "//")
 				text = strings.TrimSpace(text)
 				texts := strings.Split(text, " ")
-				if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
+				if len(texts) > 1 && strings.EqualFold(texts[0], "@name") {
 					return texts[1]
 				}
 			}
 		}
-		if spec.Name != nil {
-			return fullTypeName(strings.Split(pkgName, ".")[0], spec.Name.Name)
+		if ts.Name != nil {
+			return fullTypeName(strings.Split(pkgName, ".")[0], ts.Name.Name)
 		}
 	}
 

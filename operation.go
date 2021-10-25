@@ -6,7 +6,6 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -86,7 +85,7 @@ func SetCodeExampleFilesDirectory(directoryPath string) func(*Operation) {
 // ParseComment parses comment for given comment string and returns error if error occurs.
 func (operation *Operation) ParseComment(comment string, astFile *ast.File) error {
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "//"))
-	if len(commentLine) == 0 {
+	if commentLine == "" {
 		return nil
 	}
 	attribute := strings.Fields(commentLine)[0]
@@ -172,7 +171,7 @@ func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemainder string) error {
 	// parsing specific meta data extensions
 	if strings.HasPrefix(lowerAttribute, "@x-") {
-		if len(lineRemainder) == 0 {
+		if lineRemainder == "" {
 			return fmt.Errorf("annotation %s need a value", attribute)
 		}
 
@@ -189,7 +188,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 	return nil
 }
 
-var paramPattern = regexp.MustCompile(`(\S+)[\s]+([\w]+)[\s]+([\S.]+)[\s]+([\w]+)[\s]+"([^"]+)"`)
+var paramPattern = regexp.MustCompile(`(\S+)\s+(\w+)\s+([\S.]+)\s+(\w+)\s+"([^"]+)"`)
 
 func findInSlice(arr []string, target string) bool {
 	for _, str := range arr {
@@ -496,7 +495,7 @@ func setCollectionFormatParam(name, schemaType, attr, commentLine string) (strin
 }
 
 // defineType enum value define the type (object and array unsupported).
-func defineType(schemaType string, value string) (interface{}, error) {
+func defineType(schemaType, value string) (interface{}, error) {
 	schemaType = TransToValidSchemeType(schemaType)
 	switch schemaType {
 	case STRING:
@@ -567,7 +566,7 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]*)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w./\-{}\+:]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for gived `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
@@ -674,7 +673,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
 
 // ResponseType{data1=Type1,data2=Type2}.
-var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
+var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+)\{(.*)\}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
@@ -909,7 +908,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	return nil
 }
 
-var emptyResponsePattern = regexp.MustCompile(`([\w,]+)[\s]+"(.*)"`)
+var emptyResponsePattern = regexp.MustCompile(`([\w,]+)\s+"(.*)"`)
 
 // ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok".
 func (operation *Operation) ParseEmptyResponseComment(commentLine string) error {
@@ -953,7 +952,7 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 		}
 
 		var response spec.Response
-		// response.Description = http.StatusText(code)
+
 		operation.AddResponse(code, &response)
 	}
 
@@ -1012,8 +1011,8 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 	return parameter
 }
 
-func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error) {
-	filesInfos, err := ioutil.ReadDir(dirPath)
+func getCodeExampleForSummary(summaryName, dirPath string) ([]byte, error) {
+	filesInfos, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
 	}
@@ -1030,7 +1029,7 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 
 		if strings.Contains(fileName, summaryName) {
 			fullPath := filepath.Join(dirPath, fileName)
-			commentInfo, err := ioutil.ReadFile(fullPath)
+			commentInfo, err := os.ReadFile(fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
 			}

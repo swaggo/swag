@@ -3,7 +3,6 @@ package gen
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -54,7 +53,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	goSourceFile := filepath.Join(config.OutputDir, "docs.go")
 
 	// Validate default registration name
-	expectedCode, err := ioutil.ReadFile(goSourceFile)
+	expectedCode, err := os.ReadFile(goSourceFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +64,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	// Custom name
 	config.InstanceName = "custom"
 	assert.NoError(t, New().Build(config))
-	expectedCode, err = ioutil.ReadFile(goSourceFile)
+	expectedCode, err = os.ReadFile(goSourceFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -177,7 +176,7 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 	if err := json.Unmarshal(jsonOutput, &jsonDoc); err != nil {
 		t.Fatal(err, string(jsonOutput))
 	}
-	expectedJSON, err := ioutil.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
+	expectedJSON, err := os.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -279,20 +278,20 @@ func TestGen_FailToWrite(t *testing.T) {
 		PropNamingStrategy: propNamingStrategy,
 	}
 
-	err := os.MkdirAll(outputDir, 0755)
+	err := os.MkdirAll(outputDir, 0o755)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	os.RemoveAll(filepath.Join(outputDir, "swagger.yaml"))
-	err = os.Mkdir(filepath.Join(outputDir, "swagger.yaml"), 0755)
+	err = os.Mkdir(filepath.Join(outputDir, "swagger.yaml"), 0o755)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Error(t, New().Build(config))
 
 	os.RemoveAll(filepath.Join(outputDir, "swagger.json"))
-	err = os.Mkdir(filepath.Join(outputDir, "swagger.json"), 0755)
+	err = os.Mkdir(filepath.Join(outputDir, "swagger.json"), 0o755)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,7 +299,7 @@ func TestGen_FailToWrite(t *testing.T) {
 
 	os.RemoveAll(filepath.Join(outputDir, "docs.go"))
 
-	err = os.Mkdir(filepath.Join(outputDir, "docs.go"), 0755)
+	err = os.Mkdir(filepath.Join(outputDir, "docs.go"), 0o755)
 	if err != nil {
 		t.Fatal(err)
 	}

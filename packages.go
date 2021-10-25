@@ -4,11 +4,12 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"golang.org/x/tools/go/loader"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"golang.org/x/tools/go/loader"
 )
 
 // PackagesDefinitions map[package import path]*PackageDefinitions.
@@ -38,7 +39,7 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 	}
 
 	// return without storing the file if we lack a packageDir
-	if len(packageDir) == 0 {
+	if packageDir == "" {
 		return nil
 	}
 
@@ -152,7 +153,7 @@ func (pkgs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packagePa
 	}
 }
 
-func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *TypeSpecDef {
+func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath, typeName string) *TypeSpecDef {
 	if pkgs.packages == nil {
 		return nil
 	}
@@ -301,12 +302,12 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File, p
 			}
 		}
 		pkgPath := pkgs.findPackagePathFromImports(parts[0], file, false)
-		if len(pkgPath) == 0 {
-			//check if the current package
+		if pkgPath == "" {
+			// check if the current package
 			if parts[0] == file.Name.Name {
 				pkgPath = pkgs.files[file].PackagePath
 			} else if parseDependency {
-				//take it as an external package, needs to be loaded
+				// take it as an external package, needs to be loaded
 				if pkgPath = pkgs.findPackagePathFromImports(parts[0], file, true); len(pkgPath) > 0 {
 					if err := pkgs.loadExternalPackage(pkgPath); err != nil {
 						return nil

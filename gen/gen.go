@@ -185,7 +185,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 			// Add schemes
 			v = "{\n    \"schemes\": {{ marshal .Schemes }}," + v[1:]
 			// Sanitize backticks
-			return strings.Replace(v, "`", "`+\"`\"+`", -1)
+			return strings.ReplaceAll(v, "`", "`+\"`\"+`")
 		},
 	}).Parse(packageTemplate)
 	if err != nil {
@@ -314,10 +314,10 @@ func (s *s) ReadDoc() string {
 		},
 		"escape": func(v interface{}) string {
 			// escape tabs
-			str := strings.Replace(v.(string), "\t", "\\t", -1)
+			str := strings.ReplaceAll(v.(string), "\t", "\\t")
 			// replace " with \", and if that results in \\", replace that with \\\"
-			str = strings.Replace(str, "\"", "\\\"", -1)
-			return strings.Replace(str, "\\\\\"", "\\\\\\\"", -1)
+			str = strings.ReplaceAll(str, "\"", "\\\"")
+			return strings.ReplaceAll(str, "\\\\\"", "\\\\\\\"")
 		},
 	}).Parse(doc)
 	if err != nil {

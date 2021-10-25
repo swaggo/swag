@@ -1870,25 +1870,25 @@ func TestParseIdComment(t *testing.T) {
 func TestFindTypeDefCoreLib(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("net/http", "Request")
+	s, err := findTypeDef("net/http", "Request")
 	assert.NoError(t, err)
-	assert.NotNil(t, spec)
+	assert.NotNil(t, s)
 }
 
 func TestFindTypeDefExternalPkg(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
+	s, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
 	assert.NoError(t, err)
-	assert.NotNil(t, spec)
+	assert.NotNil(t, s)
 }
 
 func TestFindTypeDefInvalidPkg(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("does-not-exist", "foo")
+	s, err := findTypeDef("does-not-exist", "foo")
 	assert.Error(t, err)
-	assert.Nil(t, spec)
+	assert.Nil(t, s)
 }
 
 func TestParseSecurityComment(t *testing.T) {
