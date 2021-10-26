@@ -643,7 +643,98 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
 			"@authorizationurl https://example.com/oauth/authorize",
 			"@scope.read,write Multiple scope"}))
 	})
+}
 
+func TestParser_RefWithOtherPropertiesIsWrappedInAllOf(t *testing.T) {
+	t.Run("Readonly", func(t *testing.T) {
+		src := `
+package main
+
+type Teacher struct {
+	Name string
+} //@name Teacher
+
+type Student struct {
+	Name string
+	Age int ` + "`readonly:\"true\"`" + `
+	Teacher Teacher ` + "`readonly:\"true\"`" + `
+	OtherTeacher Teacher
+} //@name Student
+
+// @Success 200 {object} Student
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+		expected := `{
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/test": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Student"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Student": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "type": "integer",
+                    "readOnly": true
+                },
+                "name": {
+                    "type": "string"
+                },
+                "otherTeacher": {
+                    "$ref": "#/definitions/Teacher"
+                },
+                "teacher": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/Teacher"
+                        }
+                    ],
+                    "readOnly": true
+                }
+            }
+        },
+        "Teacher": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+		f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+		assert.NoError(t, err)
+
+		p := New()
+		p.packages.CollectAstFile("api", "api/api.go", f)
+
+		_, err = p.packages.ParseTypes()
+		assert.NoError(t, err)
+
+		err = p.ParseRouterAPIInfo("", f)
+		assert.NoError(t, err)
+
+		b, _ := json.MarshalIndent(p.swagger, "", "    ")
+		assert.Equal(t, expected, string(b))
+	})
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
@@ -3056,7 +3147,6 @@ func Fun()  {
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 
-	assert.NoError(t, err)
 	teacher, ok := p.swagger.Definitions["Teacher"]
 	assert.True(t, ok)
 
@@ -3452,6 +3542,24 @@ func TestParseFieldTag(t *testing.T) {
 			[]string{"string"})
 		assert.Error(t, err)
 	})
+
+	t.Run("Readonly tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" readonly:"true"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			readOnly:   true,
+		}, field)
+	})
 }
 
 func TestSetRouteMethodOp(t *testing.T) {
@@ -3581,5 +3689,4 @@ func TestGetFieldType(t *testing.T) {
 	field, err = getFieldType(&ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
 	assert.NoError(t, err)
 	assert.Equal(t, "models.User", field)
-
 }
