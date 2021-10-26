@@ -643,7 +643,98 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
 			"@authorizationurl https://example.com/oauth/authorize",
 			"@scope.read,write Multiple scope"}))
 	})
+}
 
+func TestParser_RefWithOtherPropertiesIsWrappedInAllOf(t *testing.T) {
+	t.Run("Readonly", func(t *testing.T) {
+		src := `
+package main
+
+type Teacher struct {
+	Name string
+} //@name Teacher
+
+type Student struct {
+	Name string
+	Age int ` + "`readonly:\"true\"`" + `
+	Teacher Teacher ` + "`readonly:\"true\"`" + `
+    OtherTeacher Teacher
+} //@name Student
+
+// @Success 200 {object} Student
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+		expected := `{
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/test": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Student"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Student": {
+            "type": "object",
+            "properties": {
+                "age": {
+                    "type": "integer",
+                    "readOnly": true
+                },
+                "name": {
+                    "type": "string"
+                },
+                "otherTeacher": {
+                    "$ref": "#/definitions/Teacher"
+                },
+                "teacher": {
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/Teacher"
+                        }
+                    ],
+                    "readOnly": true
+                }
+            }
+        },
+        "Teacher": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+		f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+		assert.NoError(t, err)
+
+		p := New()
+		p.packages.CollectAstFile("api", "api/api.go", f)
+
+		_, err = p.packages.ParseTypes()
+		assert.NoError(t, err)
+
+		err = p.ParseRouterAPIInfo("", f)
+		assert.NoError(t, err)
+
+		b, _ := json.MarshalIndent(p.swagger, "", "    ")
+		assert.Equal(t, expected, string(b))
+	})
 }
 
 func TestGetAllGoFileInfo(t *testing.T) {
