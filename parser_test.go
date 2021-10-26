@@ -658,7 +658,7 @@ type Student struct {
 	Name string
 	Age int ` + "`readonly:\"true\"`" + `
 	Teacher Teacher ` + "`readonly:\"true\"`" + `
-    OtherTeacher Teacher
+	OtherTeacher Teacher
 } //@name Student
 
 // @Success 200 {object} Student
