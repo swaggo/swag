@@ -234,7 +234,20 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	switch paramType {
 	case "path", "header":
 		switch objectType {
-		case ARRAY, OBJECT:
+		case ARRAY:
+			if !IsPrimitiveType(refType) {
+				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
+			}
+			param.SimpleSchema.Type = objectType
+			if operation.parser != nil {
+				param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
+			}
+			param.SimpleSchema.Items = &spec.Items{
+				SimpleSchema: spec.SimpleSchema{
+					Type: refType,
+				},
+			}
+		case OBJECT:
 			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
 		}
 	case "query", "formData":
