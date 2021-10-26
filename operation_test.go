@@ -1040,7 +1040,7 @@ func TestParseResponseCommentParamMissing(t *testing.T) {
 }
 
 // Test ParseParamComment
-func TestParseParamCommentByPathType(t *testing.T) {
+func TestParseParamCommentByParamType(t *testing.T) {
 	t.Parallel()
 
 	comment := `@Param some_id path int true "Some ID"`
@@ -1092,25 +1092,18 @@ func TestParseParamCommentBodyArray(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
-// Test ParseParamComment header Params
-func TestParseParamCommentHeaderArray(t *testing.T) {
-	t.Parallel()
+// Test ParseParamComment Params
+func TestParseParamCommentArray(t *testing.T) {
+	paramTypes := []string{"header", "path", "query"}
 
-	comment := `@Param names header []string true "Users List"`
-	operation := NewOperation(nil)
-	assert.Error(t, operation.ParseComment(comment, nil))
-}
+	for _, paramType := range paramTypes {
+		t.Run(paramType, func(t *testing.T) {
+			operation := NewOperation(nil)
+			err := operation.ParseComment(`@Param names `+paramType+` []string true "Users List"`, nil)
 
-// Test ParseParamComment Query Params
-func TestParseParamCommentQueryArray(t *testing.T) {
-	t.Parallel()
-
-	operation := NewOperation(nil)
-	err := operation.ParseComment(`@Param names query []string true "Users List"`, nil)
-
-	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
+			assert.NoError(t, err)
+			b, _ := json.MarshalIndent(operation, "", "    ")
+			expected := `{
     "parameters": [
         {
             "type": "array",
@@ -1119,15 +1112,17 @@ func TestParseParamCommentQueryArray(t *testing.T) {
             },
             "description": "Users List",
             "name": "names",
-            "in": "query",
+            "in": "` + paramType + `",
             "required": true
         }
     ]
 }`
-	assert.Equal(t, expected, string(b))
+			assert.Equal(t, expected, string(b))
 
-	err = operation.ParseComment(`@Param names query []model.User true "Users List"`, nil)
-	assert.Error(t, err)
+			err = operation.ParseComment(`@Param names `+paramType+` []model.User true "Users List"`, nil)
+			assert.Error(t, err)
+		})
+	}
 }
 
 // Test TestParseParamCommentDefaultValue Query Params
