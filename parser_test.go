@@ -3256,6 +3256,156 @@ func TestDefineTypeOfExample(t *testing.T) {
 	})
 }
 
+func TestValidTags(t *testing.T) {
+	t.Run("Required with max/min tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,max=10,min=1"`,
+				},
+			},
+			[]string{"string"})
+		max := int64(10)
+		min := int64(1)
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			isRequired: true,
+			maxLength:  &max,
+			minLength:  &min,
+		}, field)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,max=10,gte=1"`,
+				},
+			},
+			[]string{"string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "string",
+			isRequired: true,
+			maxLength:  &max,
+			minLength:  &min,
+		}, field)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,max=10,min=1"`,
+				},
+			},
+			[]string{"integer"})
+		maxFloat64 := float64(10)
+		minFloat64 := float64(1)
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "integer",
+			isRequired: true,
+			maximum:    &maxFloat64,
+			minimum:    &minFloat64,
+		}, field)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,max=10,min=1"`,
+				},
+			},
+			[]string{"array", "string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "array",
+			arrayType:  "string",
+			isRequired: true,
+			maxItems:   &max,
+			minItems:   &min,
+		}, field)
+
+	})
+	t.Run("Required with oneof tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,oneof='red book' 'green book'"`,
+				},
+			},
+			[]string{"array", "string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "array",
+			arrayType:  "string",
+			isRequired: true,
+			enums:      []interface{}{"red book", "green book"},
+		}, field)
+
+		field, err = parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,oneof=1 2 3"`,
+				},
+			},
+			[]string{"array", "integer"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "array",
+			arrayType:  "integer",
+			isRequired: true,
+			enums:      []interface{}{1, 2, 3},
+		}, field)
+	})
+	t.Run("Required with unique tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,unique"`,
+				},
+			},
+			[]string{"array", "string"})
+		assert.NoError(t, err)
+		assert.Equal(t, &structField{
+			schemaType: "array",
+			arrayType:  "string",
+			isRequired: true,
+			unique:     true,
+		}, field)
+	})
+	t.Run("All validate tag", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+
+		field, err := parser.parseFieldTag(
+			&ast.Field{
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,unique,max=10,min=1,oneof=abc cbd,omitempty,dive,max=1"`,
+				},
+			},
+			[]string{"array", "string"})
+		assert.NoError(t, err)
+		max := int64(10)
+		min := int64(1)
+		assert.Equal(t, &structField{
+			schemaType: "array",
+			arrayType:  "string",
+			isRequired: true,
+			unique:     true,
+			maxItems:   &max,
+			minItems:   &min,
+			enums:      []interface{}{"abc", "cbd"},
+		}, field)
+	})
+}
+
 func TestParseFieldTag(t *testing.T) {
 
 	t.Run("Example tag", func(t *testing.T) {
