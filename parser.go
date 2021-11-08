@@ -110,8 +110,10 @@ type Parser struct {
 	fieldParserFactory FieldParserFactory
 }
 
+// FieldParserFactory create FieldParser
 type FieldParserFactory func(ps *Parser, field *ast.Field) FieldParser
 
+// FieldParser parse struct field
 type FieldParser interface {
 	ShouldSkip() (bool, error)
 	FieldName() (string, error)
