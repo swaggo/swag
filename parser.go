@@ -1333,7 +1333,7 @@ func getOperationID(itm spec.PathItem) (string, string) {
 		return http.MethodHead, itm.Head.ID
 	}
 	if itm.Patch != nil {
-		return http.MethodTrace, itm.Patch.ID
+		return http.MethodPatch, itm.Patch.ID
 	}
 
 	return "", ""
@@ -1395,12 +1395,6 @@ func (parser *Parser) GetSwagger() *spec.Swagger {
 
 // addTestType just for tests.
 func (parser *Parser) addTestType(typename string) {
-	if parser.parsedSchemas == nil {
-		parser.parsedSchemas = make(map[*TypeSpecDef]*Schema)
-	}
-	if parser.packages.uniqueDefinitions == nil {
-		parser.packages.uniqueDefinitions = make(map[string]*TypeSpecDef)
-	}
 	typeDef := &TypeSpecDef{}
 	parser.packages.uniqueDefinitions[typename] = typeDef
 	parser.parsedSchemas[typeDef] = &Schema{
