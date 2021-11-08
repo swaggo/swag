@@ -1758,7 +1758,7 @@ func (parser *Parser) parseValidTags(validTag string, sf *structField) {
 					continue
 				}
 			}
-			for i, _ := range valValues {
+			for i := range valValues {
 				value, err := defineType(enumType, valValues[i])
 				if err != nil {
 					continue
