@@ -66,7 +66,7 @@
       }
     },
     "/GetPet5a": {
-      "get": {
+      "options": {
         "responses": {
           "200": {
             "description": "ok",
@@ -78,7 +78,7 @@
       }
     },
     "/GetPet5b": {
-      "get": {
+      "head": {
         "responses": {
           "200": {
             "description": "ok",
@@ -90,7 +90,7 @@
       }
     },
     "/GetPet5c": {
-      "get": {
+      "patch": {
         "responses": {
           "200": {
             "description": "ok",
