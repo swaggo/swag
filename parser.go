@@ -16,7 +16,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1402,113 +1401,5 @@ func (parser *Parser) addTestType(typename string) {
 		PkgPath: "",
 		Name:    typename,
 		Schema:  PrimitiveSchema(OBJECT),
-	}
-}
-
-func (parser *Parser) parseValidTags(validTag string, sf *structField) {
-	// `validate:"required,max=10,min=1"`
-	for _, val := range strings.Split(validTag, ",") {
-		var (
-			valKey   string
-			valValue string
-		)
-		vals := strings.Split(val, "=")
-		if len(vals) == 1 {
-			valKey = vals[0]
-		} else if len(vals) == 2 {
-			valKey = vals[0]
-			valValue = vals[1]
-		} else {
-			continue
-		}
-
-		switch valKey {
-		case "required":
-			sf.isRequired = true
-		case "max", "lte":
-			maxValue, err := strconv.ParseFloat(valValue, 64)
-			if err != nil {
-				// ignore
-				continue
-			}
-			checkSchemaTypeAndSetValue(sf, maxValue, true)
-		case "min", "gte":
-			minValue, err := strconv.ParseFloat(valValue, 64)
-			if err != nil {
-				// ignore
-				continue
-			}
-			checkSchemaTypeAndSetValue(sf, minValue, false)
-		case "oneof":
-			enumType := sf.schemaType
-			if sf.schemaType == ARRAY {
-				enumType = sf.arrayType
-			}
-			var valValues []string
-			if strings.Contains(valValue, "'") {
-				rg := regexp.MustCompile(`('.+?')`)
-				rgroup := rg.FindAllStringSubmatch(valValue, -1)
-				if len(rgroup) == 0 {
-					continue
-				}
-				for i := range rgroup {
-					if len(rgroup) != 2 {
-						continue
-					}
-					for j := range rgroup[i][1:] {
-						rgroup[i][j] = strings.ReplaceAll(rgroup[i][j], "'", "")
-						valValues = append(valValues, rgroup[i][j])
-					}
-				}
-			} else {
-				valValues = strings.Split(valValue, " ")
-				if len(valValue) == 0 {
-					continue
-				}
-			}
-			for i := range valValues {
-				value, err := defineType(enumType, valValues[i])
-				if err != nil {
-					continue
-				}
-				sf.enums = append(sf.enums, value)
-			}
-		case "unique":
-			if sf.schemaType == ARRAY {
-				sf.unique = true
-			}
-		case "dive":
-			// ignore dive
-			return
-		default:
-			continue
-		}
-	}
-}
-
-func checkSchemaTypeAndSetValue(sf *structField, value float64, isMax bool) {
-	typeSchema := sf.schemaType
-
-	if IsNumericType(typeSchema) {
-		if isMax {
-			sf.maximum = &value
-		} else {
-			sf.minimum = &value
-		}
-	} else if typeSchema == STRING {
-		intValue := int64(value)
-		if isMax {
-			sf.maxLength = &intValue
-		} else {
-			sf.minLength = &intValue
-		}
-	} else if typeSchema == ARRAY {
-		intValue := int64(value)
-		if isMax {
-			sf.maxItems = &intValue
-		} else {
-			sf.minItems = &intValue
-		}
-		// ps. for simplicity, the max\min value of the array elements is ignored
 	}
 }
