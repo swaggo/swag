@@ -344,6 +344,16 @@ func TestValidTags(t *testing.T) {
 		assert.Equal(t, &max, schema.MaxItems)
 		assert.Equal(t, &min, schema.MinItems)
 
+		// wrong validate tag will be ignored.
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" validate:"required,max=ten,min=1"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Empty(t, schema.MaxItems)
+		assert.Equal(t, &min, schema.MinItems)
 	})
 	t.Run("Required with oneof tag", func(t *testing.T) {
 		t.Parallel()
@@ -394,13 +404,23 @@ func TestValidTags(t *testing.T) {
 		err = newTagBaseFieldParser(
 			&Parser{},
 			&ast.Field{Tag: &ast.BasicLit{
-				Value: `json:"test" validate:"required,oneof='red green' blue"`,
+				Value: `json:"test" validate:"required,oneof='red green' blue 'c0x2Cc' 'd0x7Cd'"`,
 			}},
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
-		assert.Equal(t, []interface{}{"red green", "blue"}, schema.Enum)
-	})
+		assert.Equal(t, []interface{}{"red green", "blue", "c,c", "d|d"}, schema.Enum)
 
+		schema = spec.Schema{}
+		schema.Type = []string{"string"}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" validate:"required,oneof='c0x9Ab' book"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, []interface{}{"c0x9Ab", "book"}, schema.Enum)
+	})
 	t.Run("Required with unique tag", func(t *testing.T) {
 		t.Parallel()
 
@@ -437,7 +457,7 @@ func TestValidTags(t *testing.T) {
 		err := newTagBaseFieldParser(
 			&Parser{},
 			&ast.Field{Tag: &ast.BasicLit{
-				Value: `json:"test" validate:"required,unique,max=10,min=1,oneof=abc cbd,omitempty,dive,max=1"`,
+				Value: `json:"test" validate:"required,unique,max=10,min=1,oneof=a0x2Cc 'c0x7Cd book',omitempty,dive,max=1"`,
 			}},
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
@@ -447,7 +467,7 @@ func TestValidTags(t *testing.T) {
 		min := int64(1)
 		assert.Equal(t, &max, schema.MaxItems)
 		assert.Equal(t, &min, schema.MinItems)
-		assert.Equal(t, []interface{}{"abc", "cbd"}, schema.Items.Schema.Enum)
+		assert.Equal(t, []interface{}{"a,c", "c|d book"}, schema.Items.Schema.Enum)
 
 	})
 }
