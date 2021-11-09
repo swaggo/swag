@@ -102,19 +102,19 @@ type Pet3 struct {
 }
 
 // @Success 200 {object} web.Pet5a "ok"
-// @Router /GetPet5a [get]
+// @Router /GetPet5a [options]
 func GetPet5a() {
 
 }
 
 // @Success 200 {object} web.Pet5b "ok"
-// @Router /GetPet5b [get]
+// @Router /GetPet5b [head]
 func GetPet5b() {
 
 }
 
 // @Success 200 {object} web.Pet5c "ok"
-// @Router /GetPet5c [get]
+// @Router /GetPet5c [patch]
 func GetPet5c() {
 
 }

@@ -16,11 +16,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
@@ -107,6 +105,21 @@ type Parser struct {
 
 	// debugging output goes here
 	debug Debugger
+
+	// fieldParserFactory create FieldParser
+	fieldParserFactory FieldParserFactory
+}
+
+// FieldParserFactory create FieldParser
+type FieldParserFactory func(ps *Parser, field *ast.Field) FieldParser
+
+// FieldParser parse struct field
+type FieldParser interface {
+	ShouldSkip() (bool, error)
+	FieldName() (string, error)
+	CustomSchema() (*spec.Schema, error)
+	ComplementSchema(schema *spec.Schema) error
+	IsRequired() (bool, error)
 }
 
 // Debugger is the interface that wraps the basic Printf method.
@@ -144,6 +157,7 @@ func New(options ...func(*Parser)) *Parser {
 		existSchemaNames:   make(map[string]*Schema),
 		toBeRenamedSchemas: make(map[string]string),
 		excludes:           make(map[string]bool),
+		fieldParserFactory: newTagBaseFieldParser,
 	}
 
 	for _, option := range options {
@@ -191,6 +205,13 @@ func SetStrict(strict bool) func(*Parser) {
 func SetDebugger(logger Debugger) func(parser *Parser) {
 	return func(p *Parser) {
 		p.debug = logger
+	}
+}
+
+// SetFieldParserFactory allows the use of user-defined implementations.
+func SetFieldParserFactory(factory FieldParserFactory) func(parser *Parser) {
+	return func(p *Parser) {
+		p.fieldParserFactory = factory
 	}
 }
 
@@ -843,7 +864,7 @@ func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema)
 
 	refSchema := RefSchema(schema.Name)
 	// store every URL
-	parser.toBeRenamedRefURLs = append(parser.toBeRenamedRefURLs, refSchema.Ref.Ref.GetURL())
+	parser.toBeRenamedRefURLs = append(parser.toBeRenamedRefURLs, refSchema.Ref.GetURL())
 
 	return refSchema
 }
@@ -1002,27 +1023,6 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 	}, nil
 }
 
-type structField struct {
-	desc         string
-	schemaType   string
-	arrayType    string
-	formatType   string
-	isRequired   bool
-	readOnly     bool
-	exampleValue interface{}
-	maximum      *float64
-	minimum      *float64
-	multipleOf   *float64
-	maxLength    *int64
-	minLength    *int64
-	maxItems     *int64
-	minItems     *int64
-	unique       bool
-	enums        []interface{}
-	defaultValue interface{}
-	extensions   map[string]interface{}
-}
-
 func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {
 	if field.Names == nil {
 		if field.Tag != nil {
@@ -1057,12 +1057,24 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		return map[string]spec.Schema{typeName: *schema}, nil, nil
 	}
 
-	fieldName, schema, err := parser.getFieldName(field)
+	ps := newTagBaseFieldParser(parser, field)
+
+	ok, err := ps.ShouldSkip()
 	if err != nil {
 		return nil, nil, err
 	}
-	if fieldName == "" {
+	if ok {
 		return nil, nil, nil
+	}
+
+	fieldName, err := ps.FieldName()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	schema, err := ps.CustomSchema()
+	if err != nil {
+		return nil, nil, err
 	}
 	if schema == nil {
 		typeName, err := getFieldType(field.Type)
@@ -1078,49 +1090,17 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		}
 	}
 
-	types := parser.GetSchemaTypePath(schema, 2)
-	if len(types) == 0 {
-		return nil, nil, fmt.Errorf("invalid type for field: %s", field.Names[0])
-	}
-
-	structField, err := parser.parseFieldTag(field, types)
+	err = ps.ComplementSchema(schema)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if structField.schemaType == STRING && types[0] != structField.schemaType {
-		schema = PrimitiveSchema(structField.schemaType)
-	}
-
-	schema.Description = structField.desc
-	schema.ReadOnly = structField.readOnly
-	if !reflect.ValueOf(schema.SchemaProps.Ref).IsZero() && schema.ReadOnly {
-		schema.AllOf = []spec.Schema{*RefSchema(strings.TrimPrefix(schema.SchemaProps.Ref.Ref.String(), "#/definitions/"))}
-		schema.Ref = spec.Ref{} // clear out existing ref
-	}
-	schema.Default = structField.defaultValue
-	schema.Example = structField.exampleValue
-	if structField.schemaType != ARRAY {
-		schema.Format = structField.formatType
-	}
-	schema.Extensions = structField.extensions
-	eleSchema := schema
-	if structField.schemaType == ARRAY {
-		eleSchema = schema.Items.Schema
-		eleSchema.Format = structField.formatType
-	}
-	eleSchema.Maximum = structField.maximum
-	eleSchema.Minimum = structField.minimum
-	eleSchema.MultipleOf = structField.multipleOf
-	eleSchema.MaxLength = structField.maxLength
-	eleSchema.MinLength = structField.minLength
-	eleSchema.MaxItems = structField.maxItems
-	eleSchema.MinItems = structField.minItems
-	eleSchema.Enum = structField.enums
-	eleSchema.UniqueItems = structField.unique
-
 	var tagRequired []string
-	if structField.isRequired {
+	required, err := ps.IsRequired()
+	if err != nil {
+		return nil, nil, err
+	}
+	if required {
 		tagRequired = append(tagRequired, fieldName)
 	}
 
@@ -1149,211 +1129,6 @@ func getFieldType(field ast.Expr) (string, error) {
 	default:
 		return "", fmt.Errorf("unknown field type %#v", field)
 	}
-}
-
-func (parser *Parser) getFieldName(field *ast.Field) (name string, schema *spec.Schema, err error) {
-	// Skip non-exported fields.
-	if !ast.IsExported(field.Names[0].Name) {
-		return "", nil, nil
-	}
-
-	if field.Tag != nil {
-		// `json:"tag"` -> json:"tag"
-		structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
-		ignoreTag := structTag.Get("swaggerignore")
-		if strings.EqualFold(ignoreTag, "true") {
-			return "", nil, nil
-		}
-
-		name = structTag.Get("json")
-		// json:"tag,hoge"
-		if name = strings.TrimSpace(strings.Split(name, ",")[0]); name == "-" {
-			return "", nil, nil
-		}
-
-		typeTag := structTag.Get("swaggertype")
-		if typeTag != "" {
-			parts := strings.Split(typeTag, ",")
-			schema, err = BuildCustomSchema(parts)
-			if err != nil {
-				return "", nil, err
-			}
-		}
-	}
-
-	if name == "" {
-		switch parser.PropNamingStrategy {
-		case SnakeCase:
-			name = toSnakeCase(field.Names[0].Name)
-		case PascalCase:
-			name = field.Names[0].Name
-		default:
-			name = toLowerCamelCase(field.Names[0].Name)
-		}
-	}
-
-	return name, schema, err
-}
-
-func (parser *Parser) parseFieldTag(field *ast.Field, types []string) (*structField, error) {
-	structField := &structField{
-		//    name:       field.Names[0].Name,
-		schemaType: types[0],
-	}
-	if len(types) > 1 && (types[0] == ARRAY || types[0] == OBJECT) {
-		structField.arrayType = types[1]
-	}
-
-	if field.Doc != nil {
-		structField.desc = strings.TrimSpace(field.Doc.Text())
-	}
-	if structField.desc == "" && field.Comment != nil {
-		structField.desc = strings.TrimSpace(field.Comment.Text())
-	}
-
-	if field.Tag == nil {
-		return structField, nil
-	}
-	// `json:"tag"` -> json:"tag"
-	structTag := reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
-
-	jsonTag := structTag.Get("json")
-	// json:"name,string" or json:",string"
-
-	exampleTag := structTag.Get("example")
-	if exampleTag != "" {
-		structField.exampleValue = exampleTag
-		if !strings.Contains(jsonTag, ",string") {
-			example, err := defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
-			if err != nil {
-				return nil, err
-			}
-			structField.exampleValue = example
-		}
-	}
-	formatTag := structTag.Get("format")
-	if formatTag != "" {
-		structField.formatType = formatTag
-	}
-	bindingTag := structTag.Get("binding")
-	if bindingTag != "" {
-		parser.parseValidTags(bindingTag, structField)
-	}
-	validateTag := structTag.Get("validate")
-	if validateTag != "" {
-		parser.parseValidTags(validateTag, structField)
-	}
-	extensionsTag := structTag.Get("extensions")
-	if extensionsTag != "" {
-		structField.extensions = map[string]interface{}{}
-		for _, val := range strings.Split(extensionsTag, ",") {
-			parts := strings.SplitN(val, "=", 2)
-			if len(parts) == 2 {
-				structField.extensions[parts[0]] = parts[1]
-			} else {
-				if len(parts[0]) > 0 && string(parts[0][0]) == "!" {
-					structField.extensions[string(parts[0][1:])] = false
-				} else {
-					structField.extensions[parts[0]] = true
-				}
-			}
-		}
-	}
-	enumsTag := structTag.Get("enums")
-	if enumsTag != "" {
-		enumType := structField.schemaType
-		if structField.schemaType == ARRAY {
-			enumType = structField.arrayType
-		}
-
-		for _, e := range strings.Split(enumsTag, ",") {
-			value, err := defineType(enumType, e)
-			if err != nil {
-				return nil, err
-			}
-			structField.enums = append(structField.enums, value)
-		}
-	}
-	defaultTag := structTag.Get("default")
-	if defaultTag != "" {
-		value, err := defineType(structField.schemaType, defaultTag)
-		if err != nil {
-			return nil, err
-		}
-		structField.defaultValue = value
-	}
-
-	if IsNumericType(structField.schemaType) || IsNumericType(structField.arrayType) {
-		maximum, err := getFloatTag(structTag, "maximum")
-		if err != nil {
-			return nil, err
-		}
-		if maximum != nil {
-			structField.maximum = maximum
-		}
-
-		minimum, err := getFloatTag(structTag, "minimum")
-		if err != nil {
-			return nil, err
-		}
-		if minimum != nil {
-			structField.minimum = minimum
-		}
-
-		multipleOf, err := getFloatTag(structTag, "multipleOf")
-		if err != nil {
-			return nil, err
-		}
-		if multipleOf != nil {
-			structField.multipleOf = multipleOf
-		}
-	}
-	if structField.schemaType == STRING || structField.arrayType == STRING {
-		maxLength, err := getIntTag(structTag, "maxLength")
-		if err != nil {
-			return nil, err
-		}
-		if maxLength != nil {
-			structField.maxLength = maxLength
-		}
-
-		minLength, err := getIntTag(structTag, "minLength")
-		if err != nil {
-			return nil, err
-		}
-		if minLength != nil {
-			structField.minLength = minLength
-		}
-	}
-	readOnly := structTag.Get("readonly")
-	if readOnly != "" {
-		structField.readOnly = readOnly == "true"
-	}
-
-	// perform this after setting everything else (min, max, etc...)
-	if strings.Contains(jsonTag, ",string") { // @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
-		defaultValues := map[string]string{
-			// Zero Values as string
-			STRING:  "",
-			INTEGER: "0",
-			BOOLEAN: "false",
-			NUMBER:  "0",
-		}
-
-		defaultValue, ok := defaultValues[structField.schemaType]
-		if ok {
-			structField.schemaType = STRING
-
-			if structField.exampleValue == nil {
-				// if exampleValue is not defined by the user,
-				// we will force an example with a correct value
-				// (eg: int->"0", bool:"false")
-				structField.exampleValue = defaultValue
-			}
-		}
-	}
-
-	return structField, nil
 }
 
 // GetSchemaTypePath get path of schema type.
@@ -1398,68 +1173,6 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 func replaceLastTag(slice []spec.Tag, element spec.Tag) {
 	slice = slice[:len(slice)-1]
 	slice = append(slice, element)
-}
-
-func getFloatTag(structTag reflect.StructTag, tagName string) (*float64, error) {
-	strValue := structTag.Get(tagName)
-	if strValue == "" {
-		return nil, nil
-	}
-
-	value, err := strconv.ParseFloat(strValue, 64)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse numeric value of %q tag: %v", tagName, err)
-	}
-
-	return &value, nil
-}
-
-func getIntTag(structTag reflect.StructTag, tagName string) (*int64, error) {
-	strValue := structTag.Get(tagName)
-	if strValue == "" {
-		return nil, nil
-	}
-
-	value, err := strconv.ParseInt(strValue, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("can't parse numeric value of %q tag: %v", tagName, err)
-	}
-
-	return &value, nil
-}
-
-func toSnakeCase(in string) string {
-	runes := []rune(in)
-	length := len(runes)
-
-	var out []rune
-	for i := 0; i < length; i++ {
-		if i > 0 && unicode.IsUpper(runes[i]) &&
-			((i+1 < length && unicode.IsLower(runes[i+1])) || unicode.IsLower(runes[i-1])) {
-			out = append(out, '_')
-		}
-		out = append(out, unicode.ToLower(runes[i]))
-	}
-
-	return string(out)
-}
-
-func toLowerCamelCase(in string) string {
-	runes := []rune(in)
-
-	var out []rune
-	flag := false
-	for i, curr := range runes {
-		if (i == 0 && unicode.IsUpper(curr)) || (flag && unicode.IsUpper(curr)) {
-			out = append(out, unicode.ToLower(curr))
-			flag = true
-		} else {
-			out = append(out, curr)
-			flag = false
-		}
-	}
-
-	return string(out)
 }
 
 // defineTypeOfExample example value define the type (object and array unsupported)
@@ -1620,7 +1333,7 @@ func getOperationID(itm spec.PathItem) (string, string) {
 		return http.MethodHead, itm.Head.ID
 	}
 	if itm.Patch != nil {
-		return http.MethodTrace, itm.Patch.ID
+		return http.MethodPatch, itm.Patch.ID
 	}
 
 	return "", ""
@@ -1682,125 +1395,11 @@ func (parser *Parser) GetSwagger() *spec.Swagger {
 
 // addTestType just for tests.
 func (parser *Parser) addTestType(typename string) {
-	if parser.parsedSchemas == nil {
-		parser.parsedSchemas = make(map[*TypeSpecDef]*Schema)
-	}
-	if parser.packages.uniqueDefinitions == nil {
-		parser.packages.uniqueDefinitions = make(map[string]*TypeSpecDef)
-	}
 	typeDef := &TypeSpecDef{}
 	parser.packages.uniqueDefinitions[typename] = typeDef
 	parser.parsedSchemas[typeDef] = &Schema{
 		PkgPath: "",
 		Name:    typename,
 		Schema:  PrimitiveSchema(OBJECT),
-	}
-}
-
-func (parser *Parser) parseValidTags(validTag string, sf *structField) {
-	// `validate:"required,max=10,min=1"`
-	for _, val := range strings.Split(validTag, ",") {
-		var (
-			valKey   string
-			valValue string
-		)
-		vals := strings.Split(val, "=")
-		if len(vals) == 1 {
-			valKey = vals[0]
-		} else if len(vals) == 2 {
-			valKey = vals[0]
-			valValue = vals[1]
-		} else {
-			continue
-		}
-
-		switch valKey {
-		case "required":
-			sf.isRequired = true
-		case "max", "lte":
-			maxValue, err := strconv.ParseFloat(valValue, 64)
-			if err != nil {
-				// ignore
-				continue
-			}
-			checkSchemaTypeAndSetValue(sf, maxValue, true)
-		case "min", "gte":
-			minValue, err := strconv.ParseFloat(valValue, 64)
-			if err != nil {
-				// ignore
-				continue
-			}
-			checkSchemaTypeAndSetValue(sf, minValue, false)
-		case "oneof":
-			enumType := sf.schemaType
-			if sf.schemaType == ARRAY {
-				enumType = sf.arrayType
-			}
-			var valValues []string
-			if strings.Contains(valValue, "'") {
-				rg := regexp.MustCompile(`('.+?')`)
-				rgroup := rg.FindAllStringSubmatch(valValue, -1)
-				if len(rgroup) == 0 {
-					continue
-				}
-				for i := range rgroup {
-					if len(rgroup) != 2 {
-						continue
-					}
-					for j := range rgroup[i][1:] {
-						rgroup[i][j] = strings.ReplaceAll(rgroup[i][j], "'", "")
-						valValues = append(valValues, rgroup[i][j])
-					}
-				}
-			} else {
-				valValues = strings.Split(valValue, " ")
-				if len(valValue) == 0 {
-					continue
-				}
-			}
-			for i := range valValues {
-				value, err := defineType(enumType, valValues[i])
-				if err != nil {
-					continue
-				}
-				sf.enums = append(sf.enums, value)
-			}
-		case "unique":
-			if sf.schemaType == ARRAY {
-				sf.unique = true
-			}
-		case "dive":
-			// ignore dive
-			return
-		default:
-			continue
-		}
-	}
-}
-
-func checkSchemaTypeAndSetValue(sf *structField, value float64, isMax bool) {
-	typeSchema := sf.schemaType
-
-	if IsNumericType(typeSchema) {
-		if isMax {
-			sf.maximum = &value
-		} else {
-			sf.minimum = &value
-		}
-	} else if typeSchema == STRING {
-		intValue := int64(value)
-		if isMax {
-			sf.maxLength = &intValue
-		} else {
-			sf.minLength = &intValue
-		}
-	} else if typeSchema == ARRAY {
-		intValue := int64(value)
-		if isMax {
-			sf.maxItems = &intValue
-		} else {
-			sf.minItems = &intValue
-		}
-		// ps. for simplicity, the max\min value of the array elements is ignored
 	}
 }
