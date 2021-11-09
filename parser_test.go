@@ -22,42 +22,47 @@ const defaultParseDepth = 100
 const mainAPIFile = "main.go"
 
 func TestNew(t *testing.T) {
-	New()
-}
+	t.Run("SetMarkdownFileDirectory", func(t *testing.T) {
+		t.Parallel()
 
-func TestSetMarkdownFileDirectory(t *testing.T) {
-	t.Parallel()
+		expected := "docs/markdown"
+		p := New(SetMarkdownFileDirectory(expected))
+		assert.Equal(t, expected, p.markdownFileDir)
+	})
 
-	expected := "docs/markdown"
-	p := New(SetMarkdownFileDirectory(expected))
-	assert.Equal(t, expected, p.markdownFileDir)
-}
+	t.Run("SetCodeExamplesDirectory", func(t *testing.T) {
+		t.Parallel()
 
-func TestSetCodeExamplesDirectory(t *testing.T) {
-	t.Parallel()
+		expected := "docs/examples"
+		p := New(SetCodeExamplesDirectory(expected))
+		assert.Equal(t, expected, p.codeExampleFilesDir)
+	})
 
-	expected := "docs/examples"
-	p := New(SetCodeExamplesDirectory(expected))
-	assert.Equal(t, expected, p.codeExampleFilesDir)
-}
+	t.Run("SetStrict", func(t *testing.T) {
+		t.Parallel()
 
-func TestSetStrict(t *testing.T) {
-	t.Parallel()
+		p := New()
+		assert.Equal(t, false, p.Strict)
 
-	p := New()
-	assert.Equal(t, false, p.Strict)
+		p = New(SetStrict(true))
+		assert.Equal(t, true, p.Strict)
+	})
 
-	p = New(SetStrict(true))
-	assert.Equal(t, true, p.Strict)
-}
+	t.Run("SetDebugger", func(t *testing.T) {
+		t.Parallel()
 
-func TestSetDebugger(t *testing.T) {
-	t.Parallel()
+		logger := log.New(&bytes.Buffer{}, "", log.LstdFlags)
 
-	logger := log.New(&bytes.Buffer{}, "", log.LstdFlags)
+		p := New(SetDebugger(logger))
+		assert.Equal(t, logger, p.debug)
+	})
 
-	p := New(SetDebugger(logger))
-	assert.Equal(t, p.debug, logger)
+	t.Run("SetFieldParserFactory", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(SetFieldParserFactory(nil))
+		assert.Nil(t, p.fieldParserFactory)
+	})
 }
 
 func TestParser_ParseDefinition(t *testing.T) {
@@ -786,7 +791,7 @@ func TestParseSimpleApi1(t *testing.T) {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "  ")
-	assert.Equal(t, string(expected), string(b))
+	assert.JSONEq(t, string(expected), string(b))
 }
 
 func TestParseSimpleApi_ForSnakecase(t *testing.T) {
@@ -3807,9 +3812,9 @@ func TestParser_Skip(t *testing.T) {
 
 	parser = New(SetExcludedDirsAndFiles("admin/release,admin/models"))
 	assert.NoError(t, parser.Skip("admin", &mockFS{IsDirectory: true}))
-	assert.NoError(t, parser.Skip("admin/service", &mockFS{IsDirectory: true}))
-	assert.Error(t, parser.Skip("admin/models", &mockFS{IsDirectory: true}))
-	assert.Error(t, parser.Skip("admin/release", &mockFS{IsDirectory: true}))
+	assert.NoError(t, parser.Skip(filepath.Clean("admin/service"), &mockFS{IsDirectory: true}))
+	assert.Error(t, parser.Skip(filepath.Clean("admin/models"), &mockFS{IsDirectory: true}))
+	assert.Error(t, parser.Skip(filepath.Clean("admin/release"), &mockFS{IsDirectory: true}))
 }
 
 func TestGetFieldType(t *testing.T) {
