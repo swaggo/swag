@@ -1057,7 +1057,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		return map[string]spec.Schema{typeName: *schema}, nil, nil
 	}
 
-	ps := newTagBaseFieldParser(parser, field)
+	ps := parser.fieldParserFactory(parser, field)
 
 	ok, err := ps.ShouldSkip()
 	if err != nil {
