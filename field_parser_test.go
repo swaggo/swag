@@ -441,8 +441,8 @@ func TestValidTags(t *testing.T) {
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
 		assert.Equal(t, true, schema.UniqueItems)
-
 	})
+
 	t.Run("All tag", func(t *testing.T) {
 		t.Parallel()
 		schema := spec.Schema{}

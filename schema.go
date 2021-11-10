@@ -126,10 +126,7 @@ func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
 	if spec != nil {
 		if spec.Comment != nil {
 			for _, comment := range spec.Comment.List {
-				text := strings.TrimSpace(comment.Text)
-				text = strings.TrimLeft(text, "//")
-				text = strings.TrimSpace(text)
-				texts := strings.Split(text, " ")
+				texts := strings.Split(strings.TrimSpace(strings.TrimLeft(comment.Text, "/")), " ")
 				if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
 					return texts[1]
 				}

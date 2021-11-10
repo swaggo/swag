@@ -16,9 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGen_Build(t *testing.T) {
-	searchDir := "../testdata/simple"
+const searchDir = "../testdata/simple"
 
+func TestGen_Build(t *testing.T) {
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
@@ -36,13 +36,11 @@ func TestGen_Build(t *testing.T) {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 			t.Fatal(err)
 		}
-		os.Remove(expectedFile)
+		_ = os.Remove(expectedFile)
 	}
 }
 
 func TestGen_BuildInstanceName(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
@@ -88,9 +86,8 @@ func TestGen_BuildInstanceName(t *testing.T) {
 }
 
 func TestGen_BuildSnakecase(t *testing.T) {
-	searchDir := "../testdata/simple2"
 	config := &Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../testdata/simple2",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple2/docs",
 		PropNamingStrategy: "snakecase",
@@ -107,14 +104,13 @@ func TestGen_BuildSnakecase(t *testing.T) {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 			t.Fatal(err)
 		}
-		os.Remove(expectedFile)
+		_ = os.Remove(expectedFile)
 	}
 }
 
 func TestGen_BuildLowerCamelcase(t *testing.T) {
-	searchDir := "../testdata/simple3"
 	config := &Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../testdata/simple3",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple3/docs",
 		PropNamingStrategy: "",
@@ -131,17 +127,16 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 			t.Fatal(err)
 		}
-		os.Remove(expectedFile)
+		_ = os.Remove(expectedFile)
 	}
 }
 
 func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
-	searchDir := "../testdata/quotes"
 	config := &Config{
-		SearchDir:        searchDir,
+		SearchDir:        "../testdata/quotes",
 		MainAPIFile:      "./main.go",
 		OutputDir:        "../testdata/quotes/docs",
-		MarkdownFilesDir: searchDir,
+		MarkdownFilesDir: "../testdata/quotes",
 	}
 
 	require.NoError(t, New().Build(config))
@@ -185,8 +180,6 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 }
 
 func TestGen_jsonIndent(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
@@ -201,8 +194,6 @@ func TestGen_jsonIndent(t *testing.T) {
 }
 
 func TestGen_jsonToYAML(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
@@ -223,16 +214,14 @@ func TestGen_jsonToYAML(t *testing.T) {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 			t.Fatal(err)
 		}
-		os.Remove(expectedFile)
+		_ = os.Remove(expectedFile)
 	}
 }
 
 func TestGen_SearchDirIsNotExist(t *testing.T) {
-	searchDir := "../isNotExistDir"
-
 	var swaggerConfDir, propNamingStrategy string
 	config := &Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../isNotExistDir",
 		MainAPIFile:        "./main.go",
 		OutputDir:          swaggerConfDir,
 		PropNamingStrategy: propNamingStrategy,
@@ -241,12 +230,10 @@ func TestGen_SearchDirIsNotExist(t *testing.T) {
 }
 
 func TestGen_MainAPiNotExist(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	var swaggerConfDir, propNamingStrategy string
 	config := &Config{
 		SearchDir:          searchDir,
-		MainAPIFile:        "./notexists.go",
+		MainAPIFile:        "./notExists.go",
 		OutputDir:          swaggerConfDir,
 		PropNamingStrategy: propNamingStrategy,
 	}
@@ -254,8 +241,6 @@ func TestGen_MainAPiNotExist(t *testing.T) {
 }
 
 func TestGen_OutputIsNotExist(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	var propNamingStrategy string
 	config := &Config{
 		SearchDir:          searchDir,
@@ -267,8 +252,6 @@ func TestGen_OutputIsNotExist(t *testing.T) {
 }
 
 func TestGen_FailToWrite(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	outputDir := filepath.Join(os.TempDir(), "swagg", "test")
 
 	var propNamingStrategy string
@@ -284,21 +267,21 @@ func TestGen_FailToWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	os.RemoveAll(filepath.Join(outputDir, "swagger.yaml"))
+	_ = os.RemoveAll(filepath.Join(outputDir, "swagger.yaml"))
 	err = os.Mkdir(filepath.Join(outputDir, "swagger.yaml"), 0755)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Error(t, New().Build(config))
 
-	os.RemoveAll(filepath.Join(outputDir, "swagger.json"))
+	_ = os.RemoveAll(filepath.Join(outputDir, "swagger.json"))
 	err = os.Mkdir(filepath.Join(outputDir, "swagger.json"), 0755)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Error(t, New().Build(config))
 
-	os.RemoveAll(filepath.Join(outputDir, "docs.go"))
+	_ = os.RemoveAll(filepath.Join(outputDir, "docs.go"))
 
 	err = os.Mkdir(filepath.Join(outputDir, "docs.go"), 0755)
 	if err != nil {
@@ -310,12 +293,9 @@ func TestGen_FailToWrite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 }
 
 func TestGen_configWithOutputDir(t *testing.T) {
-	searchDir := "../testdata/simple"
-
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
@@ -334,7 +314,7 @@ func TestGen_configWithOutputDir(t *testing.T) {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 			t.Fatal(err)
 		}
-		os.Remove(expectedFile)
+		_ = os.Remove(expectedFile)
 	}
 }
 
@@ -409,13 +389,9 @@ func TestGen_writeGoDoc(t *testing.T) {
 	assert.NoError(t, err)
 
 	packageTemplate = swapTemplate
-
 }
 
 func TestGen_GeneratedDoc(t *testing.T) {
-
-	searchDir := "../testdata/simple"
-
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
@@ -468,7 +444,7 @@ func TestGen_cgoImports(t *testing.T) {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 			t.Fatal(err)
 		}
-		os.Remove(expectedFile)
+		_ = os.Remove(expectedFile)
 	}
 }
 

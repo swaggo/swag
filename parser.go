@@ -1171,8 +1171,7 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 }
 
 func replaceLastTag(slice []spec.Tag, element spec.Tag) {
-	slice = slice[:len(slice)-1]
-	slice = append(slice, element)
+	slice = append(slice[:len(slice)-1], element)
 }
 
 // defineTypeOfExample example value define the type (object and array unsupported)
@@ -1242,7 +1241,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
 func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
-	return filepath.Walk(searchDir, func(path string, f os.FileInfo, err error) error {
+	return filepath.Walk(searchDir, func(path string, f os.FileInfo, _ error) error {
 		if err := parser.Skip(path, f); err != nil {
 			return err
 		} else if f.IsDir() {
@@ -1269,7 +1268,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		return nil
 	}
 	srcDir := pkg.Raw.Dir
-	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contains sub dir files)
+	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contain sub dir files)
 	if err != nil {
 		return err
 	}

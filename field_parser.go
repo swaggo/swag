@@ -130,8 +130,6 @@ type structField struct {
 	schemaType   string
 	arrayType    string
 	formatType   string
-	readOnly     bool
-	exampleValue interface{}
 	maximum      *float64
 	minimum      *float64
 	multipleOf   *float64
@@ -139,10 +137,12 @@ type structField struct {
 	minLength    *int64
 	maxItems     *int64
 	minItems     *int64
-	unique       bool
-	enums        []interface{}
+	exampleValue interface{}
 	defaultValue interface{}
 	extensions   map[string]interface{}
+	enums        []interface{}
+	readOnly     bool
+	unique       bool
 }
 
 func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
@@ -189,14 +189,17 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			structField.exampleValue = example
 		}
 	}
+
 	formatTag := ps.tag.Get("format")
 	if formatTag != "" {
 		structField.formatType = formatTag
 	}
+
 	bindingTag := ps.tag.Get("binding")
 	if bindingTag != "" {
 		ps.parseValidTags(bindingTag, structField)
 	}
+
 	validateTag := ps.tag.Get("validate")
 	if validateTag != "" {
 		ps.parseValidTags(validateTag, structField)
@@ -211,13 +214,14 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 				structField.extensions[parts[0]] = parts[1]
 			} else {
 				if len(parts[0]) > 0 && string(parts[0][0]) == "!" {
-					structField.extensions[string(parts[0][1:])] = false
+					structField.extensions[parts[0][1:]] = false
 				} else {
 					structField.extensions[parts[0]] = true
 				}
 			}
 		}
 	}
+
 	enumsTag := ps.tag.Get("enums")
 	if enumsTag != "" {
 		enumType := structField.schemaType
@@ -233,6 +237,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			structField.enums = append(structField.enums, value)
 		}
 	}
+
 	defaultTag := ps.tag.Get("default")
 	if defaultTag != "" {
 		value, err := defineType(structField.schemaType, defaultTag)
@@ -267,6 +272,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			structField.multipleOf = multipleOf
 		}
 	}
+
 	if structField.schemaType == STRING || structField.arrayType == STRING {
 		maxLength, err := getIntTag(ps.tag, "maxLength")
 		if err != nil {
@@ -284,6 +290,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			structField.minLength = minLength
 		}
 	}
+
 	readOnly := ps.tag.Get("readonly")
 	if readOnly != "" {
 		structField.readOnly = readOnly == "true"
@@ -410,13 +417,14 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 			valKey   string
 			valValue string
 		)
-		vals := strings.Split(val, "=")
-		if len(vals) == 1 {
-			valKey = vals[0]
-		} else if len(vals) == 2 {
-			valKey = vals[0]
-			valValue = vals[1]
-		} else {
+		kv := strings.Split(val, "=")
+		switch len(kv) {
+		case 1:
+			valKey = kv[0]
+		case 2:
+			valKey = kv[0]
+			valValue = kv[1]
+		default:
 			continue
 		}
 		valValue = strings.Replace(strings.Replace(valValue, utf8HexComma, ",", -1), utf8Pipe, "|", -1)
@@ -464,29 +472,27 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 }
 
 func checkSchemaTypeAndSetValue(sf *structField, value float64, isMax bool) {
-	typeSchema := sf.schemaType
-
-	if IsNumericType(typeSchema) {
+	switch sf.schemaType {
+	case INTEGER, NUMBER:
 		if isMax {
 			sf.maximum = &value
 		} else {
 			sf.minimum = &value
 		}
-	} else if typeSchema == STRING {
+	case STRING:
 		intValue := int64(value)
 		if isMax {
 			sf.maxLength = &intValue
 		} else {
 			sf.minLength = &intValue
 		}
-	} else if typeSchema == ARRAY {
+	case ARRAY:
 		intValue := int64(value)
 		if isMax {
 			sf.maxItems = &intValue
 		} else {
 			sf.minItems = &intValue
 		}
-		// ps. for simplicity, the max\min value of the array elements is ignored
 	}
 }
 
@@ -504,18 +510,18 @@ var splitParamsRegex = regexp.MustCompile(`'[^']*'|\S+`)
 
 func parseOneOfParam2(s string) []string {
 	oneofValsCacheRWLock.RLock()
-	vals, ok := oneofValsCache[s]
+	values, ok := oneofValsCache[s]
 	oneofValsCacheRWLock.RUnlock()
 	if !ok {
 		oneofValsCacheRWLock.Lock()
-		vals = splitParamsRegex.FindAllString(s, -1)
-		for i := 0; i < len(vals); i++ {
-			vals[i] = strings.Replace(vals[i], "'", "", -1)
+		values = splitParamsRegex.FindAllString(s, -1)
+		for i := 0; i < len(values); i++ {
+			values[i] = strings.Replace(values[i], "'", "", -1)
 		}
-		oneofValsCache[s] = vals
+		oneofValsCache[s] = values
 		oneofValsCacheRWLock.Unlock()
 	}
-	return vals
+	return values
 }
 
 // ---
