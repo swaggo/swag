@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/swaggo/swag"
 )
 
 const searchDir = "../testdata/simple"
@@ -85,12 +86,12 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	}
 }
 
-func TestGen_BuildSnakecase(t *testing.T) {
+func TestGen_BuildSnakeCase(t *testing.T) {
 	config := &Config{
 		SearchDir:          "../testdata/simple2",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple2/docs",
-		PropNamingStrategy: "snakecase",
+		PropNamingStrategy: swag.SnakeCase,
 	}
 
 	assert.NoError(t, New().Build(config))
@@ -335,7 +336,7 @@ func main() {}
 import "fmt"
 
 func main() {
-fmt.Print("Helo world")
+fmt.Print("Hello world")
 }
 `
 	res = g.formatSource([]byte(src2))
@@ -400,10 +401,10 @@ func TestGen_GeneratedDoc(t *testing.T) {
 	}
 
 	assert.NoError(t, New().Build(config))
-	gocmd, err := exec.LookPath("go")
+	goCMD, err := exec.LookPath("go")
 	assert.NoError(t, err)
 
-	cmd := exec.Command(gocmd, "build", filepath.Join(config.OutputDir, "docs.go"))
+	cmd := exec.Command(goCMD, "build", filepath.Join(config.OutputDir, "docs.go"))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -418,15 +419,13 @@ func TestGen_GeneratedDoc(t *testing.T) {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 			t.Fatal(err)
 		}
-		os.Remove(expectedFile)
+		_ = os.Remove(expectedFile)
 	}
 }
 
 func TestGen_cgoImports(t *testing.T) {
-	searchDir := "../testdata/simple_cgo"
-
 	config := &Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../testdata/simple_cgo",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple_cgo/docs",
 		PropNamingStrategy: "",
@@ -449,10 +448,8 @@ func TestGen_cgoImports(t *testing.T) {
 }
 
 func TestGen_duplicateRoute(t *testing.T) {
-	searchDir := "../testdata/duplicate_route"
-
 	config := &Config{
-		SearchDir:          searchDir,
+		SearchDir:          "../testdata/duplicate_route",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/duplicate_route/docs",
 		PropNamingStrategy: "",

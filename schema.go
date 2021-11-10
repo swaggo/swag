@@ -10,25 +10,25 @@ import (
 )
 
 const (
-	// ARRAY array.
+	// ARRAY represent a array value.
 	ARRAY = "array"
-	// OBJECT object.
+	// OBJECT represent a object value.
 	OBJECT = "object"
-	// PRIMITIVE primitive.
+	// PRIMITIVE represent a primitive value.
 	PRIMITIVE = "primitive"
-	// BOOLEAN boolean.
+	// BOOLEAN represent a boolean value.
 	BOOLEAN = "boolean"
-	// INTEGER integer.
+	// INTEGER represent a integer value.
 	INTEGER = "integer"
-	// NUMBER number.
+	// NUMBER represent a number value.
 	NUMBER = "number"
-	// STRING string.
+	// STRING represent a string value.
 	STRING = "string"
-	// FUNC func.
+	// FUNC represent a function value.
 	FUNC = "func"
-	// ANY any
+	// ANY represent a any value.
 	ANY = "any"
-	// NIL nil
+	// NIL represent a empty value.
 	NIL = "nil"
 )
 

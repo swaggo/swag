@@ -479,7 +479,6 @@ func TestParser_ParseGeneralAPITagGroups(t *testing.T) {
 
 	expected := []interface{}{map[string]interface{}{"name": "General", "tags": []interface{}{"lanes", "video-recommendations"}}}
 	assert.Equal(t, parser.swagger.Extensions["x-tagGroups"], expected)
-
 }
 
 func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
@@ -510,7 +509,6 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
     }
 ]`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParser_ParseGeneralAPISecurity(t *testing.T) {
@@ -729,7 +727,7 @@ func Fun()  {
 		assert.NoError(t, err)
 
 		p := New()
-		p.packages.CollectAstFile("api", "api/api.go", f)
+		_ = p.packages.CollectAstFile("api", "api/api.go", f)
 
 		_, err = p.packages.ParseTypes()
 		assert.NoError(t, err)
@@ -2016,7 +2014,7 @@ func TestParseComposition(t *testing.T) {
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 
-	//windows will fail: \r\n \n
+	// windows will fail: \r\n \n
 	assert.Equal(t, string(expected), string(b))
 }
 
@@ -2032,7 +2030,7 @@ func TestParseImportAliases(t *testing.T) {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	//windows will fail: \r\n \n
+	// windows will fail: \r\n \n
 	assert.Equal(t, string(expected), string(b))
 }
 
@@ -2157,7 +2155,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2220,11 +2218,11 @@ type ResponseWrapper struct {
 
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
-	parser.packages.CollectAstFile("api", "api/api.go", f)
+	_ = parser.packages.CollectAstFile("api", "api/api.go", f)
 
 	f2, err := goparser.ParseFile(token.NewFileSet(), "", restsrc, goparser.ParseComments)
 	assert.NoError(t, err)
-	parser.packages.CollectAstFile("rest", "rest/rest.go", f2)
+	_ = parser.packages.CollectAstFile("rest", "rest/rest.go", f2)
 
 	_, err = parser.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2287,7 +2285,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2414,7 +2412,7 @@ func Test(){
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
 
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2911,7 +2909,7 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
 
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2949,7 +2947,7 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
 	_, err = p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2990,7 +2988,7 @@ func Fun()  {
 	pkgs.packages = nil
 	pkgs.files = nil
 
-	pkgs.CollectAstFile("api", "api/api.go", f)
+	_ = pkgs.CollectAstFile("api", "api/api.go", f)
 	assert.NotNil(t, pkgs.packages)
 	assert.NotNil(t, pkgs.files)
 }
@@ -3010,13 +3008,13 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
 	assert.NotNil(t, p.packages.files[f])
 
 	astFileInfo := p.packages.files[f]
 
 	// if we collect the same again nothing should happen
-	p.packages.CollectAstFile("api", "api/api.go", f)
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
 	assert.Equal(t, astFileInfo, p.packages.files[f])
 }
 
@@ -3149,8 +3147,8 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	p := New()
-	p.packages.CollectAstFile("api", "api/api.go", f)
-	p.packages.ParseTypes()
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
+	_, _ = p.packages.ParseTypes()
 	err = p.ParseRouterAPIInfo("", f)
 	assert.NoError(t, err)
 

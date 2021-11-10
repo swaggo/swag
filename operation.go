@@ -124,7 +124,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		err = operation.ParseSecurityComment(lineRemainder)
 	case "@deprecated":
 		operation.Deprecate()
-	case "@x-codesamples":
+	case xCodeSamplesAttr:
 		err = operation.ParseCodeSample(attribute, commentLine, lineRemainder)
 	default:
 		err = operation.ParseMetadata(attribute, lowerAttribute, lineRemainder)
@@ -415,7 +415,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			param.Format = attr
 		case "extensions":
 			param.Extensions = map[string]interface{}{}
-			setExtensionParam(attr, param)
+			_ = setExtensionParam(attr, param)
 		case "collectionFormat":
 			n, err := setCollectionFormatParam(attrKey, objectType, attr, commentLine)
 			if err != nil {
@@ -855,6 +855,17 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	return nil
 }
 
+func newHeaderSpec(schemaType, description string) spec.Header {
+	return spec.Header{
+		SimpleSchema: spec.SimpleSchema{
+			Type: schemaType,
+		},
+		HeaderProps: spec.HeaderProps{
+			Description: description,
+		},
+	}
+}
+
 // ParseResponseHeaderComment parses comment for given `response header` comment string.
 func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *ast.File) error {
 	matches := responsePattern.FindStringSubmatch(commentLine)
@@ -862,12 +873,9 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
-	schemaType := strings.Trim(matches[2], "{}")
+	header := newHeaderSpec(strings.Trim(matches[2], "{}"), strings.Trim(matches[4], "\""))
+
 	headerKey := matches[3]
-	description := strings.Trim(matches[4], "\"")
-	header := spec.Header{}
-	header.Description = description
-	header.Type = schemaType
 
 	if strings.EqualFold(matches[1], "all") {
 		if operation.Responses.Default != nil {
@@ -1044,12 +1052,12 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 			fullPath := filepath.Join(dirPath, fileName)
 			commentInfo, err := ioutil.ReadFile(fullPath)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
+				return nil, fmt.Errorf("failed to read code example file %s error: %s ", fullPath, err)
 			}
 
 			return commentInfo, nil
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to find code example file for tag %s in the given directory", summaryName)
+	return nil, fmt.Errorf("unable to find code example file for tag %s in the given directory", summaryName)
 }

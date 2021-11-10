@@ -48,8 +48,21 @@ type Config struct {
 	// MainAPIFile the Go file path in which 'swagger general API Info' is written
 	MainAPIFile string
 
-	// PropNamingStrategy represents property naming strategy like snakecase,camelcase,pascalcase
+	// PropNamingStrategy represents property naming strategy like snake case,camel case,pascal case
 	PropNamingStrategy string
+
+	// MarkdownFilesDir used to find markdown files, which can be used for tag descriptions
+	MarkdownFilesDir string
+
+	// CodeExampleFilesDir used to find code example files, which can be used for x-codeSamples
+	CodeExampleFilesDir string
+
+	// InstanceName is used to get distinct names for different swagger documents in the
+	// same project. The default value is "swagger".
+	InstanceName string
+
+	// ParseDepth dependency parse depth
+	ParseDepth int
 
 	// ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
@@ -63,21 +76,8 @@ type Config struct {
 	// Strict whether swag should error or warn when it detects cases which are most likely user errors
 	Strict bool
 
-	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
-	MarkdownFilesDir string
-
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
-
-	// CodeExampleFilesDir used to find code example files, which can be used for x-codeSamples
-	CodeExampleFilesDir string
-
-	// ParseDepth dependency parse depth
-	ParseDepth int
-
-	// InstanceName is used to get distinct names for different swagger documents in the
-	// same project. The default value is "swagger".
-	InstanceName string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
@@ -232,16 +232,16 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 	buffer := &bytes.Buffer{}
 	err = generator.Execute(buffer, struct {
 		Timestamp     time.Time
-		GeneratedTime bool
 		Doc           string
 		Host          string
 		PackageName   string
 		BasePath      string
-		Schemes       []string
 		Title         string
 		Description   string
 		Version       string
 		InstanceName  string
+		Schemes       []string
+		GeneratedTime bool
 	}{
 		Timestamp:     time.Now(),
 		GeneratedTime: config.GeneratedTime,

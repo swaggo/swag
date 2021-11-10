@@ -34,9 +34,10 @@ const (
 	// SnakeCase indicates using SnakeCase strategy for struct field.
 	SnakeCase = "snakecase"
 
-	acceptAttr      = "@accept"
-	produceAttr     = "@produce"
-	scopeAttrPrefix = "@scope."
+	acceptAttr       = "@accept"
+	produceAttr      = "@produce"
+	xCodeSamplesAttr = "@x-codesamples"
+	scopeAttrPrefix  = "@scope."
 )
 
 var (

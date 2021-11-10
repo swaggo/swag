@@ -248,7 +248,6 @@ func TestParseResponseFailureCommentWithEmptyResponse(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParseResponseCommentWithObjectType(t *testing.T) {
@@ -2123,14 +2122,13 @@ func TestParseObjectSchema(t *testing.T) {
 	schema, err = operation.parseObjectSchema("user.Model", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, RefSchema("user.Model"))
-
 }
 
 func TestParseCodeSamples(t *testing.T) {
 	t.Parallel()
-
+	const comment = `@x-codeSamples file`
 	t.Run("Find sample by file", func(t *testing.T) {
-		comment := `@x-codeSamples file`
+
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
 		operation.Summary = "example"
 
@@ -2150,7 +2148,6 @@ func TestParseCodeSamples(t *testing.T) {
 	})
 
 	t.Run("With broken file sample", func(t *testing.T) {
-		comment := `@x-codeSamples file`
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
 		operation.Summary = "broken"
 
@@ -2159,7 +2156,6 @@ func TestParseCodeSamples(t *testing.T) {
 	})
 
 	t.Run("Example file not found", func(t *testing.T) {
-		comment := `@x-codeSamples file`
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
 		operation.Summary = "badExample"
 

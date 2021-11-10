@@ -46,8 +46,8 @@ var initFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:    propertyStrategyFlag,
 		Aliases: []string{"p"},
-		Value:   "camelcase",
-		Usage:   "Property Naming Strategy like snakecase,camelcase,pascalcase",
+		Value:   swag.CamelCase,
+		Usage:   "Property Naming Strategy like " + swag.SnakeCase + "," + swag.CamelCase + "," + swag.PascalCase,
 	},
 	&cli.StringFlag{
 		Name:    outputFlag,
