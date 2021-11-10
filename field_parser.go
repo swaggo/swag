@@ -163,7 +163,10 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 
 	structField := &structField{
 		schemaType: types[0],
+		formatType: ps.tag.Get("format"),
+		readOnly:   ps.tag.Get("readonly") == "true",
 	}
+
 	if len(types) > 1 && (types[0] == ARRAY || types[0] == OBJECT) {
 		structField.arrayType = types[1]
 	}
@@ -188,11 +191,6 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			}
 			structField.exampleValue = example
 		}
-	}
-
-	formatTag := ps.tag.Get("format")
-	if formatTag != "" {
-		structField.formatType = formatTag
 	}
 
 	bindingTag := ps.tag.Get("binding")
@@ -289,11 +287,6 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		if minLength != nil {
 			structField.minLength = minLength
 		}
-	}
-
-	readOnly := ps.tag.Get("readonly")
-	if readOnly != "" {
-		structField.readOnly = readOnly == "true"
 	}
 
 	// perform this after setting everything else (min, max, etc...)
