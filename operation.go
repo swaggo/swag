@@ -1052,7 +1052,7 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 			fullPath := filepath.Join(dirPath, fileName)
 			commentInfo, err := ioutil.ReadFile(fullPath)
 			if err != nil {
-				return nil, fmt.Errorf("failed to read code example file %s error: %s ", fullPath, err)
+				return nil, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
 			}
 
 			return commentInfo, nil

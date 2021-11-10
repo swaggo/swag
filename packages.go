@@ -201,26 +201,26 @@ func (pkgs *PackagesDefinitions) loadExternalPackage(importPath string) error {
 // @file current ast.File in which to search imports
 // @fuzzy search for the package path that the last part matches the @pkg if true
 // @return the package path of a package of @pkg.
-func (pkgs *PackagesDefinitions) findPackagePathFromImports(p string, file *ast.File, fuzzy bool) string {
+func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File, fuzzy bool) string {
 	if file == nil {
 		return ""
 	}
 
-	if strings.ContainsRune(p, '.') {
-		p = strings.Split(p, ".")[0]
+	if strings.ContainsRune(pkg, '.') {
+		pkg = strings.Split(pkg, ".")[0]
 	}
 
 	hasAnonymousPkg := false
 
 	matchLastPathPart := func(pkgPath string) bool {
 		paths := strings.Split(pkgPath, "/")
-		return paths[len(paths)-1] == p
+		return paths[len(paths)-1] == pkg
 	}
 
 	// prior to match named package
 	for _, imp := range file.Imports {
 		if imp.Name != nil {
-			if imp.Name.Name == p {
+			if imp.Name.Name == pkg {
 				return strings.Trim(imp.Path.Value, `"`)
 			}
 			if imp.Name.Name == "_" {
@@ -235,7 +235,7 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(p string, file *ast.
 				if matchLastPathPart(path) {
 					return path
 				}
-			} else if pd, ok := pkgs.packages[path]; ok && pd.Name == p {
+			} else if pd, ok := pkgs.packages[path]; ok && pd.Name == pkg {
 				return path
 			}
 		}
@@ -253,7 +253,7 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(p string, file *ast.
 					if matchLastPathPart(path) {
 						return path
 					}
-				} else if pd, ok := pkgs.packages[path]; ok && pd.Name == p {
+				} else if pd, ok := pkgs.packages[path]; ok && pd.Name == pkg {
 					return path
 				}
 			}
