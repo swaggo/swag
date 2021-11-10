@@ -443,7 +443,7 @@ func TestValidTags(t *testing.T) {
 		assert.Equal(t, true, schema.UniqueItems)
 
 	})
-	t.Run("All validate tag", func(t *testing.T) {
+	t.Run("All tag", func(t *testing.T) {
 		t.Parallel()
 		schema := spec.Schema{}
 		schema.Type = []string{"array"}
@@ -469,5 +469,54 @@ func TestValidTags(t *testing.T) {
 		assert.Equal(t, &min, schema.MinItems)
 		assert.Equal(t, []interface{}{"a,c", "c|d book"}, schema.Items.Schema.Enum)
 
+		schema = spec.Schema{}
+		schema.Type = []string{"array"}
+		schema.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"string"},
+				},
+			},
+		}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" validate:"required,oneof=,max=10=90,min=1"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Empty(t, schema.UniqueItems)
+		assert.Empty(t, schema.MaxItems)
+		assert.Equal(t, &min, schema.MinItems)
+
+		schema = spec.Schema{}
+		schema.Type = []string{"array"}
+		schema.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"string"},
+				},
+			},
+		}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" validate:"required,max=10,min=one"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, &max, schema.MaxItems)
+		assert.Empty(t, schema.MinItems)
+
+		schema = spec.Schema{}
+		schema.Type = []string{"integer"}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" validate:"required,oneof=one two"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Empty(t, schema.Enum)
 	})
 }
