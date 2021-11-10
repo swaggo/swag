@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"go/ast"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/go-openapi/spec"
@@ -135,6 +137,9 @@ type structField struct {
 	multipleOf   *float64
 	maxLength    *int64
 	minLength    *int64
+	maxItems     *int64
+	minItems     *int64
+	unique       bool
 	enums        []interface{}
 	defaultValue interface{}
 	extensions   map[string]interface{}
@@ -188,6 +193,14 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	if formatTag != "" {
 		structField.formatType = formatTag
 	}
+	bindingTag := ps.tag.Get("binding")
+	if bindingTag != "" {
+		ps.parseValidTags(bindingTag, structField)
+	}
+	validateTag := ps.tag.Get("validate")
+	if validateTag != "" {
+		ps.parseValidTags(validateTag, structField)
+	}
 
 	extensionsTag := ps.tag.Get("extensions")
 	if extensionsTag != "" {
@@ -234,32 +247,42 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		if err != nil {
 			return err
 		}
-		structField.maximum = maximum
+		if maximum != nil {
+			structField.maximum = maximum
+		}
 
 		minimum, err := getFloatTag(ps.tag, "minimum")
 		if err != nil {
 			return err
 		}
-		structField.minimum = minimum
+		if minimum != nil {
+			structField.minimum = minimum
+		}
 
 		multipleOf, err := getFloatTag(ps.tag, "multipleOf")
 		if err != nil {
 			return err
 		}
-		structField.multipleOf = multipleOf
+		if multipleOf != nil {
+			structField.multipleOf = multipleOf
+		}
 	}
 	if structField.schemaType == STRING || structField.arrayType == STRING {
 		maxLength, err := getIntTag(ps.tag, "maxLength")
 		if err != nil {
 			return err
 		}
-		structField.maxLength = maxLength
+		if maxLength != nil {
+			structField.maxLength = maxLength
+		}
 
 		minLength, err := getIntTag(ps.tag, "minLength")
 		if err != nil {
 			return err
 		}
-		structField.minLength = minLength
+		if minLength != nil {
+			structField.minLength = minLength
+		}
 	}
 	readOnly := ps.tag.Get("readonly")
 	if readOnly != "" {
@@ -307,6 +330,11 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	schema.Extensions = structField.extensions
 	eleSchema := schema
 	if structField.schemaType == ARRAY {
+		// For Array only
+		schema.MaxItems = structField.maxItems
+		schema.MinItems = structField.minItems
+		schema.UniqueItems = structField.unique
+
 		eleSchema = schema.Items.Schema
 		eleSchema.Format = structField.formatType
 	}
@@ -373,3 +401,121 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 
 	return false, nil
 }
+
+func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
+	// `validate:"required,max=10,min=1"`
+	// ps. required checked by IsRequired().
+	for _, val := range strings.Split(validTag, ",") {
+		var (
+			valKey   string
+			valValue string
+		)
+		vals := strings.Split(val, "=")
+		if len(vals) == 1 {
+			valKey = vals[0]
+		} else if len(vals) == 2 {
+			valKey = vals[0]
+			valValue = vals[1]
+		} else {
+			continue
+		}
+		valValue = strings.Replace(strings.Replace(valValue, utf8HexComma, ",", -1), utf8Pipe, "|", -1)
+
+		switch valKey {
+		case "max", "lte":
+			maxValue, err := strconv.ParseFloat(valValue, 64)
+			if err != nil {
+				// ignore
+				continue
+			}
+			checkSchemaTypeAndSetValue(sf, maxValue, true)
+		case "min", "gte":
+			minValue, err := strconv.ParseFloat(valValue, 64)
+			if err != nil {
+				// ignore
+				continue
+			}
+			checkSchemaTypeAndSetValue(sf, minValue, false)
+		case "oneof":
+			enumType := sf.schemaType
+			if sf.schemaType == ARRAY {
+				enumType = sf.arrayType
+			}
+
+			valValues := parseOneOfParam2(valValue)
+			for i := range valValues {
+				value, err := defineType(enumType, valValues[i])
+				if err != nil {
+					continue
+				}
+				sf.enums = append(sf.enums, value)
+			}
+		case "unique":
+			if sf.schemaType == ARRAY {
+				sf.unique = true
+			}
+		case "dive":
+			// ignore dive
+			return
+		default:
+			continue
+		}
+	}
+}
+
+func checkSchemaTypeAndSetValue(sf *structField, value float64, isMax bool) {
+	typeSchema := sf.schemaType
+
+	if IsNumericType(typeSchema) {
+		if isMax {
+			sf.maximum = &value
+		} else {
+			sf.minimum = &value
+		}
+	} else if typeSchema == STRING {
+		intValue := int64(value)
+		if isMax {
+			sf.maxLength = &intValue
+		} else {
+			sf.minLength = &intValue
+		}
+	} else if typeSchema == ARRAY {
+		intValue := int64(value)
+		if isMax {
+			sf.maxItems = &intValue
+		} else {
+			sf.minItems = &intValue
+		}
+		// ps. for simplicity, the max\min value of the array elements is ignored
+	}
+}
+
+const (
+	utf8HexComma = "0x2C"
+	utf8Pipe     = "0x7C"
+)
+
+// These code copy from
+// https://github.com/go-playground/validator/blob/d4271985b44b735c6f76abc7a06532ee997f9476/baked_in.go#L207
+// ---
+var oneofValsCache = map[string][]string{}
+var oneofValsCacheRWLock = sync.RWMutex{}
+var splitParamsRegex = regexp.MustCompile(`'[^']*'|\S+`)
+
+func parseOneOfParam2(s string) []string {
+	oneofValsCacheRWLock.RLock()
+	vals, ok := oneofValsCache[s]
+	oneofValsCacheRWLock.RUnlock()
+	if !ok {
+		oneofValsCacheRWLock.Lock()
+		vals = splitParamsRegex.FindAllString(s, -1)
+		for i := 0; i < len(vals); i++ {
+			vals[i] = strings.Replace(vals[i], "'", "", -1)
+		}
+		oneofValsCache[s] = vals
+		oneofValsCacheRWLock.Unlock()
+	}
+	return vals
+}
+
+// ---

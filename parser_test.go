@@ -1155,6 +1155,8 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "maximum": 130,
+                    "minimum": 0,
                     "multipleOf": 0.01,
                     "example": 3.25
                 },
