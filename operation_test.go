@@ -65,7 +65,6 @@ func TestParseAcceptComment(t *testing.T) {
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(operation, "", "    ")
 	assert.JSONEq(t, expected, string(b))
-
 }
 
 func TestParseAcceptCommentErr(t *testing.T) {
@@ -229,7 +228,6 @@ func TestParseResponseSuccessCommentWithEmptyResponse(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParseResponseFailureCommentWithEmptyResponse(t *testing.T) {
@@ -250,7 +248,6 @@ func TestParseResponseFailureCommentWithEmptyResponse(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParseResponseCommentWithObjectType(t *testing.T) {
@@ -765,7 +762,6 @@ func TestParseResponseCommentWithArrayType(t *testing.T) {
     }
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 func TestParseResponseCommentWithBasicType(t *testing.T) {
@@ -903,7 +899,6 @@ func TestParseResponseCommentWithHeader(t *testing.T) {
 
 	err = operation.ParseComment(`@Header 200,asdsd {string} Token "qwerty"`, nil)
 	assert.Error(t, err, "ParseComment should not fail")
-
 }
 
 func TestParseResponseCommentWithHeaderForCodes(t *testing.T) {
@@ -1147,7 +1142,6 @@ func TestParseParamCommentDefaultValue(t *testing.T) {
     ]
 }`
 	assert.Equal(t, expected, string(b))
-
 }
 
 // Test ParseParamComment Query Params
@@ -1717,7 +1711,6 @@ func TestParseParamCommentByMaximum(t *testing.T) {
 
 	comment = `@Param some_id query integer true "Some ID" Maximum(Goopher)`
 	assert.Error(t, operation.ParseComment(comment, nil))
-
 }
 
 func TestParseParamCommentByDefault(t *testing.T) {
@@ -1865,25 +1858,25 @@ func TestParseIdComment(t *testing.T) {
 func TestFindTypeDefCoreLib(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("net/http", "Request")
+	s, err := findTypeDef("net/http", "Request")
 	assert.NoError(t, err)
-	assert.NotNil(t, spec)
+	assert.NotNil(t, s)
 }
 
 func TestFindTypeDefExternalPkg(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
+	s, err := findTypeDef("github.com/KyleBanks/depth", "Tree")
 	assert.NoError(t, err)
-	assert.NotNil(t, spec)
+	assert.NotNil(t, s)
 }
 
 func TestFindTypeDefInvalidPkg(t *testing.T) {
 	t.Parallel()
 
-	spec, err := findTypeDef("does-not-exist", "foo")
+	s, err := findTypeDef("does-not-exist", "foo")
 	assert.Error(t, err)
-	assert.Nil(t, spec)
+	assert.Nil(t, s)
 }
 
 func TestParseSecurityComment(t *testing.T) {
@@ -2084,7 +2077,7 @@ func TestParseObjectSchema(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.ArrayProperty(PrimitiveSchema(INTEGER)))
 
-	schema, err = operation.parseObjectSchema("[]bleah", nil)
+	_, err = operation.parseObjectSchema("[]bleah", nil)
 	assert.Error(t, err)
 
 	schema, err = operation.parseObjectSchema("map[]string", nil)
@@ -2099,10 +2092,10 @@ func TestParseObjectSchema(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.MapProperty(nil))
 
-	schema, err = operation.parseObjectSchema("map[string", nil)
+	_, err = operation.parseObjectSchema("map[string", nil)
 	assert.Error(t, err)
 
-	schema, err = operation.parseObjectSchema("map[]bleah", nil)
+	_, err = operation.parseObjectSchema("map[]bleah", nil)
 	assert.Error(t, err)
 
 	operation.parser = New()
@@ -2122,21 +2115,20 @@ func TestParseObjectSchema(t *testing.T) {
 			},
 		},
 	}
-	schema, err = operation.parseObjectSchema("model.User", nil)
+	_, err = operation.parseObjectSchema("model.User", nil)
 	assert.NoError(t, err)
 
 	operation.parser = nil
 	schema, err = operation.parseObjectSchema("user.Model", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, RefSchema("user.Model"))
-
 }
 
 func TestParseCodeSamples(t *testing.T) {
 	t.Parallel()
-
+	const comment = `@x-codeSamples file`
 	t.Run("Find sample by file", func(t *testing.T) {
-		comment := `@x-codeSamples file`
+
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
 		operation.Summary = "example"
 
@@ -2156,7 +2148,6 @@ func TestParseCodeSamples(t *testing.T) {
 	})
 
 	t.Run("With broken file sample", func(t *testing.T) {
-		comment := `@x-codeSamples file`
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
 		operation.Summary = "broken"
 
@@ -2165,9 +2156,8 @@ func TestParseCodeSamples(t *testing.T) {
 	})
 
 	t.Run("Example file not found", func(t *testing.T) {
-		comment := `@x-codeSamples file`
 		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/code_examples"))
-		operation.Summary = "exampel"
+		operation.Summary = "badExample"
 
 		err := operation.ParseComment(comment, nil)
 		assert.Error(t, err, "error was expected, as file does not exist")

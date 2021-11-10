@@ -279,6 +279,16 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, true, schema.ReadOnly)
 	})
+
+	t.Run("Invalid tag", func(t *testing.T) {
+		t.Parallel()
+
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Names: []*ast.Ident{{Name: "BasicStruct"}}},
+		).ComplementSchema(nil)
+		assert.Error(t, err)
+	})
 }
 
 func TestValidTags(t *testing.T) {
@@ -441,8 +451,8 @@ func TestValidTags(t *testing.T) {
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
 		assert.Equal(t, true, schema.UniqueItems)
-
 	})
+
 	t.Run("All tag", func(t *testing.T) {
 		t.Parallel()
 		schema := spec.Schema{}

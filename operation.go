@@ -27,11 +27,10 @@ type RouteProperties struct {
 // Operation describes a single API operation on a path.
 // For more information: https://github.com/swaggo/swag#api-operation
 type Operation struct {
-	RouterProperties []RouteProperties
-	spec.Operation
-
 	parser              *Parser
 	codeExampleFilesDir string
+	spec.Operation
+	RouterProperties []RouteProperties
 }
 
 var mimeTypeAliases = map[string]string{
@@ -85,7 +84,7 @@ func SetCodeExampleFilesDirectory(directoryPath string) func(*Operation) {
 
 // ParseComment parses comment for given comment string and returns error if error occurs.
 func (operation *Operation) ParseComment(comment string, astFile *ast.File) error {
-	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "//"))
+	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "/"))
 	if len(commentLine) == 0 {
 		return nil
 	}
@@ -125,7 +124,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		err = operation.ParseSecurityComment(lineRemainder)
 	case "@deprecated":
 		operation.Deprecate()
-	case "@x-codesamples":
+	case xCodeSamplesAttr:
 		err = operation.ParseCodeSample(attribute, commentLine, lineRemainder)
 	default:
 		err = operation.ParseMetadata(attribute, lowerAttribute, lineRemainder)
@@ -148,7 +147,7 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
-		// don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongly
+		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
 		operation.Extensions[attribute[1:]] = valueJSON
 
 		return nil
@@ -182,7 +181,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
-		// don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongly
+		// don't use the method provided by spec lib, b3cause it will call toLower() on attribute names, which is wrongly
 		operation.Extensions[attribute[1:]] = valueJSON
 	}
 
@@ -416,7 +415,7 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			param.Format = attr
 		case "extensions":
 			param.Extensions = map[string]interface{}{}
-			setExtensionParam(attr, param)
+			_ = setExtensionParam(attr, param)
 		case "collectionFormat":
 			n, err := setCollectionFormatParam(attrKey, objectType, attr, commentLine)
 			if err != nil {
@@ -424,7 +423,6 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			}
 			param.CollectionFormat = n
 		}
-
 	}
 
 	return nil
@@ -493,9 +491,10 @@ func setExtensionParam(attr string, param *spec.Parameter) error {
 		parts := strings.SplitN(val, "=", 2)
 		if len(parts) == 2 {
 			param.Extensions.Add(parts[0], parts[1])
-		} else {
-			param.Extensions.Add(parts[0], true)
+
+			continue
 		}
+		param.Extensions.Add(parts[0], true)
 	}
 	return nil
 }
@@ -580,9 +579,9 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w\.\/\-{}\+:]*)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w./\-{}+:]*)[[:blank:]]+\[(\w+)]`)
 
-// ParseRouterComment parses comment for gived `router` comment string.
+// ParseRouterComment parses comment for given `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string) error {
 	matches := routerPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 3 {
@@ -600,7 +599,7 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	return nil
 }
 
-// ParseSecurityComment parses comment for gived `security` comment string.
+// ParseSecurityComment parses comment for given `security` comment string.
 func (operation *Operation) ParseSecurityComment(commentLine string) error {
 	securitySource := commentLine[strings.Index(commentLine, "@Security")+1:]
 	l := strings.Index(securitySource, "[")
@@ -684,10 +683,10 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type spec not found")
 }
 
-var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w\{\}]+)[\s]+([\w\-\.\/\{\}=,\[\]]+)[^"]*(.*)?`)
+var responsePattern = regexp.MustCompile(`^([\w,]+)[\s]+([\w{}]+)[\s]+([\w\-.\\{}=,\[\]]+)[^"]*(.*)?`)
 
 // ResponseType{data1=Type1,data2=Type2}.
-var combinedPattern = regexp.MustCompile(`^([\w\-\.\/\[\]]+)\{(.*)\}$`)
+var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
@@ -856,6 +855,17 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	return nil
 }
 
+func newHeaderSpec(schemaType, description string) spec.Header {
+	return spec.Header{
+		SimpleSchema: spec.SimpleSchema{
+			Type: schemaType,
+		},
+		HeaderProps: spec.HeaderProps{
+			Description: description,
+		},
+	}
+}
+
 // ParseResponseHeaderComment parses comment for given `response header` comment string.
 func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *ast.File) error {
 	matches := responsePattern.FindStringSubmatch(commentLine)
@@ -863,12 +873,9 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
-	schemaType := strings.Trim(matches[2], "{}")
+	header := newHeaderSpec(strings.Trim(matches[2], "{}"), strings.Trim(matches[4], "\""))
+
 	headerKey := matches[3]
-	description := strings.Trim(matches[4], "\"")
-	header := spec.Header{}
-	header.Description = description
-	header.Type = schemaType
 
 	if strings.EqualFold(matches[1], "all") {
 		if operation.Responses.Default != nil {
@@ -994,7 +1001,7 @@ func (operation *Operation) AddResponse(code int, response *spec.Response) {
 	operation.Responses.StatusCodeResponses[code] = *response
 }
 
-// createParameter returns swagger spec.Parameter for gived  paramType, description, paramName, schemaType, required.
+// createParameter returns swagger spec.Parameter for given  paramType, description, paramName, schemaType, required.
 func createParameter(paramType, description, paramName, schemaType string, required bool) spec.Parameter {
 	// //five possible parameter types. 	query, path, body, header, form
 	paramProps := spec.ParamProps{
@@ -1052,5 +1059,5 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 		}
 	}
 
-	return nil, fmt.Errorf("Unable to find code example file for tag %s in the given directory", summaryName)
+	return nil, fmt.Errorf("unable to find code example file for tag %s in the given directory", summaryName)
 }
