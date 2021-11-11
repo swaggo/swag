@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 
+	. "github.com/swaggo/swag/testdata/simple/cross"
 	_ "github.com/swaggo/swag/testdata/simple/web"
 )
 
@@ -18,6 +19,7 @@ import (
 // @Failure 404 {object} web.APIError "Can not find ID"
 // @Router /testapi/get-string-by-int/{some_id} [get]
 func GetStringByInt(w http.ResponseWriter, r *http.Request) {
+	_ = Cross{}
 	//write your code
 }
 
@@ -54,6 +56,7 @@ func GetStructArrayByString(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 401 {array} string
 // @Failure 404 {object} web.APIError "Can not find ID"
+// @Failure 403 {object} Cross "cross"
 // @Router /file/upload [post]
 func Upload(w http.ResponseWriter, r *http.Request) {
 	//write your code
