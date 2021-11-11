@@ -5,9 +5,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/swaggo/swag"
-	"github.com/swaggo/swag/gen"
 	"github.com/urfave/cli/v2"
+
+	"github.com/swaggo/swag"
+	"github.com/swaggo/swag/format"
+	"github.com/swaggo/swag/gen"
 )
 
 const (
@@ -133,6 +135,32 @@ func main() {
 			Usage:   "Create docs.go",
 			Action:  initAction,
 			Flags:   initFlags,
+		},
+		{
+			Name:    "fmt",
+			Aliases: []string{"f"},
+			Usage:   "format swagger comments",
+			Action: func(c *cli.Context) error {
+				searchDir := c.String(searchDirFlag)
+				excludeDir := c.String(excludeFlag)
+
+				return format.New().Build(&format.Config{
+					SearchDir: searchDir,
+					Excludes:  excludeDir,
+				})
+			},
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    searchDirFlag,
+					Aliases: []string{"d"},
+					Value:   "./",
+					Usage:   "Directories you want to parse,comma separated and general-info file must be in the first one",
+				},
+				&cli.StringFlag{
+					Name:  excludeFlag,
+					Usage: "Exclude directories and files when searching, comma separated",
+				},
+			},
 		},
 	}
 	err := app.Run(os.Args)
