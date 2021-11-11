@@ -1039,28 +1039,68 @@ func TestParseResponseCommentParamMissing(t *testing.T) {
 	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode "it ok""`)
 }
 
-// Test ParseParamComment
-func TestParseParamCommentByParamType(t *testing.T) {
+func TestOperation_ParseParamComment(t *testing.T) {
 	t.Parallel()
 
-	comment := `@Param some_id path int true "Some ID"`
-	operation := NewOperation(nil)
-	err := operation.ParseComment(comment, nil)
+	t.Run("integer", func(t *testing.T) {
+		t.Parallel()
+		for _, paramType := range []string{"header", "path", "query", "formData"} {
+			t.Run(paramType, func(t *testing.T) {
+				o := NewOperation(nil)
+				err := o.ParseComment(`@Param some_id `+paramType+` int true "Some ID"`, nil)
 
-	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
+				assert.NoError(t, err)
+				b, _ := json.MarshalIndent(o, "", "    ")
+				expected := `{
     "parameters": [
         {
             "type": "integer",
             "description": "Some ID",
             "name": "some_id",
-            "in": "path",
+            "in": "` + paramType + `",
             "required": true
         }
     ]
 }`
-	assert.Equal(t, expected, string(b))
+				assert.Equal(t, expected, string(b))
+			})
+		}
+	})
+
+	t.Run("string", func(t *testing.T) {
+		t.Parallel()
+		for _, paramType := range []string{"header", "path", "query", "formData"} {
+			t.Run(paramType, func(t *testing.T) {
+				o := NewOperation(nil)
+				err := o.ParseComment(`@Param some_string `+paramType+` string true "Some String"`, nil)
+
+				assert.NoError(t, err)
+				b, _ := json.MarshalIndent(o, "", "    ")
+				expected := `{
+    "parameters": [
+        {
+            "type": "string",
+            "description": "Some String",
+            "name": "some_string",
+            "in": "` + paramType + `",
+            "required": true
+        }
+    ]
+}`
+				assert.Equal(t, expected, string(b))
+			})
+		}
+	})
+
+	t.Run("object", func(t *testing.T) {
+		t.Parallel()
+		for _, paramType := range []string{"header", "path", "query", "formData"} {
+			t.Run(paramType, func(t *testing.T) {
+				assert.Error(t, NewOperation(nil).ParseComment(`@Param some_object `+paramType+` main.Object true "Some Object"`, nil))
+			})
+		}
+	})
+
 }
 
 // Test ParseParamComment Query Params
