@@ -378,51 +378,22 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 		}
 		switch attrKey {
 		case "enums":
-			err := setEnumParam(attr, objectType, schemaType, param)
-			if err != nil {
-				return err
-			}
-		case "maximum":
-			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
-			if err != nil {
-				return err
-			}
-			param.Maximum = &n
-		case "minimum":
-			n, err := setNumberParam(attrKey, schemaType, attr, commentLine)
-			if err != nil {
-				return err
-			}
-			param.Minimum = &n
+			err = setEnumParam(param, attr, objectType, schemaType)
+		case "minimum", "maximum":
+			err = setNumberParam(param, attrKey, schemaType, attr, commentLine)
 		case "default":
-			value, err := defineType(schemaType, attr)
-			if err != nil {
-				return nil
-			}
-			param.Default = value
-		case "maxlength":
-			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
-			if err != nil {
-				return err
-			}
-			param.MaxLength = &n
-		case "minlength":
-			n, err := setStringParam(attrKey, schemaType, attr, commentLine)
-			if err != nil {
-				return err
-			}
-			param.MinLength = &n
+			err = setDefault(param, schemaType, attr)
+		case "minlength", "maxlength":
+			err = setStringParam(param, attrKey, schemaType, attr, commentLine)
 		case "format":
 			param.Format = attr
 		case "extensions":
-			param.Extensions = map[string]interface{}{}
-			_ = setExtensionParam(attr, param)
+			_ = setExtensionParam(param, attr)
 		case "collectionFormat":
-			n, err := setCollectionFormatParam(attrKey, objectType, attr, commentLine)
-			if err != nil {
-				return err
-			}
-			param.CollectionFormat = n
+			err = setCollectionFormatParam(param, attrKey, objectType, attr, commentLine)
+		}
+		if err != nil {
+			return err
 		}
 	}
 
@@ -440,34 +411,46 @@ func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	return strings.TrimSpace(attr[l+1 : r]), nil
 }
 
-func setStringParam(name, schemaType, attr, commentLine string) (int64, error) {
+func setStringParam(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
 	if schemaType != STRING {
-		return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
+		return fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
 
 	n, err := strconv.ParseInt(attr, 10, 64)
 	if err != nil {
-		return 0, fmt.Errorf("%s is allow only a number got=%s", name, attr)
+		return fmt.Errorf("%s is allow only a number got=%s", name, attr)
 	}
 
-	return n, nil
+	switch name {
+	case "minlength":
+		param.MinLength = &n
+	case "maxlength":
+		param.MaxLength = &n
+	}
+
+	return nil
 }
 
-func setNumberParam(name, schemaType, attr, commentLine string) (float64, error) {
+func setNumberParam(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
 	switch schemaType {
 	case INTEGER, NUMBER:
 		n, err := strconv.ParseFloat(attr, 64)
 		if err != nil {
-			return 0, fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+			return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
 		}
-
-		return n, nil
+		switch name {
+		case "minimum":
+			param.Minimum = &n
+		case "maximum":
+			param.Maximum = &n
+		}
+		return nil
+	default:
+		return fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
-
-	return 0, fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 }
 
-func setEnumParam(attr, objectType, schemaType string, param *spec.Parameter) error {
+func setEnumParam(param *spec.Parameter, attr, objectType, schemaType string) error {
 	for _, e := range strings.Split(attr, ",") {
 		e = strings.TrimSpace(e)
 
@@ -487,7 +470,8 @@ func setEnumParam(attr, objectType, schemaType string, param *spec.Parameter) er
 	return nil
 }
 
-func setExtensionParam(attr string, param *spec.Parameter) error {
+func setExtensionParam(param *spec.Parameter, attr string) error {
+	param.Extensions = map[string]interface{}{}
 	for _, val := range strings.Split(attr, ",") {
 		parts := strings.SplitN(val, "=", 2)
 		if len(parts) == 2 {
@@ -500,44 +484,50 @@ func setExtensionParam(attr string, param *spec.Parameter) error {
 	return nil
 }
 
-func setCollectionFormatParam(name, schemaType, attr, commentLine string) (string, error) {
+func setCollectionFormatParam(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
 	if schemaType == ARRAY {
-		return TransToValidCollectionFormat(attr), nil
+		param.CollectionFormat = TransToValidCollectionFormat(attr)
+		return nil
 	}
 
-	return "", fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
+	return fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
+}
+
+func setDefault(param *spec.Parameter, schemaType string, value string) error {
+	val, err := defineType(schemaType, value)
+	if err != nil {
+		return nil // Don't set a default value if it's not valid
+	}
+	param.Default = val
+	return nil
 }
 
 // defineType enum value define the type (object and array unsupported).
-func defineType(schemaType string, value string) (interface{}, error) {
+func defineType(schemaType string, value string) (v interface{}, err error) {
 	schemaType = TransToValidSchemeType(schemaType)
 	switch schemaType {
 	case STRING:
 		return value, nil
 	case NUMBER:
-		v, err := strconv.ParseFloat(value, 64)
+		v, err = strconv.ParseFloat(value, 64)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-
-		return v, nil
 	case INTEGER:
-		v, err := strconv.Atoi(value)
+		v, err = strconv.Atoi(value)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-
-		return v, nil
 	case BOOLEAN:
-		v, err := strconv.ParseBool(value)
+		v, err = strconv.ParseBool(value)
 		if err != nil {
 			return nil, fmt.Errorf("enum value %s can't convert to %s err: %s", value, schemaType, err)
 		}
-
-		return v, nil
 	default:
 		return nil, fmt.Errorf("%s is unsupported type in enum value %s", schemaType, value)
 	}
+
+	return v, nil
 }
 
 // ParseTagsComment parses comment for given `tag` comment string.
