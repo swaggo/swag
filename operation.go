@@ -879,19 +879,19 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	header := newHeaderSpec(strings.Trim(matches[2], "{}"), strings.Trim(matches[4], "\""))
 
 	headerKey := matches[3]
+	if operation.Responses.Default != nil {
+		if operation.Responses.Default.Headers == nil {
+			operation.Responses.Default.Headers = make(map[string]spec.Header)
+		}
+	}
 
 	if strings.EqualFold(matches[1], "all") {
 		if operation.Responses.Default != nil {
-			if operation.Responses.Default.Headers == nil {
-				operation.Responses.Default.Headers = make(map[string]spec.Header)
-			}
 			operation.Responses.Default.Headers[headerKey] = header
 		}
-		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
+
+		if operation.Responses.StatusCodeResponses != nil {
 			for code, response := range operation.Responses.StatusCodeResponses {
-				if response.Headers == nil {
-					response.Headers = make(map[string]spec.Header)
-				}
 				response.Headers[headerKey] = header
 				operation.Responses.StatusCodeResponses[code] = response
 			}
@@ -903,9 +903,6 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	for _, codeStr := range strings.Split(matches[1], ",") {
 		if strings.EqualFold(codeStr, "default") {
 			if operation.Responses.Default != nil {
-				if operation.Responses.Default.Headers == nil {
-					operation.Responses.Default.Headers = make(map[string]spec.Header)
-				}
 				operation.Responses.Default.Headers[headerKey] = header
 			}
 
@@ -916,7 +913,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 		if err != nil {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
-		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
+		if operation.Responses.StatusCodeResponses != nil {
 			response, responseExist := operation.Responses.StatusCodeResponses[code]
 			if responseExist {
 				if response.Headers == nil {
