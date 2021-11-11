@@ -35,7 +35,7 @@ func TestGen_Build(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
 	}
@@ -55,7 +55,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	// Validate default registration name
 	expectedCode, err := ioutil.ReadFile(goSourceFile)
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 	if !strings.Contains(string(expectedCode), "swag.Register(\"swagger\", &s{})") {
 		t.Fatal(errors.New("generated go code does not contain the correct default registration sequence"))
@@ -66,7 +66,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	assert.NoError(t, New().Build(config))
 	expectedCode, err = ioutil.ReadFile(goSourceFile)
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 	if !strings.Contains(string(expectedCode), "swag.Register(\"custom\", &s{})") {
 		t.Fatal(errors.New("generated go code does not contain the correct registration sequence"))
@@ -80,7 +80,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
 	}
@@ -103,7 +103,7 @@ func TestGen_BuildSnakeCase(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
 	}
@@ -126,7 +126,7 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
 	}
@@ -149,35 +149,35 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 	}
 	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/quotes")
 	cmd.Dir = config.SearchDir
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		t.Fatal(err, string(output))
+		require.NoError(t, err, string(output))
 	}
 	p, err := plugin.Open(filepath.Join(config.SearchDir, "quotes.so"))
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 	defer os.Remove("quotes.so")
 
 	readDoc, err := p.Lookup("ReadDoc")
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
-	jsonOutput := []byte(readDoc.(func() string)())
+	jsonOutput := readDoc.(func() string)()
 	var jsonDoc interface{}
-	if err := json.Unmarshal(jsonOutput, &jsonDoc); err != nil {
-		t.Fatal(err, string(jsonOutput))
+	if err := json.Unmarshal([]byte(jsonOutput), &jsonDoc); err != nil {
+		require.NoError(t, err)
 	}
 	expectedJSON, err := ioutil.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
-	assert.Equal(t, expectedJSON, jsonOutput)
+	assert.JSONEq(t, string(expectedJSON), jsonOutput)
 }
 
 func TestGen_jsonIndent(t *testing.T) {
@@ -213,7 +213,7 @@ func TestGen_jsonToYAML(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
 	}
@@ -265,20 +265,20 @@ func TestGen_FailToWrite(t *testing.T) {
 
 	err := os.MkdirAll(outputDir, 0755)
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 
 	_ = os.RemoveAll(filepath.Join(outputDir, "swagger.yaml"))
 	err = os.Mkdir(filepath.Join(outputDir, "swagger.yaml"), 0755)
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 	assert.Error(t, New().Build(config))
 
 	_ = os.RemoveAll(filepath.Join(outputDir, "swagger.json"))
 	err = os.Mkdir(filepath.Join(outputDir, "swagger.json"), 0755)
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 	assert.Error(t, New().Build(config))
 
@@ -286,13 +286,13 @@ func TestGen_FailToWrite(t *testing.T) {
 
 	err = os.Mkdir(filepath.Join(outputDir, "docs.go"), 0755)
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 	assert.Error(t, New().Build(config))
 
 	err = os.RemoveAll(outputDir)
 	if err != nil {
-		t.Fatal(err)
+		require.NoError(t, err)
 	}
 }
 
@@ -313,7 +313,7 @@ func TestGen_configWithOutputDir(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
 	}
@@ -417,7 +417,7 @@ func TestGen_GeneratedDoc(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
 	}
@@ -441,7 +441,7 @@ func TestGen_cgoImports(t *testing.T) {
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
-			t.Fatal(err)
+			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
 	}
