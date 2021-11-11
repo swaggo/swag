@@ -200,6 +200,23 @@ func findInSlice(arr []string, target string) bool {
 	return false
 }
 
+func (operation *Operation) parseArrayParam(param *spec.Parameter, paramType, refType, objectType string) error {
+	if !IsPrimitiveType(refType) {
+		return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
+	}
+	param.SimpleSchema.Type = objectType
+	if operation.parser != nil {
+		param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
+	}
+	param.SimpleSchema.Items = &spec.Items{
+		SimpleSchema: spec.SimpleSchema{
+			Type: refType,
+		},
+	}
+
+	return nil
+}
+
 // ParseParamComment parses params return []string of param properties
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
 //              [param name]    [paramType] [data type]  [is mandatory?]   [Comment]
@@ -234,17 +251,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	case "path", "header":
 		switch objectType {
 		case ARRAY:
-			if !IsPrimitiveType(refType) {
-				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
-			}
-			param.SimpleSchema.Type = objectType
-			if operation.parser != nil {
-				param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
-			}
-			param.SimpleSchema.Items = &spec.Items{
-				SimpleSchema: spec.SimpleSchema{
-					Type: refType,
-				},
+			err := operation.parseArrayParam(&param, paramType, refType, objectType)
+			if err != nil {
+				return err
 			}
 		case OBJECT:
 			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
@@ -252,17 +261,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	case "query", "formData":
 		switch objectType {
 		case ARRAY:
-			if !IsPrimitiveType(refType) {
-				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
-			}
-			param.SimpleSchema.Type = objectType
-			if operation.parser != nil {
-				param.CollectionFormat = TransToValidCollectionFormat(operation.parser.collectionFormatInQuery)
-			}
-			param.SimpleSchema.Items = &spec.Items{
-				SimpleSchema: spec.SimpleSchema{
-					Type: refType,
-				},
+			err := operation.parseArrayParam(&param, paramType, refType, objectType)
+			if err != nil {
+				return err
 			}
 		case OBJECT:
 			schema, err := operation.parser.getTypeSchema(refType, astFile, false)
@@ -878,19 +879,19 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	header := newHeaderSpec(strings.Trim(matches[2], "{}"), strings.Trim(matches[4], "\""))
 
 	headerKey := matches[3]
+	if operation.Responses.Default != nil {
+		if operation.Responses.Default.Headers == nil {
+			operation.Responses.Default.Headers = make(map[string]spec.Header)
+		}
+	}
 
 	if strings.EqualFold(matches[1], "all") {
 		if operation.Responses.Default != nil {
-			if operation.Responses.Default.Headers == nil {
-				operation.Responses.Default.Headers = make(map[string]spec.Header)
-			}
 			operation.Responses.Default.Headers[headerKey] = header
 		}
-		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
+
+		if operation.Responses.StatusCodeResponses != nil {
 			for code, response := range operation.Responses.StatusCodeResponses {
-				if response.Headers == nil {
-					response.Headers = make(map[string]spec.Header)
-				}
 				response.Headers[headerKey] = header
 				operation.Responses.StatusCodeResponses[code] = response
 			}
@@ -902,9 +903,6 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	for _, codeStr := range strings.Split(matches[1], ",") {
 		if strings.EqualFold(codeStr, "default") {
 			if operation.Responses.Default != nil {
-				if operation.Responses.Default.Headers == nil {
-					operation.Responses.Default.Headers = make(map[string]spec.Header)
-				}
 				operation.Responses.Default.Headers[headerKey] = header
 			}
 
@@ -915,7 +913,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 		if err != nil {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
-		if operation.Responses != nil && operation.Responses.StatusCodeResponses != nil {
+		if operation.Responses.StatusCodeResponses != nil {
 			response, responseExist := operation.Responses.StatusCodeResponses[code]
 			if responseExist {
 				if response.Headers == nil {
@@ -1006,32 +1004,28 @@ func (operation *Operation) AddResponse(code int, response *spec.Response) {
 // createParameter returns swagger spec.Parameter for given  paramType, description, paramName, schemaType, required.
 func createParameter(paramType, description, paramName, schemaType string, required bool) spec.Parameter {
 	// //five possible parameter types. 	query, path, body, header, form
-	paramProps := spec.ParamProps{
-		Name:        paramName,
-		Description: description,
-		Required:    required,
-		In:          paramType,
+	result := spec.Parameter{
+		ParamProps: spec.ParamProps{
+			Name:        paramName,
+			Description: description,
+			Required:    required,
+			In:          paramType,
+		},
 	}
+
 	if paramType == "body" {
-		paramProps.Schema = &spec.Schema{
+		result.ParamProps.Schema = &spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{schemaType},
 			},
 		}
-		parameter := spec.Parameter{
-			ParamProps: paramProps,
-		}
-
-		return parameter
-	}
-	parameter := spec.Parameter{
-		ParamProps: paramProps,
-		SimpleSchema: spec.SimpleSchema{
-			Type: schemaType,
-		},
+		return result
 	}
 
-	return parameter
+	result.SimpleSchema = spec.SimpleSchema{
+		Type: schemaType,
+	}
+	return result
 }
 
 func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error) {

@@ -425,36 +425,11 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 
 		switch valKey {
 		case "max", "lte":
-			maxValue, err := strconv.ParseFloat(valValue, 64)
-			if err != nil {
-				// ignore
-				continue
-			}
-			checkSchemaTypeAndSetValue(sf, maxValue, true)
+			sf.setMax(valValue)
 		case "min", "gte":
-			minValue, err := strconv.ParseFloat(valValue, 64)
-			if err != nil {
-				// ignore
-				continue
-			}
-			checkSchemaTypeAndSetValue(sf, minValue, false)
+			sf.setMin(valValue)
 		case "oneof":
-			if len(sf.enums) != 0 {
-				continue
-			}
-			enumType := sf.schemaType
-			if sf.schemaType == ARRAY {
-				enumType = sf.arrayType
-			}
-
-			valValues := parseOneOfParam2(valValue)
-			for i := range valValues {
-				value, err := defineType(enumType, valValues[i])
-				if err != nil {
-					continue
-				}
-				sf.enums = append(sf.enums, value)
-			}
+			sf.setOneOf(valValue)
 		case "unique":
 			if sf.schemaType == ARRAY {
 				sf.unique = true
@@ -468,28 +443,57 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 	}
 }
 
-func checkSchemaTypeAndSetValue(sf *structField, value float64, isMax bool) {
+func (sf *structField) setOneOf(valValue string) {
+	if len(sf.enums) != 0 {
+		return
+	}
+
+	enumType := sf.schemaType
+	if sf.schemaType == ARRAY {
+		enumType = sf.arrayType
+	}
+
+	valValues := parseOneOfParam2(valValue)
+	for i := range valValues {
+		value, err := defineType(enumType, valValues[i])
+		if err != nil {
+			continue
+		}
+		sf.enums = append(sf.enums, value)
+	}
+}
+
+func (sf *structField) setMin(valValue string) {
+	value, err := strconv.ParseFloat(valValue, 64)
+	if err != nil {
+		return
+	}
 	switch sf.schemaType {
 	case INTEGER, NUMBER:
-		if isMax {
-			sf.maximum = &value
-		} else {
-			sf.minimum = &value
-		}
+		sf.minimum = &value
 	case STRING:
 		intValue := int64(value)
-		if isMax {
-			sf.maxLength = &intValue
-		} else {
-			sf.minLength = &intValue
-		}
+		sf.minLength = &intValue
 	case ARRAY:
 		intValue := int64(value)
-		if isMax {
-			sf.maxItems = &intValue
-		} else {
-			sf.minItems = &intValue
-		}
+		sf.minItems = &intValue
+	}
+}
+
+func (sf *structField) setMax(valValue string) {
+	value, err := strconv.ParseFloat(valValue, 64)
+	if err != nil {
+		return
+	}
+	switch sf.schemaType {
+	case INTEGER, NUMBER:
+		sf.maximum = &value
+	case STRING:
+		intValue := int64(value)
+		sf.maxLength = &intValue
+	case ARRAY:
+		intValue := int64(value)
+		sf.maxItems = &intValue
 	}
 }
 
