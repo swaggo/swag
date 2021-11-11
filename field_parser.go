@@ -439,6 +439,9 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 			}
 			checkSchemaTypeAndSetValue(sf, minValue, false)
 		case "oneof":
+			if len(sf.enums) != 0 {
+				continue
+			}
 			enumType := sf.schemaType
 			if sf.schemaType == ARRAY {
 				enumType = sf.arrayType

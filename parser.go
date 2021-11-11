@@ -51,6 +51,16 @@ var (
 	ErrFailedConvertPrimitiveType = errors.New("swag property: failed convert primitive type")
 )
 
+var allMethod = map[string]struct{}{
+	http.MethodGet:     {},
+	http.MethodPut:     {},
+	http.MethodPost:    {},
+	http.MethodDelete:  {},
+	http.MethodOptions: {},
+	http.MethodHead:    {},
+	http.MethodPatch:   {},
+}
+
 // Parser implements a parser for Go source files.
 type Parser struct {
 	// swagger represents the root document object for the API specification
@@ -229,6 +239,7 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		packageDir, err := getPkgName(searchDir)
 		if err != nil {
 			parser.debug.Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
+			continue
 		}
 
 		err = parser.getAllGoFileInfo(packageDir, searchDir)
@@ -522,7 +533,7 @@ func isGeneralAPIComment(comments []string) bool {
 	for _, commentLine := range comments {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
-		// The @summary, @router, @success,@failure  annotation belongs to Operation
+		// The @summary, @router, @success, @failure annotation belongs to Operation
 		case "@summary", "@router", "@success", "@failure", "@response":
 			return false
 		}
@@ -697,8 +708,10 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 					pathItem = spec.PathItem{}
 				}
 
+				op := refRouteMethodOp(&pathItem, routeProperties.HTTPMethod)
+
 				// check if we already have a operation for this path and method
-				if hasRouteMethodOp(pathItem, routeProperties.HTTPMethod) {
+				if *op != nil {
 					err := fmt.Errorf("route %s %s is declared multiple times", routeProperties.HTTPMethod, routeProperties.Path)
 					if parser.Strict {
 						return err
@@ -706,7 +719,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 					parser.debug.Printf("warning: %s\n", err)
 				}
 
-				setRouteMethodOp(&pathItem, routeProperties.HTTPMethod, &operation.Operation)
+				*op = &operation.Operation
 
 				parser.swagger.Paths.Paths[routeProperties.Path] = pathItem
 			}
@@ -716,44 +729,24 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 	return nil
 }
 
-func setRouteMethodOp(pathItem *spec.PathItem, method string, op *spec.Operation) {
-	switch strings.ToUpper(method) {
+func refRouteMethodOp(item *spec.PathItem, method string) (op **spec.Operation) {
+	switch method {
 	case http.MethodGet:
-		pathItem.Get = op
+		op = &item.Get
 	case http.MethodPost:
-		pathItem.Post = op
+		op = &item.Post
 	case http.MethodDelete:
-		pathItem.Delete = op
+		op = &item.Delete
 	case http.MethodPut:
-		pathItem.Put = op
+		op = &item.Put
 	case http.MethodPatch:
-		pathItem.Patch = op
+		op = &item.Patch
 	case http.MethodHead:
-		pathItem.Head = op
+		op = &item.Head
 	case http.MethodOptions:
-		pathItem.Options = op
+		op = &item.Options
 	}
-}
-
-func hasRouteMethodOp(pathItem spec.PathItem, method string) bool {
-	switch strings.ToUpper(method) {
-	case http.MethodGet:
-		return pathItem.Get != nil
-	case http.MethodPost:
-		return pathItem.Post != nil
-	case http.MethodDelete:
-		return pathItem.Delete != nil
-	case http.MethodPut:
-		return pathItem.Put != nil
-	case http.MethodPatch:
-		return pathItem.Patch != nil
-	case http.MethodHead:
-		return pathItem.Head != nil
-	case http.MethodOptions:
-		return pathItem.Options != nil
-	}
-
-	return false
+	return
 }
 
 func convertFromSpecificToPrimitive(typeName string) (string, error) {
@@ -1313,58 +1306,32 @@ func (parser *Parser) parseFile(packageDir, path string, src interface{}) error 
 	return nil
 }
 
-func getOperationID(itm spec.PathItem) (string, string) {
-	if itm.Get != nil {
-		return http.MethodGet, itm.Get.ID
-	}
-	if itm.Put != nil {
-		return http.MethodPut, itm.Put.ID
-	}
-	if itm.Post != nil {
-		return http.MethodPost, itm.Post.ID
-	}
-	if itm.Delete != nil {
-		return http.MethodDelete, itm.Delete.ID
-	}
-	if itm.Options != nil {
-		return http.MethodOptions, itm.Options.ID
-	}
-	if itm.Head != nil {
-		return http.MethodHead, itm.Head.ID
-	}
-	if itm.Patch != nil {
-		return http.MethodPatch, itm.Patch.ID
-	}
-
-	return "", ""
-}
-
 func (parser *Parser) checkOperationIDUniqueness() error {
 	// operationsIds contains all operationId annotations to check it's unique
 	operationsIds := make(map[string]string)
 
-	for path, itm := range parser.swagger.Paths.Paths {
-		method, id := getOperationID(itm)
-		err := saveOperationID(operationsIds, id, fmt.Sprintf("%s %s", method, path))
-		if err != nil {
-			return err
+	for path, item := range parser.swagger.Paths.Paths {
+		var method, id string
+		for method = range allMethod {
+			op := refRouteMethodOp(&item, method)
+			if *op != nil {
+				id = (**op).ID
+				break
+			}
 		}
-	}
+		if id == "" {
+			continue
+		}
 
-	return nil
-}
-
-func saveOperationID(operationsIds map[string]string, operationID, currentPath string) error {
-	if operationID == "" {
-		return nil
+		current := fmt.Sprintf("%s %s", method, path)
+		previous, ok := operationsIds[id]
+		if ok {
+			return fmt.Errorf(
+				"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
+				id, current, previous)
+		}
+		operationsIds[id] = current
 	}
-	previousPath, ok := operationsIds[operationID]
-	if ok {
-		return fmt.Errorf(
-			"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
-			operationID, currentPath, previousPath)
-	}
-	operationsIds[operationID] = currentPath
 
 	return nil
 }
