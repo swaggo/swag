@@ -348,25 +348,37 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	return nil
 }
 
+const (
+	defaultTag          = "default"
+	enumsTag            = "enums"
+	formatTag           = "format"
+	minimumTag          = "minimum"
+	maximumTag          = "maximum"
+	minLengthTag        = "minlength"
+	maxLengthTag        = "maxlength"
+	extensionsTag       = "extensions"
+	collectionFormatTag = "collectionFormat"
+)
+
 var regexAttributes = map[string]*regexp.Regexp{
 	// for Enums(A, B)
-	"enums": regexp.MustCompile(`(?i)\s+enums\(.*\)`),
+	enumsTag: regexp.MustCompile(`(?i)\s+enums\(.*\)`),
 	// for maximum(0)
-	"maximum": regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
+	maximumTag: regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
 	// for minimum(0)
-	"minimum": regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
+	minimumTag: regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
 	// for default(0)
-	"default": regexp.MustCompile(`(?i)\s+default\(.*\)`),
+	defaultTag: regexp.MustCompile(`(?i)\s+default\(.*\)`),
 	// for minlength(0)
-	"minlength": regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
+	minLengthTag: regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
 	// for maxlength(0)
-	"maxlength": regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
+	maxLengthTag: regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
 	// for format(email)
-	"format": regexp.MustCompile(`(?i)\s+format\(.*\)`),
+	formatTag: regexp.MustCompile(`(?i)\s+format\(.*\)`),
 	// for extensions(x-example=test)
-	"extensions": regexp.MustCompile(`(?i)\s+extensions\(.*\)`),
+	extensionsTag: regexp.MustCompile(`(?i)\s+extensions\(.*\)`),
 	// for collectionFormat(csv)
-	"collectionFormat": regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
+	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
 }
 
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, objectType, schemaType string, param *spec.Parameter) error {
@@ -377,19 +389,19 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			continue
 		}
 		switch attrKey {
-		case "enums":
+		case enumsTag:
 			err = setEnumParam(param, attr, objectType, schemaType)
-		case "minimum", "maximum":
+		case minimumTag, maximumTag:
 			err = setNumberParam(param, attrKey, schemaType, attr, commentLine)
-		case "default":
+		case defaultTag:
 			err = setDefault(param, schemaType, attr)
-		case "minlength", "maxlength":
+		case minLengthTag, maxLengthTag:
 			err = setStringParam(param, attrKey, schemaType, attr, commentLine)
-		case "format":
+		case formatTag:
 			param.Format = attr
-		case "extensions":
+		case extensionsTag:
 			_ = setExtensionParam(param, attr)
-		case "collectionFormat":
+		case collectionFormatTag:
 			err = setCollectionFormatParam(param, attrKey, objectType, attr, commentLine)
 		}
 		if err != nil {
@@ -422,9 +434,9 @@ func setStringParam(param *spec.Parameter, name, schemaType, attr, commentLine s
 	}
 
 	switch name {
-	case "minlength":
+	case minLengthTag:
 		param.MinLength = &n
-	case "maxlength":
+	case maxLengthTag:
 		param.MaxLength = &n
 	}
 
@@ -439,9 +451,9 @@ func setNumberParam(param *spec.Parameter, name, schemaType, attr, commentLine s
 			return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
 		}
 		switch name {
-		case "minimum":
+		case minimumTag:
 			param.Minimum = &n
-		case "maximum":
+		case maximumTag:
 			param.Maximum = &n
 		}
 		return nil
@@ -826,7 +838,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, "default") {
+		if strings.EqualFold(codeStr, defaultTag) {
 			operation.DefaultResponse().Schema = schema
 			operation.DefaultResponse().Description = responseDescription
 
@@ -891,7 +903,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	}
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, "default") {
+		if strings.EqualFold(codeStr, defaultTag) {
 			if operation.Responses.Default != nil {
 				operation.Responses.Default.Headers[headerKey] = header
 			}
@@ -930,7 +942,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 
 	responseDescription := strings.Trim(matches[2], "\"")
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, "default") {
+		if strings.EqualFold(codeStr, defaultTag) {
 			operation.DefaultResponse().Description = responseDescription
 
 			continue
@@ -952,7 +964,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 // ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200.
 func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 	for _, codeStr := range strings.Split(commentLine, ",") {
-		if strings.EqualFold(codeStr, "default") {
+		if strings.EqualFold(codeStr, defaultTag) {
 			_ = operation.DefaultResponse()
 
 			continue
