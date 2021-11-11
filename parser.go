@@ -239,7 +239,6 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		packageDir, err := getPkgName(searchDir)
 		if err != nil {
 			parser.debug.Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
-			continue
 		}
 
 		err = parser.getAllGoFileInfo(packageDir, searchDir)
