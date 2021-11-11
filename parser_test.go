@@ -8,12 +8,10 @@ import (
 	"go/token"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -3259,68 +3257,6 @@ func TestDefineTypeOfExample(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, example)
 	})
-}
-
-func TestSetRouteMethodOp(t *testing.T) {
-	t.Parallel()
-
-	op := spec.NewOperation("dummy")
-
-	// choosing to test each method explicitly instead of table driven to avoid reliance on helpers
-
-	pathItem := spec.PathItem{}
-	setRouteMethodOp(&pathItem, http.MethodGet, op)
-	assert.Equal(t, op, pathItem.Get)
-
-	pathItem = spec.PathItem{}
-	setRouteMethodOp(&pathItem, http.MethodPost, op)
-	assert.Equal(t, op, pathItem.Post)
-
-	pathItem = spec.PathItem{}
-	setRouteMethodOp(&pathItem, http.MethodDelete, op)
-	assert.Equal(t, op, pathItem.Delete)
-
-	pathItem = spec.PathItem{}
-	setRouteMethodOp(&pathItem, http.MethodPut, op)
-	assert.Equal(t, op, pathItem.Put)
-
-	pathItem = spec.PathItem{}
-	setRouteMethodOp(&pathItem, http.MethodPatch, op)
-	assert.Equal(t, op, pathItem.Patch)
-
-	pathItem = spec.PathItem{}
-	setRouteMethodOp(&pathItem, http.MethodHead, op)
-	assert.Equal(t, op, pathItem.Head)
-
-	pathItem = spec.PathItem{}
-	setRouteMethodOp(&pathItem, http.MethodOptions, op)
-	assert.Equal(t, op, pathItem.Options)
-}
-
-func TestHasRouteMethodOp(t *testing.T) {
-	t.Parallel()
-
-	pathItem := spec.PathItem{}
-
-	// assert that an invalid http method produces false
-	assert.False(t, hasRouteMethodOp(pathItem, "OOPSIE"))
-
-	// test each (supported) http method
-	httpMethods := []string{
-		http.MethodGet, http.MethodPost, http.MethodDelete, http.MethodPut,
-		http.MethodPatch, http.MethodHead, http.MethodOptions,
-	}
-	for _, httpMethod := range httpMethods {
-		pathItem = spec.PathItem{}
-
-		// should be false before setting
-		assert.False(t, hasRouteMethodOp(pathItem, httpMethod))
-
-		// and true after we set it
-		// we rely on setRouteMethodOp, which is tested more thoroughly above
-		setRouteMethodOp(&pathItem, httpMethod, spec.NewOperation("dummy"))
-		assert.True(t, hasRouteMethodOp(pathItem, httpMethod))
-	}
 }
 
 type mockFS struct {

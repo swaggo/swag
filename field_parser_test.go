@@ -430,6 +430,28 @@ func TestValidTags(t *testing.T) {
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"c0x9Ab", "book"}, schema.Enum)
+
+		schema = spec.Schema{}
+		schema.Type = []string{"string"}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" binding:"oneof=foo bar" validate:"required,oneof=foo bar" enums:"a,b,c"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, []interface{}{"a", "b", "c"}, schema.Enum)
+
+		schema = spec.Schema{}
+		schema.Type = []string{"string"}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" binding:"oneof=aa bb" validate:"required,oneof=foo bar"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, []interface{}{"aa", "bb"}, schema.Enum)
 	})
 	t.Run("Required with unique tag", func(t *testing.T) {
 		t.Parallel()

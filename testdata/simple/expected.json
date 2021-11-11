@@ -208,6 +208,12 @@
             "schema": {
               "$ref": "#/definitions/web.APIError"
             }
+          },
+          "403": {
+            "description": "cross",
+            "schema": {
+              "$ref": "#/definitions/cross.Cross"
+            }
           }
         }
       }

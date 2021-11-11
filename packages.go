@@ -39,7 +39,7 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 	}
 
 	// return without storing the file if we lack a packageDir
-	if len(packageDir) == 0 {
+	if packageDir == "" {
 		return nil
 	}
 

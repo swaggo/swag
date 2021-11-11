@@ -181,7 +181,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 			return fmt.Errorf("annotation %s need a valid json value", attribute)
 		}
 
-		// don't use the method provided by spec lib, b3cause it will call toLower() on attribute names, which is wrongly
+		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
 		operation.Extensions[attribute[1:]] = valueJSON
 	}
 
@@ -587,13 +587,15 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	if len(matches) != 3 {
 		return fmt.Errorf("can not parse router comment \"%s\"", commentLine)
 	}
-	path := matches[1]
-	httpMethod := matches[2]
-
 	signature := RouteProperties{
-		Path:       path,
-		HTTPMethod: strings.ToUpper(httpMethod),
+		Path:       matches[1],
+		HTTPMethod: strings.ToUpper(matches[2]),
 	}
+
+	if _, ok := allMethod[signature.HTTPMethod]; !ok {
+		return fmt.Errorf("invalid method: %s", signature.HTTPMethod)
+	}
+
 	operation.RouterProperties = append(operation.RouterProperties, signature)
 
 	return nil

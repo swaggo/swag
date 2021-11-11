@@ -227,6 +227,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			enumType = structField.arrayType
 		}
 
+		structField.enums = nil
 		for _, e := range strings.Split(enumsTag, ",") {
 			value, err := defineType(enumType, e)
 			if err != nil {
@@ -438,6 +439,9 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 			}
 			checkSchemaTypeAndSetValue(sf, minValue, false)
 		case "oneof":
+			if len(sf.enums) != 0 {
+				continue
+			}
 			enumType := sf.schemaType
 			if sf.schemaType == ARRAY {
 				enumType = sf.arrayType
