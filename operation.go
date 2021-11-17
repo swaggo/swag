@@ -1000,6 +1000,7 @@ func (operation *Operation) AddResponse(code int, response *spec.Response) {
 			},
 		}
 	}
+
 	operation.Responses.StatusCodeResponses[code] = *response
 }
 
@@ -1021,12 +1022,14 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 				Type: []string{schemaType},
 			},
 		}
+
 		return result
 	}
 
 	result.SimpleSchema = spec.SimpleSchema{
 		Type: schemaType,
 	}
+
 	return result
 }
 
