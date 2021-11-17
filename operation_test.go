@@ -2216,4 +2216,12 @@ func TestParseCodeSamples(t *testing.T) {
 		err := operation.ParseComment(comment, nil)
 		assert.Error(t, err, "no error should be thrown")
 	})
+
+	t.Run(" broken dir", func(t *testing.T) {
+		operation := NewOperation(nil, SetCodeExampleFilesDirectory("testdata/fake_examples"))
+		operation.Summary = "code"
+
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err, "no error should be thrown")
+	})
 }
