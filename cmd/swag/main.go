@@ -139,7 +139,7 @@ func main() {
 		{
 			Name:    "fmt",
 			Aliases: []string{"f"},
-			Usage:   "format swagger comments",
+			Usage:   "format swag comments",
 			Action: func(c *cli.Context) error {
 				searchDir := c.String(searchDirFlag)
 				excludeDir := c.String(excludeFlag)
