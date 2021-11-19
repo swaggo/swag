@@ -209,28 +209,20 @@ func separatorFinder(comment string) string {
 		for ; i < len(commentBytes); i++ {
 			if !skipFlag && commentBytes[i] == ' ' {
 				j := i
-				for ; j < len(commentBytes); j++ {
-					if commentBytes[j] != ' ' {
-						break
-					}
+				for j < len(commentBytes) && commentBytes[j] == ' ' {
+					j++
 				}
 				commentBytes = replaceRange(commentBytes, i, j, '\t')
-			}
-			if _, ok := skipChar[commentBytes[i]]; ok {
+				i = j
+			} else if _, ok := skipChar[commentBytes[i]]; ok {
 				skipFlag = true
-				continue
-			}
-			if skipFlag {
-				if _, ok := skipCharEnd[commentBytes[i]]; ok {
-					skipFlag = false
-				}
+			} else if _, ok := skipCharEnd[commentBytes[i]]; ok && skipFlag {
+				skipFlag = false
 			}
 		}
 	} else {
-		for ; i < len(commentBytes); i++ {
-			if commentBytes[i] != ' ' {
-				break
-			}
+		for i < len(commentBytes) && commentBytes[i] == ' ' {
+			i++
 		}
 		if i >= len(commentBytes) {
 			return comment
@@ -241,8 +233,11 @@ func separatorFinder(comment string) string {
 }
 
 func replaceRange(s []byte, start, end int, new byte) []byte {
-	if start > end || end < 1 || end > len(s) {
+	if start > end || end < 1 {
 		return s
+	}
+	if end > len(s) {
+		end = len(s)
 	}
 	s = append(s[:start], s[end-1:]...)
 	s[start] = new

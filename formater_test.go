@@ -1,39 +1,18 @@
 package swag
 
 import (
+	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
 func TestFormater_FormatAPI(t *testing.T) {
-	type fields struct {
-		debug    Debugger
-		excludes map[string]bool
-	}
-	type args struct {
-		searchDir  string
-		excludeDir string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := &Formater{
-				debug:    tt.fields.debug,
-				excludes: tt.fields.excludes,
-			}
-			if err := f.FormatAPI(tt.args.searchDir, tt.args.excludeDir); (err != nil) != tt.wantErr {
-				t.Errorf("FormatAPI() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	t.Parallel()
+
+	formater := NewFormater()
+
 }
 
 func TestFormater_FormatFile(t *testing.T) {
@@ -276,10 +255,10 @@ func Test_replaceRange(t *testing.T) {
 			args: args{
 				s:     []byte("// @ID  "),
 				start: 6,
-				end:   10,
+				end:   12,
 				new:   '\t',
 			},
-			want: []byte("// @ID  "),
+			want: []byte("// @ID\t"),
 		},
 	}
 	for _, tt := range tests {
