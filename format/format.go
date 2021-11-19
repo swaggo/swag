@@ -21,6 +21,8 @@ type Config struct {
 
 	// excludes dirs and files in SearchDir,comma separated
 	Excludes string
+
+	MainFile string
 }
 
 func (f *Fmt) Build(config *Config) error {
@@ -30,7 +32,7 @@ func (f *Fmt) Build(config *Config) error {
 
 	log.Println("Formating code.... ")
 	formater := swag.NewFormater()
-	if err := formater.FormatAPI(config.SearchDir, config.Excludes); err != nil {
+	if err := formater.FormatAPI(config.SearchDir, config.Excludes, config.MainFile); err != nil {
 		return err
 	}
 	return nil

@@ -25,6 +25,8 @@ type Formater struct {
 
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]bool
+
+	mainFile string
 }
 
 func NewFormater() *Formater {
@@ -34,7 +36,7 @@ func NewFormater() *Formater {
 	return formater
 }
 
-func (f *Formater) FormatAPI(searchDir, excludeDir string) error {
+func (f *Formater) FormatAPI(searchDir, excludeDir, mainFile string) error {
 	searchDirs := strings.Split(searchDir, ",")
 	for _, searchDir := range searchDirs {
 		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
@@ -49,7 +51,18 @@ func (f *Formater) FormatAPI(searchDir, excludeDir string) error {
 		}
 	}
 
-	err := f.formatMultiSearchDir(searchDirs)
+	// parse main.go
+	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDirs[0], mainFile))
+	if err != nil {
+		return err
+	}
+	err = f.FormatMain(absMainAPIFilePath)
+	if err != nil {
+		return err
+	}
+	f.mainFile = mainFile
+
+	err = f.formatMultiSearchDir(searchDirs)
 	if err != nil {
 		return err
 	}
@@ -81,6 +94,10 @@ func (f *Formater) visit(path string, fileInfo os.FileInfo, err error) error {
 		// skip if file not has suffix "*.go"
 		return nil
 	}
+	if strings.HasSuffix(strings.ToLower(path), f.mainFile) {
+		// skip main file
+		return nil
+	}
 
 	err = f.FormatFile(path)
 	if err != nil {
@@ -107,6 +124,27 @@ func (f *Formater) skip(path string, fileInfo os.FileInfo) error {
 	return nil
 }
 
+func (formater *Formater) FormatMain(mainFilepath string) error {
+	fileSet := token.NewFileSet()
+	astFile, err := goparser.ParseFile(fileSet, mainFilepath, nil, goparser.ParseComments)
+	if err != nil {
+		return fmt.Errorf("cannot format file, err: %w path : %s ", err, mainFilepath)
+	}
+	var (
+		formatedComments = bytes.Buffer{}
+		// CommentCache
+		oldCommentsMap = make(map[string]string)
+	)
+
+	if astFile.Comments != nil {
+		for _, comment := range astFile.Comments {
+			formatFuncDoc(comment.List, &formatedComments, oldCommentsMap)
+		}
+	}
+
+	return writeFormatedComments(mainFilepath, formatedComments, oldCommentsMap)
+}
+
 func (formater *Formater) FormatFile(filepath string) error {
 	fileSet := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fileSet, filepath, nil, goparser.ParseComments)
@@ -127,6 +165,10 @@ func (formater *Formater) FormatFile(filepath string) error {
 		}
 	}
 
+	return writeFormatedComments(filepath, formatedComments, oldCommentsMap)
+}
+
+func writeFormatedComments(filepath string, formatedComments bytes.Buffer, oldCommentsMap map[string]string) error {
 	// Replace the file
 	// Read the file
 	srcBytes, err := ioutil.ReadFile(filepath)
@@ -152,7 +194,7 @@ func (formater *Formater) FormatFile(filepath string) error {
 }
 
 func formatFuncDoc(commentList []*ast.Comment, formatedComments *bytes.Buffer, oldCommentsMap map[string]string) {
-	tabw := tabwriter.NewWriter(formatedComments, 0, 0, 3, ' ', 0)
+	tabw := tabwriter.NewWriter(formatedComments, 0, 0, 2, ' ', tabwriter.Debug)
 
 	for _, comment := range commentList {
 		commentLine := comment.Text

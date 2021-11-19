@@ -1,17 +1,13 @@
 package swag
 
 import (
-	"fmt"
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 )
 
 func TestFormater_FormatAPI(t *testing.T) {
 	t.Parallel()
-
-	formater := NewFormater()
 
 }
 

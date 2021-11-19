@@ -143,10 +143,12 @@ func main() {
 			Action: func(c *cli.Context) error {
 				searchDir := c.String(searchDirFlag)
 				excludeDir := c.String(excludeFlag)
+				mainFile := c.String(generalInfoFlag)
 
 				return format.New().Build(&format.Config{
 					SearchDir: searchDir,
 					Excludes:  excludeDir,
+					MainFile:  mainFile,
 				})
 			},
 			Flags: []cli.Flag{
@@ -159,6 +161,12 @@ func main() {
 				&cli.StringFlag{
 					Name:  excludeFlag,
 					Usage: "Exclude directories and files when searching, comma separated",
+				},
+				&cli.StringFlag{
+					Name:    generalInfoFlag,
+					Aliases: []string{"g"},
+					Value:   "main.go",
+					Usage:   "Go file path in which 'swagger general API Info' is written",
 				},
 			},
 		},
