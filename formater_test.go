@@ -1,177 +1,117 @@
 package swag
 
 import (
+	"bytes"
 	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/otiai10/copy"
+	"github.com/stretchr/testify/assert"
+)
+
+func formaterTimeMachine() {
+	// reset format_test to format_src
+	err := copy.Copy("./testdata/format_src", "./testdata/format_test")
+	if err != nil {
+		panic(err)
+	}
+}
+
+const (
+	SearchDir = "./testdata/format_test"
+	Excludes  = "./testdata/format_test/web"
+	MainFile  = "main.go"
 )
 
 func TestFormater_FormatAPI(t *testing.T) {
-	t.Parallel()
+	t.Run("Format Test", func(t *testing.T) {
+		formaterTimeMachine()
+		formater := NewFormater()
+		err := formater.FormatAPI(SearchDir, Excludes, MainFile)
+		assert.NoError(t, err)
+		parsedFile, err := os.ReadFile("./testdata/format_test/api/api.go")
+		assert.NoError(t, err)
+		apiFile, err := os.ReadFile("./testdata/format_dst/api/api.go")
+		assert.NoError(t, err)
+		assert.Equal(t, parsedFile, apiFile)
 
+		parsedMainFile, err := os.ReadFile("./testdata/format_test/main.go")
+		assert.NoError(t, err)
+		mainFile, err := os.ReadFile("./testdata/format_dst/main.go")
+		assert.NoError(t, err)
+		assert.Equal(t, parsedMainFile, mainFile)
+		formaterTimeMachine()
+	})
+
+	t.Run("TestWrongSearchDir", func(t *testing.T) {
+		t.Parallel()
+		formater := NewFormater()
+		err := formater.FormatAPI("/dir_not_have", "", "")
+		assert.Error(t, err)
+	})
+}
+
+func TestFormater_FormatMain(t *testing.T) {
+	t.Run("TestWrongMainPath", func(t *testing.T) {
+		t.Parallel()
+		formater := NewFormater()
+		err := formater.FormatMain("/dir_not_have/main.go")
+		assert.Error(t, err)
+	})
 }
 
 func TestFormater_FormatFile(t *testing.T) {
-	type fields struct {
-		debug    Debugger
-		excludes map[string]bool
-	}
-	type args struct {
-		filepath string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			formater := &Formater{
-				debug:    tt.fields.debug,
-				excludes: tt.fields.excludes,
-			}
-			if err := formater.FormatFile(tt.args.filepath); (err != nil) != tt.wantErr {
-				t.Errorf("FormatFile() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	t.Run("TestWrongFilePath", func(t *testing.T) {
+		t.Parallel()
+		formater := NewFormater()
+		err := formater.FormatFile("/dir_not_have/api.go")
+		assert.Error(t, err)
+	})
 }
 
-func TestFormater_formatMultiSearchDir(t *testing.T) {
-	type fields struct {
-		debug    Debugger
-		excludes map[string]bool
-	}
-	type args struct {
-		searchDirs []string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := &Formater{
-				debug:    tt.fields.debug,
-				excludes: tt.fields.excludes,
-			}
-			if err := f.formatMultiSearchDir(tt.args.searchDirs); (err != nil) != tt.wantErr {
-				t.Errorf("formatMultiSearchDir() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+func Test_writeFormatedComments(t *testing.T) {
+	t.Run("TestWrongPath", func(t *testing.T) {
+		t.Parallel()
+		var (
+			formatedComments = bytes.Buffer{}
+			// CommentCache
+			oldCommentsMap = make(map[string]string)
+		)
+		err := writeFormatedComments("/wrong_path", formatedComments, oldCommentsMap)
+		assert.Error(t, err)
+	})
 }
 
 func TestFormater_skip(t *testing.T) {
-	type fields struct {
-		debug    Debugger
-		excludes map[string]bool
-	}
-	type args struct {
-		path     string
-		fileInfo os.FileInfo
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := &Formater{
-				debug:    tt.fields.debug,
-				excludes: tt.fields.excludes,
-			}
-			if err := f.skip(tt.args.path, tt.args.fileInfo); (err != nil) != tt.wantErr {
-				t.Errorf("skip() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	formater := NewFormater()
+
+	err := formater.skip("./testdata", &mockFS{FileName: "vendor", IsDirectory: true})
+	assert.ErrorIs(t, err, filepath.SkipDir)
+	err = formater.skip("/testdata", &mockFS{FileName: "docs", IsDirectory: true})
+	assert.ErrorIs(t, err, filepath.SkipDir)
+	err = formater.skip("/testdata", &mockFS{FileName: ".hidden", IsDirectory: true})
+	assert.ErrorIs(t, err, filepath.SkipDir)
+
+	formater.excludes["/testdata/excludes"] = true
+	err = formater.skip("/testdata/excludes", &mockFS{FileName: ".hidden", IsDirectory: true})
+	assert.ErrorIs(t, err, filepath.SkipDir)
+
+	err = formater.skip("/testdata", &mockFS{FileName: ".hidden", IsDirectory: false})
+	assert.NoError(t, err)
 }
 
 func TestFormater_visit(t *testing.T) {
-	type fields struct {
-		debug    Debugger
-		excludes map[string]bool
-	}
-	type args struct {
-		path     string
-		fileInfo os.FileInfo
-		err      error
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			f := &Formater{
-				debug:    tt.fields.debug,
-				excludes: tt.fields.excludes,
-			}
-			if err := f.visit(tt.args.path, tt.args.fileInfo, tt.args.err); (err != nil) != tt.wantErr {
-				t.Errorf("visit() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+	formater := NewFormater()
 
-func TestNewFormater(t *testing.T) {
-	tests := []struct {
-		name string
-		want *Formater
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := NewFormater(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewFormater() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_backupFile(t *testing.T) {
-	type args struct {
-		filename string
-		data     []byte
-		perm     os.FileMode
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := backupFile(tt.args.filename, tt.args.data, tt.args.perm)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("backupFile() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("backupFile() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	err := formater.visit("./testdata/test_test.go", &mockFS{}, nil)
+	assert.NoError(t, err)
+	err = formater.visit("/testdata/api.md", &mockFS{}, nil)
+	assert.NoError(t, err)
+	formater.mainFile = "main.go"
+	err = formater.visit("/testdata/main.go", &mockFS{}, nil)
+	assert.NoError(t, err)
 }
 
 func Test_isBlankComment(t *testing.T) {
@@ -183,7 +123,27 @@ func Test_isBlankComment(t *testing.T) {
 		args args
 		want bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test1",
+			args: args{
+				comment: " ",
+			},
+			want: true,
+		},
+		{
+			name: "test2",
+			args: args{
+				comment: " A",
+			},
+			want: false,
+		},
+		{
+			name: "test3",
+			args: args{
+				comment: " \t",
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -203,7 +163,27 @@ func Test_isSwagComment(t *testing.T) {
 		args args
 		want bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test1",
+			args: args{
+				comment: "@Param some_id ",
+			},
+			want: true,
+		},
+		{
+			name: "test2",
+			args: args{
+				comment: "@ ",
+			},
+			want: false,
+		},
+		{
+			name: "test3",
+			args: args{
+				comment: "@Success {object} ",
+			},
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -239,12 +219,12 @@ func Test_replaceRange(t *testing.T) {
 		{
 			name: "test1_replaceFail",
 			args: args{
-				s:     []byte("// @ID  "),
+				s:     []byte("// @ID  A pet"),
 				start: 6,
 				end:   8,
 				new:   '\t',
 			},
-			want: []byte("// @ID\t"),
+			want: []byte("// @ID\tA pet"),
 		},
 		{
 			name: "test1_replaceFail2",
@@ -255,6 +235,16 @@ func Test_replaceRange(t *testing.T) {
 				new:   '\t',
 			},
 			want: []byte("// @ID\t"),
+		},
+		{
+			name: "test1_replaceFail3",
+			args: args{
+				s:     []byte("// @ID  "),
+				start: 2,
+				end:   1,
+				new:   '\t',
+			},
+			want: []byte("// @ID  "),
 		},
 	}
 	for _, tt := range tests {
@@ -275,35 +265,66 @@ func Test_separatorFinder(t *testing.T) {
 		args args
 		want string
 	}{
-		// TODO: Add test cases.
+		{
+			name: "test1",
+			args: args{
+				comment: `// @Param   some_id  query int  "some id  data" Enums(1, 2, 3)`,
+			},
+			want: `// @Param|some_id|query|int|"some id  data"|Enums(1, 2, 3)`,
+		},
+		{
+			name: "test2",
+			args: args{
+				comment: `// @Summary   A pet store. `,
+			},
+			want: `// @Summary|A pet store. `,
+		},
+		{
+			name: "test3",
+			args: args{
+				comment: `// @Summary    `,
+			},
+			want: `// @Summary    `,
+		},
+		{
+			name: "test4",
+			args: args{
+				comment: `// @Failure      400       {object}  web.APIError{data=web.D ,data2=web.D2}  "We need ID!!"`,
+			},
+			want: `// @Failure|400|{object}|web.APIError{data=web.D ,data2=web.D2}|"We need ID!!"`,
+		},
+		{
+			name: "test5",
+			args: args{
+				comment: `// `,
+			},
+			want: ``,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := separatorFinder(tt.args.comment); got != tt.want {
-				t.Errorf("separatorFinder() = %v, want %v", got, tt.want)
-			}
+			got := separatorFinder(tt.args.comment, '|')
+			assert.Equal(t, got, tt.want)
 		})
 	}
 }
 
 func Test_writeBack(t *testing.T) {
-	type args struct {
-		filepath string
-		src      []byte
-		old      []byte
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if err := writeBack(tt.args.filepath, tt.args.src, tt.args.old); (err != nil) != tt.wantErr {
-				t.Errorf("writeBack() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
+	assert.NoError(t, err)
+	defer func() {
+		_ = os.Remove(testFile)
+	}()
+
+	testBytes, err := os.ReadFile(testFile)
+	assert.NoError(t, err)
+	newBytes := append(testBytes, []byte("import ()")...)
+
+	err = writeBack(testFile, newBytes, testBytes)
+	assert.NoError(t, err)
+
+	newTestBytes, err := os.ReadFile(testFile)
+	assert.NoError(t, err)
+
+	assert.Equal(t, newTestBytes, newBytes)
 }

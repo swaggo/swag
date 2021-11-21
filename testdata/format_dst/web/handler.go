@@ -97,3 +97,9 @@ type Pet5c struct {
 	*Pet5b
 	Odd bool `json:"odd" binding:"required"`
 }
+
+// @testFunc  a Func
+// @test2     das A
+func testFunc() {
+
+}

@@ -31,7 +31,8 @@ type Formater struct {
 
 func NewFormater() *Formater {
 	formater := &Formater{
-		debug: log.New(os.Stdout, "", log.LstdFlags),
+		debug:    log.New(os.Stdout, "", log.LstdFlags),
+		excludes: make(map[string]bool),
 	}
 	return formater
 }
@@ -194,7 +195,7 @@ func writeFormatedComments(filepath string, formatedComments bytes.Buffer, oldCo
 }
 
 func formatFuncDoc(commentList []*ast.Comment, formatedComments *bytes.Buffer, oldCommentsMap map[string]string) {
-	tabw := tabwriter.NewWriter(formatedComments, 0, 0, 2, ' ', tabwriter.Debug)
+	tabw := tabwriter.NewWriter(formatedComments, 0, 0, 2, ' ', 0)
 
 	for _, comment := range commentList {
 		commentLine := comment.Text
@@ -202,16 +203,16 @@ func formatFuncDoc(commentList []*ast.Comment, formatedComments *bytes.Buffer, o
 			cmd5 := fmt.Sprintf("%x", md5.Sum([]byte(commentLine)))
 
 			// Find the separator and replace to \t
-			c := separatorFinder(commentLine)
+			c := separatorFinder(commentLine, '\t')
 			oldCommentsMap[cmd5] = commentLine
 
 			// md5 + SplitTag + srcCommentLine
 			// eg. xxx&*@Description get struct array
-			fmt.Fprintln(tabw, cmd5+SplitTag+c)
+			_, _ = fmt.Fprintln(tabw, cmd5+SplitTag+c)
 		}
 	}
 	// format by tabwriter
-	tabw.Flush()
+	_ = tabw.Flush()
 }
 
 // Check of @Param @Success @Failure @Response @Header
@@ -227,15 +228,17 @@ var skipChar = map[byte]byte{
 	'"': 1,
 	'(': 1,
 	'{': 1,
+	'[': 1,
 }
 
 var skipCharEnd = map[byte]byte{
 	'"': 1,
 	')': 1,
 	'}': 1,
+	']': 1,
 }
 
-func separatorFinder(comment string) string {
+func separatorFinder(comment string, rp byte) string {
 	commentBytes := []byte(comment)
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "/"))
 	if len(commentLine) == 0 {
@@ -254,9 +257,9 @@ func separatorFinder(comment string) string {
 				for j < len(commentBytes) && commentBytes[j] == ' ' {
 					j++
 				}
-				commentBytes = replaceRange(commentBytes, i, j, '\t')
-				i = j
-			} else if _, ok := skipChar[commentBytes[i]]; ok {
+				commentBytes = replaceRange(commentBytes, i, j, rp)
+			}
+			if _, ok := skipChar[commentBytes[i]]; ok && !skipFlag {
 				skipFlag = true
 			} else if _, ok := skipCharEnd[commentBytes[i]]; ok && skipFlag {
 				skipFlag = false
@@ -269,7 +272,7 @@ func separatorFinder(comment string) string {
 		if i >= len(commentBytes) {
 			return comment
 		}
-		commentBytes = replaceRange(commentBytes, attrLen, i, '\t')
+		commentBytes = replaceRange(commentBytes, attrLen, i, rp)
 	}
 	return string(commentBytes)
 }
@@ -305,12 +308,12 @@ func writeBack(filepath string, src, old []byte) error {
 	}
 	err = ioutil.WriteFile(filepath, src, 0644)
 	if err != nil {
-		os.Rename(bakname, filepath)
+		_ = os.Rename(bakname, filepath)
 		return err
 	}
 	err = os.Remove(bakname)
 	if err != nil {
-		return err
+		return fmt.Errorf("remove the back file fail: %w, please remove by youself. ", err)
 	}
 	return nil
 }
@@ -331,8 +334,8 @@ func backupFile(filename string, data []byte, perm os.FileMode) (string, error) 
 	if chmodSupported {
 		err = f.Chmod(perm)
 		if err != nil {
-			f.Close()
-			os.Remove(bakname)
+			_ = f.Close()
+			_ = os.Remove(bakname)
 			return bakname, err
 		}
 	}
