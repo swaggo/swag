@@ -17,8 +17,9 @@ import (
 	"text/tabwriter"
 )
 
-const SplitTag = "&*"
+const splitTag = "&*"
 
+// Formater implements a formater for Go source files.
 type Formater struct {
 	// debugging output goes here
 	debug Debugger
@@ -29,6 +30,7 @@ type Formater struct {
 	mainFile string
 }
 
+// NewFormater create a new formater
 func NewFormater() *Formater {
 	formater := &Formater{
 		debug:    log.New(os.Stdout, "", log.LstdFlags),
@@ -37,6 +39,7 @@ func NewFormater() *Formater {
 	return formater
 }
 
+// FormatAPI format the swag comment.
 func (f *Formater) FormatAPI(searchDir, excludeDir, mainFile string) error {
 	searchDirs := strings.Split(searchDir, ",")
 	for _, searchDir := range searchDirs {
@@ -125,7 +128,8 @@ func (f *Formater) skip(path string, fileInfo os.FileInfo) error {
 	return nil
 }
 
-func (formater *Formater) FormatMain(mainFilepath string) error {
+// FormatMain format the main.go comment
+func (f *Formater) FormatMain(mainFilepath string) error {
 	fileSet := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fileSet, mainFilepath, nil, goparser.ParseComments)
 	if err != nil {
@@ -146,7 +150,8 @@ func (formater *Formater) FormatMain(mainFilepath string) error {
 	return writeFormatedComments(mainFilepath, formatedComments, oldCommentsMap)
 }
 
-func (formater *Formater) FormatFile(filepath string) error {
+// FormatFile format the swag comment in go function.
+func (f *Formater) FormatFile(filepath string) error {
 	fileSet := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fileSet, filepath, nil, goparser.ParseComments)
 	if err != nil {
@@ -179,7 +184,7 @@ func writeFormatedComments(filepath string, formatedComments bytes.Buffer, oldCo
 	replaceSrc := string(srcBytes)
 	newComments := strings.Split(formatedComments.String(), "\n")
 	for _, e := range newComments {
-		commentSplit := strings.Split(e, SplitTag)
+		commentSplit := strings.Split(e, splitTag)
 		if len(commentSplit) == 2 {
 			commentHash, commentContent := commentSplit[0], commentSplit[1]
 
@@ -206,9 +211,9 @@ func formatFuncDoc(commentList []*ast.Comment, formatedComments *bytes.Buffer, o
 			c := separatorFinder(commentLine, '\t')
 			oldCommentsMap[cmd5] = commentLine
 
-			// md5 + SplitTag + srcCommentLine
+			// md5 + splitTag + srcCommentLine
 			// eg. xxx&*@Description get struct array
-			_, _ = fmt.Fprintln(tabw, cmd5+SplitTag+c)
+			_, _ = fmt.Fprintln(tabw, cmd5+splitTag+c)
 		}
 	}
 	// format by tabwriter
