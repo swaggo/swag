@@ -37,7 +37,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [Use swaggerignore tag to exclude a field](#use-swaggerignore-tag-to-exclude-a-field)
 	- [Add extension info to struct field](#add-extension-info-to-struct-field)
 	- [Rename model to display](#rename-model-to-display)
-	- [How to using security annotations](#how-to-using-security-annotations)
+	- [How to use security annotations](#how-to-use-security-annotations)
 	- [Add a description for enum items](#add-a-description-for-enum-items)
 - [About the Project](#about-the-project)
 
@@ -722,7 +722,7 @@ type Resp struct {
 }//@name Response
 ```
 
-### How to using security annotations
+### How to use security annotations
 
 General API info.
 
