@@ -2,6 +2,7 @@ package swag
 
 import (
 	"bytes"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -31,15 +32,15 @@ func TestFormater_FormatAPI(t *testing.T) {
 		formater := NewFormater()
 		err := formater.FormatAPI(SearchDir, Excludes, MainFile)
 		assert.NoError(t, err)
-		parsedFile, err := os.ReadFile("./testdata/format_test/api/api.go")
+		parsedFile, err := ioutil.ReadFile("./testdata/format_test/api/api.go")
 		assert.NoError(t, err)
-		apiFile, err := os.ReadFile("./testdata/format_dst/api/api.go")
+		apiFile, err := ioutil.ReadFile("./testdata/format_dst/api/api.go")
 		assert.NoError(t, err)
 		assert.Equal(t, parsedFile, apiFile)
 
-		parsedMainFile, err := os.ReadFile("./testdata/format_test/main.go")
+		parsedMainFile, err := ioutil.ReadFile("./testdata/format_test/main.go")
 		assert.NoError(t, err)
-		mainFile, err := os.ReadFile("./testdata/format_dst/main.go")
+		mainFile, err := ioutil.ReadFile("./testdata/format_dst/main.go")
 		assert.NoError(t, err)
 		assert.Equal(t, parsedMainFile, mainFile)
 		formaterTimeMachine()
@@ -316,14 +317,14 @@ func Test_writeBack(t *testing.T) {
 		_ = os.Remove(testFile)
 	}()
 
-	testBytes, err := os.ReadFile(testFile)
+	testBytes, err := ioutil.ReadFile(testFile)
 	assert.NoError(t, err)
 	newBytes := append(testBytes, []byte("import ()")...)
 
 	err = writeBack(testFile, newBytes, testBytes)
 	assert.NoError(t, err)
 
-	newTestBytes, err := os.ReadFile(testFile)
+	newTestBytes, err := ioutil.ReadFile(testFile)
 	assert.NoError(t, err)
 
 	assert.Equal(t, newTestBytes, newBytes)
