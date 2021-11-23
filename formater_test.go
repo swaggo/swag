@@ -66,6 +66,7 @@ func TestFormater_FormatAPI(t *testing.T) {
 
 		err := formater.FormatAPI(SearchDir, Excludes, MainFile)
 		assert.Equal(t, err, errFilePath)
+		formaterTimeMachine()
 	})
 
 	t.Run("TestWithMonkeyFormatMain", func(t *testing.T) {
@@ -80,6 +81,7 @@ func TestFormater_FormatAPI(t *testing.T) {
 
 		err := formater.FormatAPI(SearchDir, Excludes, MainFile)
 		assert.Equal(t, err, errFormatMain)
+		formaterTimeMachine()
 	})
 
 	t.Run("TestWithMonkeyFormatFile", func(t *testing.T) {
@@ -94,6 +96,7 @@ func TestFormater_FormatAPI(t *testing.T) {
 
 		err := formater.FormatAPI(SearchDir, Excludes, MainFile)
 		assert.Equal(t, err, fmt.Errorf("ParseFile error:%s", errFormatFile))
+		formaterTimeMachine()
 	})
 
 }
@@ -390,7 +393,7 @@ func Test_writeBack(t *testing.T) {
 		patches := gomonkey.ApplyFunc(os.Remove, func(name string) error {
 			return errIoErr
 		})
-		defer patches.Reset()
+		patches.Reset()
 
 		err = writeBack(testFile, newBytes, testBytes)
 		assert.Error(t, err)
@@ -400,5 +403,6 @@ func Test_writeBack(t *testing.T) {
 		})
 		err = writeBack(testFile, newBytes, testBytes)
 		assert.Equal(t, errIoErr, err)
+		patches.Reset()
 	})
 }
