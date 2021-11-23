@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/agiledragon/gomonkey/v2"
-	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -388,18 +387,18 @@ func Test_writeBack(t *testing.T) {
 		newBytes := append(testBytes, []byte("import ()")...)
 
 		errIoErr := fmt.Errorf("io error ")
-		patches := gomonkey.ApplyFunc(ioutil.WriteFile, func(_ string, _ []byte, _ fs.FileMode) error {
+		patches := gomonkey.ApplyFunc(os.Remove, func(name string) error {
 			return errIoErr
 		})
 		defer patches.Reset()
 
 		err = writeBack(testFile, newBytes, testBytes)
+		assert.Error(t, err)
+
+		patches = gomonkey.ApplyFunc(ioutil.TempFile, func(dir, pattern string) (f *os.File, err error) {
+			return nil, errIoErr
+		})
+		err = writeBack(testFile, newBytes, testBytes)
 		assert.Equal(t, errIoErr, err)
-
-		// rollback
-		newTestBytes, err := ioutil.ReadFile(testFile)
-		assert.NoError(t, err)
-
-		assert.Equal(t, newTestBytes, testBytes)
 	})
 }
