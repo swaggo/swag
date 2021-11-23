@@ -316,10 +316,7 @@ func writeBack(filepath string, src, old []byte) error {
 		_ = os.Rename(bakname, filepath)
 		return err
 	}
-	err = os.Remove(bakname)
-	if err != nil {
-		return fmt.Errorf("remove the back file fail: %w, please remove by youself. ", err)
-	}
+	_ = os.Remove(bakname)
 	return nil
 }
 
@@ -337,12 +334,7 @@ func backupFile(filename string, data []byte, perm os.FileMode) (string, error) 
 	}
 	bakname := f.Name()
 	if chmodSupported {
-		err = f.Chmod(perm)
-		if err != nil {
-			_ = f.Close()
-			_ = os.Remove(bakname)
-			return bakname, err
-		}
+		_ = f.Chmod(perm)
 	}
 
 	// write data to backup file

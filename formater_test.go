@@ -377,4 +377,34 @@ func Test_writeBack(t *testing.T) {
 
 		assert.Equal(t, newTestBytes, newBytes)
 	})
+
+	t.Run("TestWrongPathError", func(t *testing.T) {
+		testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
+		assert.NoError(t, err)
+		defer func() {
+			_ = os.Remove(testFile)
+		}()
+
+		testBytes, err := ioutil.ReadFile(testFile)
+		assert.NoError(t, err)
+		newBytes := append(testBytes, []byte("import ()")...)
+
+		err = writeBack("/not_found_file_path", testBytes, newBytes)
+		assert.Error(t, err)
+	})
+
+	t.Run("TestWrongFile", func(t *testing.T) {
+		testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
+		assert.NoError(t, err)
+		defer func() {
+			_ = os.Remove(testFile)
+		}()
+
+		testBytes, err := ioutil.ReadFile(testFile)
+		assert.NoError(t, err)
+		newBytes := append(testBytes, []byte("import ()")...)
+
+		err = writeBack("", testBytes, newBytes)
+		assert.Error(t, err)
+	})
 }
