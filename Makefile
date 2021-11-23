@@ -32,7 +32,7 @@ install: deps
 test:
 	echo "mode: count" > coverage.out
 	for PKG in $(PACKAGES); do \
-		$(GOCMD) test -v -gcflags=all=-l -covermode=count -coverprofile=profile.out $$PKG > tmp.out; \
+		$(GOCMD) test -v -covermode=count -coverprofile=profile.out $$PKG > tmp.out; \
 		cat tmp.out; \
 		if grep -q "^--- FAIL" tmp.out; then \
 			rm tmp.out; \
@@ -90,5 +90,5 @@ fmt-check:
 
 .PHONY: view-covered
 view-covered:
-	$(GOTEST) -gcflags=all=-l -coverprofile=cover.out $(TARGET)
+	$(GOTEST) -coverprofile=cover.out $(TARGET)
 	$(GOCMD) tool cover -html=cover.out
