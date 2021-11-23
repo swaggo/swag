@@ -2,6 +2,9 @@ package swag
 
 import (
 	"bytes"
+	"fmt"
+	"github.com/agiledragon/gomonkey/v2"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -52,6 +55,48 @@ func TestFormater_FormatAPI(t *testing.T) {
 		err := formater.FormatAPI("/dir_not_have", "", "")
 		assert.Error(t, err)
 	})
+
+	t.Run("TestWithMonkeyFilepathAbs", func(t *testing.T) {
+		formater := NewFormater()
+		errFilePath := fmt.Errorf("file path error ")
+
+		patches := gomonkey.ApplyFunc(filepath.Abs, func(_ string) (string, error) {
+			return "", errFilePath
+		})
+		defer patches.Reset()
+
+		err := formater.FormatAPI(SearchDir, Excludes, MainFile)
+		assert.Equal(t, err, errFilePath)
+	})
+
+	t.Run("TestWithMonkeyFormatMain", func(t *testing.T) {
+		formater := NewFormater()
+
+		var s *Formater
+		errFormatMain := fmt.Errorf("main format error ")
+		patches := gomonkey.ApplyMethod(reflect.TypeOf(s), "FormatMain", func(_ *Formater, _ string) error {
+			return errFormatMain
+		})
+		defer patches.Reset()
+
+		err := formater.FormatAPI(SearchDir, Excludes, MainFile)
+		assert.Equal(t, err, errFormatMain)
+	})
+
+	t.Run("TestWithMonkeyFormatFile", func(t *testing.T) {
+		formater := NewFormater()
+
+		var s *Formater
+		errFormatFile := fmt.Errorf("file format error ")
+		patches := gomonkey.ApplyMethod(reflect.TypeOf(s), "FormatFile", func(_ *Formater, _ string) error {
+			return errFormatFile
+		})
+		defer patches.Reset()
+
+		err := formater.FormatAPI(SearchDir, Excludes, MainFile)
+		assert.Equal(t, err, fmt.Errorf("ParseFile error:%s", errFormatFile))
+	})
+
 }
 
 func TestFormater_FormatMain(t *testing.T) {
@@ -311,21 +356,50 @@ func Test_separatorFinder(t *testing.T) {
 }
 
 func Test_writeBack(t *testing.T) {
-	testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
-	assert.NoError(t, err)
-	defer func() {
-		_ = os.Remove(testFile)
-	}()
+	t.Run("Test", func(t *testing.T) {
+		testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
+		assert.NoError(t, err)
+		defer func() {
+			_ = os.Remove(testFile)
+		}()
 
-	testBytes, err := ioutil.ReadFile(testFile)
-	assert.NoError(t, err)
-	newBytes := append(testBytes, []byte("import ()")...)
+		testBytes, err := ioutil.ReadFile(testFile)
+		assert.NoError(t, err)
+		newBytes := append(testBytes, []byte("import ()")...)
 
-	err = writeBack(testFile, newBytes, testBytes)
-	assert.NoError(t, err)
+		err = writeBack(testFile, newBytes, testBytes)
+		assert.NoError(t, err)
 
-	newTestBytes, err := ioutil.ReadFile(testFile)
-	assert.NoError(t, err)
+		newTestBytes, err := ioutil.ReadFile(testFile)
+		assert.NoError(t, err)
 
-	assert.Equal(t, newTestBytes, newBytes)
+		assert.Equal(t, newTestBytes, newBytes)
+	})
+
+	t.Run("TestWithMonkeyWriteFile", func(t *testing.T) {
+		testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
+		assert.NoError(t, err)
+		defer func() {
+			_ = os.Remove(testFile)
+		}()
+
+		testBytes, err := ioutil.ReadFile(testFile)
+		assert.NoError(t, err)
+		newBytes := append(testBytes, []byte("import ()")...)
+
+		errIoErr := fmt.Errorf("io error ")
+		patches := gomonkey.ApplyFunc(ioutil.WriteFile, func(_ string, _ []byte, _ fs.FileMode) error {
+			return errIoErr
+		})
+		defer patches.Reset()
+
+		err = writeBack(testFile, newBytes, testBytes)
+		assert.Equal(t, errIoErr, err)
+
+		// rollback
+		newTestBytes, err := ioutil.ReadFile(testFile)
+		assert.NoError(t, err)
+
+		assert.Equal(t, newTestBytes, testBytes)
+	})
 }
