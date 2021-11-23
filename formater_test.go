@@ -393,10 +393,10 @@ func Test_writeBack(t *testing.T) {
 		patches := gomonkey.ApplyFunc(os.Remove, func(name string) error {
 			return errIoErr
 		})
-		patches.Reset()
 
 		err = writeBack(testFile, newBytes, testBytes)
 		assert.Error(t, err)
+		patches.Reset()
 
 		patches = gomonkey.ApplyFunc(ioutil.TempFile, func(dir, pattern string) (f *os.File, err error) {
 			return nil, errIoErr
