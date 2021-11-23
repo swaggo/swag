@@ -377,32 +377,4 @@ func Test_writeBack(t *testing.T) {
 
 		assert.Equal(t, newTestBytes, newBytes)
 	})
-
-	t.Run("TestWithMonkeyWriteFile", func(t *testing.T) {
-		testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
-		assert.NoError(t, err)
-		defer func() {
-			_ = os.Remove(testFile)
-		}()
-
-		testBytes, err := ioutil.ReadFile(testFile)
-		assert.NoError(t, err)
-		newBytes := append(testBytes, []byte("import ()")...)
-
-		errIoErr := fmt.Errorf("io error ")
-		patches := gomonkey.ApplyFunc(os.Remove, func(name string) error {
-			return errIoErr
-		})
-
-		err = writeBack(testFile, newBytes, testBytes)
-		assert.Error(t, err)
-		patches.Reset()
-
-		patches = gomonkey.ApplyFunc(ioutil.TempFile, func(dir, pattern string) (f *os.File, err error) {
-			return nil, errIoErr
-		})
-		err = writeBack(testFile, newBytes, testBytes)
-		assert.Equal(t, errIoErr, err)
-		patches.Reset()
-	})
 }
