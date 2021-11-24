@@ -292,7 +292,8 @@ swag init
 
 ## 格式化说明
 
-可以针对Swag的注释自动格式化，就像`go fmt`
+可以针对Swag的注释自动格式化，就像`go fmt`。   
+此处查看格式化结果 [here](https://github.com/swaggo/swag/tree/master/example/celler).
 
 示例：
 ```shell
