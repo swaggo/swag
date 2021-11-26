@@ -78,6 +78,9 @@ type Config struct {
 
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
+
+	// OverridesFile defines global type overrides.
+	OverridesFile string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
@@ -93,11 +96,33 @@ func (g *Gen) Build(config *Config) error {
 		}
 	}
 
+	overrides := make(map[string]string)
+	if config.OverridesFile != "" {
+		f, err := os.Open(config.OverridesFile)
+		if err != nil {
+			return fmt.Errorf("file %s cannot be opened: %s", config.OverridesFile, err)
+		}
+
+		contents, err := io.ReadAll(f)
+		if err != nil {
+			return fmt.Errorf("file %s cannot be read: %s", config.OverridesFile, err)
+		}
+
+		err = yaml.Unmarshal(contents, &overrides)
+		if err != nil {
+			return fmt.Errorf("could not parse overrides file: %s", err)
+		}
+
+		log.Printf("Using overrides from %s...", config.OverridesFile)
+	}
+
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
-		swag.SetStrict(config.Strict))
+		swag.SetStrict(config.Strict),
+		swag.SetOverrides(overrides),
+	)
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency

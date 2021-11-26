@@ -35,6 +35,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [Example value of struct](#example-value-of-struct)
 	- [Description of struct](#description-of-struct)
 	- [Use swaggertype tag to supported custom type](#use-swaggertype-tag-to-supported-custom-type)
+	- [Use global overrides to support a custom type](#use-global-overrides-to-support-a-custom-type)
 	- [Use swaggerignore tag to exclude a field](#use-swaggerignore-tag-to-exclude-a-field)
 	- [Add extension info to struct field](#add-extension-info-to-struct-field)
 	- [Rename model to display](#rename-model-to-display)
@@ -683,6 +684,33 @@ generated swagger doc as follows:
 
 ```
 
+### Use global overrides to support a custom type
+
+If you are using generated files, the [`swaggertype`](#use-swaggertype-tag-to-supported-custom-type) tag may not be possible.
+
+By passing a mapping to swag with `--overridesFile` you can tell swag to use one type in place of another wherever it appears.
+
+Go code:
+```go
+type MyStruct struct {
+  ID     sql.NullInt64 `json:"id"`
+}
+```
+
+`overrides.yaml`:
+```yaml
+"database/sql.NullInt64": "int"
+```
+
+(Note that the full paths to any named types must be provided to prevent problems when multiple packages define a type with the same name)
+
+Rendered (after running swag with `--overridesFile overrides.yaml`):
+```go
+"types.MyStruct": {
+  "id": "integer"
+}
+```
+    
 
 ### Use swaggerignore tag to exclude a field
 

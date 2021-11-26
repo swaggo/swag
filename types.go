@@ -35,6 +35,11 @@ func (t *TypeSpecDef) FullName() string {
 	return fullTypeName(t.File.Name.Name, t.TypeSpec.Name.Name)
 }
 
+// FullPath of the typeSpec.
+func (t *TypeSpecDef) FullPath() string {
+	return t.PkgPath + "." + t.Name()
+}
+
 // AstFileInfo information of an ast.File.
 type AstFileInfo struct {
 	// File ast.File
