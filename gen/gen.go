@@ -1,6 +1,7 @@
 package gen
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -17,6 +19,9 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag"
 )
+
+// DefaultOverridesFile is the location swaggo will look for type overrides.
+const DefaultOverridesFile = ".swaggo"
 
 // Gen presents a generate tool for swag.
 type Gen struct {
@@ -96,24 +101,20 @@ func (g *Gen) Build(config *Config) error {
 		}
 	}
 
-	overrides := make(map[string]string)
+	var overrides map[string]string
 	if config.OverridesFile != "" {
-		f, err := os.Open(config.OverridesFile)
-		if err != nil {
-			return fmt.Errorf("file %s cannot be opened: %s", config.OverridesFile, err)
-		}
+		overridesFile, err := os.Open(config.OverridesFile)
+		if err == nil {
+			log.Printf("Using overrides from %s", config.OverridesFile)
 
-		contents, err := io.ReadAll(f)
-		if err != nil {
-			return fmt.Errorf("file %s cannot be read: %s", config.OverridesFile, err)
+			overrides, err = parseOverrides(overridesFile)
+			if err != nil {
+				return err
+			}
+		} else if !(config.OverridesFile == DefaultOverridesFile && os.IsNotExist(err)) {
+			// Don't bother reporting if the default file is missing; assume there are no overrides
+			return fmt.Errorf("could not open overrides file: %w", err)
 		}
-
-		err = yaml.Unmarshal(contents, &overrides)
-		if err != nil {
-			return fmt.Errorf("could not parse overrides file: %s", err)
-		}
-
-		log.Printf("Using overrides from %s...", config.OverridesFile)
 	}
 
 	log.Println("Generate swagger docs....")
@@ -202,6 +203,34 @@ func (g *Gen) formatSource(src []byte) []byte {
 		code = src // Output the unformatted code anyway
 	}
 	return code
+}
+
+// Read the swaggo overrides
+func parseOverrides(r io.Reader) (map[string]string, error) {
+	overrides := make(map[string]string)
+	scanner := bufio.NewScanner(r)
+	overridesReplace := regexp.MustCompile(`replace\s+(\S+)\s+(\S+)`)
+	overridesSkip := regexp.MustCompile(`skip\s+(\S+)`)
+	overridesComment := regexp.MustCompile(`^//.*`)
+	nonWhitespace := regexp.MustCompile(`\S`)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if parts := overridesReplace.FindStringSubmatch(line); parts != nil {
+			overrides[parts[1]] = parts[2] // parts[0] is the full line
+		} else if parts := overridesSkip.FindStringSubmatch(line); parts != nil {
+			overrides[parts[1]] = "" // parts[0] is the full line
+		} else if nonWhitespace.MatchString(line) && !overridesComment.MatchString(line) {
+			return nil, fmt.Errorf("could not parse override: '%s'", line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading overrides file: %w", err)
+	}
+
+	return overrides, nil
 }
 
 func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swagger, config *Config) error {

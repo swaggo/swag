@@ -15,3 +15,7 @@ type DateOnly time.Time
 type TypeToEmbed struct {
 	Embedded string
 }
+
+type ShouldSkip struct {
+	Name string
+}

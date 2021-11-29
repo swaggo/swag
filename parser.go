@@ -49,6 +49,9 @@ var (
 
 	// ErrFailedConvertPrimitiveType Failed to convert for swag to interpretable type.
 	ErrFailedConvertPrimitiveType = errors.New("swag property: failed convert primitive type")
+
+	// ErrSkippedField .swaggo specifies field should be skipped
+	ErrSkippedField = errors.New("field is skipped by global overrides")
 )
 
 var allMethod = map[string]struct{}{
@@ -120,7 +123,7 @@ type Parser struct {
 	// fieldParserFactory create FieldParser
 	fieldParserFactory FieldParserFactory
 
-	// Overrides allows global replacements of types
+	// Overrides allows global replacements of types. A blank replacement will be skipped.
 	Overrides map[string]string
 }
 
@@ -792,7 +795,13 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 	}
 
 	if override, ok := parser.Overrides[typeSpecDef.FullPath()]; ok {
-		parser.debug.Printf("Override detected for %s, using %s instead", typeSpecDef.FullPath(), override)
+		if override == "" {
+			parser.debug.Printf("Override detected for %s: ignoring", typeSpecDef.FullPath())
+			return nil, ErrSkippedField
+		}
+
+		parser.debug.Printf("Override detected for %s: using %s instead", typeSpecDef.FullPath(), override)
+
 		separator := strings.LastIndex(override, ".")
 		if separator == -1 {
 			// treat as a swaggertype tag
@@ -1015,7 +1024,7 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 	for _, field := range fields.List {
 		fieldProps, requiredFromAnon, err := parser.parseStructField(file, field)
 		if err != nil {
-			if err == ErrFuncTypeField {
+			if err == ErrFuncTypeField || err == ErrSkippedField {
 				continue
 			}
 

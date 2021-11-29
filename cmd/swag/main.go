@@ -99,7 +99,7 @@ var initFlags = []cli.Flag{
 	},
 	&cli.StringFlag{
 		Name:  overridesFileFlag,
-		Value: "",
+		Value: gen.DefaultOverridesFile,
 		Usage: "File to read global type overrides from.",
 	},
 }
