@@ -887,6 +887,14 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 		}
 	}
 
+	for code, response := range operation.Responses.StatusCodeResponses {
+		if response.Headers == nil {
+			r := operation.Responses.StatusCodeResponses[code]
+			r.Headers = make(map[string]spec.Header)
+			operation.Responses.StatusCodeResponses[code] = r
+		}
+	}
+
 	if strings.EqualFold(matches[1], "all") {
 		if operation.Responses.Default != nil {
 			operation.Responses.Default.Headers[headerKey] = header
@@ -918,9 +926,6 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 		if operation.Responses.StatusCodeResponses != nil {
 			response, responseExist := operation.Responses.StatusCodeResponses[code]
 			if responseExist {
-				if response.Headers == nil {
-					response.Headers = make(map[string]spec.Header)
-				}
 				response.Headers[headerKey] = header
 
 				operation.Responses.StatusCodeResponses[code] = response
