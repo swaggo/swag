@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -104,16 +103,18 @@ func (g *Gen) Build(config *Config) error {
 	var overrides map[string]string
 	if config.OverridesFile != "" {
 		overridesFile, err := os.Open(config.OverridesFile)
-		if err == nil {
+		if err != nil {
+			// Don't bother reporting if the default file is missing; assume there are no overrides
+			if !(config.OverridesFile == DefaultOverridesFile && os.IsNotExist(err)) {
+				return fmt.Errorf("could not open overrides file: %w", err)
+			}
+		} else {
 			log.Printf("Using overrides from %s", config.OverridesFile)
 
 			overrides, err = parseOverrides(overridesFile)
 			if err != nil {
 				return err
 			}
-		} else if !(config.OverridesFile == DefaultOverridesFile && os.IsNotExist(err)) {
-			// Don't bother reporting if the default file is missing; assume there are no overrides
-			return fmt.Errorf("could not open overrides file: %w", err)
 		}
 	}
 
@@ -209,19 +210,34 @@ func (g *Gen) formatSource(src []byte) []byte {
 func parseOverrides(r io.Reader) (map[string]string, error) {
 	overrides := make(map[string]string)
 	scanner := bufio.NewScanner(r)
-	overridesReplace := regexp.MustCompile(`replace\s+(\S+)\s+(\S+)`)
-	overridesSkip := regexp.MustCompile(`skip\s+(\S+)`)
-	overridesComment := regexp.MustCompile(`^//.*`)
-	nonWhitespace := regexp.MustCompile(`\S`)
 
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		if parts := overridesReplace.FindStringSubmatch(line); parts != nil {
-			overrides[parts[1]] = parts[2] // parts[0] is the full line
-		} else if parts := overridesSkip.FindStringSubmatch(line); parts != nil {
-			overrides[parts[1]] = "" // parts[0] is the full line
-		} else if nonWhitespace.MatchString(line) && !overridesComment.MatchString(line) {
+		// Skip comments
+		if len(line) > 1 && line[0:2] == "//" {
+			continue
+		}
+
+		parts := strings.Fields(line)
+
+		switch len(parts) {
+		case 0:
+			// only whitespace
+			continue
+		case 2:
+			// either a skip or malformed
+			if parts[0] != "skip" {
+				return nil, fmt.Errorf("could not parse override: '%s'", line)
+			}
+			overrides[parts[1]] = ""
+		case 3:
+			// either a replace or malformed
+			if parts[0] != "replace" {
+				return nil, fmt.Errorf("could not parse override: '%s'", line)
+			}
+			overrides[parts[1]] = parts[2]
+		default:
 			return nil, fmt.Errorf("could not parse override: '%s'", line)
 		}
 	}
