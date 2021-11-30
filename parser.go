@@ -49,6 +49,9 @@ var (
 
 	// ErrFailedConvertPrimitiveType Failed to convert for swag to interpretable type.
 	ErrFailedConvertPrimitiveType = errors.New("swag property: failed convert primitive type")
+
+	// ErrSkippedField .swaggo specifies field should be skipped
+	ErrSkippedField = errors.New("field is skipped by global overrides")
 )
 
 var allMethod = map[string]struct{}{
@@ -119,6 +122,9 @@ type Parser struct {
 
 	// fieldParserFactory create FieldParser
 	fieldParserFactory FieldParserFactory
+
+	// Overrides allows global replacements of types. A blank replacement will be skipped.
+	Overrides map[string]string
 }
 
 // FieldParserFactory create FieldParser
@@ -169,6 +175,7 @@ func New(options ...func(*Parser)) *Parser {
 		toBeRenamedSchemas: make(map[string]string),
 		excludes:           make(map[string]bool),
 		fieldParserFactory: newTagBaseFieldParser,
+		Overrides:          make(map[string]string),
 	}
 
 	for _, option := range options {
@@ -223,6 +230,15 @@ func SetDebugger(logger Debugger) func(parser *Parser) {
 func SetFieldParserFactory(factory FieldParserFactory) func(parser *Parser) {
 	return func(p *Parser) {
 		p.fieldParserFactory = factory
+	}
+}
+
+// SetOverrides allows the use of user-defined global type overrides.
+func SetOverrides(overrides map[string]string) func(parser *Parser) {
+	return func(p *Parser) {
+		for k, v := range overrides {
+			p.Overrides[k] = v
+		}
 	}
 }
 
@@ -778,6 +794,24 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 
+	if override, ok := parser.Overrides[typeSpecDef.FullPath()]; ok {
+		if override == "" {
+			parser.debug.Printf("Override detected for %s: ignoring", typeSpecDef.FullPath())
+			return nil, ErrSkippedField
+		}
+
+		parser.debug.Printf("Override detected for %s: using %s instead", typeSpecDef.FullPath(), override)
+
+		separator := strings.LastIndex(override, ".")
+		if separator == -1 {
+			// treat as a swaggertype tag
+			parts := strings.Split(override, ",")
+			return BuildCustomSchema(parts)
+		}
+
+		typeSpecDef = parser.packages.findTypeSpec(override[0:separator], override[separator+1:])
+	}
+
 	schema, ok := parser.parsedSchemas[typeSpecDef]
 	if !ok {
 		var err error
@@ -990,7 +1024,7 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 	for _, field := range fields.List {
 		fieldProps, requiredFromAnon, err := parser.parseStructField(file, field)
 		if err != nil {
-			if err == ErrFuncTypeField {
+			if err == ErrFuncTypeField || err == ErrSkippedField {
 				continue
 			}
 

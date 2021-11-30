@@ -63,6 +63,17 @@ func TestNew(t *testing.T) {
 	})
 }
 
+func TestSetOverrides(t *testing.T) {
+	t.Parallel()
+
+	overrides := map[string]string{
+		"foo": "bar",
+	}
+
+	p := New(SetOverrides(overrides))
+	assert.Equal(t, overrides, p.Overrides)
+}
+
 func TestParser_ParseDefinition(t *testing.T) {
 	p := New()
 
@@ -2029,6 +2040,26 @@ func TestParseImportAliases(t *testing.T) {
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	// windows will fail: \r\n \n
+	assert.Equal(t, string(expected), string(b))
+}
+
+func TestParseTypeOverrides(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/global_override"
+	p := New(SetOverrides(map[string]string{
+		"github.com/swaggo/swag/testdata/global_override/types.Application":  "string",
+		"github.com/swaggo/swag/testdata/global_override/types.Application2": "github.com/swaggo/swag/testdata/global_override/othertypes.Application",
+		"github.com/swaggo/swag/testdata/global_override/types.ShouldSkip":   "",
+	}))
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	//windows will fail: \r\n \n
 	assert.Equal(t, string(expected), string(b))
 }
 

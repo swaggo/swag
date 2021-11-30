@@ -26,6 +26,7 @@ const (
 	generatedTimeFlag    = "generatedTime"
 	parseDepthFlag       = "parseDepth"
 	instanceNameFlag     = "instanceName"
+	overridesFileFlag    = "overridesFile"
 )
 
 var initFlags = []cli.Flag{
@@ -96,6 +97,11 @@ var initFlags = []cli.Flag{
 		Value: "",
 		Usage: "This parameter can be used to name different swagger document instances. It is optional.",
 	},
+	&cli.StringFlag{
+		Name:  overridesFileFlag,
+		Value: gen.DefaultOverridesFile,
+		Usage: "File to read global type overrides from.",
+	},
 }
 
 func initAction(c *cli.Context) error {
@@ -121,6 +127,7 @@ func initAction(c *cli.Context) error {
 		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
 		ParseDepth:          c.Int(parseDepthFlag),
 		InstanceName:        c.String(instanceNameFlag),
+		OverridesFile:       c.String(overridesFileFlag),
 	})
 }
 

@@ -3,6 +3,7 @@ package gen
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -462,4 +463,132 @@ func TestGen_duplicateRoute(t *testing.T) {
 	config.Strict = true
 	err = New().Build(config)
 	assert.EqualError(t, err, "route GET /testapi/endpoint is declared multiple times")
+}
+
+func TestGen_parseOverrides(t *testing.T) {
+	testCases := []struct {
+		Name          string
+		Data          string
+		Expected      map[string]string
+		ExpectedError error
+	}{
+		{
+			Name: "replace",
+			Data: `replace github.com/foo/bar baz`,
+			Expected: map[string]string{
+				"github.com/foo/bar": "baz",
+			},
+		},
+		{
+			Name: "skip",
+			Data: `skip github.com/foo/bar`,
+			Expected: map[string]string{
+				"github.com/foo/bar": "",
+			},
+		},
+		{
+			Name: "comment",
+			Data: `// this is a comment
+			replace foo bar`,
+			Expected: map[string]string{
+				"foo": "bar",
+			},
+		},
+		{
+			Name: "ignore whitespace",
+			Data: `
+
+			replace foo bar`,
+			Expected: map[string]string{
+				"foo": "bar",
+			},
+		},
+		{
+			Name:          "unknown directive",
+			Data:          `foo`,
+			ExpectedError: fmt.Errorf("could not parse override: 'foo'"),
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			overrides, err := parseOverrides(strings.NewReader(tc.Data))
+			assert.Equal(t, tc.Expected, overrides)
+			assert.Equal(t, tc.ExpectedError, err)
+		})
+	}
+}
+
+func TestGen_TypeOverridesFile(t *testing.T) {
+	customPath := "/foo/bar/baz"
+
+	tmp, err := ioutil.TempFile("", "")
+	require.NoError(t, err)
+	defer os.Remove(tmp.Name())
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		PropNamingStrategy: "",
+	}
+
+	t.Run("Default file is missing", func(t *testing.T) {
+		open = func(path string) (*os.File, error) {
+			assert.Equal(t, DefaultOverridesFile, path)
+			return nil, os.ErrNotExist
+		}
+		defer func() {
+			open = os.Open
+		}()
+
+		config.OverridesFile = DefaultOverridesFile
+		err := New().Build(config)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Default file is present", func(t *testing.T) {
+		open = func(path string) (*os.File, error) {
+			assert.Equal(t, DefaultOverridesFile, path)
+			return tmp, nil
+		}
+		defer func() {
+			open = os.Open
+		}()
+
+		config.OverridesFile = DefaultOverridesFile
+		err := New().Build(config)
+		assert.NoError(t, err)
+	})
+
+	t.Run("Different file is missing", func(t *testing.T) {
+		open = func(path string) (*os.File, error) {
+			assert.Equal(t, customPath, path)
+			return nil, os.ErrNotExist
+		}
+		defer func() {
+			open = os.Open
+		}()
+
+		config.OverridesFile = customPath
+		err := New().Build(config)
+		assert.EqualError(t, err, "could not open overrides file: file does not exist")
+	})
+
+	t.Run("Different file is present", func(t *testing.T) {
+		open = func(path string) (*os.File, error) {
+			assert.Equal(t, customPath, path)
+			return tmp, nil
+		}
+		defer func() {
+			open = os.Open
+		}()
+
+		config.OverridesFile = customPath
+		err := New().Build(config)
+		assert.NoError(t, err)
+	})
 }

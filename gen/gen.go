@@ -1,6 +1,7 @@
 package gen
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -17,6 +18,11 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag"
 )
+
+var open = os.Open
+
+// DefaultOverridesFile is the location swaggo will look for type overrides.
+const DefaultOverridesFile = ".swaggo"
 
 // Gen presents a generate tool for swag.
 type Gen struct {
@@ -78,6 +84,9 @@ type Config struct {
 
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
+
+	// OverridesFile defines global type overrides.
+	OverridesFile string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
@@ -93,11 +102,31 @@ func (g *Gen) Build(config *Config) error {
 		}
 	}
 
+	var overrides map[string]string
+	if config.OverridesFile != "" {
+		overridesFile, err := open(config.OverridesFile)
+		if err != nil {
+			// Don't bother reporting if the default file is missing; assume there are no overrides
+			if !(config.OverridesFile == DefaultOverridesFile && os.IsNotExist(err)) {
+				return fmt.Errorf("could not open overrides file: %w", err)
+			}
+		} else {
+			log.Printf("Using overrides from %s", config.OverridesFile)
+
+			overrides, err = parseOverrides(overridesFile)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
-		swag.SetStrict(config.Strict))
+		swag.SetStrict(config.Strict),
+		swag.SetOverrides(overrides),
+	)
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
@@ -177,6 +206,49 @@ func (g *Gen) formatSource(src []byte) []byte {
 		code = src // Output the unformatted code anyway
 	}
 	return code
+}
+
+// Read the swaggo overrides
+func parseOverrides(r io.Reader) (map[string]string, error) {
+	overrides := make(map[string]string)
+	scanner := bufio.NewScanner(r)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Skip comments
+		if len(line) > 1 && line[0:2] == "//" {
+			continue
+		}
+
+		parts := strings.Fields(line)
+
+		switch len(parts) {
+		case 0:
+			// only whitespace
+			continue
+		case 2:
+			// either a skip or malformed
+			if parts[0] != "skip" {
+				return nil, fmt.Errorf("could not parse override: '%s'", line)
+			}
+			overrides[parts[1]] = ""
+		case 3:
+			// either a replace or malformed
+			if parts[0] != "replace" {
+				return nil, fmt.Errorf("could not parse override: '%s'", line)
+			}
+			overrides[parts[1]] = parts[2]
+		default:
+			return nil, fmt.Errorf("could not parse override: '%s'", line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading overrides file: %w", err)
+	}
+
+	return overrides, nil
 }
 
 func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swagger, config *Config) error {
