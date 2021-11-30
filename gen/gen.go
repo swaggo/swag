@@ -19,6 +19,8 @@ import (
 	"github.com/swaggo/swag"
 )
 
+var open = os.Open
+
 // DefaultOverridesFile is the location swaggo will look for type overrides.
 const DefaultOverridesFile = ".swaggo"
 
@@ -102,7 +104,7 @@ func (g *Gen) Build(config *Config) error {
 
 	var overrides map[string]string
 	if config.OverridesFile != "" {
-		overridesFile, err := os.Open(config.OverridesFile)
+		overridesFile, err := open(config.OverridesFile)
 		if err != nil {
 			// Don't bother reporting if the default file is missing; assume there are no overrides
 			if !(config.OverridesFile == DefaultOverridesFile && os.IsNotExist(err)) {

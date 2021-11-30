@@ -12,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/agiledragon/gomonkey/v2"
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -526,47 +525,70 @@ func TestGen_parseOverrides(t *testing.T) {
 func TestGen_TypeOverridesFile(t *testing.T) {
 	customPath := "/foo/bar/baz"
 
+	tmp, err := ioutil.TempFile("", "")
+	require.NoError(t, err)
+	defer os.Remove(tmp.Name())
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		PropNamingStrategy: "",
+	}
+
 	t.Run("Default file is missing", func(t *testing.T) {
-		patches := gomonkey.ApplyFunc(os.Open, func(path string) (*os.File, error) {
+		open = func(path string) (*os.File, error) {
 			assert.Equal(t, DefaultOverridesFile, path)
 			return nil, os.ErrNotExist
-		})
-		defer patches.Reset()
+		}
+		defer func() {
+			open = os.Open
+		}()
 
-		err := New().Build(&Config{})
+		config.OverridesFile = DefaultOverridesFile
+		err := New().Build(config)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Default file is present", func(t *testing.T) {
-		patches := gomonkey.ApplyFunc(os.Open, func(path string) (*os.File, error) {
+		open = func(path string) (*os.File, error) {
 			assert.Equal(t, DefaultOverridesFile, path)
-			return &os.File{}, nil
-		})
-		defer patches.Reset()
+			return tmp, nil
+		}
+		defer func() {
+			open = os.Open
+		}()
 
-		err := New().Build(&Config{})
+		config.OverridesFile = DefaultOverridesFile
+		err := New().Build(config)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Different file is missing", func(t *testing.T) {
-		patches := gomonkey.ApplyFunc(os.Open, func(path string) (*os.File, error) {
-			assert.Equal(t, DefaultOverridesFile, path)
+		open = func(path string) (*os.File, error) {
+			assert.Equal(t, customPath, path)
 			return nil, os.ErrNotExist
-		})
-		defer patches.Reset()
+		}
+		defer func() {
+			open = os.Open
+		}()
 
-		err := New().Build(&Config{OverridesFile: customPath})
-		assert.EqualError(t, err, "could not open overrides file: %w")
+		config.OverridesFile = customPath
+		err := New().Build(config)
+		assert.EqualError(t, err, "could not open overrides file: file does not exist")
 	})
 
 	t.Run("Different file is present", func(t *testing.T) {
-		patches := gomonkey.ApplyFunc(os.Open, func(path string) (*os.File, error) {
+		open = func(path string) (*os.File, error) {
 			assert.Equal(t, customPath, path)
-			return &os.File{}, nil
-		})
-		defer patches.Reset()
+			return tmp, nil
+		}
+		defer func() {
+			open = os.Open
+		}()
 
-		err := New().Build(&Config{OverridesFile: customPath})
+		config.OverridesFile = customPath
+		err := New().Build(config)
 		assert.NoError(t, err)
 	})
 }
