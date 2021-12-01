@@ -25,7 +25,7 @@ type Formater struct {
 	debug Debugger
 
 	// excludes excludes dirs and files in SearchDir
-	excludes map[string]bool
+	excludes map[string]struct{}
 
 	mainFile string
 }
@@ -34,7 +34,7 @@ type Formater struct {
 func NewFormater() *Formater {
 	formater := &Formater{
 		debug:    log.New(os.Stdout, "", log.LstdFlags),
-		excludes: make(map[string]bool),
+		excludes: make(map[string]struct{}),
 	}
 	return formater
 }
@@ -51,7 +51,7 @@ func (f *Formater) FormatAPI(searchDir, excludeDir, mainFile string) error {
 		fi = strings.TrimSpace(fi)
 		if fi != "" {
 			fi = filepath.Clean(fi)
-			f.excludes[fi] = true
+			f.excludes[fi] = struct{}{}
 		}
 	}
 
@@ -87,7 +87,7 @@ func (f *Formater) formatMultiSearchDir(searchDirs []string) error {
 }
 
 func (f *Formater) visit(path string, fileInfo os.FileInfo, err error) error {
-	if err := f.skip(path, fileInfo); err != nil {
+	if err := walkWith(f.excludes, false)(path, fileInfo); err != nil {
 		return err
 	} else if fileInfo.IsDir() {
 		// skip if file is folder
@@ -106,24 +106,6 @@ func (f *Formater) visit(path string, fileInfo os.FileInfo, err error) error {
 	err = f.FormatFile(path)
 	if err != nil {
 		return fmt.Errorf("ParseFile error:%+v", err)
-	}
-	return nil
-}
-
-// skip skip folder in ('vendor' 'docs' 'excludes' 'hidden folder')
-func (f *Formater) skip(path string, fileInfo os.FileInfo) error {
-	if fileInfo.IsDir() {
-		if fileInfo.Name() == "vendor" || // ignore "vendor"
-			fileInfo.Name() == "docs" || // exclude docs
-			len(fileInfo.Name()) > 1 && fileInfo.Name()[0] == '.' { // exclude all hidden folder
-			return filepath.SkipDir
-		}
-
-		if f.excludes != nil {
-			if _, ok := f.excludes[path]; ok {
-				return filepath.SkipDir
-			}
-		}
 	}
 	return nil
 }

@@ -115,7 +115,7 @@ type Parser struct {
 	collectionFormatInQuery string
 
 	// excludes excludes dirs and files in SearchDir
-	excludes map[string]bool
+	excludes map[string]struct{}
 
 	// debugging output goes here
 	debug Debugger
@@ -173,7 +173,7 @@ func New(options ...func(*Parser)) *Parser {
 		outputSchemas:      make(map[*TypeSpecDef]*Schema),
 		existSchemaNames:   make(map[string]*Schema),
 		toBeRenamedSchemas: make(map[string]string),
-		excludes:           make(map[string]bool),
+		excludes:           make(map[string]struct{}),
 		fieldParserFactory: newTagBaseFieldParser,
 		Overrides:          make(map[string]string),
 	}
@@ -206,7 +206,7 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 			f = strings.TrimSpace(f)
 			if f != "" {
 				f = filepath.Clean(f)
-				p.excludes[f] = true
+				p.excludes[f] = struct{}{}
 			}
 		}
 	}
@@ -1371,21 +1371,27 @@ func (parser *Parser) checkOperationIDUniqueness() error {
 
 // Skip returns filepath.SkipDir error if match vendor and hidden folder.
 func (parser *Parser) Skip(path string, f os.FileInfo) error {
-	if f.IsDir() {
-		if !parser.ParseVendor && f.Name() == "vendor" || // ignore "vendor"
-			f.Name() == "docs" || // exclude docs
-			len(f.Name()) > 1 && f.Name()[0] == '.' { // exclude all hidden folder
-			return filepath.SkipDir
-		}
+	return walkWith(parser.excludes, parser.ParseVendor)(path, f)
+}
 
-		if parser.excludes != nil {
-			if _, ok := parser.excludes[path]; ok {
+func walkWith(excludes map[string]struct{}, parseVendor bool) func(path string, fileInfo os.FileInfo) error {
+	return func(path string, f os.FileInfo) error {
+		if f.IsDir() {
+			if !parseVendor && f.Name() == "vendor" || // ignore "vendor"
+				f.Name() == "docs" || // exclude docs
+				len(f.Name()) > 1 && f.Name()[0] == '.' { // exclude all hidden folder
 				return filepath.SkipDir
 			}
-		}
-	}
 
-	return nil
+			if excludes != nil {
+				if _, ok := excludes[path]; ok {
+					return filepath.SkipDir
+				}
+			}
+		}
+
+		return nil
+	}
 }
 
 // GetSwagger returns *spec.Swagger which is the root document object for the API specification.
