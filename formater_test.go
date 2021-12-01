@@ -3,12 +3,13 @@ package swag
 import (
 	"bytes"
 	"fmt"
-	"github.com/agiledragon/gomonkey/v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
 	"testing"
+
+	"github.com/agiledragon/gomonkey/v2"
 
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/assert"
@@ -130,24 +131,6 @@ func Test_writeFormatedComments(t *testing.T) {
 		err := writeFormatedComments("/wrong_path", formatedComments, oldCommentsMap)
 		assert.Error(t, err)
 	})
-}
-
-func TestFormater_skip(t *testing.T) {
-	formater := NewFormater()
-
-	err := formater.skip("./testdata", &mockFS{FileName: "vendor", IsDirectory: true})
-	assert.ErrorIs(t, err, filepath.SkipDir)
-	err = formater.skip("/testdata", &mockFS{FileName: "docs", IsDirectory: true})
-	assert.ErrorIs(t, err, filepath.SkipDir)
-	err = formater.skip("/testdata", &mockFS{FileName: ".hidden", IsDirectory: true})
-	assert.ErrorIs(t, err, filepath.SkipDir)
-
-	formater.excludes["/testdata/excludes"] = true
-	err = formater.skip("/testdata/excludes", &mockFS{FileName: ".hidden", IsDirectory: true})
-	assert.ErrorIs(t, err, filepath.SkipDir)
-
-	err = formater.skip("/testdata", &mockFS{FileName: ".hidden", IsDirectory: false})
-	assert.NoError(t, err)
 }
 
 func TestFormater_visit(t *testing.T) {
