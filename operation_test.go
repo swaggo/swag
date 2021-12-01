@@ -233,6 +233,27 @@ func TestParseRouterCommentMethodMissingErr(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestOperation_ParseResponseWithDefault(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success default {object} nil "An empty response"`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "An empty response", operation.Responses.Default.Description)
+
+	comment = `@Success 200,default {string} Response "A response"`
+	operation = NewOperation(nil)
+
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "A response", operation.Responses.Default.Description)
+	assert.Equal(t, "A response", operation.Responses.StatusCodeResponses[200].Description)
+}
+
 func TestParseResponseSuccessCommentWithEmptyResponse(t *testing.T) {
 	t.Parallel()
 

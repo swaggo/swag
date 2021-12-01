@@ -831,7 +831,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 
-	responseDescription := strings.Trim(matches[4], "\"")
+	description := strings.Trim(matches[4], "\"")
 	schema, err := operation.parseAPIObjectSchema(strings.Trim(matches[2], "{}"), matches[3], astFile)
 	if err != nil {
 		return err
@@ -839,8 +839,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
 		if strings.EqualFold(codeStr, defaultTag) {
-			operation.DefaultResponse().Schema = schema
-			operation.DefaultResponse().Description = responseDescription
+			operation.DefaultResponse().WithSchema(schema).WithDescription(description)
 
 			continue
 		}
@@ -848,12 +847,12 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		if err != nil {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
-		resp := &spec.Response{
-			ResponseProps: spec.ResponseProps{Schema: schema, Description: responseDescription},
+
+		resp := spec.NewResponse().WithSchema(schema).WithDescription(description)
+		if description == "" {
+			resp.WithDescription(http.StatusText(code))
 		}
-		if resp.Description == "" {
-			resp.Description = http.StatusText(code)
-		}
+
 		operation.AddResponse(code, resp)
 	}
 
@@ -945,10 +944,10 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
-	responseDescription := strings.Trim(matches[2], "\"")
+	description := strings.Trim(matches[2], "\"")
 	for _, codeStr := range strings.Split(matches[1], ",") {
 		if strings.EqualFold(codeStr, defaultTag) {
-			operation.DefaultResponse().Description = responseDescription
+			operation.DefaultResponse().WithDescription(description)
 
 			continue
 		}
@@ -958,9 +957,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 
-		var response spec.Response
-		response.Description = responseDescription
-		operation.AddResponse(code, &response)
+		operation.AddResponse(code, spec.NewResponse().WithDescription(description))
 	}
 
 	return nil
@@ -979,9 +976,7 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 
-		var response spec.Response
-		// response.Description = http.StatusText(code)
-		operation.AddResponse(code, &response)
+		operation.AddResponse(code, spec.NewResponse())
 	}
 
 	return nil
@@ -989,8 +984,12 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 
 // DefaultResponse return the default response member pointer.
 func (operation *Operation) DefaultResponse() *spec.Response {
+	if operation.Responses == nil {
+		operation.Responses = &spec.Responses{}
+	}
+
 	if operation.Responses.Default == nil {
-		operation.Responses.Default = &spec.Response{}
+		operation.Responses.Default = spec.NewResponse()
 	}
 
 	return operation.Responses.Default
