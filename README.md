@@ -54,7 +54,7 @@ $ go get -u github.com/swaggo/swag/cmd/swag
 # 1.16 or newer
 $ go install github.com/swaggo/swag/cmd/swag@latest
 ```
-To build from source you need [Go](https://golang.org/dl/) (1.13 or newer).
+To build from source you need [Go](https://golang.org/dl/) (1.14 or newer).
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
