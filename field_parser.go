@@ -141,6 +141,7 @@ type structField struct {
 	defaultValue interface{}
 	extensions   map[string]interface{}
 	enums        []interface{}
+	enumVarNames []interface{}
 	readOnly     bool
 	unique       bool
 }
@@ -236,7 +237,21 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			structField.enums = append(structField.enums, value)
 		}
 	}
-
+	varnamesTag := ps.tag.Get("x-enum-varnames")
+	if varnamesTag != "" {
+		if structField.extensions == nil {
+			structField.extensions = map[string]interface{}{}
+		}
+		varNames := strings.Split(varnamesTag, ",")
+		if len(varNames) != len(structField.enums) {
+			return fmt.Errorf("invalid count of x-enum-varnames. expected %d, got %d", len(structField.enums), len(varNames))
+		}
+		structField.enumVarNames = nil
+		for _, v := range varNames {
+			structField.enumVarNames = append(structField.enumVarNames, v)
+		}
+		structField.extensions["x-enum-varnames"] = structField.enumVarNames
+	}
 	defaultTag := ps.tag.Get("default")
 	if defaultTag != "" {
 		value, err := defineType(structField.schemaType, defaultTag)
@@ -345,7 +360,6 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	eleSchema.MaxLength = structField.maxLength
 	eleSchema.MinLength = structField.minLength
 	eleSchema.Enum = structField.enums
-
 	return nil
 }
 
