@@ -239,6 +239,9 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	}
 	varnamesTag := ps.tag.Get("x-enum-varnames")
 	if varnamesTag != "" {
+		if structField.extensions == nil {
+			structField.extensions = map[string]interface{}{}
+		}
 		varNames := strings.Split(varnamesTag, ",")
 		if len(varNames) != len(structField.enums) {
 			return fmt.Errorf("invalid count of x-enum-varnames. expected %d, got %d", len(structField.enums), len(varNames))
