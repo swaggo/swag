@@ -1969,8 +1969,8 @@ func TestParseSecurityComment(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, operation.Security, []map[string][]string{
-		map[string][]string{
-			"OAuth2Implicit": []string{"read", "write"},
+		{
+			"OAuth2Implicit": {"read", "write"},
 		},
 	})
 }
