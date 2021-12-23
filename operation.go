@@ -100,35 +100,35 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 
 	var err error
 	switch lowerAttribute {
-	case "@description":
+	case descriptionAttr:
 		operation.ParseDescriptionComment(lineRemainder)
-	case "@description.markdown":
+	case descriptionMarkdownAttr:
 		commentInfo, err := getMarkdownForTag(lineRemainder, operation.parser.markdownFileDir)
 		if err != nil {
 			return err
 		}
 		operation.ParseDescriptionComment(string(commentInfo))
-	case "@summary":
+	case summaryAttr:
 		operation.Summary = lineRemainder
-	case "@id":
+	case idAttr:
 		operation.ID = lineRemainder
-	case "@tags":
+	case tagsAttr:
 		operation.ParseTagsComment(lineRemainder)
 	case acceptAttr:
 		err = operation.ParseAcceptComment(lineRemainder)
 	case produceAttr:
 		err = operation.ParseProduceComment(lineRemainder)
-	case "@param":
+	case paramAttr:
 		err = operation.ParseParamComment(lineRemainder, astFile)
-	case "@success", "@failure", "@response":
+	case successAttr, failureAttr, responseAttr:
 		err = operation.ParseResponseComment(lineRemainder, astFile)
-	case "@header":
+	case headerAttr:
 		err = operation.ParseResponseHeaderComment(lineRemainder, astFile)
-	case "@router":
+	case routerAttr:
 		err = operation.ParseRouterComment(lineRemainder)
-	case "@security":
+	case securityAttr:
 		err = operation.ParseSecurityComment(lineRemainder)
-	case "@deprecated":
+	case deprecatedAttr:
 		operation.Deprecate()
 	case xCodeSamplesAttr:
 		err = operation.ParseCodeSample(attribute, commentLine, lineRemainder)

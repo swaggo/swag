@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -37,7 +38,7 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 	if pkgs.packages == nil {
 		pkgs.packages = make(map[string]*PackageDefinitions)
 	}
-
+	log.Printf("CollectAstFile: %s:%s", packageDir, path)
 	// return without storing the file if we lack a packageDir
 	if packageDir == "" {
 		return nil
@@ -74,9 +75,9 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 }
 
 // RangeFiles for range the collection of ast.File in alphabetic order.
-func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *ast.File) error) error {
-	sortedFiles := make([]*AstFileInfo, 0, len(pkgs.files))
-	for _, info := range pkgs.files {
+func rangeFiles(files map[*ast.File]*AstFileInfo, handle func(filename string, file *ast.File) error) error {
+	sortedFiles := make([]*AstFileInfo, 0, len(files))
+	for _, info := range files {
 		sortedFiles = append(sortedFiles, info)
 	}
 

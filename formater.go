@@ -204,11 +204,11 @@ func formatFuncDoc(commentList []*ast.Comment, formatedComments *bytes.Buffer, o
 
 // Check of @Param @Success @Failure @Response @Header
 var specialTagForSplit = map[string]byte{
-	"@param":    1,
-	"@success":  1,
-	"@failure":  1,
-	"@response": 1,
-	"@header":   1,
+	paramAttr:    1,
+	successAttr:  1,
+	failureAttr:  1,
+	responseAttr: 1,
+	headerAttr:   1,
 }
 
 var skipChar = map[byte]byte{
@@ -276,9 +276,10 @@ func replaceRange(s []byte, start, end int, new byte) []byte {
 	return s
 }
 
+var swagCommentExpression = regexp.MustCompile("@[A-z]+")
+
 func isSwagComment(comment string) bool {
-	lc := strings.ToLower(comment)
-	return regexp.MustCompile("@[A-z]+").MatchString(lc)
+	return swagCommentExpression.MatchString(strings.ToLower(comment))
 }
 
 func isBlankComment(comment string) bool {

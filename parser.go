@@ -34,10 +34,25 @@ const (
 	// SnakeCase indicates using SnakeCase strategy for struct field.
 	SnakeCase = "snakecase"
 
-	acceptAttr       = "@accept"
-	produceAttr      = "@produce"
-	xCodeSamplesAttr = "@x-codesamples"
-	scopeAttrPrefix  = "@scope."
+	idAttr                  = "@id"
+	acceptAttr              = "@accept"
+	produceAttr             = "@produce"
+	paramAttr               = "@param"
+	successAttr             = "@success"
+	failureAttr             = "@failure"
+	responseAttr            = "@response"
+	headerAttr              = "@header"
+	tagsAttr                = "@tags"
+	routerAttr              = "@router"
+	summaryAttr             = "@summary"
+	deprecatedAttr          = "@deprecated"
+	securityAttr            = "@security"
+	titleAttr               = "@title"
+	versionAttr             = "@version"
+	descriptionAttr         = "@description"
+	descriptionMarkdownAttr = "@description.markdown"
+	xCodeSamplesAttr        = "@x-codesamples"
+	scopeAttrPrefix         = "@scope."
 )
 
 var (
@@ -301,7 +316,7 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		return err
 	}
 
-	err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
+	err = rangeFiles(parser.packages.files, parser.ParseRouterAPIInfo)
 	if err != nil {
 		return err
 	}
@@ -376,11 +391,11 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			multilineBlock = true
 		}
 		switch strings.ToLower(attribute) {
-		case "@version":
+		case versionAttr:
 			parser.swagger.Info.Version = value
-		case "@title":
+		case titleAttr:
 			parser.swagger.Info.Title = value
-		case "@description":
+		case descriptionAttr:
 			if multilineBlock {
 				parser.swagger.Info.Description += "\n" + value
 
@@ -549,7 +564,7 @@ func isGeneralAPIComment(comments []string) bool {
 		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
 		switch attribute {
 		// The @summary, @router, @success, @failure annotation belongs to Operation
-		case "@summary", "@router", "@success", "@failure", "@response":
+		case summaryAttr, routerAttr, successAttr, failureAttr, responseAttr:
 			return false
 		}
 	}
