@@ -355,13 +355,19 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 }
 
 const (
+	jsonTag             = "json"
+	bindingTag          = "binding"
 	defaultTag          = "default"
 	enumsTag            = "enums"
+	exampleTag          = "example"
 	formatTag           = "format"
+	validateTag         = "validate"
 	minimumTag          = "minimum"
 	maximumTag          = "maximum"
 	minLengthTag        = "minlength"
 	maxLengthTag        = "maxlength"
+	multipleOfTag       = "multipleOf"
+	readOnlyTag         = "readonly"
 	extensionsTag       = "extensions"
 	collectionFormatTag = "collectionFormat"
 )
