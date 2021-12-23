@@ -23,48 +23,35 @@ func TestParseEmptyComment(t *testing.T) {
 func TestParseTagsComment(t *testing.T) {
 	t.Parallel()
 
-	expected := `{
-    "tags": [
-        "pet",
-        "store",
-        "user"
-    ]
-}`
-	comment := `/@Tags pet, store,user`
 	operation := NewOperation(nil)
-	err := operation.ParseComment(comment, nil)
+	err := operation.ParseComment(`/@Tags pet, store,user`, nil)
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	assert.Equal(t, expected, string(b))
+	assert.Equal(t, operation.Tags, []string{"pet", "store", "user"})
 }
 
 func TestParseAcceptComment(t *testing.T) {
 	t.Parallel()
 
-	expected := `{
-    "consumes": [
-        "application/json",
-        "text/xml",
-        "text/plain",
-        "text/html",
-        "multipart/form-data",
-        "application/x-www-form-urlencoded",
-        "application/vnd.api+json",
-        "application/x-json-stream",
-		"application/octet-stream",
-		"image/png",
-		"image/jpeg",
-		"image/gif",
-		"application/xhtml+xml",
-		"application/health+json"
-    ]
-}`
 	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	assert.JSONEq(t, expected, string(b))
+	assert.Equal(t,
+		operation.Consumes,
+		[]string{"application/json",
+			"text/xml",
+			"text/plain",
+			"text/html",
+			"multipart/form-data",
+			"application/x-www-form-urlencoded",
+			"application/vnd.api+json",
+			"application/x-json-stream",
+			"application/octet-stream",
+			"image/png",
+			"image/jpeg",
+			"image/gif",
+			"application/xhtml+xml",
+			"application/health+json"})
 }
 
 func TestParseAcceptCommentErr(t *testing.T) {
@@ -1146,19 +1133,17 @@ func TestOperation_ParseParamComment(t *testing.T) {
 				err := o.ParseComment(`@Param some_id `+paramType+` int true "Some ID"`, nil)
 
 				assert.NoError(t, err)
-				b, _ := json.MarshalIndent(o, "", "    ")
-				expected := `{
-    "parameters": [
-        {
-            "type": "integer",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "` + paramType + `",
-            "required": true
-        }
-    ]
-}`
-				assert.Equal(t, expected, string(b))
+				assert.Equal(t, o.Parameters, []spec.Parameter{{
+					SimpleSchema: spec.SimpleSchema{
+						Type: "integer",
+					},
+					ParamProps: spec.ParamProps{
+						Name:        "some_id",
+						Description: "Some ID",
+						In:          paramType,
+						Required:    true,
+					},
+				}})
 			})
 		}
 	})
@@ -1171,19 +1156,17 @@ func TestOperation_ParseParamComment(t *testing.T) {
 				err := o.ParseComment(`@Param some_string `+paramType+` string true "Some String"`, nil)
 
 				assert.NoError(t, err)
-				b, _ := json.MarshalIndent(o, "", "    ")
-				expected := `{
-    "parameters": [
-        {
-            "type": "string",
-            "description": "Some String",
-            "name": "some_string",
-            "in": "` + paramType + `",
-            "required": true
-        }
-    ]
-}`
-				assert.Equal(t, expected, string(b))
+				assert.Equal(t, o.Parameters, []spec.Parameter{{
+					SimpleSchema: spec.SimpleSchema{
+						Type: "string",
+					},
+					ParamProps: spec.ParamProps{
+						Name:        "some_string",
+						Description: "Some String",
+						In:          paramType,
+						Required:    true,
+					},
+				}})
 			})
 		}
 	})
@@ -1204,28 +1187,29 @@ func TestParseParamCommentBodyArray(t *testing.T) {
 	t.Parallel()
 
 	comment := `@Param names body []string true "Users List"`
-	operation := NewOperation(nil)
-	err := operation.ParseComment(comment, nil)
-
+	o := NewOperation(nil)
+	err := o.ParseComment(comment, nil)
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "description": "Users List",
-            "name": "names",
-            "in": "body",
-            "required": true,
-            "schema": {
-                "type": "array",
-                "items": {
-                    "type": "string"
-                }
-            }
-        }
-    ]
-}`
-	assert.Equal(t, expected, string(b))
+	assert.Equal(t, o.Parameters, []spec.Parameter{{
+		ParamProps: spec.ParamProps{
+			Name:        "names",
+			Description: "Users List",
+			In:          "body",
+			Required:    true,
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"array"},
+					Items: &spec.SchemaOrArray{
+						Schema: &spec.Schema{
+							SchemaProps: spec.SchemaProps{
+								Type: []string{"string"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}})
 }
 
 // Test ParseParamComment Params
@@ -1238,21 +1222,20 @@ func TestParseParamCommentArray(t *testing.T) {
 			err := operation.ParseComment(`@Param names `+paramType+` []string true "Users List"`, nil)
 
 			assert.NoError(t, err)
-			b, _ := json.MarshalIndent(operation, "", "    ")
-			expected := `{
-    "parameters": [
-        {
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "description": "Users List",
-            "name": "names",
-            "in": "` + paramType + `",
-            "required": true
-        }
-    ]
-}`
+
+			b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+			expected := `[
+    {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "description": "Users List",
+        "name": "names",
+        "in": "` + paramType + `",
+        "required": true
+    }
+]`
 			assert.Equal(t, expected, string(b))
 
 			err = operation.ParseComment(`@Param names `+paramType+` []model.User true "Users List"`, nil)
@@ -1269,19 +1252,17 @@ func TestParseParamCommentDefaultValue(t *testing.T) {
 	err := operation.ParseComment(`@Param names query string true "Users List" default(test)`, nil)
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "string",
-            "default": "test",
-            "description": "Users List",
-            "name": "names",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "string",
+        "default": "test",
+        "description": "Users List",
+        "name": "names",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1294,22 +1275,20 @@ func TestParseParamCommentQueryArrayFormat(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "collectionFormat": "multi",
-            "description": "Users List",
-            "name": "names",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "collectionFormat": "multi",
+        "description": "Users List",
+        "name": "names",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1321,18 +1300,16 @@ func TestParseParamCommentByID(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "integer",
-            "description": "Unsafe query param",
-            "name": "unsafe_id[lte]",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "description": "Unsafe query param",
+        "name": "unsafe_id[lte]",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1344,18 +1321,16 @@ func TestParseParamCommentByQueryType(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "integer",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1369,20 +1344,18 @@ func TestParseParamCommentByBodyType(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "body",
-            "required": true,
-            "schema": {
-                "$ref": "#/definitions/model.OrderRow"
-            }
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "body",
+        "required": true,
+        "schema": {
+            "$ref": "#/definitions/model.OrderRow"
         }
-    ]
-}`
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1395,20 +1368,18 @@ func TestParseParamCommentByBodyTextPlain(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "description": "Text to process",
-            "name": "text",
-            "in": "body",
-            "required": true,
-            "schema": {
-                "type": "string"
-            }
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "description": "Text to process",
+        "name": "text",
+        "in": "body",
+        "required": true,
+        "schema": {
+            "type": "string"
         }
-    ]
-}`
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1426,16 +1397,87 @@ func TestParseParamCommentByBodyTypeWithDeepNestedFields(t *testing.T) {
 	assert.Equal(t, "test deep", operation.Parameters[0].Description)
 	assert.True(t, operation.Parameters[0].Required)
 
-	b, err := json.MarshalIndent(operation, "", "    ")
+	b, err := json.MarshalIndent(operation.Parameters, "", "    ")
 	assert.NoError(t, err)
-	expected := `{
-    "parameters": [
-        {
-            "description": "test deep",
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
+	expected := `[
+    {
+        "description": "test deep",
+        "name": "body",
+        "in": "body",
+        "required": true,
+        "schema": {
+            "allOf": [
+                {
+                    "$ref": "#/definitions/model.CommonHeader"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "type": "string"
+                        },
+                        "data2": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id body []int true "Some ID"`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "body",
+        "required": true,
+        "schema": {
+            "type": "array",
+            "items": {
+                "type": "integer"
+            }
+        }
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFields(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param body body []model.CommonHeader{data=string,data2=int} true "test deep"`
+	operation := NewOperation(nil)
+	operation.parser.addTestType("model.CommonHeader")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Len(t, operation.Parameters, 1)
+	assert.Equal(t, "test deep", operation.Parameters[0].Description)
+	assert.True(t, operation.Parameters[0].Required)
+
+	b, err := json.MarshalIndent(operation.Parameters, "", "    ")
+	assert.NoError(t, err)
+	expected := `[
+    {
+        "description": "test deep",
+        "name": "body",
+        "in": "body",
+        "required": true,
+        "schema": {
+            "type": "array",
+            "items": {
                 "allOf": [
                     {
                         "$ref": "#/definitions/model.CommonHeader"
@@ -1454,85 +1496,8 @@ func TestParseParamCommentByBodyTypeWithDeepNestedFields(t *testing.T) {
                 ]
             }
         }
-    ]
-}`
-	assert.Equal(t, expected, string(b))
-}
-
-func TestParseParamCommentByBodyTypeArrayOfPrimitiveGo(t *testing.T) {
-	t.Parallel()
-
-	comment := `@Param some_id body []int true "Some ID"`
-	operation := NewOperation(nil)
-	err := operation.ParseComment(comment, nil)
-
-	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "body",
-            "required": true,
-            "schema": {
-                "type": "array",
-                "items": {
-                    "type": "integer"
-                }
-            }
-        }
-    ]
-}`
-	assert.Equal(t, expected, string(b))
-}
-
-func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFields(t *testing.T) {
-	t.Parallel()
-
-	comment := `@Param body body []model.CommonHeader{data=string,data2=int} true "test deep"`
-	operation := NewOperation(nil)
-	operation.parser.addTestType("model.CommonHeader")
-
-	err := operation.ParseComment(comment, nil)
-	assert.NoError(t, err)
-	assert.Len(t, operation.Parameters, 1)
-	assert.Equal(t, "test deep", operation.Parameters[0].Description)
-	assert.True(t, operation.Parameters[0].Required)
-
-	b, err := json.MarshalIndent(operation, "", "    ")
-	assert.NoError(t, err)
-	expected := `{
-    "parameters": [
-        {
-            "description": "test deep",
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-                "type": "array",
-                "items": {
-                    "allOf": [
-                        {
-                            "$ref": "#/definitions/model.CommonHeader"
-                        },
-                        {
-                            "type": "object",
-                            "properties": {
-                                "data": {
-                                    "type": "string"
-                                },
-                                "data2": {
-                                    "type": "integer"
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        }
-    ]
-}`
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1556,18 +1521,16 @@ func TestParseParamCommentByFormDataType(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "file",
-            "description": "this is a test file",
-            "name": "file",
-            "in": "formData",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "file",
+        "description": "this is a test file",
+        "name": "file",
+        "in": "formData",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1580,18 +1543,16 @@ func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "integer",
-            "description": "this is a test file",
-            "name": "file",
-            "in": "formData",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "description": "this is a test file",
+        "name": "file",
+        "in": "formData",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1623,23 +1584,21 @@ func TestParseParamCommentByEnums(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "enum": [
-                "A",
-                "B",
-                "C"
-            ],
-            "type": "string",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "enum": [
+            "A",
+            "B",
+            "C"
+        ],
+        "type": "string",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 
 	comment = `@Param some_id query int true "Some ID" Enums(1, 2, 3)`
@@ -1647,23 +1606,21 @@ func TestParseParamCommentByEnums(t *testing.T) {
 	err = operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ = json.MarshalIndent(operation, "", "    ")
-	expected = `{
-    "parameters": [
-        {
-            "enum": [
-                1,
-                2,
-                3
-            ],
-            "type": "integer",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ = json.MarshalIndent(operation.Parameters, "", "    ")
+	expected = `[
+    {
+        "enum": [
+            1,
+            2,
+            3
+        ],
+        "type": "integer",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 
 	comment = `@Param some_id query number true "Some ID" Enums(1.1, 2.2, 3.3)`
@@ -1671,23 +1628,21 @@ func TestParseParamCommentByEnums(t *testing.T) {
 	err = operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ = json.MarshalIndent(operation, "", "    ")
-	expected = `{
-    "parameters": [
-        {
-            "enum": [
-                1.1,
-                2.2,
-                3.3
-            ],
-            "type": "number",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ = json.MarshalIndent(operation.Parameters, "", "    ")
+	expected = `[
+    {
+        "enum": [
+            1.1,
+            2.2,
+            3.3
+        ],
+        "type": "number",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 
 	comment = `@Param some_id query bool true "Some ID" Enums(true, false)`
@@ -1695,22 +1650,20 @@ func TestParseParamCommentByEnums(t *testing.T) {
 	err = operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ = json.MarshalIndent(operation, "", "    ")
-	expected = `{
-    "parameters": [
-        {
-            "enum": [
-                true,
-                false
-            ],
-            "type": "boolean",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ = json.MarshalIndent(operation.Parameters, "", "    ")
+	expected = `[
+    {
+        "enum": [
+            true,
+            false
+        ],
+        "type": "boolean",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 
 	operation = NewOperation(nil)
@@ -1736,19 +1689,17 @@ func TestParseParamCommentByMaxLength(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "maxLength": 10,
-            "type": "string",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "maxLength": 10,
+        "type": "string",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 
 	comment = `@Param some_id query int true "Some ID" MaxLength(10)`
@@ -1766,19 +1717,17 @@ func TestParseParamCommentByMinLength(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "minLength": 10,
-            "type": "string",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "minLength": 10,
+        "type": "string",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 
 	comment = `@Param some_id query int true "Some ID" MinLength(10)`
@@ -1796,19 +1745,17 @@ func TestParseParamCommentByMinimum(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "minimum": 10,
-            "type": "integer",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "minimum": 10,
+        "type": "integer",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 
 	comment = `@Param some_id query int true "Some ID" Mininum(10)`
@@ -1829,19 +1776,17 @@ func TestParseParamCommentByMaximum(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "maximum": 10,
-            "type": "integer",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "maximum": 10,
+        "type": "integer",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 
 	comment = `@Param some_id query int true "Some ID" Maxinum(10)`
@@ -1862,19 +1807,17 @@ func TestParseParamCommentByDefault(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "integer",
-            "default": 10,
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "default": 10,
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1886,26 +1829,24 @@ func TestParseParamArrayWithEnums(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "array",
-            "items": {
-                "enum": [
-                    "also",
-                    "valid"
-                ],
-                "type": "string"
-            },
-            "collectionFormat": "csv",
-            "description": "An enum collection",
-            "name": "field",
-            "in": "query",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "array",
+        "items": {
+            "enum": [
+                "also",
+                "valid"
+            ],
+            "type": "string"
+        },
+        "collectionFormat": "csv",
+        "description": "An enum collection",
+        "name": "field",
+        "in": "query",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -1967,21 +1908,19 @@ func TestParseParamCommentByExtensions(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "parameters": [
-        {
-            "type": "integer",
-            "x-custom": "Goopher",
-            "x-custom2": true,
-            "x-example": "test",
-            "description": "Some ID",
-            "name": "some_id",
-            "in": "path",
-            "required": true
-        }
-    ]
-}`
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "x-custom": "Goopher",
+        "x-custom2": true,
+        "x-example": "test",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "path",
+        "required": true
+    }
+]`
 	assert.Equal(t, expected, string(b))
 }
 
@@ -2029,18 +1968,11 @@ func TestParseSecurityComment(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "security": [
-        {
-            "OAuth2Implicit": [
-                "read",
-                "write"
-            ]
-        }
-    ]
-}`
-	assert.Equal(t, expected, string(b))
+	assert.Equal(t, operation.Security, []map[string][]string{
+		map[string][]string{
+			"OAuth2Implicit": []string{"read", "write"},
+		},
+	})
 }
 
 func TestParseMultiDescription(t *testing.T) {
@@ -2138,17 +2070,13 @@ func TestParseExtentions(t *testing.T) {
 
 		err := operation.ParseComment(comment, nil)
 		assert.NoError(t, err)
-
-		expected := `{
-    "x-amazon-apigateway-integration": {
-        "httpMethod": "POST",
-        "passthroughBehavior": "when_no_match",
-        "type": "aws_proxy",
-        "uri": "${some_arn}"
-    }
-}`
-		b, _ := json.MarshalIndent(operation, "", "    ")
-		assert.Equal(t, expected, string(b))
+		assert.Equal(t, operation.Extensions["x-amazon-apigateway-integration"],
+			map[string]interface{}{
+				"httpMethod":          "POST",
+				"passthroughBehavior": "when_no_match",
+				"type":                "aws_proxy",
+				"uri":                 "${some_arn}",
+			})
 	}
 
 	// Test x-tagGroups
@@ -2158,22 +2086,15 @@ func TestParseExtentions(t *testing.T) {
 
 		err := operation.ParseComment(comment, nil)
 		assert.NoError(t, err)
-
-		expected := `{
-    "x-tagGroups": [
-        {
-            "name": "Natural Persons",
-            "tags": [
-                "Person",
-                "PersonRisk",
-                "PersonDocuments"
-            ]
-        }
-    ]
-}`
-
-		b, _ := json.MarshalIndent(operation, "", "    ")
-		assert.Equal(t, expected, string(b))
+		assert.Equal(t, operation.Extensions["x-tagGroups"],
+			[]interface{}{map[string]interface{}{
+				"name": "Natural Persons",
+				"tags": []interface{}{
+					"Person",
+					"PersonRisk",
+					"PersonDocuments",
+				},
+			}})
 	}
 }
 
@@ -2275,17 +2196,9 @@ func TestParseCodeSamples(t *testing.T) {
 
 		err := operation.ParseComment(comment, nil)
 		assert.NoError(t, err, "no error should be thrown")
-
-		b, _ := json.MarshalIndent(operation, "", "    ")
-
-		expected := `{
-    "summary": "example",
-    "x-codeSamples": {
-        "lang": "JavaScript",
-        "source": "console.log('Hello World');"
-    }
-}`
-		assert.Equal(t, expected, string(b))
+		assert.Equal(t, operation.Summary, "example")
+		assert.Equal(t, operation.Extensions["x-codeSamples"],
+			map[string]interface{}{"lang": "JavaScript", "source": "console.log('Hello World');"})
 	})
 
 	t.Run("With broken file sample", func(t *testing.T) {
