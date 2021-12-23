@@ -74,9 +74,9 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 }
 
 // RangeFiles for range the collection of ast.File in alphabetic order.
-func (pkgs *PackagesDefinitions) RangeFiles(handle func(filename string, file *ast.File) error) error {
-	sortedFiles := make([]*AstFileInfo, 0, len(pkgs.files))
-	for _, info := range pkgs.files {
+func rangeFiles(files map[*ast.File]*AstFileInfo, handle func(filename string, file *ast.File) error) error {
+	sortedFiles := make([]*AstFileInfo, 0, len(files))
+	for _, info := range files {
 		sortedFiles = append(sortedFiles, info)
 	}
 
