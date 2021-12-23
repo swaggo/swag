@@ -1,4 +1,4 @@
 package swag
 
 // Version of swag.
-const Version = "v1.7.6"
+const Version = "v1.7.7"
