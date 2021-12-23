@@ -990,10 +990,6 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 
 // DefaultResponse return the default response member pointer.
 func (operation *Operation) DefaultResponse() *spec.Response {
-	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{}
-	}
-
 	if operation.Responses.Default == nil {
 		operation.Responses.Default = spec.NewResponse()
 	}
