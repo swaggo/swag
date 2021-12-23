@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"text/template"
 	"time"
@@ -137,6 +138,150 @@ func (g *Gen) Build(config *Config) error {
 	}
 	swagger := p.GetSwagger()
 
+	pathMap := swagger.SwaggerProps.Paths.Paths
+	idx := 1
+	baseRef, _ := spec.NewRef("#/definitions/yidAutoResponse")
+	for key, _ := range pathMap {
+		item := pathMap[key]
+		// 获取get post等path
+		rv := reflect.ValueOf(&item.PathItemProps).Elem()
+		for i := 0; i < rv.NumField(); i++ {
+			x := rv.Field(i)
+			if !x.IsNil() && reflect.TypeOf(x.Interface()).Kind() == reflect.Ptr {
+				get, ok := x.Interface().(*spec.Operation)
+				if ok {
+					getResp := get.OperationProps.Responses
+					if getResp == nil {
+						get.OperationProps.Responses = &spec.Responses{
+							ResponsesProps: spec.ResponsesProps{
+								StatusCodeResponses: map[int]spec.Response{
+									200: {
+										ResponseProps: spec.ResponseProps{
+											Description: "auto response",
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Ref: baseRef,
+												},
+											},
+										},
+									}},
+							},
+						}
+						continue
+					}
+					responseMap := getResp.ResponsesProps.StatusCodeResponses
+					// baseRef, _ := spec.NewRef("#/definitions/yidAutoResponse")
+					if responseMap == nil {
+						getResp.ResponsesProps.StatusCodeResponses = map[int]spec.Response{
+							200: {
+								ResponseProps: spec.ResponseProps{
+									Description: "auto response",
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: baseRef,
+										},
+									},
+								},
+							}}
+						continue
+					}
+					for keyCode, valResponse := range responseMap {
+						if valResponse.ResponseProps.Schema.SchemaProps.Type == nil {
+							newResponse := responseMap[keyCode]
+							urn := newResponse.ResponseProps.Schema.SchemaProps.Ref.Ref.String()
+							baseRef, _ := spec.NewRef(urn + "Auto")
+							newResponse.ResponseProps.Schema.SchemaProps.Ref = baseRef
+							responseMap[keyCode] = newResponse
+							addAutoObject(swagger, urn)
+						} else {
+							oldResponse := responseMap[keyCode]
+							name := fmt.Sprintf("yidAutoResponse%d", idx)
+							idx++
+							autoRef, _ := spec.NewRef("#/definitions/" + name)
+							responseMap[keyCode] = spec.Response{
+								ResponseProps: spec.ResponseProps{
+									Description: "auto response ok",
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: autoRef,
+										},
+									},
+								},
+							}
+							swagger.Definitions[name] = spec.Schema{
+								SchemaProps: spec.SchemaProps{
+									Type: []string{"object"},
+									Properties: map[string]spec.Schema{
+										"code": {
+											SchemaProps: spec.SchemaProps{
+												Description: "返回码",
+												Type:        []string{"string"},
+											}},
+										"message": {
+											SchemaProps: spec.SchemaProps{
+												Description: "返回信息",
+												Type:        []string{"string"},
+											}},
+										"request_id": {
+											SchemaProps: spec.SchemaProps{
+												Description: "requestID",
+												Type:        []string{"string"},
+											}},
+										"data": *oldResponse.ResponseProps.Schema,
+									},
+								},
+							}
+						}
+					}
+					// baseRef, _ := spec.NewRef("#/definitions/yidAutoResponse")
+					if _, ok := responseMap[200]; !ok {
+						responseMap[200] = spec.Response{
+							ResponseProps: spec.ResponseProps{
+								Description: "auto response",
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: baseRef,
+									},
+								},
+							},
+						}
+					}
+				}
+			}
+		}
+		pathMap[key] = item
+	}
+	swagger.SwaggerProps.Paths.Paths = pathMap
+
+	// 默认返回
+	swagger.Definitions["yidAutoResponse"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"code": {
+					SchemaProps: spec.SchemaProps{
+						Description: "返回码",
+						Type:        []string{"string"},
+					}},
+				"message": {
+					SchemaProps: spec.SchemaProps{
+						Description: "返回信息",
+						Type:        []string{"string"},
+					}},
+				"request_id": {
+					SchemaProps: spec.SchemaProps{
+						Description: "requestID",
+						Type:        []string{"string"},
+					}},
+				"data": {
+					SchemaProps: spec.SchemaProps{
+						Description: "data",
+						Type:        []string{"object"},
+					}},
+			},
+		},
+	}
+
 	b, err := g.jsonIndent(swagger)
 	if err != nil {
 		return err
@@ -187,6 +332,41 @@ func (g *Gen) Build(config *Config) error {
 	log.Printf("create swagger.yaml at %+v", yamlFileName)
 
 	return nil
+}
+
+func addAutoObject(swagger *spec.Swagger, uri string) {
+	baseRef, _ := spec.NewRef(uri)
+	splitedUri := strings.Split(uri, `/`)
+	name := splitedUri[len(splitedUri)-1]
+	swagger.Definitions[name+"Auto"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"code": {
+					SchemaProps: spec.SchemaProps{
+						Description: "返回码",
+						Type:        []string{"string"},
+					}},
+				"message": {
+					SchemaProps: spec.SchemaProps{
+						Description: "返回信息",
+						Type:        []string{"string"},
+					}},
+				"request_id": {
+					SchemaProps: spec.SchemaProps{
+						Description: "requestID",
+						Type:        []string{"string"},
+					}},
+				"data": {
+					SchemaProps: spec.SchemaProps{
+						Description: "数据",
+						Type:        []string{"object"},
+						Ref:         baseRef,
+					},
+				},
+			},
+		},
+	}
 }
 
 func (g *Gen) writeFile(b []byte, file string) error {
