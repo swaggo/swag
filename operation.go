@@ -61,7 +61,13 @@ func NewOperation(parser *Parser, options ...func(*Operation)) *Operation {
 		parser:           parser,
 		RouterProperties: []RouteProperties{},
 		Operation: spec.Operation{
-			OperationProps: spec.OperationProps{},
+			OperationProps: spec.OperationProps{
+				Responses: &spec.Responses{
+					ResponsesProps: spec.ResponsesProps{
+						StatusCodeResponses: make(map[int]spec.Response),
+					},
+				},
+			},
 			VendorExtensible: spec.VendorExtensible{
 				Extensions: spec.Extensions{},
 			},
@@ -984,10 +990,6 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 
 // DefaultResponse return the default response member pointer.
 func (operation *Operation) DefaultResponse() *spec.Response {
-	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{}
-	}
-
 	if operation.Responses.Default == nil {
 		operation.Responses.Default = spec.NewResponse()
 	}
@@ -997,14 +999,6 @@ func (operation *Operation) DefaultResponse() *spec.Response {
 
 // AddResponse add a response for a code.
 func (operation *Operation) AddResponse(code int, response *spec.Response) {
-	if operation.Responses == nil {
-		operation.Responses = &spec.Responses{
-			ResponsesProps: spec.ResponsesProps{
-				StatusCodeResponses: make(map[int]spec.Response),
-			},
-		}
-	}
-
 	operation.Responses.StatusCodeResponses[code] = *response
 }
 
