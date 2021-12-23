@@ -4,7 +4,6 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -38,7 +37,7 @@ func (pkgs *PackagesDefinitions) CollectAstFile(packageDir, path string, astFile
 	if pkgs.packages == nil {
 		pkgs.packages = make(map[string]*PackageDefinitions)
 	}
-	log.Printf("CollectAstFile: %s:%s", packageDir, path)
+
 	// return without storing the file if we lack a packageDir
 	if packageDir == "" {
 		return nil

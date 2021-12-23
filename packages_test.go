@@ -2,6 +2,7 @@ package swag
 
 import (
 	"go/ast"
+	"go/token"
 	"path/filepath"
 	"testing"
 
@@ -39,7 +40,7 @@ func TestPackagesDefinitions_CollectAstFile(t *testing.T) {
 	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+secondFile.Name.String(), secondFile))
 }
 
-func TestPackagesDefinitions_RangeFiles(t *testing.T) {
+func TestPackagesDefinitions_rangeFiles(t *testing.T) {
 	pd := PackagesDefinitions{
 		files: map[*ast.File]*AstFileInfo{
 			{
@@ -65,6 +66,48 @@ func TestPackagesDefinitions_RangeFiles(t *testing.T) {
 		i++
 		return nil
 	})
+}
+
+func TestPackagesDefinitions_ParseTypes(t *testing.T) {
+	absPath, _ := filepath.Abs("")
+
+	mainAST := ast.File{
+		Name: &ast.Ident{Name: "main.go"},
+		Decls: []ast.Decl{
+			&ast.GenDecl{
+				Tok: token.TYPE,
+				Specs: []ast.Spec{
+					&ast.TypeSpec{
+						Name: &ast.Ident{Name: "Test"},
+						Type: &ast.Ident{
+							Name: "string",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	pd := PackagesDefinitions{
+		files: map[*ast.File]*AstFileInfo{
+			&mainAST: {
+				File:        &mainAST,
+				Path:        filepath.Join(absPath, "testdata/simple/main.go"),
+				PackagePath: "main",
+			},
+			{
+				Name: &ast.Ident{Name: "api.go"},
+			}: {
+				File:        &ast.File{Name: &ast.Ident{Name: "api.go"}},
+				Path:        filepath.Join(absPath, "testdata/simple/api/api.go"),
+				PackagePath: "api",
+			},
+		},
+		packages: make(map[string]*PackageDefinitions),
+	}
+
+	_, err := pd.ParseTypes()
+	assert.NoError(t, err)
 }
 
 func TestPackagesDefinitions_findTypeSpec(t *testing.T) {
