@@ -886,19 +886,6 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	header := newHeaderSpec(strings.Trim(matches[2], "{}"), strings.Trim(matches[4], "\""))
 
 	headerKey := matches[3]
-	if operation.Responses.Default != nil {
-		if operation.Responses.Default.Headers == nil {
-			operation.Responses.Default.Headers = make(map[string]spec.Header)
-		}
-	}
-
-	for code, response := range operation.Responses.StatusCodeResponses {
-		if response.Headers == nil {
-			r := operation.Responses.StatusCodeResponses[code]
-			r.Headers = make(map[string]spec.Header)
-			operation.Responses.StatusCodeResponses[code] = r
-		}
-	}
 
 	if strings.EqualFold(matches[1], "all") {
 		if operation.Responses.Default != nil {
@@ -991,7 +978,11 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 // DefaultResponse return the default response member pointer.
 func (operation *Operation) DefaultResponse() *spec.Response {
 	if operation.Responses.Default == nil {
-		operation.Responses.Default = spec.NewResponse()
+		operation.Responses.Default = &spec.Response{
+			ResponseProps: spec.ResponseProps{
+				Headers: make(map[string]spec.Header),
+			},
+		}
 	}
 
 	return operation.Responses.Default
@@ -999,6 +990,9 @@ func (operation *Operation) DefaultResponse() *spec.Response {
 
 // AddResponse add a response for a code.
 func (operation *Operation) AddResponse(code int, response *spec.Response) {
+	if response.Headers == nil {
+		response.Headers = make(map[string]spec.Header)
+	}
 	operation.Responses.StatusCodeResponses[code] = *response
 }
 
