@@ -1,7 +1,7 @@
 # Dockerfile References: https://docs.docker.com/engine/reference/builder/
 
 # Start from the latest golang base image
-FROM golang:1.14-alpine as builder
+FROM golang:1.17-alpine as builder
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -26,4 +26,3 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/swag .
-
