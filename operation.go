@@ -154,7 +154,7 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 			return err
 		}
 
-		var valueJSON interface{}
+		var valueJSON []map[string]interface{}
 
 		if isJSON {
 			err = json.Unmarshal(data, &valueJSON)

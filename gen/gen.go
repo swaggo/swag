@@ -35,7 +35,7 @@ type Gen struct {
 func New() *Gen {
 	return &Gen{
 		jsonIndent: func(data interface{}) ([]byte, error) {
-			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			var json = jsoniter.ConfigDefault
 			return json.MarshalIndent(&data, "", "    ")
 		},
 		jsonToYAML: yaml.JSONToYAML,
