@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/swaggo/swag"
+	"github.com/Nerzal/swag"
 )
 
 var doc = `{

@@ -6,8 +6,10 @@ import (
 	"os"
 
 	"github.com/Nerzal/swag"
-	"github.com/Nerzal/swag/gen"
 	"github.com/Nerzal/swag/format"
+	"github.com/Nerzal/swag/gen"
+
+	"github.com/urfave/cli/v2"
 )
 
 const (

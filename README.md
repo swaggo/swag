@@ -4,7 +4,7 @@
 
 <img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
-[![Build Status](https://github.com/swaggo/swag/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/features/actions)
+[![Build Status](https://github.com/Nerzal/swag/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/features/actions)
 [![Coverage Status](https://img.shields.io/codecov/c/github/swaggo/swag/master.svg)](https://codecov.io/gh/swaggo/swag)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Nerzal/swag)](https://goreportcard.com/report/github.com/Nerzal/swag)
 [![codebeat badge](https://codebeat.co/badges/71e2f5e5-9e6b-405d-baf9-7cc8b5037330)](https://codebeat.co/projects/github-com-swaggo-swag-master)
@@ -52,7 +52,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 $ go get -u github.com/Nerzal/swag/cmd/swag
 
 # 1.16 or newer
-$ go install github.com/swaggo/swag/cmd/swag@latest
+$ go install github.com/Nerzal/swag/cmd/swag@latest
 ```
 To build from source you need [Go](https://golang.org/dl/) (1.14 or newer).
 
@@ -295,7 +295,7 @@ $ swag init
 ## The swag formatter
 
 The Swag Comments can be automatically formatted, just like 'go fmt'.  
-Find the result of formatting [here](https://github.com/swaggo/swag/tree/master/example/celler).
+Find the result of formatting [here](https://github.com/Nerzal/swag/tree/master/example/celler).
 
 Usage: 
 ```shell

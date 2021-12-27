@@ -12,10 +12,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Nerzal/swag"
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/swaggo/swag"
 )
 
 const searchDir = "../testdata/simple"
@@ -153,7 +153,7 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 			require.NoError(t, err)
 		}
 	}
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/quotes")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/Nerzal/swag/testdata/quotes")
 	cmd.Dir = config.SearchDir
 	output, err := cmd.CombinedOutput()
 	if err != nil {

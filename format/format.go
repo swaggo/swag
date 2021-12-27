@@ -3,7 +3,7 @@ package format
 import (
 	"log"
 
-	"github.com/swaggo/swag"
+	"github.com/Nerzal/swag"
 )
 
 type Fmt struct {

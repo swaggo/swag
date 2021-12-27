@@ -1,7 +1,6 @@
 package swag
 
 import (
-	"errors"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -146,7 +145,8 @@ func (pkgs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packagePa
 							TypeDefinitions: map[string]*TypeSpecDef{typeSpecDef.Name(): typeSpecDef},
 						}
 					} else if _, ok = pkgs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()]; !ok {
-					pkgs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
+						pkgs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
+					}
 
 				}
 			}
@@ -154,7 +154,7 @@ func (pkgs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packagePa
 	}
 }
 
-func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string) *TypeSpecDef {
+func (pkgs *PackagesDefinitions) findTypeSpec(pkgPath, typeName string) *TypeSpecDef {
 	if pkgs.packages == nil {
 		return nil
 	}
@@ -178,6 +178,7 @@ func (pkgs *PackagesDefinitions) loadExternalPackage(importPath string) error {
 	conf := loader.Config{
 		ParserMode: goparser.ParseComments,
 		Cwd:        cwd,
+	}
 
 	conf.Import(importPath)
 
@@ -206,8 +207,8 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 		return ""
 	}
 
-	if strings.ContainsRune(pkgName, '.') {
-		pkgName = strings.Split(pkgName, ".")[0]
+	if strings.ContainsRune(pkg, '.') {
+		pkg = strings.Split(pkg, ".")[0]
 	}
 
 	hasAnonymousPkg := false
@@ -220,7 +221,7 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 	// prior to match named package
 	for _, imp := range file.Imports {
 		if imp.Name != nil {
-			if imp.Name.Name == pkgName {
+			if imp.Name.Name == pkg {
 				return strings.Trim(imp.Path.Value, `"`)
 			}
 			if imp.Name.Name == "_" {
@@ -229,6 +230,7 @@ func (pkgs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *as
 
 			continue
 		}
+
 		if pkgs.packages != nil {
 			path := strings.Trim(imp.Path.Value, `"`)
 			if fuzzy {
@@ -305,15 +307,14 @@ func (pkgs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File, p
 			}
 		}
 
-			pkgDefinition := pkgs.packages["pkg/"+parts[0]]
-			if pkgDefinition == nil {
-				return pkgs.findTypeSpec(pkgPath, parts[1])
-			}
+		pkgDefinition := pkgs.packages["pkg/"+parts[0]]
+		if pkgDefinition == nil {
+			return pkgs.findTypeSpec(pkgPath, parts[1])
+		}
 
-			typeDef := pkgDefinition.TypeDefinitions[parts[1]]
-			if typeDef != nil {
-				return typeDef
-			}
+		typeDef := pkgDefinition.TypeDefinitions[parts[1]]
+		if typeDef != nil {
+			return typeDef
 		}
 
 		return pkgs.findTypeSpec(pkgPath, parts[1])

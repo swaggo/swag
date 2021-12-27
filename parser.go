@@ -295,7 +295,7 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		}
 
 		if err := t.Resolve(pkgName); err != nil {
-			return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not parse dependencies")
+			return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not resolve dependencies")
 		}
 
 		for i := 0; i < len(t.Root.Deps); i++ {
@@ -359,9 +359,15 @@ func initIfEmpty(license *spec.License) *spec.License {
 
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path.
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
-	fileTree, err := goparser.ParseFile(token.NewFileSet(), mainAPIFile, nil, goparser.ParseComments)
+	filePath := mainAPIFile
+
+	if !strings.Contains(mainAPIFile, "main.go") {
+		filePath = mainAPIFile + "/main.go"
+	}
+
+	fileTree, err := goparser.ParseFile(token.NewFileSet(), filePath, nil, goparser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("cannot parse source files %s: %s", mainAPIFile, err)
+		return fmt.Errorf("cannot parse source files %s: %s", filePath, err)
 	}
 
 	parser.swagger.Swagger = "2.0"
@@ -371,6 +377,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 		if !isGeneralAPIComment(comments) {
 			continue
 		}
+
 		err := parseGeneralAPIInfo(parser, comments)
 		if err != nil {
 			return err
@@ -504,18 +511,18 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			parser.swagger.SecurityDefinitions[value] = secOAuth2AccessToken(attrs["@authorizationurl"], attrs["@tokenurl"], scopes, ext)
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = value
-			case "@x-taggroups":
-				originalAttribute := strings.Split(commentLine, " ")[0]
-				if len(value) == 0 {
-					return fmt.Errorf("annotation %s need a value", attribute)
-				}
+		case "@x-taggroups":
+			originalAttribute := strings.Split(commentLine, " ")[0]
+			if len(value) == 0 {
+				return fmt.Errorf("annotation %s need a value", attribute)
+			}
 
-				var valueJSON interface{}
-				if err := json.Unmarshal([]byte(value), &valueJSON); err != nil {
-					return fmt.Errorf("annotation %s need a valid json value", originalAttribute)
-				}
+			var valueJSON interface{}
+			if err := json.Unmarshal([]byte(value), &valueJSON); err != nil {
+				return fmt.Errorf("annotation %s need a valid json value. error: %s", originalAttribute, err.Error())
+			}
 
-				parser.swagger.Extensions[originalAttribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
+			parser.swagger.Extensions[originalAttribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
 		default:
 			prefixExtension := "@x-"
 			// Prefix extension + 1 char + 1 space  + 1 char
@@ -543,7 +550,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 				extensionName := "x-" + strings.SplitAfter(attribute, prefixExtension)[1]
 				err := json.Unmarshal([]byte(split[1]), &valueJSON)
 				if err != nil {
-					return fmt.Errorf("annotation %s need a valid json value", attribute)
+					return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
 				}
 
 				if strings.Contains(extensionName, "logo") {
@@ -735,6 +742,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 			// for per 'function' comment, create a new 'Operation' object
 			operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
+
 			for _, comment := range astDeclaration.Doc.List {
 				err := operation.ParseComment(comment.Text, astFile)
 				if err != nil {
@@ -759,6 +767,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 					if parser.Strict {
 						return err
 					}
+
 					parser.debug.Printf("warning: %s\n", err)
 				}
 
@@ -819,7 +828,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 
 	typeSpecDef := parser.packages.FindTypeSpec(typeName, file, parser.ParseDependency)
 	if typeSpecDef == nil {
-		parser.packages.FindTypeSpec(typeName, file) // uncomment for debugging
+		parser.packages.FindTypeSpec(typeName, file, parser.ParseDependency) // uncomment for debugging
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 

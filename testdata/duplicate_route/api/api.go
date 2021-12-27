@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	_ "github.com/swaggo/swag/testdata/simple/web"
+	_ "github.com/Nerzal/swag/testdata/simple/web"
 )
 
 // @Router /testapi/endpoint [get]

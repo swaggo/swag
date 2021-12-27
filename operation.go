@@ -7,6 +7,7 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -25,7 +26,7 @@ type RouteProperties struct {
 }
 
 // Operation describes a single API operation on a path.
-// For more information: https://github.com/swaggo/swag#api-operation
+// For more information: https://github.com/Nerzal/swag#api-operation
 type Operation struct {
 	parser              *Parser
 	codeExampleFilesDir string
@@ -142,16 +143,22 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 
 // ParseCodeSample godoc.
 func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) error {
+	log.Println("line remainder:", lineRemainder)
+
 	if lineRemainder == "file" {
+		log.Println("line remainder is file")
+
 		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
 		if err != nil {
 			return err
 		}
 
+		log.Println(string(data))
+
 		var valueJSON interface{}
 		err = json.Unmarshal(data, &valueJSON)
 		if err != nil {
-			return fmt.Errorf("annotation %s need a valid json value", attribute)
+			return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
 		}
 
 		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
@@ -185,7 +192,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 		var valueJSON interface{}
 		err := json.Unmarshal([]byte(lineRemainder), &valueJSON)
 		if err != nil {
-			return fmt.Errorf("annotation %s need a valid json value", attribute)
+			return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
 		}
 
 		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly

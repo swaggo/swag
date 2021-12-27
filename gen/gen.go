@@ -17,7 +17,6 @@ import (
 	"github.com/Nerzal/swag"
 	"github.com/ghodss/yaml"
 	"github.com/go-openapi/spec"
-	"github.com/pkg/errors"
 )
 
 var open = os.Open
