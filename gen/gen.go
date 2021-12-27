@@ -1,6 +1,7 @@
 package gen
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -18,6 +19,11 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/pkg/errors"
 )
+
+var open = os.Open
+
+// DefaultOverridesFile is the location swaggo will look for type overrides.
+const DefaultOverridesFile = ".swaggo"
 
 // Gen presents a generate tool for swag.
 type Gen struct {
@@ -37,7 +43,7 @@ func New() *Gen {
 
 // Config presents Gen configurations.
 type Config struct {
-	// SearchDir the swag would be parse
+	// SearchDir the swag would be parse,comma separated if multiple
 	SearchDir string
 
 	// excludes dirs and files in SearchDir,comma separated
@@ -49,8 +55,21 @@ type Config struct {
 	// MainAPIFile the Go file path in which 'swagger general API Info' is written
 	MainAPIFile string
 
-	// PropNamingStrategy represents property naming strategy like snakecase,camelcase,pascalcase
+	// PropNamingStrategy represents property naming strategy like snake case,camel case,pascal case
 	PropNamingStrategy string
+
+	// MarkdownFilesDir used to find markdown files, which can be used for tag descriptions
+	MarkdownFilesDir string
+
+	// CodeExampleFilesDir used to find code example files, which can be used for x-codeSamples
+	CodeExampleFilesDir string
+
+	// InstanceName is used to get distinct names for different swagger documents in the
+	// same project. The default value is "swagger".
+	InstanceName string
+
+	// ParseDepth dependency parse depth
+	ParseDepth int
 
 	// ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
@@ -61,35 +80,60 @@ type Config struct {
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
 
-	// MarkdownFilesDir used to find markdownfiles, which can be used for tag descriptions
-	MarkdownFilesDir string
+	// Strict whether swag should error or warn when it detects cases which are most likely user errors
+	Strict bool
 
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
 
-	// CodeExampleFilesDir used to find code example files, which can be used for x-codeSamples
-	CodeExampleFilesDir string
-
-	// ParseDepth dependency parse depth
-	ParseDepth int
+	// OverridesFile defines global type overrides.
+	OverridesFile string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
-	if _, err := os.Stat(config.SearchDir); os.IsNotExist(err) {
-		return errors.Wrap(fmt.Errorf("dir: %s does not exist", config.SearchDir), "could not find specified searchDir")
+	if config.InstanceName == "" {
+		config.InstanceName = swag.Name
+	}
+
+	searchDirs := strings.Split(config.SearchDir, ",")
+	for _, searchDir := range searchDirs {
+		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
+			return fmt.Errorf("dir: %s does not exist", searchDir)
+		}
+	}
+
+	var overrides map[string]string
+	if config.OverridesFile != "" {
+		overridesFile, err := open(config.OverridesFile)
+		if err != nil {
+			// Don't bother reporting if the default file is missing; assume there are no overrides
+			if !(config.OverridesFile == DefaultOverridesFile && os.IsNotExist(err)) {
+				return fmt.Errorf("could not open overrides file: %w", err)
+			}
+		} else {
+			log.Printf("Using overrides from %s", config.OverridesFile)
+
+			overrides, err = parseOverrides(overridesFile)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	log.Println("Generate swagger docs....")
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
-		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir))
+		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
+		swag.SetStrict(config.Strict),
+		swag.SetOverrides(overrides),
+	)
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
 
-	if err := p.ParseAPI(config.SearchDir, config.MainAPIFile, config.ParseDepth); err != nil {
+	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
 	}
 	swagger := p.GetSwagger()
@@ -165,6 +209,49 @@ func (g *Gen) formatSource(src []byte) []byte {
 	return code
 }
 
+// Read the swaggo overrides
+func parseOverrides(r io.Reader) (map[string]string, error) {
+	overrides := make(map[string]string)
+	scanner := bufio.NewScanner(r)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Skip comments
+		if len(line) > 1 && line[0:2] == "//" {
+			continue
+		}
+
+		parts := strings.Fields(line)
+
+		switch len(parts) {
+		case 0:
+			// only whitespace
+			continue
+		case 2:
+			// either a skip or malformed
+			if parts[0] != "skip" {
+				return nil, fmt.Errorf("could not parse override: '%s'", line)
+			}
+			overrides[parts[1]] = ""
+		case 3:
+			// either a replace or malformed
+			if parts[0] != "replace" {
+				return nil, fmt.Errorf("could not parse override: '%s'", line)
+			}
+			overrides[parts[1]] = parts[2]
+		default:
+			return nil, fmt.Errorf("could not parse override: '%s'", line)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading overrides file: %w", err)
+	}
+
+	return overrides, nil
+}
+
 func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swagger, config *Config) error {
 	generator, err := template.New("swagger_info").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
@@ -188,7 +275,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 			Info: &spec.Info{
 				VendorExtensible: swagger.Info.VendorExtensible,
 				InfoProps: spec.InfoProps{
-					Description:    "{{.Description}}",
+					Description:    "{{escape .Description}}",
 					Title:          "{{.Title}}",
 					TermsOfService: swagger.Info.TermsOfService,
 					Contact:        swagger.Info.Contact,
@@ -218,15 +305,16 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 	buffer := &bytes.Buffer{}
 	err = generator.Execute(buffer, struct {
 		Timestamp     time.Time
-		GeneratedTime bool
 		Doc           string
 		Host          string
 		PackageName   string
 		BasePath      string
-		Schemes       []string
 		Title         string
 		Description   string
 		Version       string
+		InstanceName  string
+		Schemes       []string
+		GeneratedTime bool
 	}{
 		Timestamp:     time.Now(),
 		GeneratedTime: config.GeneratedTime,
@@ -238,6 +326,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 		Title:         swagger.Info.Title,
 		Description:   swagger.Info.Description,
 		Version:       swagger.Info.Version,
+		InstanceName:  config.InstanceName,
 	})
 	if err != nil {
 		return err
@@ -250,18 +339,17 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 	return err
 }
 
-var packageTemplate = `// GENERATED BY THE COMMAND ABOVE; DO NOT EDIT
+var packageTemplate = `// Package {{.PackageName}} GENERATED BY THE COMMAND ABOVE; DO NOT EDIT
 // This file was generated by swaggo/swag{{ if .GeneratedTime }} at
 // {{ .Timestamp }}{{ end }}
-
 package {{.PackageName}}
 
 import (
 	"bytes"
 	"encoding/json"
 	"strings"
+	"text/template"
 
-	"github.com/alecthomas/template"
 	"github.com/Nerzal/swag"
 )
 
@@ -277,9 +365,9 @@ type swaggerInfo struct {
 }
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
-var SwaggerInfo = swaggerInfo{ 
+var SwaggerInfo = swaggerInfo{
 	Version:     {{ printf "%q" .Version}},
- 	Host:        {{ printf "%q" .Host}},
+	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},
 	Schemes:     []string{ {{ range $index, $schema := .Schemes}}{{if gt $index 0}},{{end}}{{printf "%q" $schema}}{{end}} },
 	Title:       {{ printf "%q" .Title}},
@@ -297,6 +385,13 @@ func (s *s) ReadDoc() string {
 			a, _ := json.Marshal(v)
 			return string(a)
 		},
+		"escape": func(v interface{}) string {
+			// escape tabs
+			str := strings.Replace(v.(string), "\t", "\\t", -1)
+			// replace " with \", and if that results in \\", replace that with \\\"
+			str = strings.Replace(str, "\"", "\\\"", -1)
+			return strings.Replace(str, "\\\\\"", "\\\\\\\"", -1)
+		},
 	}).Parse(doc)
 	if err != nil {
 		return doc
@@ -311,6 +406,6 @@ func (s *s) ReadDoc() string {
 }
 
 func init() {
-	swag.Register(swag.Name, &s{})
+	swag.Register({{ printf "%q" .InstanceName }}, &s{})
 }
 `

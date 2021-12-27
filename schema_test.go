@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"go/ast"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -8,6 +9,8 @@ import (
 )
 
 func TestValidDataType(t *testing.T) {
+	t.Parallel()
+
 	assert.NoError(t, CheckSchemaType(STRING))
 	assert.NoError(t, CheckSchemaType(NUMBER))
 	assert.NoError(t, CheckSchemaType(INTEGER))
@@ -19,6 +22,8 @@ func TestValidDataType(t *testing.T) {
 }
 
 func TestTransToValidSchemeType(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, TransToValidSchemeType("uint"), INTEGER)
 	assert.Equal(t, TransToValidSchemeType("uint32"), INTEGER)
 	assert.Equal(t, TransToValidSchemeType("uint64"), INTEGER)
@@ -27,10 +32,13 @@ func TestTransToValidSchemeType(t *testing.T) {
 	assert.Equal(t, TransToValidSchemeType("string"), STRING)
 
 	// should accept any type, due to user defined types
-	TransToValidSchemeType("oops")
+	other := "oops"
+	assert.Equal(t, TransToValidSchemeType(other), other)
 }
 
 func TestTransToValidCollectionFormat(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, TransToValidCollectionFormat("csv"), "csv")
 	assert.Equal(t, TransToValidCollectionFormat("multi"), "multi")
 	assert.Equal(t, TransToValidCollectionFormat("pipes"), "pipes")
@@ -42,6 +50,7 @@ func TestTransToValidCollectionFormat(t *testing.T) {
 }
 
 func TestIsGolangPrimitiveType(t *testing.T) {
+	t.Parallel()
 
 	assert.Equal(t, IsGolangPrimitiveType("uint"), true)
 	assert.Equal(t, IsGolangPrimitiveType("int"), true)
@@ -63,6 +72,7 @@ func TestIsGolangPrimitiveType(t *testing.T) {
 }
 
 func TestIsSimplePrimitiveType(t *testing.T) {
+	t.Parallel()
 
 	assert.Equal(t, IsSimplePrimitiveType("string"), true)
 	assert.Equal(t, IsSimplePrimitiveType("number"), true)
@@ -73,6 +83,8 @@ func TestIsSimplePrimitiveType(t *testing.T) {
 }
 
 func TestBuildCustomSchema(t *testing.T) {
+	t.Parallel()
+
 	var schema *spec.Schema
 	var err error
 
@@ -120,8 +132,27 @@ func TestBuildCustomSchema(t *testing.T) {
 }
 
 func TestIsNumericType(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, IsNumericType(INTEGER), true)
 	assert.Equal(t, IsNumericType(NUMBER), true)
 
 	assert.Equal(t, IsNumericType(STRING), false)
+}
+
+func TestTypeDocName(t *testing.T) {
+	t.Parallel()
+
+	expected := "a/package"
+	assert.Equal(t, expected, TypeDocName(expected, nil))
+
+	expected = "package.Model"
+	assert.Equal(t, expected, TypeDocName("package", &ast.TypeSpec{Name: &ast.Ident{Name: "Model"}}))
+
+	expected = "Model"
+	assert.Equal(t, expected, TypeDocName("package", &ast.TypeSpec{
+		Comment: &ast.CommentGroup{
+			List: []*ast.Comment{{Text: "// @name Model"}},
+		},
+	}))
 }

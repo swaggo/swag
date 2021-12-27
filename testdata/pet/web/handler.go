@@ -16,7 +16,7 @@ type Pet struct {
 	PhotoUrls []string `json:"photo_urls" example:"http://test/image/1.jpg,http://test/image/2.jpg"`
 	Tags      []Tag    `json:"tags"`
 	Status    string   `json:"status"`
-	Price     float32  `json:"price" example:"3.25"`
+	Price     float32  `json:"price" example:"3.25" multipleOf:"0.01"`
 	IsAlive   bool     `json:"is_alive" example:"true"`
 }
 

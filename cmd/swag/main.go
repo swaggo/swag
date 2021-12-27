@@ -7,7 +7,7 @@ import (
 
 	"github.com/Nerzal/swag"
 	"github.com/Nerzal/swag/gen"
-	"github.com/urfave/cli/v2"
+	"github.com/Nerzal/swag/format"
 )
 
 const (
@@ -23,6 +23,8 @@ const (
 	parseInternalFlag    = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
 	parseDepthFlag       = "parseDepth"
+	instanceNameFlag     = "instanceName"
+	overridesFileFlag    = "overridesFile"
 )
 
 var initFlags = []cli.Flag{
@@ -36,7 +38,7 @@ var initFlags = []cli.Flag{
 		Name:    searchDirFlag,
 		Aliases: []string{"d"},
 		Value:   "./",
-		Usage:   "Directory you want to parse",
+		Usage:   "Directories you want to parse,comma separated and general-info file must be in the first one",
 	},
 	&cli.StringFlag{
 		Name:  excludeFlag,
@@ -45,8 +47,8 @@ var initFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:    propertyStrategyFlag,
 		Aliases: []string{"p"},
-		Value:   "camelcase",
-		Usage:   "Property Naming Strategy like snakecase,camelcase,pascalcase",
+		Value:   swag.CamelCase,
+		Usage:   "Property Naming Strategy like " + swag.SnakeCase + "," + swag.CamelCase + "," + swag.PascalCase,
 	},
 	&cli.StringFlag{
 		Name:    outputFlag,
@@ -59,8 +61,9 @@ var initFlags = []cli.Flag{
 		Usage: "Parse go files in 'vendor' folder, disabled by default",
 	},
 	&cli.BoolFlag{
-		Name:  parseDependencyFlag,
-		Usage: "Parse go files in outside dependency folder, disabled by default",
+		Name:    parseDependencyFlag,
+		Aliases: []string{"pd"},
+		Usage:   "Parse go files inside dependency folder, disabled by default",
 	},
 	&cli.StringFlag{
 		Name:    markdownFilesFlag,
@@ -87,6 +90,16 @@ var initFlags = []cli.Flag{
 		Value: 100,
 		Usage: "Dependency parse depth",
 	},
+	&cli.StringFlag{
+		Name:  instanceNameFlag,
+		Value: "",
+		Usage: "This parameter can be used to name different swagger document instances. It is optional.",
+	},
+	&cli.StringFlag{
+		Name:  overridesFileFlag,
+		Value: gen.DefaultOverridesFile,
+		Usage: "File to read global type overrides from.",
+	},
 }
 
 func initAction(c *cli.Context) error {
@@ -111,6 +124,8 @@ func initAction(c *cli.Context) error {
 		GeneratedTime:       c.Bool(generatedTimeFlag),
 		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
 		ParseDepth:          c.Int(parseDepthFlag),
+		InstanceName:        c.String(instanceNameFlag),
+		OverridesFile:       c.String(overridesFileFlag),
 	})
 }
 
@@ -126,6 +141,40 @@ func main() {
 			Usage:   "Create docs.go",
 			Action:  initAction,
 			Flags:   initFlags,
+		},
+		{
+			Name:    "fmt",
+			Aliases: []string{"f"},
+			Usage:   "format swag comments",
+			Action: func(c *cli.Context) error {
+				searchDir := c.String(searchDirFlag)
+				excludeDir := c.String(excludeFlag)
+				mainFile := c.String(generalInfoFlag)
+
+				return format.New().Build(&format.Config{
+					SearchDir: searchDir,
+					Excludes:  excludeDir,
+					MainFile:  mainFile,
+				})
+			},
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:    searchDirFlag,
+					Aliases: []string{"d"},
+					Value:   "./",
+					Usage:   "Directories you want to parse,comma separated and general-info file must be in the first one",
+				},
+				&cli.StringFlag{
+					Name:  excludeFlag,
+					Usage: "Exclude directories and files when searching, comma separated",
+				},
+				&cli.StringFlag{
+					Name:    generalInfoFlag,
+					Aliases: []string{"g"},
+					Value:   "main.go",
+					Usage:   "Go file path in which 'swagger general API Info' is written",
+				},
+			},
 		},
 	}
 	err := app.Run(os.Args)

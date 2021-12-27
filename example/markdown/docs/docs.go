@@ -8,9 +8,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"strings"
+	"text/template"
 
 	"github.com/Nerzal/swag"
-	"github.com/alecthomas/template"
 )
 
 var doc = `{

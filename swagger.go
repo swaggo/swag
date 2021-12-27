@@ -2,6 +2,7 @@ package swag
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 )
 
@@ -10,10 +11,10 @@ const Name = "swagger"
 
 var (
 	swaggerMu sync.RWMutex
-	swag      Swagger
+	swags     map[string]Swagger
 )
 
-// Swagger is a interface to read swagger document.
+// Swagger is an interface to read swagger document.
 type Swagger interface {
 	ReadDoc() string
 }
@@ -26,16 +27,35 @@ func Register(name string, swagger Swagger) {
 		panic("swagger is nil")
 	}
 
-	if swag != nil {
+	if swags == nil {
+		swags = make(map[string]Swagger)
+	}
+
+	if _, ok := swags[name]; ok {
 		panic("Register called twice for swag: " + name)
 	}
-	swag = swagger
+	swags[name] = swagger
 }
 
-// ReadDoc reads swagger document.
-func ReadDoc() (string, error) {
-	if swag != nil {
-		return swag.ReadDoc(), nil
+// ReadDoc reads swagger document. An optional name parameter can be passed to read a specific document.
+// The default name is "swagger".
+func ReadDoc(optionalName ...string) (string, error) {
+	swaggerMu.RLock()
+	defer swaggerMu.RUnlock()
+
+	if swags == nil {
+		return "", errors.New("no swag has yet been registered")
 	}
-	return "", errors.New("not yet registered swag")
+
+	name := Name
+	if len(optionalName) != 0 && optionalName[0] != "" {
+		name = optionalName[0]
+	}
+
+	swag, ok := swags[name]
+	if !ok {
+		return "", fmt.Errorf("no swag named \"%s\" was registered", name)
+	}
+
+	return swag.ReadDoc(), nil
 }
