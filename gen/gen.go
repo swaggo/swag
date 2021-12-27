@@ -3,7 +3,6 @@ package gen
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"go/format"
 	"io"
@@ -13,6 +12,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/Nerzal/swag"
 	"github.com/ghodss/yaml"
@@ -34,7 +35,8 @@ type Gen struct {
 func New() *Gen {
 	return &Gen{
 		jsonIndent: func(data interface{}) ([]byte, error) {
-			return json.MarshalIndent(data, "", "    ")
+			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			return json.MarshalIndent(&data, "", "    ")
 		},
 		jsonToYAML: yaml.JSONToYAML,
 	}

@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-openapi/spec"
 	"golang.org/x/tools/go/loader"
+	"gopkg.in/yaml.v2"
 )
 
 // RouteProperties describes HTTP properties of a single router comment.
@@ -148,17 +149,23 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 	if lineRemainder == "file" {
 		log.Println("line remainder is file")
 
-		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
+		data, isJSON, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
 		if err != nil {
 			return err
 		}
 
-		log.Println(string(data))
-
 		var valueJSON interface{}
-		err = json.Unmarshal(data, &valueJSON)
-		if err != nil {
-			return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
+
+		if isJSON {
+			err = json.Unmarshal(data, &valueJSON)
+			if err != nil {
+				return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
+			}
+		} else {
+			err = yaml.Unmarshal(data, &valueJSON)
+			if err != nil {
+				return fmt.Errorf("annotation %s need a valid yaml value. error: %s", attribute, err.Error())
+			}
 		}
 
 		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
@@ -240,6 +247,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	if len(matches) != 6 {
 		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
 	}
+
 	name := matches[1]
 	paramType := matches[2]
 	refType := TransToValidSchemeType(matches[3])
@@ -1039,10 +1047,10 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 	return result
 }
 
-func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error) {
+func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, bool, error) {
 	filesInfos, err := ioutil.ReadDir(dirPath)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	for _, fileInfo := range filesInfos {
@@ -1051,7 +1059,9 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 		}
 		fileName := fileInfo.Name()
 
-		if !strings.Contains(fileName, ".json") {
+		isJson := strings.Contains(fileName, ".json")
+		isYaml := strings.Contains(fileName, ".yaml")
+		if !isJson && !isYaml {
 			continue
 		}
 
@@ -1059,12 +1069,12 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 			fullPath := filepath.Join(dirPath, fileName)
 			commentInfo, err := ioutil.ReadFile(fullPath)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
+				return nil, false, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
 			}
 
-			return commentInfo, nil
+			return commentInfo, isJson, nil
 		}
 	}
 
-	return nil, fmt.Errorf("unable to find code example file for tag %s in the given directory", summaryName)
+	return nil, false, fmt.Errorf("unable to find code example file for tag %s in the given directory", summaryName)
 }

@@ -2060,7 +2060,7 @@ func TestParseExtentions(t *testing.T) {
 		operation := NewOperation(nil)
 
 		err := operation.ParseComment(comment, nil)
-		assert.EqualError(t, err, "annotation @x-amazon-apigateway-integration need a valid json value")
+		assert.EqualError(t, err, "annotation @x-amazon-apigateway-integration need a valid json value. error: invalid character '}' after array element")
 	}
 
 	// OK
