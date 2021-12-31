@@ -810,6 +810,10 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	}), nil
 }
 
+func (operation *Operation) ParseAPIObjectSchema(schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
+	return operation.parseObjectSchema(refType, astFile)
+}
+
 func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch schemaType {
 	case OBJECT:
