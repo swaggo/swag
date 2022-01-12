@@ -435,6 +435,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 - number (float32)
 - boolean (bool)
 - user defined struct
+- file
 
 ## Security
 | annotation | description | parameters | example |
