@@ -41,6 +41,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [Rename model to display](#rename-model-to-display)
 	- [How to use security annotations](#how-to-use-security-annotations)
 	- [Add a description for enum items](#add-a-description-for-enum-items)
+	- [Generate only specific docs file types](#generate-only-specific-docs-file-types)
 - [About the Project](#about-the-project)
 
 ## Getting started
@@ -86,18 +87,20 @@ USAGE:
 
 OPTIONS:
    --generalInfo value, -g value          Go file path in which 'swagger general API Info' is written (default: "main.go")
-   --dir value, -d value                  Directory you want to parse (default: "./")
+   --dir value, -d value                  Directories you want to parse,comma separated and general-info file must be in the first one (default: "./")
    --exclude value                        Exclude directories and files when searching, comma separated
    --propertyStrategy value, -p value     Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
-   --output value, -o value               Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
+   --output value, -o value               Output directory for all the generated files(swagger.json, swagger.yaml and docs.go) (default: "./docs")
+   --outputTypes value, --ot value        Output types of generated files (docs.go, swagger.json, swagger.yaml) like go,json,yaml (default: "go,json,yaml")
    --parseVendor                          Parse go files in 'vendor' folder, disabled by default (default: false)
-   --parseDependency                      Parse go files in outside dependency folder, disabled by default (default: false)
+   --parseDependency, --pd                Parse go files inside dependency folder, disabled by default (default: false)
    --markdownFiles value, --md value      Parse folder containing markdown files to use as description, disabled by default
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
    --generatedTime                        Generate timestamp at the top of docs.go, disabled by default (default: false)
    --parseDepth value                     Dependency parse depth (default: 100)
-   --instanceName value                   Set the swagger document instance name (default: "swagger")
+   --instanceName value                   This parameter can be used to name different swagger document instances. It is optional.
+   --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
    --help, -h                             show help (default: false)
 ```
 
@@ -796,6 +799,15 @@ type Example struct {
 	Order string `enums:"asc,desc"`
 }
 ```
+
+### Generate only specific docs file types
+
+By default `swag` command generates Swagger specification in three different files/file types:
+- docs.go
+- swagger.json
+- swagger.yaml
+
+If you would like to limit a set of file types which should be generated you can use `--outputTypes` (short `-ot`) flag. Default value is `go,json,yaml` - output types separated with comma. To limit output only to `go` and `yaml` files, you would write `go,yaml`. With complete command that would be `swag init --outputTypes go,yaml`.
 
 ## About the Project
 This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks). Gopher image source is [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). It has licenses [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).
