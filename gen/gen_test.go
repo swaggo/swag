@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"plugin"
 	"strings"
@@ -20,11 +21,14 @@ import (
 
 const searchDir = "../testdata/simple"
 
+var outputTypes = []string{"go", "json", "yaml"}
+
 func TestGen_Build(t *testing.T) {
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 	assert.NoError(t, New().Build(config))
@@ -42,11 +46,44 @@ func TestGen_Build(t *testing.T) {
 	}
 }
 
+func TestGen_SpecificOutputTypes(t *testing.T) {
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        []string{"go", "unknownType"},
+		PropNamingStrategy: "",
+	}
+	assert.NoError(t, New().Build(config))
+
+	tt := []struct {
+		expectedFile string
+		shouldExist  bool
+	}{
+		{filepath.Join(config.OutputDir, "docs.go"), true},
+		{filepath.Join(config.OutputDir, "swagger.json"), false},
+		{filepath.Join(config.OutputDir, "swagger.yaml"), false},
+	}
+	for _, tc := range tt {
+		_, err := os.Stat(tc.expectedFile)
+		if tc.shouldExist {
+			if os.IsNotExist(err) {
+				require.NoError(t, err)
+			}
+		} else {
+			require.Error(t, err)
+			require.True(t, errors.Is(err, os.ErrNotExist))
+		}
+		_ = os.Remove(tc.expectedFile)
+	}
+}
+
 func TestGen_BuildInstanceName(t *testing.T) {
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 	assert.NoError(t, New().Build(config))
@@ -92,6 +129,7 @@ func TestGen_BuildSnakeCase(t *testing.T) {
 		SearchDir:          "../testdata/simple2",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple2/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: swag.SnakeCase,
 	}
 
@@ -115,6 +153,7 @@ func TestGen_BuildLowerCamelcase(t *testing.T) {
 		SearchDir:          "../testdata/simple3",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple3/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 
@@ -138,6 +177,7 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 		SearchDir:        "../testdata/quotes",
 		MainAPIFile:      "./main.go",
 		OutputDir:        "../testdata/quotes/docs",
+		OutputTypes:      outputTypes,
 		MarkdownFilesDir: "../testdata/quotes",
 	}
 
@@ -186,6 +226,7 @@ func TestGen_jsonIndent(t *testing.T) {
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 	gen := New()
@@ -200,6 +241,7 @@ func TestGen_jsonToYAML(t *testing.T) {
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 	gen := New()
@@ -226,6 +268,7 @@ func TestGen_SearchDirIsNotExist(t *testing.T) {
 		SearchDir:          "../isNotExistDir",
 		MainAPIFile:        "./main.go",
 		OutputDir:          swaggerConfDir,
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: propNamingStrategy,
 	}
 	assert.EqualError(t, New().Build(config), "dir: ../isNotExistDir does not exist")
@@ -237,6 +280,7 @@ func TestGen_MainAPiNotExist(t *testing.T) {
 		SearchDir:          searchDir,
 		MainAPIFile:        "./notExists.go",
 		OutputDir:          swaggerConfDir,
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: propNamingStrategy,
 	}
 	assert.Error(t, New().Build(config))
@@ -248,6 +292,7 @@ func TestGen_OutputIsNotExist(t *testing.T) {
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "/dev/null",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: propNamingStrategy,
 	}
 	assert.Error(t, New().Build(config))
@@ -255,12 +300,14 @@ func TestGen_OutputIsNotExist(t *testing.T) {
 
 func TestGen_FailToWrite(t *testing.T) {
 	outputDir := filepath.Join(os.TempDir(), "swagg", "test")
+	outputTypes := []string{"go", "json", "yaml"}
 
 	var propNamingStrategy string
 	config := &Config{
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          outputDir,
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: propNamingStrategy,
 	}
 
@@ -302,6 +349,7 @@ func TestGen_configWithOutputDir(t *testing.T) {
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 
@@ -317,6 +365,64 @@ func TestGen_configWithOutputDir(t *testing.T) {
 			require.NoError(t, err)
 		}
 		_ = os.Remove(expectedFile)
+	}
+}
+
+func TestGen_configWithOutputTypesAll(t *testing.T) {
+	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
+
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
+		PropNamingStrategy: "",
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		path.Join(config.OutputDir, "docs.go"),
+		path.Join(config.OutputDir, "swagger.json"),
+		path.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			t.Fatal(err)
+		}
+		os.Remove(expectedFile)
+	}
+}
+
+func TestGen_configWithOutputTypesSingle(t *testing.T) {
+	searchDir := "../testdata/simple"
+	outputTypes := []string{"go", "json", "yaml"}
+
+	for _, outputType := range outputTypes {
+		config := &Config{
+			SearchDir:          searchDir,
+			MainAPIFile:        "./main.go",
+			OutputDir:          "../testdata/simple/docs",
+			OutputTypes:        []string{outputType},
+			PropNamingStrategy: "",
+		}
+
+		assert.NoError(t, New().Build(config))
+
+		outFileName := "swagger"
+		if outputType == "go" {
+			outFileName = "docs"
+		}
+		expectedFiles := []string{
+			path.Join(config.OutputDir, outFileName+"."+outputType),
+		}
+		for _, expectedFile := range expectedFiles {
+			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+				t.Fatal(err)
+			}
+			os.Remove(expectedFile)
+		}
 	}
 }
 
@@ -398,6 +504,7 @@ func TestGen_GeneratedDoc(t *testing.T) {
 		SearchDir:          searchDir,
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 	}
 
@@ -429,6 +536,7 @@ func TestGen_cgoImports(t *testing.T) {
 		SearchDir:          "../testdata/simple_cgo",
 		MainAPIFile:        "./main.go",
 		OutputDir:          "../testdata/simple_cgo/docs",
+		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
 		ParseDependency:    true,
 	}
