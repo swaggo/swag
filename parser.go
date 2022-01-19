@@ -954,6 +954,11 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		return nil, err
 	}
 
+	err = fillDefinition(definition, typeSpecDef.File, typeSpecDef)
+	if err != nil {
+		return nil, err
+	}
+
 	s := Schema{
 		Name:    refTypeName,
 		PkgPath: typeSpecDef.PkgPath,
@@ -976,6 +981,60 @@ func fullTypeName(pkgName, typeName string) string {
 	}
 
 	return typeName
+}
+
+// fillDefinition additionally fills fields in definition (spec.Schema)
+// TODO: If .go file contains many types, it may work for a long time
+func fillDefinition(definition *spec.Schema, file *ast.File, typeSpecDef *TypeSpecDef) error {
+	if definition.Description == "" {
+		for _, astDeclaration := range file.Decls {
+			generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
+			if !ok || generalDeclaration.Tok != token.TYPE {
+				continue
+			}
+
+			for _, astSpec := range generalDeclaration.Specs {
+				typeSpec, ok := astSpec.(*ast.TypeSpec)
+				if !ok || typeSpec != typeSpecDef.TypeSpec {
+					continue
+				}
+
+				definition.Description =
+					extractDeclarationDescription(typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
+				return nil
+			}
+		}
+	}
+
+	return nil
+}
+
+// extractDeclarationDescription gets first description
+// from attribute descriptionAttr in commentGroups (ast.CommentGroup)
+func extractDeclarationDescription(commentGroups ...*ast.CommentGroup) (description string) {
+	for _, commentGroup := range commentGroups {
+		if commentGroup == nil {
+			continue
+		}
+
+		isHandlingDescription := false
+		for _, comment := range commentGroup.List {
+			commentText := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
+			attribute := strings.Split(commentText, " ")[0]
+			if strings.ToLower(attribute) != descriptionAttr && !isHandlingDescription {
+				continue
+			}
+
+			if strings.ToLower(attribute) != descriptionAttr && isHandlingDescription {
+				break
+			}
+
+			isHandlingDescription = true
+			description += " " + strings.TrimSpace(commentText[len(attribute):])
+		}
+	}
+
+	return strings.TrimLeft(description, " ")
 }
 
 // parseTypeExpr parses given type expression that corresponds to the type under

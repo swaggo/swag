@@ -613,10 +613,49 @@ type Account struct {
 ### Description of struct
 
 ```go
+// Account model info
+// @Description User account information
+// @Description with user id and username
 type Account struct {
 	// ID this is userid
 	ID   int    `json:"id"`
 	Name string `json:"name"` // This is Name
+}
+```
+
+generated swagger doc as follows:
+```json
+"Account": {
+  "type":"object",
+  "description": "User account information with user id and username"
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "ID this is userid"
+    },
+    "name": {
+      "type":"string",
+      "description": "This is Name"
+    }
+  }
+}
+```
+
+generated swagger doc as follows:
+```json
+"Account": {
+  "type":"object",
+  "description": "User account information"
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "ID this is userid"
+    },
+    "name": {
+      "type":"string",
+      "description": "This is Name"
+    }
+  }
 }
 ```
 
