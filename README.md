@@ -641,24 +641,6 @@ generated swagger doc as follows:
 }
 ```
 
-generated swagger doc as follows:
-```json
-"Account": {
-  "type":"object",
-  "description": "User account information"
-  "properties": {
-    "id": {
-      "type": "integer",
-      "description": "ID this is userid"
-    },
-    "name": {
-      "type":"string",
-      "description": "This is Name"
-    }
-  }
-}
-```
-
 ### Use swaggertype tag to supported custom type
 [#201](https://github.com/swaggo/swag/issues/201#issuecomment-475479409)
 
