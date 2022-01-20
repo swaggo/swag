@@ -954,7 +954,9 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		return nil, err
 	}
 
-	fillDefinition(definition, typeSpecDef.File, typeSpecDef)
+	if definition.Description == "" {
+		fillDefinitionDescription(definition, typeSpecDef.File, typeSpecDef)
+	}
 
 	s := Schema{
 		Name:    refTypeName,
@@ -980,25 +982,24 @@ func fullTypeName(pkgName, typeName string) string {
 	return typeName
 }
 
-// fillDefinition additionally fills fields in definition (spec.Schema)
+// fillDefinitionDescription additionally fills fields in definition (spec.Schema)
 // TODO: If .go file contains many types, it may work for a long time
-func fillDefinition(definition *spec.Schema, file *ast.File, typeSpecDef *TypeSpecDef) {
-	if definition.Description == "" {
-		for _, astDeclaration := range file.Decls {
-			generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
-			if !ok || generalDeclaration.Tok != token.TYPE {
+func fillDefinitionDescription(definition *spec.Schema, file *ast.File, typeSpecDef *TypeSpecDef) {
+
+	for _, astDeclaration := range file.Decls {
+		generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
+		if !ok || generalDeclaration.Tok != token.TYPE {
+			continue
+		}
+
+		for _, astSpec := range generalDeclaration.Specs {
+			typeSpec, ok := astSpec.(*ast.TypeSpec)
+			if !ok || typeSpec != typeSpecDef.TypeSpec {
 				continue
 			}
 
-			for _, astSpec := range generalDeclaration.Specs {
-				typeSpec, ok := astSpec.(*ast.TypeSpec)
-				if !ok || typeSpec != typeSpecDef.TypeSpec {
-					continue
-				}
-
-				definition.Description =
-					extractDeclarationDescription(typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
-			}
+			definition.Description =
+				extractDeclarationDescription(typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
 		}
 	}
 }
