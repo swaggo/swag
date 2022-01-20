@@ -1,12 +1,16 @@
 package swag
 
 import (
+	"go/ast"
 	"testing"
 
+	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestValidDataType(t *testing.T) {
+	t.Parallel()
+
 	assert.NoError(t, CheckSchemaType(STRING))
 	assert.NoError(t, CheckSchemaType(NUMBER))
 	assert.NoError(t, CheckSchemaType(INTEGER))
@@ -18,6 +22,8 @@ func TestValidDataType(t *testing.T) {
 }
 
 func TestTransToValidSchemeType(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, TransToValidSchemeType("uint"), INTEGER)
 	assert.Equal(t, TransToValidSchemeType("uint32"), INTEGER)
 	assert.Equal(t, TransToValidSchemeType("uint64"), INTEGER)
@@ -26,10 +32,25 @@ func TestTransToValidSchemeType(t *testing.T) {
 	assert.Equal(t, TransToValidSchemeType("string"), STRING)
 
 	// should accept any type, due to user defined types
-	TransToValidSchemeType("oops")
+	other := "oops"
+	assert.Equal(t, TransToValidSchemeType(other), other)
+}
+
+func TestTransToValidCollectionFormat(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, TransToValidCollectionFormat("csv"), "csv")
+	assert.Equal(t, TransToValidCollectionFormat("multi"), "multi")
+	assert.Equal(t, TransToValidCollectionFormat("pipes"), "pipes")
+	assert.Equal(t, TransToValidCollectionFormat("tsv"), "tsv")
+	assert.Equal(t, TransToValidSchemeType("string"), STRING)
+
+	// should accept any type, due to user defined types
+	assert.Equal(t, TransToValidCollectionFormat("oops"), "")
 }
 
 func TestIsGolangPrimitiveType(t *testing.T) {
+	t.Parallel()
 
 	assert.Equal(t, IsGolangPrimitiveType("uint"), true)
 	assert.Equal(t, IsGolangPrimitiveType("int"), true)
@@ -50,9 +71,88 @@ func TestIsGolangPrimitiveType(t *testing.T) {
 	assert.Equal(t, IsGolangPrimitiveType("oops"), false)
 }
 
+func TestIsSimplePrimitiveType(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, IsSimplePrimitiveType("string"), true)
+	assert.Equal(t, IsSimplePrimitiveType("number"), true)
+	assert.Equal(t, IsSimplePrimitiveType("integer"), true)
+	assert.Equal(t, IsSimplePrimitiveType("boolean"), true)
+
+	assert.Equal(t, IsSimplePrimitiveType("oops"), false)
+}
+
+func TestBuildCustomSchema(t *testing.T) {
+	t.Parallel()
+
+	var schema *spec.Schema
+	var err error
+
+	schema, err = BuildCustomSchema([]string{})
+	assert.NoError(t, err)
+	assert.Nil(t, schema)
+
+	schema, err = BuildCustomSchema([]string{"primitive"})
+	assert.Error(t, err)
+	assert.Nil(t, schema)
+
+	schema, err = BuildCustomSchema([]string{"primitive", "oops"})
+	assert.Error(t, err)
+	assert.Nil(t, schema)
+
+	schema, err = BuildCustomSchema([]string{"primitive", "string"})
+	assert.NoError(t, err)
+	assert.Equal(t, schema.SchemaProps.Type, spec.StringOrArray{"string"})
+
+	schema, err = BuildCustomSchema([]string{"array"})
+	assert.Error(t, err)
+	assert.Nil(t, schema)
+
+	schema, err = BuildCustomSchema([]string{"array", "oops"})
+	assert.Error(t, err)
+	assert.Nil(t, schema)
+
+	schema, err = BuildCustomSchema([]string{"array", "string"})
+	assert.NoError(t, err)
+	assert.Equal(t, schema.SchemaProps.Type, spec.StringOrArray{"array"})
+	assert.Equal(t, schema.SchemaProps.Items.Schema.SchemaProps.Type, spec.StringOrArray{"string"})
+
+	schema, err = BuildCustomSchema([]string{"object"})
+	assert.NoError(t, err)
+	assert.Equal(t, schema.SchemaProps.Type, spec.StringOrArray{"object"})
+
+	schema, err = BuildCustomSchema([]string{"object", "oops"})
+	assert.Error(t, err)
+	assert.Nil(t, schema)
+
+	schema, err = BuildCustomSchema([]string{"object", "string"})
+	assert.NoError(t, err)
+	assert.Equal(t, schema.SchemaProps.Type, spec.StringOrArray{"object"})
+	assert.Equal(t, schema.SchemaProps.AdditionalProperties.Schema.Type, spec.StringOrArray{"string"})
+}
+
 func TestIsNumericType(t *testing.T) {
+	t.Parallel()
+
 	assert.Equal(t, IsNumericType(INTEGER), true)
 	assert.Equal(t, IsNumericType(NUMBER), true)
 
 	assert.Equal(t, IsNumericType(STRING), false)
+}
+
+func TestTypeDocName(t *testing.T) {
+	t.Parallel()
+
+	expected := "a/package"
+	assert.Equal(t, expected, TypeDocName(expected, nil))
+
+	expected = "package.Model"
+	assert.Equal(t, expected, TypeDocName("package", &ast.TypeSpec{Name: &ast.Ident{Name: "Model"}}))
+
+	expected = "Model"
+	assert.Equal(t, expected, TypeDocName("package", &ast.TypeSpec{
+		Comment: &ast.CommentGroup{
+			List: []*ast.Comment{{Text: "// @name Model"}},
+		},
+	}))
 }

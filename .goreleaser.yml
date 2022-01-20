@@ -1,12 +1,24 @@
 build:
   main: cmd/swag/main.go
-archive:
-  replacements:
-    darwin: Darwin
-    linux: Linux
-    windows: Windows
-    386: i386
-    amd64: x86_64
+  goos:
+    - linux
+    - darwin
+  goarch:
+    - amd64
+    - arm64
+    - 386
+  ignore:
+    - goos: darwin
+      goarch: arm64
+archives:
+  -
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+      arm64: aarch64
 checksum:
   name_template: 'checksums.txt'
 snapshot:

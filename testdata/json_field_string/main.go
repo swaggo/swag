@@ -1,18 +1,19 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 type MyStruct struct {
-	ID       int     `json:"id" example:"1" format:"int64"`
-	Name     string  `json:"name" example:"poti"`
-	Intvar   int     `json:"myint,string"`                   // integer as string
-	Boolvar  bool    `json:",string"`                        // boolean as a string
-	TrueBool bool    `json:"truebool,string" example:"true"` // boolean as a string
-	Floatvar float64 `json:",string"`                        // float as a string
+	ID       int      `json:"id" example:"1" format:"int64"`
+	Name     string   `json:"name" example:"poti"`
+	Intvar   int      `json:"myint,string"`                            // integer as string
+	Boolvar  bool     `json:",string"`                                 // boolean as a string
+	TrueBool bool     `json:"truebool,string" example:"true"`          // boolean as a string
+	Floatvar float64  `json:",string"`                                 // float as a string
+	UUIDs    []string `json:"uuids" type:"array,string" format:"uuid"` // string array with format
 }
 
 // @Summary Call DoSomething
@@ -23,12 +24,13 @@ type MyStruct struct {
 // @Success 200 {object} MyStruct
 // @Failure 500
 // @Router /do-something [post]
-func DoSomething(c *gin.Context) {
+func DoSomething(w http.ResponseWriter, r *http.Request) {
 	objectFromJSON := new(MyStruct)
-	if err := c.BindJSON(&objectFromJSON); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
+	if err := json.NewDecoder(r.Body).Decode(&objectFromJSON); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Print(err.Error())
 	}
-	c.JSON(http.StatusOK, objectFromJSON)
+	json.NewEncoder(w).Encode(ojbectFromJSON)
 }
 
 // @title Swagger Example API
@@ -37,7 +39,6 @@ func DoSomething(c *gin.Context) {
 // @host localhost:4000
 // @basePath /
 func main() {
-	r := gin.New()
-	r.POST("/do-something", DoSomething)
-	r.Run()
+	http.HandleFund("/do-something", DoSomething)
+	http.ListenAndServe(":8080", nil)
 }

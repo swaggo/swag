@@ -20,6 +20,7 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 - [快速开始](#快速开始)
 - [支持的Web框架](#支持的web框架)
 - [如何与Gin集成](#如何与gin集成)
+- [格式化说明](#格式化说明)
 - [开发现状](#开发现状)
 - [声明式注释格式](#声明式注释格式)
     - [通用API信息](#通用api信息)
@@ -46,10 +47,13 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 2. 使用如下命令下载swag：
 
 ```bash
-go get -u github.com/swaggo/swag/cmd/swag
+$ go get -u github.com/swaggo/swag/cmd/swag
+
+# 1.16 及以上版本
+$ go install github.com/swaggo/swag/cmd/swag@latest
 ```
 
-从源码开始构建的话，需要有Go环境（1.9及以上版本）。
+从源码开始构建的话，需要有Go环境（1.14及以上版本）。
 
 或者从github的release页面下载预编译好的二进制文件。
 
@@ -65,6 +69,12 @@ swag init
 swag init -g http/api.go
 ```
 
+4. (可选) 使用`fmt`格式化 SWAG 注释。(请先升级到最新版本)
+
+```bash
+swag fmt
+```
+
 ## swag cli
 
 ```bash
@@ -76,14 +86,35 @@ USAGE:
    swag init [command options] [arguments...]
 
 OPTIONS:
-   --generalInfo value, -g value       API通用信息所在的go源文件路径，如果是相对路径则基于API解析目录 (默认: "main.go")
-   --dir value, -d value               API解析目录 (默认: "./")
-   --propertyStrategy value, -p value  结构体字段命名规则，三种：snakecase,camelcase,pascalcase (默认: "camelcase")
-   --output value, -o value            文件(swagger.json, swagger.yaml and doc.go)输出目录 (默认: "./docs")
-   --parseVendor                       是否解析vendor目录里的go源文件，默认不
-   --parseDependency                   是否解析依赖目录中的go源文件，默认不
-   --markdownFiles value, --md value   指定API的描述信息所使用的markdown文件所在的目录
-   --generatedTime                     是否输出时间到输出文件docs.go的顶部，默认是
+   --generalInfo value, -g value          API通用信息所在的go源文件路径，如果是相对路径则基于API解析目录 (默认: "main.go")
+   --dir value, -d value                  API解析目录 (默认: "./")
+   --exclude value                        解析扫描时排除的目录，多个目录可用逗号分隔（默认：空）
+   --propertyStrategy value, -p value     结构体字段命名规则，三种：snakecase,camelcase,pascalcase (默认: "camelcase")
+   --output value, -o value               文件(swagger.json, swagger.yaml and doc.go)输出目录 (默认: "./docs")
+   --parseVendor                          是否解析vendor目录里的go源文件，默认不
+   --parseDependency                      是否解析依赖目录中的go源文件，默认不
+   --markdownFiles value, --md value      指定API的描述信息所使用的markdown文件所在的目录
+   --generatedTime                        是否输出时间到输出文件docs.go的顶部，默认是
+   --codeExampleFiles value, --cef value  解析包含用于 x-codeSamples 扩展的代码示例文件的文件夹，默认禁用
+   --parseInternal                        解析 internal 包中的go文件，默认禁用
+   --parseDepth value                     依赖解析深度 (默认: 100)
+   --instanceName value                   设置文档实例名 (默认: "swagger")
+```
+
+```bash
+swag fmt -h
+NAME:
+   swag fmt - format swag comments
+
+USAGE:
+   swag fmt [command options] [arguments...]
+
+OPTIONS:
+   --dir value, -d value          API解析目录 (默认: "./")
+   --exclude value                解析扫描时排除的目录，多个目录可用逗号分隔（默认：空）
+   --generalInfo value, -g value  API通用信息所在的go源文件路径，如果是相对路径则基于API解析目录 (默认: "main.go")
+   --help, -h                     show help (default: false)
+
 ```
 
 ## 支持的Web框架
@@ -107,51 +138,22 @@ import "github.com/swaggo/files" // swagger embed files
 2. 在`main.go`源代码中添加通用的API注释：
 
 ```go
-// @title Swagger Example API
-// @version 1.0
-// @description This is a sample server celler server.
-// @termsOfService http://swagger.io/terms/
+// @title           Swagger Example API
+// @version         1.0
+// @description     This is a sample server celler server.
+// @termsOfService  http://swagger.io/terms/
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
-// @BasePath /api/v1
-// @query.collection.format multi
+// @host      localhost:8080
+// @BasePath  /api/v1
 
-// @securityDefinitions.basic BasicAuth
-
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
-
-// @securitydefinitions.oauth2.application OAuth2Application
-// @tokenUrl https://example.com/oauth/token
-// @scope.write Grants write access
-// @scope.admin Grants read and write access to administrative information
-
-// @securitydefinitions.oauth2.implicit OAuth2Implicit
-// @authorizationurl https://example.com/oauth/authorize
-// @scope.write Grants write access
-// @scope.admin Grants read and write access to administrative information
-
-// @securitydefinitions.oauth2.password OAuth2Password
-// @tokenUrl https://example.com/oauth/token
-// @scope.read Grants read access
-// @scope.write Grants write access
-// @scope.admin Grants read and write access to administrative information
-
-// @securitydefinitions.oauth2.accessCode OAuth2AccessCode
-// @tokenUrl https://example.com/oauth/token
-// @authorizationurl https://example.com/oauth/authorize
-// @scope.admin Grants read and write access to administrative information
-
-// @x-extension-openapi {"example": "value on a json format"}
-
+// @securityDefinitions.basic  BasicAuth
 func main() {
     r := gin.Default()
 
@@ -189,15 +191,12 @@ import (
     "./docs" // docs is generated by Swag CLI, you have to import it.
 )
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @termsOfService http://swagger.io/terms/
-
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 func main() {
 
     // programatically set swagger info
@@ -233,55 +232,53 @@ import (
 )
 
 // ShowAccount godoc
-// @Summary Show a account
-// @Description get string by ID
-// @ID get-string-by-int
-// @Accept  json
-// @Produce  json
-// @Param id path int true "Account ID"
-// @Success 200 {object} model.Account
-// @Header 200 {string} Token "qwerty"
-// @Failure 400 {object} httputil.HTTPError
-// @Failure 404 {object} httputil.HTTPError
-// @Failure 500 {object} httputil.HTTPError
-// @Router /accounts/{id} [get]
+// @Summary      Show an account
+// @Description  get string by ID
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Account ID"
+// @Success      200  {object}  model.Account
+// @Failure      400  {object}  httputil.HTTPError
+// @Failure      404  {object}  httputil.HTTPError
+// @Failure      500  {object}  httputil.HTTPError
+// @Router       /accounts/{id} [get]
 func (c *Controller) ShowAccount(ctx *gin.Context) {
-    id := ctx.Param("id")
-    aid, err := strconv.Atoi(id)
-    if err != nil {
-        httputil.NewError(ctx, http.StatusBadRequest, err)
-        return
-    }
-    account, err := model.AccountOne(aid)
-    if err != nil {
-        httputil.NewError(ctx, http.StatusNotFound, err)
-        return
-    }
-    ctx.JSON(http.StatusOK, account)
+  id := ctx.Param("id")
+  aid, err := strconv.Atoi(id)
+  if err != nil {
+    httputil.NewError(ctx, http.StatusBadRequest, err)
+    return
+  }
+  account, err := model.AccountOne(aid)
+  if err != nil {
+    httputil.NewError(ctx, http.StatusNotFound, err)
+    return
+  }
+  ctx.JSON(http.StatusOK, account)
 }
 
 // ListAccounts godoc
-// @Summary List accounts
-// @Description get accounts
-// @Accept  json
-// @Produce  json
-// @Param q query string false "name search by q"
-// @Success 200 {array} model.Account
-// @Header 200 {string} Token "qwerty"
-// @Failure 400 {object} httputil.HTTPError
-// @Failure 404 {object} httputil.HTTPError
-// @Failure 500 {object} httputil.HTTPError
-// @Router /accounts [get]
+// @Summary      List accounts
+// @Description  get accounts
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        q    query     string  false  "name search by q"  Format(email)
+// @Success      200  {array}   model.Account
+// @Failure      400  {object}  httputil.HTTPError
+// @Failure      404  {object}  httputil.HTTPError
+// @Failure      500  {object}  httputil.HTTPError
+// @Router       /accounts [get]
 func (c *Controller) ListAccounts(ctx *gin.Context) {
-    q := ctx.Request.URL.Query().Get("q")
-    accounts, err := model.AccountsAll(q)
-    if err != nil {
-        httputil.NewError(ctx, http.StatusNotFound, err)
-        return
-    }
-    ctx.JSON(http.StatusOK, accounts)
+  q := ctx.Request.URL.Query().Get("q")
+  accounts, err := model.AccountsAll(q)
+  if err != nil {
+    httputil.NewError(ctx, http.StatusNotFound, err)
+    return
+  }
+  ctx.JSON(http.StatusOK, accounts)
 }
-
 //...
 ```
 
@@ -289,9 +286,24 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 swag init
 ```
 
-4. 运行程序，然后在浏览器中访问 http://localhost:8080/swagger/index.html。将看到Swagger 2.0 Api文档，如下所示：
+4. 运行程序，然后在浏览器中访问 http://localhost:8080/swagger/index.html 。将看到Swagger 2.0 Api文档，如下所示：
 
 ![swagger_index.html](https://raw.githubusercontent.com/swaggo/swag/master/assets/swagger-image.png)
+
+## 格式化说明
+
+可以针对Swag的注释自动格式化，就像`go fmt`。   
+此处查看格式化结果 [here](https://github.com/swaggo/swag/tree/master/example/celler).
+
+示例：
+```shell
+swag fmt
+```
+
+排除目录（不扫描）示例：
+```shell
+swag fmt -d ./ --exclude ./internal
+```
 
 ## 开发现状
 
@@ -336,6 +348,8 @@ swag init
 | license.url             | 用于API的许可证的URL。 必须采用网址格式。                                                       | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
 | host                    | 运行API的主机（主机名或IP地址）。                                                               | // @host localhost:8080                                         |
 | BasePath                | 运行API的基本路径。                                                                             | // @BasePath /api/v1                                            |
+| accept                  | API 可以使用的 MIME 类型列表。 请注意，Accept 仅影响具有请求正文的操作，例如 POST、PUT 和 PATCH。 值必须如“[Mime类型](#mime-types)”中所述。                                  | // @accept json |
+| produce                 | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  | // @produce json |
 | query.collection.format | 请求URI query里数组参数的默认格式：csv，multi，pipes，tsv，ssv。 如果未设置，则默认为csv。 | // @query.collection.format multi                               |
 | schemes                 | 用空格分隔的请求的传输协议。                                                                    | // @schemes http https                                          |
 | x-name                  | 扩展的键必须以x-开头，并且只能使用json值                                                        | // @x-example-key {"key": "value"}                              |
@@ -356,19 +370,20 @@ swag init
 
 Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
 
-| 注释                 | 描述                                                                                                    |                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 注释                 | 描述                                                                                                    |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
 | description          | 操作行为的详细说明。                                                                                    |
-| description.markdown | 应用程序的简短描述。该描述将从名为`endpointname.md`的文件中读取。                                       | // @description.file endpoint.description.markdown |
+| description.markdown | 应用程序的简短描述。该描述将从名为`endpointname.md`的文件中读取。                                       |
 | id                   | 用于标识操作的唯一字符串。在所有API操作中必须唯一。                                                     |
 | tags                 | 每个API操作的标签列表，以逗号分隔。                                                                     |
 | summary              | 该操作的简短摘要。                                                                                      |
-| accept               | API可以使用的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  |
+| accept               | API 可以使用的 MIME 类型列表。 请注意，Accept 仅影响具有请求正文的操作，例如 POST、PUT 和 PATCH。 值必须如“[Mime类型](#mime-types)”中所述。                                  |
 | produce              | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  |
 | param                | 用空格分隔的参数。`param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)` |
-| security             | 每个API操作的[安全性](#security)。                                                                      |
+| security             | 每个API操作的[安全性](#安全性)。                                                                      |
 | success              | 以空格分隔的成功响应。`return code`,`{param type}`,`data type`,`comment`                                |
 | failure              | 以空格分隔的故障响应。`return code`,`{param type}`,`data type`,`comment`                                |
+| response             | 与success、failure作用相同                                                                               |
 | header               | 以空格分隔的头字段。 `return code`,`{param type}`,`data type`,`comment`                                 |
 | router               | 以空格分隔的路径定义。 `path`,`[httpMethod]`                                                            |
 | x-name               | 扩展字段必须以`x-`开头，并且只能使用json值。                                                            |
@@ -430,13 +445,14 @@ Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/c
 ## 属性
 
 ```go
-// @Param enumstring query string false "string enums" Enums(A, B, C)
-// @Param enumint query int false "int enums" Enums(1, 2, 3)
-// @Param enumnumber query number false "int enums" Enums(1.1, 1.2, 1.3)
-// @Param string query string false "string valid" minlength(5) maxlength(10)
-// @Param int query int false "int valid" minimum(1) maximum(10)
-// @Param default query string false "string default" default(A)
-// @Param collection query []string false "string collection" collectionFormat(multi)
+// @Param   enumstring  query     string     false  "string enums"       Enums(A, B, C)
+// @Param   enumint     query     int        false  "int enums"          Enums(1, 2, 3)
+// @Param   enumnumber  query     number     false  "int enums"          Enums(1.1, 1.2, 1.3)
+// @Param   string      query     string     false  "string valid"       minlength(5)  maxlength(10)
+// @Param   int         query     int        false  "int valid"          minimum(1)    maximum(10)
+// @Param   default     query     string     false  "string default"     default(A)
+// @Param   collection  query     []string   false  "string collection"  collectionFormat(multi)
+// @Param   extensions  query     []string   false  "string collection"  extensions(x-example=test,x-nullable)
 ```
 
 也适用于结构体字段：
@@ -535,17 +551,20 @@ type Order struct { //in `proto` package
 ### 在响应中增加头字段
 
 ```go
-// @Success 200 {string} string	"ok"
-// @Header 200 {string} Location "/entity/1"
-// @Header 200 {string} Token "qwerty"
+// @Success      200              {string}  string    "ok"
+// @failure      400              {string}  string    "error"
+// @response     default          {string}  string    "other error"
+// @Header       200              {string}  Location  "/entity/1"
+// @Header       200,400,default  {string}  Token     "token"
+// @Header       all              {string}  Token2    "token2"
 ```
 
 ### 使用多路径参数
 
 ```go
 /// ...
-// @Param group_id path int true "Group ID"
-// @Param account_id path int true "Account ID"
+// @Param  group_id    path  int  true  "Group ID"
+// @Param  account_id  path  int  true  "Account ID"
 // ...
 // @Router /examples/groups/{group_id}/accounts/{account_id} [get]
 ```
@@ -652,7 +671,7 @@ type Account struct {
 
 ```go
 type Account struct {
-    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def"` // 扩展字段必须以"x-"开头
+    ID   string    `json:"id"   extensions:"x-nullable,x-abc=def,!x-omitempty"` // 扩展字段必须以"x-"开头
 }
 ```
 
@@ -665,7 +684,8 @@ type Account struct {
         "id": {
             "type": "string",
             "x-nullable": true,
-            "x-abc": "def"
+            "x-abc": "def",
+            "x-omitempty": false
         }
     }
 }

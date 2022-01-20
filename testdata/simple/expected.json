@@ -66,7 +66,7 @@
       }
     },
     "/GetPet5a": {
-      "get": {
+      "options": {
         "responses": {
           "200": {
             "description": "ok",
@@ -78,7 +78,7 @@
       }
     },
     "/GetPet5b": {
-      "get": {
+      "head": {
         "responses": {
           "200": {
             "description": "ok",
@@ -90,7 +90,7 @@
       }
     },
     "/GetPet5c": {
-      "get": {
+      "patch": {
         "responses": {
           "200": {
             "description": "ok",
@@ -207,6 +207,12 @@
             "description": "Can not find ID",
             "schema": {
               "$ref": "#/definitions/web.APIError"
+            }
+          },
+          "403": {
+            "description": "cross",
+            "schema": {
+              "$ref": "#/definitions/cross.Cross"
             }
           }
         }
@@ -449,9 +455,9 @@
             },
             "photo_urls": {
               "type": "array",
-              "format": "url",
               "items": {
-                "type": "string"
+                "type": "string",
+                "format": "url"
               },
               "example": [
                 "http://test/image/1.jpg",
@@ -488,9 +494,7 @@
             }
           }
         },
-        "data": {
-          "type": "object"
-        },
+        "data": {},
         "decimal": {
           "type": "number"
         },
@@ -558,6 +562,7 @@
           "type": "number",
           "maximum": 1000,
           "minimum": 1,
+          "multipleOf": 0.01,
           "example": 3.25
         },
         "status": {
@@ -566,6 +571,16 @@
             "healthy",
             "ill"
           ]
+        },
+        "string_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "example": {
+            "key1": "value",
+            "key2": "value2"
+          }
         },
         "tags": {
           "type": "array",
@@ -590,7 +605,8 @@
         "middlename": {
           "type": "string",
           "x-abc": "def",
-          "x-nullable": true
+          "x-nullable": true,
+          "x-omitempty": false
         }
       }
     },
