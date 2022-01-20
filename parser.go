@@ -1006,7 +1006,9 @@ func fillDefinitionDescription(definition *spec.Schema, file *ast.File, typeSpec
 
 // extractDeclarationDescription gets first description
 // from attribute descriptionAttr in commentGroups (ast.CommentGroup)
-func extractDeclarationDescription(commentGroups ...*ast.CommentGroup) (description string) {
+func extractDeclarationDescription(commentGroups ...*ast.CommentGroup) string {
+	var description string
+
 	for _, commentGroup := range commentGroups {
 		if commentGroup == nil {
 			continue
@@ -1016,11 +1018,10 @@ func extractDeclarationDescription(commentGroups ...*ast.CommentGroup) (descript
 		for _, comment := range commentGroup.List {
 			commentText := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
 			attribute := strings.Split(commentText, " ")[0]
-			if strings.ToLower(attribute) != descriptionAttr && !isHandlingDescription {
-				continue
-			}
-
-			if strings.ToLower(attribute) != descriptionAttr && isHandlingDescription {
+			if strings.ToLower(attribute) != descriptionAttr {
+				if !isHandlingDescription {
+					continue
+				}
 				break
 			}
 
