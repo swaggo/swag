@@ -623,7 +623,10 @@ type Account struct {
 }
 ```
 
-generated swagger doc as follows:
+[#708](https://github.com/swaggo/swag/issues/708) The parser handles only struct comments starting with `@Description` attribute.
+But it writes all struct field comments as is.
+
+So, generated swagger doc as follows:
 ```json
 "Account": {
   "type":"object",
