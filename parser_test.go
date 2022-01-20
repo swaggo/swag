@@ -3195,7 +3195,6 @@ func Fun()  {
 	assert.Empty(t, childName)
 }
 
-
 func TestParseErrorField(t *testing.T) {
 	searchDir := "testdata/error_field"
 	mainAPIFile := "main.go"
