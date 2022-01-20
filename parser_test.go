@@ -2159,6 +2159,16 @@ func TestParseExternalModels(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseGoList(t *testing.T) {
+	searchDir := "testdata/golist"
+	mainAPIFile := "main.go"
+	p := New()
+	p.ParseDependency = true
+	p.ParseGoList = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+}
+
 func TestParser_ParseStructArrayObject(t *testing.T) {
 	t.Parallel()
 

@@ -105,6 +105,9 @@ type Config struct {
 
 	// OverridesFile defines global type overrides.
 	OverridesFile string
+
+	// ParseGoList whether swag use go list to parse dependency
+	ParseGoList bool
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -152,6 +155,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
+	p.ParseGoList = config.ParseGoList
 
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
