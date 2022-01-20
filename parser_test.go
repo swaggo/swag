@@ -2951,6 +2951,63 @@ func Fun()  {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentExtension(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+// @Param request query string true "query params" extensions(x-example=[0,, 9],x-foo=bar)
+// @Success 200
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	expected := `{
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/test": {
+            "get": {
+                "parameters": [
+                    {
+                       "type": "string",
+                       "x-example": "[0, 9]",
+                       "x-foo": "bar",
+                       "description": "query params",
+                       "name": "request",
+                       "in": "query",
+                       "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                }
+            }
+        }
+    }
+}`
+
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.JSONEq(t, expected, string(b))
+}
+
 func TestParseRenamedStructDefinition(t *testing.T) {
 	t.Parallel()
 

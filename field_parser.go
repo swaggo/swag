@@ -207,7 +207,9 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	extensionsTag := ps.tag.Get(extensionsTag)
 	if extensionsTag != "" {
 		structField.extensions = map[string]interface{}{}
+		extensionsTag := strings.ReplaceAll(extensionsTag, `,,`, `{{escape-comma}}`)
 		for _, val := range strings.Split(extensionsTag, ",") {
+			val = strings.ReplaceAll(val, `{{escape-comma}}`, ",")
 			parts := strings.SplitN(val, "=", 2)
 			if len(parts) == 2 {
 				structField.extensions[parts[0]] = parts[1]
