@@ -18,6 +18,7 @@ type Post struct {
 // APIError
 // @Description API error
 // @Description with information about it
+// Other some summary
 type APIError struct {
 	// Error an Api error
 	Error string // Error this is Line comment
