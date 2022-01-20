@@ -616,10 +616,34 @@ type Account struct {
 ### Description of struct
 
 ```go
+// Account model info
+// @Description User account information
+// @Description with user id and username
 type Account struct {
 	// ID this is userid
 	ID   int    `json:"id"`
 	Name string `json:"name"` // This is Name
+}
+```
+
+[#708](https://github.com/swaggo/swag/issues/708) The parser handles only struct comments starting with `@Description` attribute.
+But it writes all struct field comments as is.
+
+So, generated swagger doc as follows:
+```json
+"Account": {
+  "type":"object",
+  "description": "User account information with user id and username"
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "ID this is userid"
+    },
+    "name": {
+      "type":"string",
+      "description": "This is Name"
+    }
+  }
 }
 ```
 

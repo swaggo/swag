@@ -1800,6 +1800,7 @@ func TestParseStructComment(t *testing.T) {
     },
     "definitions": {
         "web.APIError": {
+            "description": "API error with information about it",
             "type": "object",
             "properties": {
                 "createdAt": {
