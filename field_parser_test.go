@@ -87,7 +87,7 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Equal(t, true, schema.Extensions["x-nullable"])
 		assert.Equal(t, "def", schema.Extensions["x-abc"])
 		assert.Equal(t, false, schema.Extensions["x-omitempty"])
-		assert.Equal(t, "[0,, 9]", schema.Extensions["x-example"])
+		assert.Equal(t, "[0, 9]", schema.Extensions["x-example"])
 	})
 
 	t.Run("Enums tag", func(t *testing.T) {
