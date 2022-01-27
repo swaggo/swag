@@ -88,7 +88,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	}
 	assert.NoError(t, New().Build(config))
 
-	goSourceFile := filepath.Join(config.OutputDir, "docs.go")
+	goSourceFile := filepath.Join(config.OutputDir, config.InstanceName+"_"+"docs.go")
 
 	// Validate default registration name
 	expectedCode, err := ioutil.ReadFile(goSourceFile)
