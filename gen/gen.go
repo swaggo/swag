@@ -178,7 +178,7 @@ func (g *Gen) Build(config *Config) error {
 func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 	var filename = "docs.go"
 	if config.InstanceName != swag.Name {
-		filename = config.InstanceName + filename
+		filename = config.InstanceName + "_" + filename
 	}
 	docFileName := path.Join(config.OutputDir, filename)
 
@@ -207,7 +207,7 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 	var filename = "swagger.json"
 	if config.InstanceName != swag.Name {
-		filename = config.InstanceName + filename
+		filename = config.InstanceName + "_" + filename
 	}
 	jsonFileName := path.Join(config.OutputDir, filename)
 
@@ -228,7 +228,7 @@ func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 func (g *Gen) writeYAMLSwagger(config *Config, swagger *spec.Swagger) error {
 	var filename = "swagger.yaml"
 	if config.InstanceName != swag.Name {
-		filename = config.InstanceName + filename
+		filename = config.InstanceName + "_" + filename
 	}
 	yamlFileName := path.Join(config.OutputDir, filename)
 
