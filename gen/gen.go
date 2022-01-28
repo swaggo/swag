@@ -479,12 +479,15 @@ func (s *s) ReadDoc() string {
 `
 	packageInitTemplate = `
 func init() {
-	swag.Register({{ printf "%q" .InstanceName }}, &s{})
+	if err := swag.Register({{ printf "%q" .InstanceName }}, &s{}); err != nil {
+		panic(err)
+	}
 }`
 	packageRegisterTemplate = `
-func Register() string {
-	swag.Register({{ printf "%q" .InstanceName }}, &s{})
-	return {{ printf "%q" .InstanceName }}
+type Documentation struct{}
+
+func (*Documentation) Register() string, error {
+	return {{ printf "%q" .InstanceName }}, swag.Register({{ printf "%q" .InstanceName }}, &s{})
 }
 `
 )

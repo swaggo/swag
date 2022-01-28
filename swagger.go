@@ -19,12 +19,16 @@ type Swagger interface {
 	ReadDoc() string
 }
 
+type Documentation interface {
+	Register() (string, error)
+}
+
 // Register registers swagger for given name.
-func Register(name string, swagger Swagger) {
+func Register(name string, swagger Swagger) error {
 	swaggerMu.Lock()
 	defer swaggerMu.Unlock()
 	if swagger == nil {
-		panic("swagger is nil")
+		return errors.New("swagger is nil")
 	}
 
 	if swags == nil {
@@ -32,9 +36,10 @@ func Register(name string, swagger Swagger) {
 	}
 
 	if _, ok := swags[name]; ok {
-		panic("Register called twice for swag: " + name)
+		return errors.New("Register called twice for swag: " + name)
 	}
 	swags[name] = swagger
+	return nil
 }
 
 // ReadDoc reads swagger document. An optional name parameter can be passed to read a specific document.
