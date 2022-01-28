@@ -318,11 +318,10 @@ func parseOverrides(r io.Reader) (map[string]string, error) {
 }
 
 func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swagger, config *Config) error {
-	tmpl := packageTemplate
 	if config.DocUserRegister {
-		tmpl += packageRegisterTemplate
+		packageTemplate += packageRegisterTemplate
 	} else {
-		tmpl += packageInitTemplate
+		packageTemplate += packageInitTemplate
 	}
 	generator, err := template.New("swagger_info").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
@@ -331,7 +330,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 			// Sanitize backticks
 			return strings.Replace(v, "`", "`+\"`\"+`", -1)
 		},
-	}).Parse(tmpl)
+	}).Parse(packageTemplate)
 	if err != nil {
 		return err
 	}

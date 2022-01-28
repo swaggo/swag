@@ -467,6 +467,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 
 	swapTemplate := packageTemplate
 
+	packageInitTemplate = ``
 	packageTemplate = `{{{`
 	err := gen.writeGoDoc("docs", nil, nil, &Config{})
 	assert.Error(t, err)
