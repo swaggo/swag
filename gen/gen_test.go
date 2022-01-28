@@ -465,6 +465,7 @@ func (w *mockWriter) Write(data []byte) (int, error) {
 func TestGen_writeGoDoc(t *testing.T) {
 	gen := New()
 
+	swapInitTemplate := packageInitTemplate
 	swapTemplate := packageTemplate
 
 	packageInitTemplate = ``
@@ -499,6 +500,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 	assert.NoError(t, err)
 
 	packageTemplate = swapTemplate
+	packageInitTemplate = swapInitTemplate
 }
 
 func TestGen_GeneratedDoc(t *testing.T) {
