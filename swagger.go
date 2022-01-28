@@ -19,6 +19,7 @@ type Swagger interface {
 	ReadDoc() string
 }
 
+// Documentation is an interface to register swagger document.
 type Documentation interface {
 	Register() (string, error)
 }
