@@ -28,6 +28,7 @@ const (
 	generatedTimeFlag    = "generatedTime"
 	parseDepthFlag       = "parseDepth"
 	instanceNameFlag     = "instanceName"
+	docUserRegisterFlag  = "docUserRegister"
 	overridesFileFlag    = "overridesFile"
 )
 
@@ -105,6 +106,10 @@ var initFlags = []cli.Flag{
 		Value: "",
 		Usage: "This parameter can be used to name different swagger document instances. It is optional.",
 	},
+	&cli.BoolFlag{
+		Name:  docUserRegisterFlag,
+		Usage: "Generates doc.go with Register func to manually register swagger",
+	},
 	&cli.StringFlag{
 		Name:  overridesFileFlag,
 		Value: gen.DefaultOverridesFile,
@@ -141,6 +146,7 @@ func initAction(c *cli.Context) error {
 		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
 		ParseDepth:          c.Int(parseDepthFlag),
 		InstanceName:        c.String(instanceNameFlag),
+		DocUserRegister:     c.Bool(docUserRegisterFlag),
 		OverridesFile:       c.String(overridesFileFlag),
 	})
 }
