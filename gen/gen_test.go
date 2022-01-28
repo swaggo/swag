@@ -101,13 +101,17 @@ func TestGen_BuildInstanceName(t *testing.T) {
 
 	// Custom name
 	config.InstanceName = "custom"
+	config.DocUserRegister = true
 	goSourceFile = filepath.Join(config.OutputDir, config.InstanceName+"_"+"docs.go")
 	assert.NoError(t, New().Build(config))
 	expectedCode, err = ioutil.ReadFile(goSourceFile)
 	if err != nil {
 		require.NoError(t, err)
 	}
-	if !strings.Contains(string(expectedCode), "swag.Register(\"custom\", &s{})") {
+	println(string(expectedCode))
+	if !strings.Contains(string(expectedCode), "func (*Documentation) Register() string, error {\n"+
+		"\treturn \"custom\", swag.Register(\"custom\", &s{})\n"+
+		"}") {
 		t.Fatal(errors.New("generated go code does not contain the correct registration sequence"))
 	}
 

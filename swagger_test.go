@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -157,22 +158,26 @@ func (s *s) ReadDoc() string {
 
 func TestRegister(t *testing.T) {
 	setup()
-	Register(Name, &s{})
+	err := Register(Name, &s{})
+	require.NoError(t, err, "registering swagger")
 	d, _ := ReadDoc()
 	assert.Equal(t, doc, d)
 }
 
 func TestRegisterByName(t *testing.T) {
 	setup()
-	Register("another_name", &s{})
+	err := Register("another_name", &s{})
+	require.NoError(t, err, "registering swagger")
 	d, _ := ReadDoc("another_name")
 	assert.Equal(t, doc, d)
 }
 
 func TestRegisterMultiple(t *testing.T) {
 	setup()
-	Register(Name, &s{})
-	Register("another_name", &s{})
+	err := Register(Name, &s{})
+	require.NoError(t, err, "registering swagger")
+	err = Register("another_name", &s{})
+	require.NoError(t, err, "registering swagger")
 	d1, _ := ReadDoc(Name)
 	d2, _ := ReadDoc("another_name")
 	assert.Equal(t, doc, d1)
@@ -187,25 +192,25 @@ func TestReadDocBeforeRegistered(t *testing.T) {
 
 func TestReadDocWithInvalidName(t *testing.T) {
 	setup()
-	Register(Name, &s{})
-	_, err := ReadDoc("invalid")
+	err := Register(Name, &s{})
+	require.NoError(t, err, "registering swagger")
+	_, err = ReadDoc("invalid")
 	assert.Error(t, err)
 }
 
 func TestNilRegister(t *testing.T) {
 	setup()
 	var swagger Swagger
-	assert.Panics(t, func() {
-		Register(Name, swagger)
-	})
+	err := Register(Name, swagger)
+	require.Error(t, err)
 }
 
-func TestCalledTwicelRegister(t *testing.T) {
+func TestCalledTwiceRegister(t *testing.T) {
 	setup()
-	assert.Panics(t, func() {
-		Register(Name, &s{})
-		Register(Name, &s{})
-	})
+	err := Register(Name, &s{})
+	require.NoError(t, err, "registering swagger")
+	err = Register(Name, &s{})
+	require.Error(t, err)
 }
 
 func setup() {
