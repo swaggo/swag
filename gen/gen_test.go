@@ -101,6 +101,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 
 	// Custom name
 	config.InstanceName = "custom"
+	goSourceFile = filepath.Join(config.OutputDir, config.InstanceName+"_"+"docs.go")
 	assert.NoError(t, New().Build(config))
 	expectedCode, err = ioutil.ReadFile(goSourceFile)
 	if err != nil {
@@ -112,9 +113,9 @@ func TestGen_BuildInstanceName(t *testing.T) {
 
 	// cleanup
 	expectedFiles := []string{
-		filepath.Join(config.OutputDir, "docs.go"),
-		filepath.Join(config.OutputDir, "swagger.json"),
-		filepath.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, config.InstanceName+"_"+"docs.go"),
+		filepath.Join(config.OutputDir, config.InstanceName+"_"+"swagger.json"),
+		filepath.Join(config.OutputDir, config.InstanceName+"_"+"swagger.yaml"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
