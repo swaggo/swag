@@ -109,7 +109,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 		require.NoError(t, err)
 	}
 	println(string(expectedCode))
-	if !strings.Contains(string(expectedCode), "func (*Documentation) Register() string, error {\n"+
+	if !strings.Contains(string(expectedCode), "func (*Documentation_custom) Register() (string, error) {\n"+
 		"\treturn \"custom\", swag.Register(\"custom\", &s{})\n"+
 		"}") {
 		t.Fatal(errors.New("generated go code does not contain the correct registration sequence"))

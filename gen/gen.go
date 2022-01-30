@@ -479,7 +479,7 @@ func (s *s) ReadDoc() string {
 `
 	packageInitTemplate = `
 func init() {
-	if err := swag.Register({{ printf %q .InstanceName }}, &s{}); err != nil {
+	if err := swag.Register({{ printf "%q" .InstanceName }}, &s{}); err != nil {
 		panic(err)
 	}
 }`
