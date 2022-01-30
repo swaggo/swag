@@ -414,31 +414,37 @@ import (
 	"github.com/swaggo/swag"
 )
 
-var doc = ` + "`{{ printDoc .Doc}}`" + `
+var doc_{{ .InstanceName }} = ` + "`{{ printDoc .Doc}}`" + `
 
-type swaggerInfo struct {
+type swaggerInfo_{{ .InstanceName }} struct {
 	Version     string
 	Host        string
 	BasePath    string
 	Schemes     []string
 	Title       string
 	Description string
+	instanceName string
 }
 
-// SwaggerInfo holds exported Swagger Info so clients can modify it
-var SwaggerInfo = swaggerInfo{
+func (i *swaggerInfo_{{ .InstanceName }}) InstanceName() string {
+	return i.instanceName
+}
+
+// SwaggerInfo_{{ .InstanceName }} holds exported Swagger Info so clients can modify it
+var SwaggerInfo_{{ .InstanceName }} = swaggerInfo_{{ .InstanceName }}{
 	Version:     {{ printf "%q" .Version}},
 	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},
 	Schemes:     []string{ {{ range $index, $schema := .Schemes}}{{if gt $index 0}},{{end}}{{printf "%q" $schema}}{{end}} },
 	Title:       {{ printf "%q" .Title}},
 	Description: {{ printf "%q" .Description}},
+	instanceName: {{ printf "%q" .InstanceName }},
 }
 
-type s struct{}
+type s_{{ .InstanceName }} struct{}
 
-func (s *s) ReadDoc() string {
-	sInfo := SwaggerInfo
+func (s *s_{{ .InstanceName }}) ReadDoc() string {
+	sInfo := SwaggerInfo_{{ .InstanceName }}
 	sInfo.Description = strings.Replace(sInfo.Description, "\n", "\\n", -1)
 
 	t, err := template.New("swagger_info").Funcs(template.FuncMap{
@@ -453,20 +459,20 @@ func (s *s) ReadDoc() string {
 			str = strings.Replace(str, "\"", "\\\"", -1)
 			return strings.Replace(str, "\\\\\"", "\\\\\\\"", -1)
 		},
-	}).Parse(doc)
+	}).Parse(doc_{{ .InstanceName }})
 	if err != nil {
-		return doc
+		return doc_{{ .InstanceName }}
 	}
 
 	var tpl bytes.Buffer
 	if err := t.Execute(&tpl, sInfo); err != nil {
-		return doc
+		return doc_{{ .InstanceName }}
 	}
 
 	return tpl.String()
 }
 
 func init() {
-	swag.Register({{ printf "%q" .InstanceName }}, &s{})
+	swag.Register(SwaggerInfo_{{ .InstanceName }}.InstanceName(), &s_{{ .InstanceName }}{})
 }
 `
