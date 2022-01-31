@@ -7,11 +7,13 @@ import (
 	"text/template"
 )
 
-type Documentation interface {
-	ReadDoc() string
+// DocumentationReader is an interface to inject Swagger info reader.
+type DocumentationReader interface {
+	Swagger
 	InstanceName() string
 }
 
+// SwaggerInfo holds exported Swagger Info so clients can modify it.
 type SwaggerInfo struct {
 	Version          string
 	Host             string
