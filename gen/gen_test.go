@@ -95,7 +95,10 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	if err != nil {
 		require.NoError(t, err)
 	}
-	if !strings.Contains(string(expectedCode), "swag.Register(SwaggerInfo_swagger.InstanceName(), &s_swagger{})") {
+	if !strings.Contains(
+		string(expectedCode),
+		"swag.Register(SwaggerInfo_swagger.InstanceName(), SwaggerInfo_swagger)",
+	) {
 		t.Fatal(errors.New("generated go code does not contain the correct default registration sequence"))
 	}
 
@@ -107,7 +110,10 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	if err != nil {
 		require.NoError(t, err)
 	}
-	if !strings.Contains(string(expectedCode), "swag.Register(SwaggerInfo_custom.InstanceName(), &s_custom{})") {
+	if !strings.Contains(
+		string(expectedCode),
+		"swag.Register(SwaggerInfo_custom.InstanceName(), SwaggerInfo_custom)",
+	) {
 		t.Fatal(errors.New("generated go code does not contain the correct registration sequence"))
 	}
 
