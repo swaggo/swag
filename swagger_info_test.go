@@ -22,7 +22,7 @@ func TestSwaggerInfo_InstanceName(t *testing.T) {
 		want   string
 	}{
 		{
-			name: "TestInstanceName1",
+			name: "TestInstanceNameCorrect",
 			fields: fields{
 				Version:          "1.0",
 				Host:             "localhost:8080",
@@ -66,7 +66,7 @@ func TestSwaggerInfo_ReadDoc(t *testing.T) {
 		want   string
 	}{
 		{
-			name: "TestReadDoc1",
+			name: "TestReadDocCorrect",
 			fields: fields{
 				Version:          "1.0",
 				Host:             "localhost:8080",
@@ -93,6 +93,39 @@ func TestSwaggerInfo_ReadDoc(t *testing.T) {
 				"\n\t\t\t\"host\": \"localhost:8080\"," +
 				"\n\t\t\t\"basePath\": \"/\"," +
 				"\n\t\t}",
+		},
+		{
+			name: "TestReadDocMarshalTrigger",
+			fields: fields{
+				Version:          "1.0",
+				Host:             "localhost:8080",
+				BasePath:         "/",
+				InfoInstanceName: "TestInstanceName",
+				SwaggerTemplate:  "{{ marshal .Version }}",
+			},
+			want: "\"1.0\"",
+		},
+		{
+			name: "TestReadDocParseError",
+			fields: fields{
+				Version:          "1.0",
+				Host:             "localhost:8080",
+				BasePath:         "/",
+				InfoInstanceName: "TestInstanceName",
+				SwaggerTemplate:  "{{ ..Version }}",
+			},
+			want: "{{ ..Version }}",
+		},
+		{
+			name: "TestReadDocExecuteError",
+			fields: fields{
+				Version:          "1.0",
+				Host:             "localhost:8080",
+				BasePath:         "/",
+				InfoInstanceName: "TestInstanceName",
+				SwaggerTemplate:  "{{ .Schemesa }}",
+			},
+			want: "{{ .Schemesa }}",
 		},
 	}
 	for _, tt := range tests {

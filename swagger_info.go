@@ -47,7 +47,7 @@ func (i *SwaggerInfo) ReadDoc() string {
 	}
 
 	var tpl bytes.Buffer
-	if err := t.Execute(&tpl, i); err != nil {
+	if err = t.Execute(&tpl, i); err != nil {
 		return i.SwaggerTemplate
 	}
 
