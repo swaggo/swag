@@ -25,6 +25,7 @@ type SwaggerInfo struct {
 	SwaggerTemplate  string
 }
 
+// ReadDoc parses SwaggerTemplate into swagger document.
 func (i *SwaggerInfo) ReadDoc() string {
 	i.Description = strings.Replace(i.Description, "\n", "\\n", -1)
 
@@ -53,6 +54,7 @@ func (i *SwaggerInfo) ReadDoc() string {
 	return tpl.String()
 }
 
+// InstanceName returns SwaggerInfo instance name.
 func (i *SwaggerInfo) InstanceName() string {
 	return i.InfoInstanceName
 }
