@@ -410,7 +410,7 @@ import "github.com/swaggo/swag"
 const docTemplate_{{ .InstanceName }} = ` + "`{{ printDoc .Doc}}`" + `
 
 // SwaggerInfo_{{ .InstanceName }} holds exported Swagger Info so clients can modify it
-var SwaggerInfo_{{ .InstanceName }} = &swag.SwaggerInfo{
+var SwaggerInfo_{{ .InstanceName }} = &swag.Spec{
 	Version:     {{ printf "%q" .Version}},
 	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},

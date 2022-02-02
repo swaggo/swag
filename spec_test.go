@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestSwaggerInfo_InstanceName(t *testing.T) {
+func TestSpec_InstanceName(t *testing.T) {
 	type fields struct {
 		Version          string
 		Host             string
@@ -34,7 +34,7 @@ func TestSwaggerInfo_InstanceName(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &SwaggerInfo{
+			i := &Spec{
 				Version:          tt.fields.Version,
 				Host:             tt.fields.Host,
 				BasePath:         tt.fields.BasePath,
@@ -49,7 +49,7 @@ func TestSwaggerInfo_InstanceName(t *testing.T) {
 	}
 }
 
-func TestSwaggerInfo_ReadDoc(t *testing.T) {
+func TestSpec_ReadDoc(t *testing.T) {
 	type fields struct {
 		Version          string
 		Host             string
@@ -130,7 +130,7 @@ func TestSwaggerInfo_ReadDoc(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &SwaggerInfo{
+			i := &Spec{
 				Version:          tt.fields.Version,
 				Host:             tt.fields.Host,
 				BasePath:         tt.fields.BasePath,

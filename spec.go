@@ -7,14 +7,8 @@ import (
 	"text/template"
 )
 
-// DocumentationReader is an interface to inject Swagger info reader.
-type DocumentationReader interface {
-	Swagger
-	InstanceName() string
-}
-
-// SwaggerInfo holds exported Swagger Info so clients can modify it.
-type SwaggerInfo struct {
+// Spec holds exported Swagger Info so clients can modify it.
+type Spec struct {
 	Version          string
 	Host             string
 	BasePath         string
@@ -26,7 +20,7 @@ type SwaggerInfo struct {
 }
 
 // ReadDoc parses SwaggerTemplate into swagger document.
-func (i *SwaggerInfo) ReadDoc() string {
+func (i *Spec) ReadDoc() string {
 	i.Description = strings.Replace(i.Description, "\n", "\\n", -1)
 
 	t, err := template.New("swagger_info").Funcs(template.FuncMap{
@@ -54,7 +48,7 @@ func (i *SwaggerInfo) ReadDoc() string {
 	return tpl.String()
 }
 
-// InstanceName returns SwaggerInfo instance name.
-func (i *SwaggerInfo) InstanceName() string {
+// InstanceName returns Spec instance name.
+func (i *Spec) InstanceName() string {
 	return i.InfoInstanceName
 }
