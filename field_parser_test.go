@@ -24,6 +24,17 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Equal(t, "one", schema.Example)
 
 		schema = spec.Schema{}
+		schema.Type = []string{"string"}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" example:""`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "", schema.Example)
+
+		schema = spec.Schema{}
 		schema.Type = []string{"float"}
 		err = newTagBaseFieldParser(
 			&Parser{},
