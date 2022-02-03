@@ -533,7 +533,7 @@ func setDefault(param *spec.Parameter, schemaType string, value string) error {
 func setExample(param *spec.Parameter, schemaType string, value string) error {
 	val, err := defineType(schemaType, value)
 	if err != nil {
-		return nil // Don't set a default value if it's not valid
+		return nil // Don't set a example value if it's not valid
 	}
 	param.Example = val
 	return nil
