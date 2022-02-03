@@ -182,8 +182,8 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	jsonTag := ps.tag.Get(jsonTag)
 	// json:"name,string" or json:",string"
 
-	exampleTag := ps.tag.Get(exampleTag)
-	if exampleTag != "" {
+	exampleTag, ok := ps.tag.Lookup(exampleTag)
+	if ok {
 		structField.exampleValue = exampleTag
 		if !strings.Contains(jsonTag, ",string") {
 			example, err := defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
