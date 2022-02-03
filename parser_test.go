@@ -2745,21 +2745,29 @@ func TestParser_ParseRouterApiDuplicateRoute(t *testing.T) {
 	t.Parallel()
 
 	src := `
-package test
+package api
 
-// @Router /api/{id} [get]
-func Test1(){
+import (
+	"net/http"
+)
+
+// @Router /api/endpoint [get]
+func FunctionOne(w http.ResponseWriter, r *http.Request) {
+	//write your code
 }
-// @Router /api/{id} [get]
-func Test2(){
+
+// @Router /api/endpoint [get]
+func FunctionTwo(w http.ResponseWriter, r *http.Request) {
+	//write your code
 }
+
 `
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
 	p := New(SetStrict(true))
 	err = p.ParseRouterAPIInfo("", f)
-	assert.EqualError(t, err, "route GET /api/{id} is declared multiple times")
+	assert.EqualError(t, err, "route GET /api/endpoint is declared multiple times")
 
 	p = New()
 	err = p.ParseRouterAPIInfo("", f)
