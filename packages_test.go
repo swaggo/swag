@@ -137,14 +137,14 @@ func TestPackagesDefinitions_FindTypeSpec(t *testing.T) {
 
 func TestPackage_rangeFiles(t *testing.T) {
 	files := map[*ast.File]*AstFileInfo{
-		&ast.File{
+		{
 			Name: &ast.Ident{Name: "main.go"},
 		}: {
 			File:        &ast.File{Name: &ast.Ident{Name: "main.go"}},
 			Path:        "testdata/simple/main.go",
 			PackagePath: "main",
 		},
-		&ast.File{
+		{
 			Name: &ast.Ident{Name: "api.go"},
 		}: {
 			File:        &ast.File{Name: &ast.Ident{Name: "api.go"}},
