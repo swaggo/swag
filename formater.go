@@ -7,6 +7,7 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -30,7 +31,7 @@ type Formater struct {
 	mainFile string
 }
 
-// NewFormater create a new formater
+// NewFormater create a new formater instance.
 func NewFormater() *Formater {
 	formater := &Formater{
 		debug:    log.New(os.Stdout, "", log.LstdFlags),
@@ -110,7 +111,7 @@ func (f *Formater) visit(path string, fileInfo os.FileInfo, err error) error {
 	return nil
 }
 
-// FormatMain format the main.go comment
+// FormatMain format the main.go comment.
 func (f *Formater) FormatMain(mainFilepath string) error {
 	fileSet := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fileSet, mainFilepath, nil, goparser.ParseComments)
@@ -171,17 +172,14 @@ func writeFormatedComments(filepath string, formatedComments bytes.Buffer, oldCo
 			commentHash, commentContent := commentSplit[0], commentSplit[1]
 
 			if !isBlankComment(commentContent) {
-				oldComment := oldCommentsMap[commentHash]
-				if strings.Contains(replaceSrc, oldComment) {
-					replaceSrc = strings.Replace(replaceSrc, oldComment, commentContent, 1)
-				}
+				replaceSrc = strings.Replace(replaceSrc, oldCommentsMap[commentHash], commentContent, 1)
 			}
 		}
 	}
 	return writeBack(filepath, []byte(replaceSrc), srcBytes)
 }
 
-func formatFuncDoc(commentList []*ast.Comment, formatedComments *bytes.Buffer, oldCommentsMap map[string]string) {
+func formatFuncDoc(commentList []*ast.Comment, formatedComments io.Writer, oldCommentsMap map[string]string) {
 	tabw := tabwriter.NewWriter(formatedComments, 0, 0, 2, ' ', 0)
 
 	for _, comment := range commentList {
@@ -315,7 +313,6 @@ func backupFile(filename string, data []byte, perm os.FileMode) (string, error) 
 	if err != nil {
 		return "", err
 	}
-	bakname := f.Name()
 	if chmodSupported {
 		_ = f.Chmod(perm)
 	}
@@ -325,5 +322,5 @@ func backupFile(filename string, data []byte, perm os.FileMode) (string, error) 
 	if err1 := f.Close(); err == nil {
 		err = err1
 	}
-	return bakname, err
+	return f.Name(), err
 }
