@@ -110,6 +110,63 @@ func TestPackagesDefinitions_ParseTypes(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestPackagesDefinitions_FindTypeSpec(t *testing.T) {
+	userDef := TypeSpecDef{
+		File: &ast.File{
+			Name: &ast.Ident{Name: "user.go"},
+		},
+		TypeSpec: &ast.TypeSpec{
+			Name: ast.NewIdent("User"),
+		},
+		PkgPath: "user",
+	}
+	var pkg = PackagesDefinitions{
+		uniqueDefinitions: map[string]*TypeSpecDef{
+			"user.Model": &userDef,
+		},
+	}
+
+	var nilDef *TypeSpecDef
+	assert.Equal(t, nilDef, pkg.FindTypeSpec("int", nil, false))
+	assert.Equal(t, nilDef, pkg.FindTypeSpec("bool", nil, false))
+	assert.Equal(t, nilDef, pkg.FindTypeSpec("string", nil, false))
+
+	assert.Equal(t, &userDef, pkg.FindTypeSpec("user.Model", nil, false))
+	assert.Equal(t, nilDef, pkg.FindTypeSpec("Model", nil, false))
+}
+
+func TestPackage_rangeFiles(t *testing.T) {
+	files := map[*ast.File]*AstFileInfo{
+		{
+			Name: &ast.Ident{Name: "main.go"},
+		}: {
+			File:        &ast.File{Name: &ast.Ident{Name: "main.go"}},
+			Path:        "testdata/simple/main.go",
+			PackagePath: "main",
+		},
+		{
+			Name: &ast.Ident{Name: "api.go"},
+		}: {
+			File:        &ast.File{Name: &ast.Ident{Name: "api.go"}},
+			Path:        "testdata/simple/api/api.go",
+			PackagePath: "api",
+		},
+	}
+
+	var sorted []string
+	processor := func(filename string, file *ast.File) error {
+		sorted = append(sorted, filename)
+		return nil
+	}
+	assert.NoError(t, rangeFiles(files, processor))
+	assert.Equal(t, []string{"testdata/simple/api/api.go", "testdata/simple/main.go"}, sorted)
+
+	assert.Error(t, rangeFiles(files, func(filename string, file *ast.File) error {
+		return ErrFuncTypeField
+	}))
+
+}
+
 func TestPackagesDefinitions_findTypeSpec(t *testing.T) {
 	pd := PackagesDefinitions{}
 	var nilTypeSpec *TypeSpecDef
@@ -131,4 +188,5 @@ func TestPackagesDefinitions_findTypeSpec(t *testing.T) {
 	}
 	assert.Equal(t, &userTypeSpec, pd.findTypeSpec("model", "User"))
 	assert.Equal(t, nilTypeSpec, pd.findTypeSpec("others", "User"))
+
 }

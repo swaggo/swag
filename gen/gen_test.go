@@ -398,7 +398,7 @@ func TestGen_configWithOutputTypesAll(t *testing.T) {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 			t.Fatal(err)
 		}
-		os.Remove(expectedFile)
+		_ = os.Remove(expectedFile)
 	}
 }
 
@@ -428,7 +428,7 @@ func TestGen_configWithOutputTypesSingle(t *testing.T) {
 			if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 				t.Fatal(err)
 			}
-			os.Remove(expectedFile)
+			_ = os.Remove(expectedFile)
 		}
 	}
 }
@@ -561,23 +561,6 @@ func TestGen_cgoImports(t *testing.T) {
 		}
 		_ = os.Remove(expectedFile)
 	}
-}
-
-func TestGen_duplicateRoute(t *testing.T) {
-	config := &Config{
-		SearchDir:          "../testdata/duplicate_route",
-		MainAPIFile:        "./main.go",
-		OutputDir:          "../testdata/duplicate_route/docs",
-		PropNamingStrategy: "",
-		ParseDependency:    true,
-	}
-	err := New().Build(config)
-	assert.NoError(t, err)
-
-	// with Strict enabled should cause an error instead of warning about the duplicate route
-	config.Strict = true
-	err = New().Build(config)
-	assert.EqualError(t, err, "route GET /testapi/endpoint is declared multiple times")
 }
 
 func TestGen_parseOverrides(t *testing.T) {
