@@ -1821,6 +1821,50 @@ func TestParseParamCommentByDefault(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentByExampleInt(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "Some ID" Example(10)`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "example": 10,
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByExampleString(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query string true "Some ID" Example(True feelings)`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "string",
+        "example": "True feelings",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamArrayWithEnums(t *testing.T) {
 	t.Parallel()
 
