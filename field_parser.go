@@ -146,6 +146,46 @@ type structField struct {
 	unique       bool
 }
 
+// splitNotWrapped slices s into all substrings separated by sep if sep is not
+// wrapped by brackets and returns a slice of the substrings between those separators.
+func splitNotWrapped(s string, sep rune) []string {
+	openCloseMap := map[rune]rune{
+		'(': ')',
+		'[': ']',
+		'{': '}',
+	}
+
+	result := make([]string, 0)
+	current := ""
+	var openCount = 0
+	var openChar rune
+	for _, char := range s {
+		if openChar == 0 && openCloseMap[char] != 0 {
+			openChar = char
+			openCount++
+			current += string(char)
+		} else if char == openChar {
+			openCount++
+			current = current + string(char)
+		} else if openCount > 0 && char == openCloseMap[openChar] {
+			openCount--
+			current += string(char)
+		} else if openCount == 0 && char == sep {
+			result = append(result, current)
+			openChar = 0
+			current = ""
+		} else {
+			current += string(char)
+		}
+	}
+
+	if current != "" {
+		result = append(result, current)
+	}
+
+	return result
+}
+
 func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	types := ps.p.GetSchemaTypePath(schema, 2)
 	if len(types) == 0 {
@@ -207,7 +247,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	extensionsTag := ps.tag.Get(extensionsTag)
 	if extensionsTag != "" {
 		structField.extensions = map[string]interface{}{}
-		for _, val := range strings.Split(extensionsTag, ",") {
+		for _, val := range splitNotWrapped(extensionsTag, ',') {
 			parts := strings.SplitN(val, "=", 2)
 			if len(parts) == 2 {
 				structField.extensions[parts[0]] = parts[1]

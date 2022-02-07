@@ -500,7 +500,7 @@ func setEnumParam(param *spec.Parameter, attr, objectType, schemaType string) er
 
 func setExtensionParam(param *spec.Parameter, attr string) error {
 	param.Extensions = map[string]interface{}{}
-	for _, val := range strings.Split(attr, ",") {
+	for _, val := range splitNotWrapped(attr, ',') {
 		parts := strings.SplitN(val, "=", 2)
 		if len(parts) == 2 {
 			param.Extensions.Add(parts[0], parts[1])
