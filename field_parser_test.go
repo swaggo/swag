@@ -80,7 +80,7 @@ func TestDefaultFieldParser(t *testing.T) {
 		err := newTagBaseFieldParser(
 			&Parser{},
 			&ast.Field{Tag: &ast.BasicLit{
-				Value: `json:"test" extensions:"x-nullable,x-abc=def,!x-omitempty,x-example=[0,, 9]"`,
+				Value: `json:"test" extensions:"x-nullable,x-abc=def,!x-omitempty,x-example=[0, 9],x-example2={çãíœ, (bar=(abc, def)), [0,9]}"`,
 			}},
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
@@ -88,6 +88,7 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Equal(t, "def", schema.Extensions["x-abc"])
 		assert.Equal(t, false, schema.Extensions["x-omitempty"])
 		assert.Equal(t, "[0, 9]", schema.Extensions["x-example"])
+		assert.Equal(t, "{çãíœ, (bar=(abc, def)), [0,9]}", schema.Extensions["x-example2"])
 	})
 
 	t.Run("Enums tag", func(t *testing.T) {
