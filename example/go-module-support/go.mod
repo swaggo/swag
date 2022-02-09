@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/gin-gonic/gin v1.7.7
-	github.com/swaggo/examples v0.0.0-20190624090508-a983dcc3c013
+	github.com/swaggo/examples v0.0.0-20190624100559-f57286ab550c
 )
 
 require (
