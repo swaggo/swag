@@ -183,7 +183,7 @@ func main() {
 //...
 ```
 
-Additionally some general API info can be set dynamically. The generated code package `docs` exports `SwaggerInfo` variable which we can use to set the title, description, version, host and base path programmatically. Example using Gin:
+Additionally some general API info can be set dynamically. The generated code package `docs` exports `SwaggerInfo_swagger` variable which we can use to set the title, description, version, host and base path programmatically. Example using Gin:
 
 ```go
 package main
@@ -205,12 +205,12 @@ import (
 func main() {
 
 	// programmatically set swagger info
-	docs.SwaggerInfo.Title = "Swagger Example API"
-	docs.SwaggerInfo.Description = "This is a sample server Petstore server."
-	docs.SwaggerInfo.Version = "1.0"
-	docs.SwaggerInfo.Host = "petstore.swagger.io"
-	docs.SwaggerInfo.BasePath = "/v2"
-	docs.SwaggerInfo.Schemes = []string{"http", "https"}
+	docs.SwaggerInfo_swagger.Title = "Swagger Example API"
+	docs.SwaggerInfo_swagger.Description = "This is a sample server Petstore server."
+	docs.SwaggerInfo_swagger.Version = "1.0"
+	docs.SwaggerInfo_swagger.Host = "petstore.swagger.io"
+	docs.SwaggerInfo_swagger.BasePath = "/v2"
+	docs.SwaggerInfo_swagger.Schemes = []string{"http", "https"}
 		
 	r := gin.New()
 

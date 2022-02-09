@@ -178,7 +178,7 @@ func main() {
 //...
 ```
 
-此外，可以动态设置一些通用的API信息。生成的代码包`docs`导出`SwaggerInfo`变量，使用该变量可以通过编码的方式设置标题、描述、版本、主机和基础路径。使用Gin的示例：
+此外，可以动态设置一些通用的API信息。生成的代码包`docs`导出`SwaggerInfo_swagger`变量，使用该变量可以通过编码的方式设置标题、描述、版本、主机和基础路径。使用Gin的示例：
 
 ```go
 package main
@@ -200,12 +200,12 @@ import (
 func main() {
 
     // programatically set swagger info
-    docs.SwaggerInfo.Title = "Swagger Example API"
-    docs.SwaggerInfo.Description = "This is a sample server Petstore server."
-    docs.SwaggerInfo.Version = "1.0"
-    docs.SwaggerInfo.Host = "petstore.swagger.io"
-    docs.SwaggerInfo.BasePath = "/v2"
-    docs.SwaggerInfo.Schemes = []string{"http", "https"}
+    docs.SwaggerInfo_swagger.Title = "Swagger Example API"
+    docs.SwaggerInfo_swagger.Description = "This is a sample server Petstore server."
+    docs.SwaggerInfo_swagger.Version = "1.0"
+    docs.SwaggerInfo_swagger.Host = "petstore.swagger.io"
+    docs.SwaggerInfo_swagger.BasePath = "/v2"
+    docs.SwaggerInfo_swagger.Schemes = []string{"http", "https"}
 
     r := gin.New()
 
