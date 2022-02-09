@@ -34,8 +34,8 @@ github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
-github.com/swaggo/examples v0.0.0-20190624090508-a983dcc3c013 h1:8nvIMI6paovcDrv7Pl54FofWYk2bU8+n2t1JdwvgUJM=
-github.com/swaggo/examples v0.0.0-20190624090508-a983dcc3c013/go.mod h1:U21M3+8BIXRyR/pwjJ7X0D36sVTzFMiOyUAdgvVfUVI=
+github.com/swaggo/examples v0.0.0-20190624100559-f57286ab550c h1:wgBp6VweQ9dML4cKbjh0sV0xxvxgqCrCRiHG6losLv4=
+github.com/swaggo/examples v0.0.0-20190624100559-f57286ab550c/go.mod h1:U21M3+8BIXRyR/pwjJ7X0D36sVTzFMiOyUAdgvVfUVI=
 github.com/ugorji/go v1.1.7 h1:/68gy2h+1mWMrwZFeD1kQialdSzAb432dtpeJ42ovdo=
 github.com/ugorji/go v1.1.7/go.mod h1:kZn38zHttfInRq0xu/PH0az30d+z6vm202qpg1oXVMw=
 github.com/ugorji/go/codec v1.1.7 h1:2SvQaVZ1ouYrrKKwoSk2pzd4A9evlKJb9oTL+OaLUSs=
