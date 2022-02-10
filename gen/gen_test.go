@@ -101,6 +101,12 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	) {
 		t.Fatal(errors.New("generated go code does not contain the correct default registration sequence"))
 	}
+	if !strings.Contains(
+		string(expectedCode),
+		"var SwaggerInfo =",
+	) {
+		t.Fatal(errors.New("generated go code does not contain the correct default variable declaration"))
+	}
 
 	// Custom name
 	config.InstanceName = "custom"
@@ -115,6 +121,12 @@ func TestGen_BuildInstanceName(t *testing.T) {
 		"swag.Register(SwaggerInfo_custom.InstanceName(), SwaggerInfo_custom)",
 	) {
 		t.Fatal(errors.New("generated go code does not contain the correct registration sequence"))
+	}
+	if !strings.Contains(
+		string(expectedCode),
+		"var SwaggerInfo_custom =",
+	) {
+		t.Fatal(errors.New("generated go code does not contain the correct variable declaration"))
 	}
 
 	// cleanup

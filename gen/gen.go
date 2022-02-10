@@ -410,7 +410,7 @@ import "github.com/swaggo/swag"
 const docTemplate_{{ .InstanceName }} = ` + "`{{ printDoc .Doc}}`" + `
 
 // SwaggerInfo{{ if ne .InstanceName "swagger" }}_{{ .InstanceName }} {{- end }} holds exported Swagger Info so clients can modify it
-var SwaggerInfo {{ if ne .InstanceName "swagger" }}_{{ .InstanceName }} {{- end }} = &swag.Spec{
+var SwaggerInfo{{ if ne .InstanceName "swagger" }}_{{ .InstanceName }} {{- end }} = &swag.Spec{
 	Version:     {{ printf "%q" .Version}},
 	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},
