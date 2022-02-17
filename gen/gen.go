@@ -407,7 +407,7 @@ package {{.PackageName}}
 
 import "github.com/swaggo/swag"
 
-const docTemplate{{ .InstanceName }} = ` + "`{{ printDoc .Doc}}`" + `
+const docTemplate{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }} = ` + "`{{ printDoc .Doc}}`" + `
 
 // SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }} holds exported Swagger Info so clients can modify it
 var SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }} = &swag.Spec{
@@ -418,7 +418,7 @@ var SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }}
 	Title:       {{ printf "%q" .Title}},
 	Description: {{ printf "%q" .Description}},
 	InfoInstanceName: {{ printf "%q" .InstanceName }},
-	SwaggerTemplate: docTemplate{{ .InstanceName }},
+	SwaggerTemplate: docTemplate{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }},
 }
 
 func init() {

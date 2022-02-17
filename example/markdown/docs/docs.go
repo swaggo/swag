@@ -4,7 +4,7 @@ package docs
 
 import "github.com/swaggo/swag"
 
-const docTemplateswagger = `{
+const docTemplate = `{
     "schemes": {{ marshal .Schemes }},
     "swagger": "2.0",
     "info": {
@@ -230,7 +230,7 @@ var SwaggerInfo = &swag.Spec{
 	Title:            "Swagger Example API",
 	Description:      "# General API documentation\n\n**Warning** this api is not production ready. Use at your own risk.\n\nIn order to re-generate the documentation you need to run\n\n`swag init --md .`\n",
 	InfoInstanceName: "swagger",
-	SwaggerTemplate:  docTemplateswagger,
+	SwaggerTemplate:  docTemplate,
 }
 
 func init() {
