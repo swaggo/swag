@@ -4,4 +4,4 @@
 
 In order to re-generate the documentation you need to run
 
-`swago init --md .`
+`swag init --md .`

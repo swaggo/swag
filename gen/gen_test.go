@@ -109,7 +109,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	}
 
 	// Custom name
-	config.InstanceName = "custom"
+	config.InstanceName = "Custom"
 	goSourceFile = filepath.Join(config.OutputDir, config.InstanceName+"_"+"docs.go")
 	assert.NoError(t, New().Build(config))
 	expectedCode, err = ioutil.ReadFile(goSourceFile)
@@ -118,13 +118,13 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	}
 	if !strings.Contains(
 		string(expectedCode),
-		"swag.Register(SwaggerInfo_custom.InstanceName(), SwaggerInfo_custom)",
+		"swag.Register(SwaggerInfoCustom.InstanceName(), SwaggerInfoCustom)",
 	) {
 		t.Fatal(errors.New("generated go code does not contain the correct registration sequence"))
 	}
 	if !strings.Contains(
 		string(expectedCode),
-		"var SwaggerInfo_custom =",
+		"var SwaggerInfoCustom =",
 	) {
 		t.Fatal(errors.New("generated go code does not contain the correct variable declaration"))
 	}
