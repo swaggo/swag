@@ -48,7 +48,6 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/model.Account'
-        type: object
       id:
         example: 1
         type: integer
@@ -122,7 +121,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/model.AddAccount'
-          type: object
       produces:
       - application/json
       responses:
@@ -142,7 +140,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-      summary: Add a account
+      summary: Add an account
       tags:
       - accounts
   /accounts/{id}:
@@ -176,7 +174,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-      summary: Update a account
+      summary: Delete an account
       tags:
       - accounts
     get:
@@ -208,7 +206,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-      summary: Show a account
+      summary: Show an account
       tags:
       - accounts
     patch:
@@ -227,7 +225,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/model.UpdateAccount'
-          type: object
       produces:
       - application/json
       responses:
@@ -247,7 +244,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
-      summary: Update a account
+      summary: Update an account
       tags:
       - accounts
   /accounts/{id}/images:
@@ -590,6 +587,30 @@ paths:
       summary: ping example
       tags:
       - example
+  /examples/post:
+    post:
+      consumes:
+      - application/json
+      description: post request example
+      parameters:
+      - description: Account Info
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/model.Account'
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: success
+          schema:
+            type: string
+        "500":
+          description: fail
+          schema:
+            type: string
+      summary: post request example
   /examples/securities:
     get:
       consumes:
@@ -639,29 +660,33 @@ securityDefinitions:
     authorizationUrl: https://example.com/oauth/authorize
     flow: accessCode
     scopes:
-      admin: ' Grants read and write access to administrative information'
+      admin: '                            Grants read and write access to administrative
+        information'
     tokenUrl: https://example.com/oauth/token
     type: oauth2
   OAuth2Application:
     flow: application
     scopes:
-      admin: ' Grants read and write access to administrative information'
-      write: ' Grants write access'
+      admin: '                             Grants read and write access to administrative
+        information'
+      write: '                             Grants write access'
     tokenUrl: https://example.com/oauth/token
     type: oauth2
   OAuth2Implicit:
     authorizationUrl: https://example.com/oauth/authorize
     flow: implicit
     scopes:
-      admin: ' Grants read and write access to administrative information'
-      write: ' Grants write access'
+      admin: '                          Grants read and write access to administrative
+        information'
+      write: '                          Grants write access'
     type: oauth2
   OAuth2Password:
     flow: password
     scopes:
-      admin: ' Grants read and write access to administrative information'
-      read: ' Grants read access'
-      write: ' Grants write access'
+      admin: '                          Grants read and write access to administrative
+        information'
+      read: '                           Grants read access'
+      write: '                          Grants write access'
     tokenUrl: https://example.com/oauth/token
     type: oauth2
 swagger: "2.0"

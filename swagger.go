@@ -7,7 +7,7 @@ import (
 )
 
 // Name is a unique name be used to register swag instance.
-const Name = "Swagger"
+const Name = "swagger"
 
 var (
 	swaggerMu sync.RWMutex
@@ -38,7 +38,7 @@ func Register(name string, swagger Swagger) {
 }
 
 // ReadDoc reads swagger document. An optional name parameter can be passed to read a specific document.
-// The default name is "Swagger".
+// The default name is "swagger".
 func ReadDoc(optionalName ...string) (string, error) {
 	swaggerMu.RLock()
 	defer swaggerMu.RUnlock()

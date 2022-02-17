@@ -18,30 +18,19 @@ definitions:
       password:
         type: string
     type: object
-  api.UsersCollection:
-    items:
-      properties:
-        email:
-          type: string
-        id:
-          type: integer
-        password:
-          type: string
-      type: object
-    type: array
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: |-
+  description: |
     # General API documentation
 
     **Warning** this api is not production ready. Use at your own risk.
 
     In order to re-generate the documentation you need to run
 
-    `swago init --md .`
+    `swag init --md .`
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -60,7 +49,9 @@ paths:
           description: ok
           schema:
             items:
-              $ref: '#/definitions/api.UsersCollection'
+              items:
+                $ref: '#/definitions/api.User'
+              type: array
             type: array
       summary: List users from the store
       tags:
@@ -75,7 +66,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/api.User'
-          type: object
       produces:
       - application/json
       responses:
@@ -104,7 +94,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/api.User'
-          type: object
       produces:
       - application/json
       responses:

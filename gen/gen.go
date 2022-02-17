@@ -84,7 +84,7 @@ type Config struct {
 	CodeExampleFilesDir string
 
 	// InstanceName is used to get distinct names for different swagger documents in the
-	// same project. The default value is "Swagger".
+	// same project. The default value is "swagger".
 	InstanceName string
 
 	// ParseDepth dependency parse depth
@@ -409,8 +409,8 @@ import "github.com/swaggo/swag"
 
 const docTemplate{{ .InstanceName }} = ` + "`{{ printDoc .Doc}}`" + `
 
-// SwaggerInfo{{ if ne .InstanceName "Swagger" }}{{ .InstanceName }} {{- end }} holds exported Swagger Info so clients can modify it
-var SwaggerInfo{{ if ne .InstanceName "Swagger" }}{{ .InstanceName }} {{- end }} = &swag.Spec{
+// SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }} holds exported Swagger Info so clients can modify it
+var SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }} = &swag.Spec{
 	Version:     {{ printf "%q" .Version}},
 	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},
@@ -422,6 +422,6 @@ var SwaggerInfo{{ if ne .InstanceName "Swagger" }}{{ .InstanceName }} {{- end }}
 }
 
 func init() {
-	swag.Register(SwaggerInfo{{ if ne .InstanceName "Swagger" }}{{ .InstanceName }} {{- end }}.InstanceName(), SwaggerInfo{{ if ne .InstanceName "Swagger" }}{{ .InstanceName }} {{- end }})
+	swag.Register(SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }}.InstanceName(), SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }})
 }
 `

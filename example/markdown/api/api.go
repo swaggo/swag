@@ -16,7 +16,7 @@ type User struct {
 type UsersCollection []User
 
 // Error example
-type Error struct {
+type APIError struct {
 	ErrorCode    int
 	ErrorMessage string
 	CreatedAt    time.Time
