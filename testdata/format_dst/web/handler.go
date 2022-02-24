@@ -36,6 +36,7 @@ type Pet struct {
 	IntArray  []int             `json:"int_array" example:"1,2"`
 	StringMap map[string]string `json:"string_map" example:"key1:value,key2:value2"`
 	EnumArray []int             `json:"enum_array" enums:"1,2,3,5,7"`
+	NotShown  string            `json:"notShown" writeonly:"true"`
 }
 
 type Tag struct {

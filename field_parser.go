@@ -143,6 +143,7 @@ type structField struct {
 	enums        []interface{}
 	enumVarNames []interface{}
 	readOnly     bool
+	writeOnly    bool
 	unique       bool
 }
 
@@ -206,6 +207,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		schemaType: types[0],
 		formatType: ps.tag.Get(formatTag),
 		readOnly:   ps.tag.Get(readOnlyTag) == "true",
+		writeOnly:  ps.tag.Get(writeOnlyTag) == "true",
 	}
 
 	if len(types) > 1 && (types[0] == ARRAY || types[0] == OBJECT) {
@@ -373,6 +375,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	}
 
 	schema.Description = structField.desc
+	schema.WriteOnly = structField.writeOnly
 	schema.ReadOnly = structField.readOnly
 	if !reflect.ValueOf(schema.Ref).IsZero() && schema.ReadOnly {
 		schema.AllOf = []spec.Schema{*spec.RefSchema(schema.Ref.String())}

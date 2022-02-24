@@ -368,6 +368,7 @@ const (
 	maxLengthTag        = "maxlength"
 	multipleOfTag       = "multipleOf"
 	readOnlyTag         = "readonly"
+	writeOnlyTag        = "writeonly"
 	extensionsTag       = "extensions"
 	collectionFormatTag = "collectionFormat"
 )

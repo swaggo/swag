@@ -335,6 +335,21 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Equal(t, true, schema.ReadOnly)
 	})
 
+	t.Run("Writeonly tag", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"string"}
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" writeonly:"true"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, true, schema.WriteOnly)
+	})
+
 	t.Run("Invalid tag", func(t *testing.T) {
 		t.Parallel()
 
