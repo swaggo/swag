@@ -109,7 +109,6 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/web.Pet'
-          type: object
       produces:
       - application/json
       responses:

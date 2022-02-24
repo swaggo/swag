@@ -407,10 +407,10 @@ package {{.PackageName}}
 
 import "github.com/swaggo/swag"
 
-const docTemplate_{{ .InstanceName }} = ` + "`{{ printDoc .Doc}}`" + `
+const docTemplate{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }} = ` + "`{{ printDoc .Doc}}`" + `
 
-// SwaggerInfo{{ if ne .InstanceName "swagger" }}_{{ .InstanceName }} {{- end }} holds exported Swagger Info so clients can modify it
-var SwaggerInfo{{ if ne .InstanceName "swagger" }}_{{ .InstanceName }} {{- end }} = &swag.Spec{
+// SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }} holds exported Swagger Info so clients can modify it
+var SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }} = &swag.Spec{
 	Version:     {{ printf "%q" .Version}},
 	Host:        {{ printf "%q" .Host}},
 	BasePath:    {{ printf "%q" .BasePath}},
@@ -418,10 +418,10 @@ var SwaggerInfo{{ if ne .InstanceName "swagger" }}_{{ .InstanceName }} {{- end }
 	Title:       {{ printf "%q" .Title}},
 	Description: {{ printf "%q" .Description}},
 	InfoInstanceName: {{ printf "%q" .InstanceName }},
-	SwaggerTemplate: docTemplate_{{ .InstanceName }},
+	SwaggerTemplate: docTemplate{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }},
 }
 
 func init() {
-	swag.Register(SwaggerInfo{{ if ne .InstanceName "swagger" }}_{{ .InstanceName }} {{- end }}.InstanceName(), SwaggerInfo{{ if ne .InstanceName "swagger" }}_{{ .InstanceName }} {{- end }})
+	swag.Register(SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }}.InstanceName(), SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }})
 }
 `
