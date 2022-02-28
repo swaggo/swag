@@ -629,30 +629,38 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	return nil
 }
 
+type SecurityMap map[string][]string
+
 // ParseSecurityComment parses comment for given `security` comment string.
 func (operation *Operation) ParseSecurityComment(commentLine string) error {
+	var securityMap SecurityMap = SecurityMap{}
 	securitySource := commentLine[strings.Index(commentLine, "@Security")+1:]
-	l := strings.Index(securitySource, "[")
-	r := strings.Index(securitySource, "]")
+	for _, secOption := range strings.Split(securitySource, "||") {
+		secOption = strings.TrimSpace(secOption)
+		operation.ProcessSecurityOption(secOption, securityMap)
+	}
+	operation.Security = append(operation.Security, securityMap)
+	return nil
+}
+
+func (operation *Operation) ProcessSecurityOption(securityOption string, securityMap SecurityMap) {
 	// exists scope
+	l := strings.Index(securityOption, "[")
+	r := strings.Index(securityOption, "]")
 	if !(l == -1 && r == -1) {
-		scopes := securitySource[l+1 : r]
+		scopes := securityOption[l+1 : r]
 		var s []string
 		for _, scope := range strings.Split(scopes, ",") {
 			s = append(s, strings.TrimSpace(scope))
 		}
-		securityKey := securitySource[0:l]
-		securityMap := map[string][]string{}
+		securityKey := securityOption[0:l]
 		securityMap[securityKey] = append(securityMap[securityKey], s...)
-		operation.Security = append(operation.Security, securityMap)
+
 	} else {
-		securityKey := strings.TrimSpace(securitySource)
+		securityKey := strings.TrimSpace(securityOption)
 		securityMap := map[string][]string{}
 		securityMap[securityKey] = []string{}
-		operation.Security = append(operation.Security, securityMap)
 	}
-
-	return nil
 }
 
 // findTypeDef attempts to find the *ast.TypeSpec for a specific type given the
