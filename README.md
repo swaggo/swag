@@ -20,6 +20,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
  - [Getting started](#getting-started)
  - [Supported Web Frameworks](#supported-web-frameworks)
  - [How to use it with Gin](#how-to-use-it-with-gin)
+ - [The swag formatter](#the-swag-formatter)
  - [Implementation Status](#implementation-status)
  - [Declarative Comments Format](#declarative-comments-format)
 	- [General API Info](#general-api-info)
@@ -34,11 +35,13 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [Example value of struct](#example-value-of-struct)
 	- [Description of struct](#description-of-struct)
 	- [Use swaggertype tag to supported custom type](#use-swaggertype-tag-to-supported-custom-type)
+	- [Use global overrides to support a custom type](#use-global-overrides-to-support-a-custom-type)
 	- [Use swaggerignore tag to exclude a field](#use-swaggerignore-tag-to-exclude-a-field)
 	- [Add extension info to struct field](#add-extension-info-to-struct-field)
 	- [Rename model to display](#rename-model-to-display)
-	- [How to using security annotations](#how-to-using-security-annotations)
+	- [How to use security annotations](#how-to-use-security-annotations)
 	- [Add a description for enum items](#add-a-description-for-enum-items)
+	- [Generate only specific docs file types](#generate-only-specific-docs-file-types)
 - [About the Project](#about-the-project)
 
 ## Getting started
@@ -52,7 +55,7 @@ $ go get -u github.com/swaggo/swag/cmd/swag
 # 1.16 or newer
 $ go install github.com/swaggo/swag/cmd/swag@latest
 ```
-To build from source you need [Go](https://golang.org/dl/) (1.13 or newer).
+To build from source you need [Go](https://golang.org/dl/) (1.15 or newer).
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
@@ -64,6 +67,12 @@ $ swag init
   Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
   ```sh
   swag init -g http/api.go
+  ```
+
+4. (optional) Use `swag fmt` format the SWAG comment. (Please upgrade to the latest version)
+
+  ```sh
+  swag fmt
   ```
 
 ## swag cli
@@ -78,18 +87,37 @@ USAGE:
 
 OPTIONS:
    --generalInfo value, -g value          Go file path in which 'swagger general API Info' is written (default: "main.go")
-   --dir value, -d value                  Directory you want to parse (default: "./")
+   --dir value, -d value                  Directories you want to parse,comma separated and general-info file must be in the first one (default: "./")
    --exclude value                        Exclude directories and files when searching, comma separated
    --propertyStrategy value, -p value     Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
-   --output value, -o value               Output directory for all the generated files(swagger.json, swagger.yaml and doc.go) (default: "./docs")
+   --output value, -o value               Output directory for all the generated files(swagger.json, swagger.yaml and docs.go) (default: "./docs")
+   --outputTypes value, --ot value        Output types of generated files (docs.go, swagger.json, swagger.yaml) like go,json,yaml (default: "go,json,yaml")
    --parseVendor                          Parse go files in 'vendor' folder, disabled by default (default: false)
-   --parseDependency                      Parse go files in outside dependency folder, disabled by default (default: false)
+   --parseDependency, --pd                Parse go files inside dependency folder, disabled by default (default: false)
    --markdownFiles value, --md value      Parse folder containing markdown files to use as description, disabled by default
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
    --generatedTime                        Generate timestamp at the top of docs.go, disabled by default (default: false)
    --parseDepth value                     Dependency parse depth (default: 100)
+   --instanceName value                   This parameter can be used to name different swagger document instances. It is optional.
+   --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
    --help, -h                             show help (default: false)
+```
+
+```bash
+swag fmt -h
+NAME:
+   swag fmt - format swag comments
+
+USAGE:
+   swag fmt [command options] [arguments...]
+
+OPTIONS:
+   --dir value, -d value          Directories you want to parse,comma separated and general-info file must be in the first one (default: "./")
+   --exclude value                Exclude directories and files when searching, comma separated
+   --generalInfo value, -g value  Go file path in which 'swagger general API Info' is written (default: "main.go")
+   --help, -h                     show help (default: false)
+
 ```
 
 ## Supported Web Frameworks
@@ -115,51 +143,22 @@ import "github.com/swaggo/files" // swagger embed files
 2. Add [General API](#general-api-info) annotations in `main.go` code:
 
 ```go
-// @title Swagger Example API
-// @version 1.0
-// @description This is a sample server celler server.
-// @termsOfService http://swagger.io/terms/
+// @title           Swagger Example API
+// @version         1.0
+// @description     This is a sample server celler server.
+// @termsOfService  http://swagger.io/terms/
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8080
-// @BasePath /api/v1
-// @query.collection.format multi
+// @host      localhost:8080
+// @BasePath  /api/v1
 
-// @securityDefinitions.basic BasicAuth
-
-// @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
-
-// @securitydefinitions.oauth2.application OAuth2Application
-// @tokenUrl https://example.com/oauth/token
-// @scope.write Grants write access
-// @scope.admin Grants read and write access to administrative information
-
-// @securitydefinitions.oauth2.implicit OAuth2Implicit
-// @authorizationurl https://example.com/oauth/authorize
-// @scope.write Grants write access
-// @scope.admin Grants read and write access to administrative information
-
-// @securitydefinitions.oauth2.password OAuth2Password
-// @tokenUrl https://example.com/oauth/token
-// @scope.read Grants read access
-// @scope.write Grants write access
-// @scope.admin Grants read and write access to administrative information
-
-// @securitydefinitions.oauth2.accessCode OAuth2AccessCode
-// @tokenUrl https://example.com/oauth/token
-// @authorizationurl https://example.com/oauth/authorize
-// @scope.admin Grants read and write access to administrative information
-
-// @x-extension-openapi {"example": "value on a json format"}
-
+// @securityDefinitions.basic  BasicAuth
 func main() {
 	r := gin.Default()
 
@@ -197,15 +196,12 @@ import (
 	"./docs" // docs is generated by Swag CLI, you have to import it.
 )
 
-// @contact.name API Support
-// @contact.url http://www.swagger.io/support
-// @contact.email support@swagger.io
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
 
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @termsOfService http://swagger.io/terms/
-
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 func main() {
 
 	// programmatically set swagger info
@@ -231,65 +227,63 @@ func main() {
 package controller
 
 import (
-	"fmt"
-	"net/http"
-	"strconv"
+    "fmt"
+    "net/http"
+    "strconv"
 
-	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/example/celler/httputil"
-	"github.com/swaggo/swag/example/celler/model"
+    "github.com/gin-gonic/gin"
+    "github.com/swaggo/swag/example/celler/httputil"
+    "github.com/swaggo/swag/example/celler/model"
 )
 
 // ShowAccount godoc
-// @Summary Show a account
-// @Description get string by ID
-// @ID get-string-by-int
-// @Accept  json
-// @Produce  json
-// @Param id path int true "Account ID"
-// @Success 200 {object} model.Account
-// @Header 200 {string} Token "qwerty"
-// @Failure 400,404 {object} httputil.HTTPError
-// @Failure 500 {object} httputil.HTTPError
-// @Failure default {object} httputil.DefaultError
-// @Router /accounts/{id} [get]
+// @Summary      Show an account
+// @Description  get string by ID
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "Account ID"
+// @Success      200  {object}  model.Account
+// @Failure      400  {object}  httputil.HTTPError
+// @Failure      404  {object}  httputil.HTTPError
+// @Failure      500  {object}  httputil.HTTPError
+// @Router       /accounts/{id} [get]
 func (c *Controller) ShowAccount(ctx *gin.Context) {
-	id := ctx.Param("id")
-	aid, err := strconv.Atoi(id)
-	if err != nil {
-		httputil.NewError(ctx, http.StatusBadRequest, err)
-		return
-	}
-	account, err := model.AccountOne(aid)
-	if err != nil {
-		httputil.NewError(ctx, http.StatusNotFound, err)
-		return
-	}
-	ctx.JSON(http.StatusOK, account)
+  id := ctx.Param("id")
+  aid, err := strconv.Atoi(id)
+  if err != nil {
+    httputil.NewError(ctx, http.StatusBadRequest, err)
+    return
+  }
+  account, err := model.AccountOne(aid)
+  if err != nil {
+    httputil.NewError(ctx, http.StatusNotFound, err)
+    return
+  }
+  ctx.JSON(http.StatusOK, account)
 }
 
 // ListAccounts godoc
-// @Summary List accounts
-// @Description get accounts
-// @Accept  json
-// @Produce  json
-// @Param q query string false "name search by q"
-// @Success 200 {array} model.Account
-// @Header 200 {string} Token "qwerty"
-// @Failure 400,404 {object} httputil.HTTPError
-// @Failure 500 {object} httputil.HTTPError
-// @Failure default {object} httputil.DefaultError
-// @Router /accounts [get]
+// @Summary      List accounts
+// @Description  get accounts
+// @Tags         accounts
+// @Accept       json
+// @Produce      json
+// @Param        q    query     string  false  "name search by q"  Format(email)
+// @Success      200  {array}   model.Account
+// @Failure      400  {object}  httputil.HTTPError
+// @Failure      404  {object}  httputil.HTTPError
+// @Failure      500  {object}  httputil.HTTPError
+// @Router       /accounts [get]
 func (c *Controller) ListAccounts(ctx *gin.Context) {
-	q := ctx.Request.URL.Query().Get("q")
-	accounts, err := model.AccountsAll(q)
-	if err != nil {
-		httputil.NewError(ctx, http.StatusNotFound, err)
-		return
-	}
-	ctx.JSON(http.StatusOK, accounts)
+  q := ctx.Request.URL.Query().Get("q")
+  accounts, err := model.AccountsAll(q)
+  if err != nil {
+    httputil.NewError(ctx, http.StatusNotFound, err)
+    return
+  }
+  ctx.JSON(http.StatusOK, accounts)
 }
-
 //...
 ```
 
@@ -300,6 +294,21 @@ $ swag init
 4. Run your app, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
 
 ![swagger_index.html](https://raw.githubusercontent.com/swaggo/swag/master/assets/swagger-image.png)
+
+## The swag formatter
+
+The Swag Comments can be automatically formatted, just like 'go fmt'.  
+Find the result of formatting [here](https://github.com/swaggo/swag/tree/master/example/celler).
+
+Usage: 
+```shell
+swag fmt
+```
+
+Exclude folder：
+```shell
+swag fmt -d ./ --exclude ./internal
+```
 
 ## Implementation Status
 
@@ -345,7 +354,7 @@ $ swag init
 | license.url  | A URL to the license used for the API. MUST be in the format of a URL.                       | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
 | host        | The host (name or ip) serving the API.     | // @host localhost:8080         |
 | BasePath    | The base path on which the API is served. | // @BasePath /api/v1             |
-| accept      | A list of MIME types the APIs can consume. Value MUST be as described under [Mime Types](#mime-types).                     | // @accept json |
+| accept      | A list of MIME types the APIs can consume. Note that Accept only affects operations with a request body, such as POST, PUT and PATCH.  Value MUST be as described under [Mime Types](#mime-types).                     | // @accept json |
 | produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     | // @produce json |
 | query.collection.format | The default collection(array) param format in query,enums:csv,multi,pipes,tsv,ssv. If not set, csv is the default.| // @query.collection.format multi
 | schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
@@ -377,7 +386,7 @@ When a short string in your documentation is insufficient, or you need images, c
 | id          | A unique string used to identify the operation. Must be unique among all API operations.                                   |
 | tags        | A list of tags to each API operation that separated by commas.                                                             |
 | summary     | A short summary of what the operation does.                                                                                |
-| accept      | A list of MIME types the APIs can consume. Value MUST be as described under [Mime Types](#mime-types).                     |
+| accept      | A list of MIME types the APIs can consume. Note that Accept only affects operations with a request body, such as POST, PUT and PATCH.  Value MUST be as described under [Mime Types](#mime-types).                     |
 | produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     |
 | param       | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)` |
 | security    | [Security](#security) to each API operation.                                                                               |
@@ -453,15 +462,14 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 ## Attribute
 
 ```go
-// @Param enumstring query string false "string enums" Enums(A, B, C)
-// @Param enumint query int false "int enums" Enums(1, 2, 3)
-// @Param enumnumber query number false "int enums" Enums(1.1, 1.2, 1.3)
-// @Param string query string false "string valid" minlength(5) maxlength(10)
-// @Param int query int false "int valid" minimum(1) maximum(10)
-// @Param default query string false "string default" default(A)
-// @Param collection query []string false "string collection" collectionFormat(multi)
-// @Param extensions query []string false "string collection" extensions(x-example=test,x-nullable)
-
+// @Param   enumstring  query     string     false  "string enums"       Enums(A, B, C)
+// @Param   enumint     query     int        false  "int enums"          Enums(1, 2, 3)
+// @Param   enumnumber  query     number     false  "int enums"          Enums(1.1, 1.2, 1.3)
+// @Param   string      query     string     false  "string valid"       minlength(5)  maxlength(10)
+// @Param   int         query     int        false  "int valid"          minimum(1)    maximum(10)
+// @Param   default     query     string     false  "string default"     default(A)
+// @Param   collection  query     []string   false  "string collection"  collectionFormat(multi)
+// @Param   extensions  query     []string   false  "string collection"  extensions(x-example=test,x-nullable)
 ```
 
 It also works for the struct fields:
@@ -566,19 +574,19 @@ type DeepObject struct { //in `proto` package
 ### Add a headers in response
 
 ```go
-// @Success 200 {string} string	"ok"
-// @failure 400 {string} string	"error"
-// @response default {string} string	"other error"
-// @Header 200 {string} Location "/entity/1"
-// @Header 200,400,default {string} Token "token"
-// @Header all {string} Token2 "token2"
+// @Success      200              {string}  string    "ok"
+// @failure      400              {string}  string    "error"
+// @response     default          {string}  string    "other error"
+// @Header       200              {string}  Location  "/entity/1"
+// @Header       200,400,default  {string}  Token     "token"
+// @Header       all              {string}  Token2    "token2"
 ```
 
 ### Use multiple path params
 
 ```go
 /// ...
-// @Param group_id path int true "Group ID"
+// @Param group_id   path int true "Group ID"
 // @Param account_id path int true "Account ID"
 // ...
 // @Router /examples/groups/{group_id}/accounts/{account_id} [get]
@@ -589,7 +597,7 @@ type DeepObject struct { //in `proto` package
 ```go
 /// ...
 // @Param group_id path int true "Group ID"
-// @Param user_id path int true "User ID"
+// @Param user_id  path int true "User ID"
 // ...
 // @Router /examples/groups/{group_id}/user/{user_id}/address [put]
 // @Router /examples/user/{user_id}/address [put]
@@ -608,10 +616,34 @@ type Account struct {
 ### Description of struct
 
 ```go
+// Account model info
+// @Description User account information
+// @Description with user id and username
 type Account struct {
 	// ID this is userid
 	ID   int    `json:"id"`
 	Name string `json:"name"` // This is Name
+}
+```
+
+[#708](https://github.com/swaggo/swag/issues/708) The parser handles only struct comments starting with `@Description` attribute.
+But it writes all struct field comments as is.
+
+So, generated swagger doc as follows:
+```json
+"Account": {
+  "type":"object",
+  "description": "User account information with user id and username"
+  "properties": {
+    "id": {
+      "type": "integer",
+      "description": "ID this is userid"
+    },
+    "name": {
+      "type":"string",
+      "description": "This is Name"
+    }
+  }
 }
 ```
 
@@ -679,6 +711,40 @@ generated swagger doc as follows:
 
 ```
 
+### Use global overrides to support a custom type
+
+If you are using generated files, the [`swaggertype`](#use-swaggertype-tag-to-supported-custom-type) or `swaggerignore` tags may not be possible.
+
+By passing a mapping to swag with `--overridesFile` you can tell swag to use one type in place of another wherever it appears. By default, if a `.swaggo` file is present in the current directory it will be used.
+
+Go code:
+```go
+type MyStruct struct {
+  ID     sql.NullInt64 `json:"id"`
+  Name   sql.NullString `json:"name"`
+}
+```
+
+`.swaggo`:
+```
+// Replace all NullInt64 with int
+replace database/sql.NullInt64 int
+
+// Don't include any fields of type database/sql.NullString in the swagger docs
+skip    database/sql.NullString
+```
+
+Possible directives are comments (beginning with `//`), `replace path/to/a.type path/to/b.type`, and `skip path/to/a.type`.
+
+(Note that the full paths to any named types must be provided to prevent problems when multiple packages define a type with the same name)
+
+Rendered:
+```go
+"types.MyStruct": {
+  "id": "integer"
+}
+```
+    
 
 ### Use swaggerignore tag to exclude a field
 
@@ -721,7 +787,7 @@ type Resp struct {
 }//@name Response
 ```
 
-### How to using security annotations
+### How to use security annotations
 
 General API info.
 
@@ -757,6 +823,15 @@ type Example struct {
 	Order string `enums:"asc,desc"`
 }
 ```
+
+### Generate only specific docs file types
+
+By default `swag` command generates Swagger specification in three different files/file types:
+- docs.go
+- swagger.json
+- swagger.yaml
+
+If you would like to limit a set of file types which should be generated you can use `--outputTypes` (short `-ot`) flag. Default value is `go,json,yaml` - output types separated with comma. To limit output only to `go` and `yaml` files, you would write `go,yaml`. With complete command that would be `swag init --outputTypes go,yaml`.
 
 ## About the Project
 This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks). Gopher image source is [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). It has licenses [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).
