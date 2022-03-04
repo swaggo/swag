@@ -2048,7 +2048,7 @@ func TestParseSecurityCommentOr(t *testing.T) {
 	assert.Equal(t, operation.Security, []map[string][]string{
 		{
 			"OAuth2Implicit": {"read", "write"},
-			"Firebase": {""},
+			"Firebase":       {""},
 		},
 	})
 }
