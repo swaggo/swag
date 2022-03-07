@@ -360,6 +360,7 @@ const (
 	defaultTag          = "default"
 	enumsTag            = "enums"
 	exampleTag          = "example"
+	schemaExampleTag    = "schemaExample"
 	formatTag           = "format"
 	validateTag         = "validate"
 	minimumTag          = "minimum"
@@ -393,6 +394,8 @@ var regexAttributes = map[string]*regexp.Regexp{
 	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
 	// example(0)
 	exampleTag: regexp.MustCompile(`(?i)\s+example\(.*\)`),
+	// schemaExample(0)
+	schemaExampleTag: regexp.MustCompile(`(?i)\s+schemaExample\(.*\)`),
 }
 
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, objectType, schemaType string, param *spec.Parameter) error {
@@ -415,6 +418,8 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			param.Format = attr
 		case exampleTag:
 			err = setExample(param, schemaType, attr)
+		case schemaExampleTag:
+			err = setSchemaExample(param, schemaType, attr)
 		case extensionsTag:
 			_ = setExtensionParam(param, attr)
 		case collectionFormatTag:
@@ -527,6 +532,19 @@ func setDefault(param *spec.Parameter, schemaType string, value string) error {
 		return nil // Don't set a default value if it's not valid
 	}
 	param.Default = val
+	return nil
+}
+
+func setSchemaExample(param *spec.Parameter, schemaType string, value string) error {
+	val, err := defineType(schemaType, value)
+	if err != nil {
+		return nil // Don't set a example value if it's not valid
+	}
+	// skip schema
+	if param.Schema == nil {
+		return nil
+	}
+	param.Schema.Example = val
 	return nil
 }
 
