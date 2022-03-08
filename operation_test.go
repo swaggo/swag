@@ -2036,6 +2036,22 @@ func TestParseSecurityComment(t *testing.T) {
 	})
 }
 
+func TestParseSecurityCommentSimple(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Security ApiKeyAuth`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Equal(t, operation.Security, []map[string][]string{
+		{
+			"ApiKeyAuth": {},
+		},
+	})
+}
+
 func TestParseSecurityCommentOr(t *testing.T) {
 	t.Parallel()
 

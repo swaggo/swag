@@ -631,7 +631,9 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 // ParseSecurityComment parses comment for given `security` comment string.
 func (operation *Operation) ParseSecurityComment(commentLine string) error {
-	var securityMap map[string][]string = map[string][]string{}
+	//var securityMap map[string][]string = map[string][]string{}
+
+	var securityMap = make(map[string][]string)
 	securitySource := commentLine[strings.Index(commentLine, "@Security")+1:]
 	for _, securityOption := range strings.Split(securitySource, "||") {
 		securityOption = strings.TrimSpace(securityOption)
@@ -648,7 +650,6 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 
 		} else {
 			securityKey := strings.TrimSpace(securityOption)
-			securityMap := map[string][]string{}
 			securityMap[securityKey] = []string{}
 		}
 	}
