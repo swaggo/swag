@@ -360,6 +360,7 @@ const (
 	defaultTag          = "default"
 	enumsTag            = "enums"
 	exampleTag          = "example"
+	schemaExampleTag    = "schemaExample"
 	formatTag           = "format"
 	validateTag         = "validate"
 	minimumTag          = "minimum"
@@ -394,6 +395,8 @@ var regexAttributes = map[string]*regexp.Regexp{
 	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
 	// example(0)
 	exampleTag: regexp.MustCompile(`(?i)\s+example\(.*\)`),
+	// schemaExample(0)
+	schemaExampleTag: regexp.MustCompile(`(?i)\s+schemaExample\(.*\)`),
 }
 
 func (operation *Operation) parseAndExtractionParamAttribute(commentLine, objectType, schemaType string, param *spec.Parameter) error {
@@ -416,6 +419,8 @@ func (operation *Operation) parseAndExtractionParamAttribute(commentLine, object
 			param.Format = attr
 		case exampleTag:
 			err = setExample(param, schemaType, attr)
+		case schemaExampleTag:
+			err = setSchemaExample(param, schemaType, attr)
 		case extensionsTag:
 			_ = setExtensionParam(param, attr)
 		case collectionFormatTag:
@@ -531,6 +536,19 @@ func setDefault(param *spec.Parameter, schemaType string, value string) error {
 	return nil
 }
 
+func setSchemaExample(param *spec.Parameter, schemaType string, value string) error {
+	val, err := defineType(schemaType, value)
+	if err != nil {
+		return nil // Don't set a example value if it's not valid
+	}
+	// skip schema
+	if param.Schema == nil {
+		return nil
+	}
+	param.Schema.Example = val
+	return nil
+}
+
 func setExample(param *spec.Parameter, schemaType string, value string) error {
 	val, err := defineType(schemaType, value)
 	if err != nil {
@@ -632,27 +650,29 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 // ParseSecurityComment parses comment for given `security` comment string.
 func (operation *Operation) ParseSecurityComment(commentLine string) error {
-	securitySource := commentLine[strings.Index(commentLine, "@Security")+1:]
-	l := strings.Index(securitySource, "[")
-	r := strings.Index(securitySource, "]")
-	// exists scope
-	if !(l == -1 && r == -1) {
-		scopes := securitySource[l+1 : r]
-		var s []string
-		for _, scope := range strings.Split(scopes, ",") {
-			s = append(s, strings.TrimSpace(scope))
-		}
-		securityKey := securitySource[0:l]
-		securityMap := map[string][]string{}
-		securityMap[securityKey] = append(securityMap[securityKey], s...)
-		operation.Security = append(operation.Security, securityMap)
-	} else {
-		securityKey := strings.TrimSpace(securitySource)
-		securityMap := map[string][]string{}
-		securityMap[securityKey] = []string{}
-		operation.Security = append(operation.Security, securityMap)
-	}
+	//var securityMap map[string][]string = map[string][]string{}
 
+	var securityMap = make(map[string][]string)
+	securitySource := commentLine[strings.Index(commentLine, "@Security")+1:]
+	for _, securityOption := range strings.Split(securitySource, "||") {
+		securityOption = strings.TrimSpace(securityOption)
+		l := strings.Index(securityOption, "[")
+		r := strings.Index(securityOption, "]")
+		if !(l == -1 && r == -1) {
+			scopes := securityOption[l+1 : r]
+			var s []string
+			for _, scope := range strings.Split(scopes, ",") {
+				s = append(s, strings.TrimSpace(scope))
+			}
+			securityKey := securityOption[0:l]
+			securityMap[securityKey] = append(securityMap[securityKey], s...)
+
+		} else {
+			securityKey := strings.TrimSpace(securityOption)
+			securityMap[securityKey] = []string{}
+		}
+	}
+	operation.Security = append(operation.Security, securityMap)
 	return nil
 }
 

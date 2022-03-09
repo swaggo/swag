@@ -813,6 +813,14 @@ Make it AND condition
 // @Security OAuth2Application[write, admin]
 ```
 
+Make it OR condition
+
+```go
+// @Security ApiKeyAuth || firebase
+// @Security OAuth2Application[write, admin] || APIKeyAuth
+```
+
+
 ### Add a description for enum items
 
 ```go
