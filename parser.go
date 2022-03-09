@@ -142,8 +142,8 @@ type Parser struct {
 	// Overrides allows global replacements of types. A blank replacement will be skipped.
 	Overrides map[string]string
 
-	// ParseGoList whether swag use go list to parse dependency
-	ParseGoList bool
+	// parseGoList whether swag use go list to parse dependency
+	parseGoList bool
 }
 
 // FieldParserFactory create FieldParser.
@@ -265,6 +265,13 @@ func SetOverrides(overrides map[string]string) func(parser *Parser) {
 	}
 }
 
+// ParseUsingGoList sets whether swag use go list to parse dependency
+func ParseUsingGoList(enabled bool) func(parser *Parser) {
+	return func(p *Parser) {
+		p.parseGoList = enabled
+	}
+}
+
 // ParseAPI parses general api info for given searchDir and mainAPIFile.
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth int) error {
 	return parser.ParseAPIMultiSearchDir([]string{searchDir}, mainAPIFile, parseDepth)
@@ -291,9 +298,9 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		return err
 	}
 
+	// Use 'go list' command instead of depth.Resolve()
 	if parser.ParseDependency {
-		// Use 'go list' command instead of depth.Resolve()
-		if parser.ParseGoList {
+		if parser.parseGoList {
 			pkgs, err := listPackages(context.Background(), filepath.Dir(absMainAPIFilePath), nil, "-deps")
 			if err != nil {
 				return fmt.Errorf("pkg %s cannot find all dependencies, %s", filepath.Dir(absMainAPIFilePath), err)

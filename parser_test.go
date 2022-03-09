@@ -2164,7 +2164,7 @@ func TestParseGoList(t *testing.T) {
 	mainAPIFile := "main.go"
 	p := New()
 	p.ParseDependency = true
-	p.ParseGoList = true
+	p.parseGoList = true
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 }

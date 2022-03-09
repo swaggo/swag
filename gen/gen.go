@@ -149,13 +149,13 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
 		swag.SetStrict(config.Strict),
 		swag.SetOverrides(overrides),
+		swag.ParseUsingGoList(config.ParseGoList),
 	)
 
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
-	p.ParseGoList = config.ParseGoList
 
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err

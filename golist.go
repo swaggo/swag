@@ -11,8 +11,7 @@ import (
 )
 
 func listPackages(ctx context.Context, dir string, env []string, args ...string) (pkgs []*build.Package, finalErr error) {
-	goArgs := append([]string{"list", "-json", "-e"}, args...)
-	cmd := exec.CommandContext(ctx, "go", goArgs...)
+	cmd := exec.CommandContext(ctx, "go", append([]string{"list", "-json", "-e"}, args...)...)
 	cmd.Env = env
 	cmd.Dir = dir
 
@@ -28,18 +27,21 @@ func listPackages(ctx context.Context, dir string, env []string, args ...string)
 		}
 	}()
 
-	if err := cmd.Start(); err != nil {
+	err = cmd.Start()
+	if err != nil {
 		return nil, err
 	}
 	dec := json.NewDecoder(stdout)
 	for dec.More() {
 		var pkg build.Package
-		if err := dec.Decode(&pkg); err != nil {
+		err = dec.Decode(&pkg)
+		if err != nil {
 			return nil, err
 		}
 		pkgs = append(pkgs, &pkg)
 	}
-	if err := cmd.Wait(); err != nil {
+	err = cmd.Wait()
+	if err != nil {
 		return nil, err
 	}
 	return pkgs, nil
@@ -57,16 +59,17 @@ func (parser *Parser) getAllGoFileInfoFromDepsByList(pkg *build.Package) error {
 	}
 
 	srcDir := pkg.Dir
+	var err error
 	for i := range pkg.GoFiles {
-		path := filepath.Join(srcDir, pkg.GoFiles[i])
-		if err := parser.parseFile(pkg.ImportPath, path, nil); err != nil {
+		err = parser.parseFile(pkg.ImportPath, filepath.Join(srcDir, pkg.GoFiles[i]), nil)
+		if err != nil {
 			return err
 		}
 	}
 
 	for i := range pkg.CFiles {
-		path := filepath.Join(srcDir, pkg.CFiles[i])
-		if err := parser.parseFile(pkg.ImportPath, path, nil); err != nil {
+		err = parser.parseFile(pkg.ImportPath, filepath.Join(srcDir, pkg.CFiles[i]), nil)
+		if err != nil {
 			return err
 		}
 	}
