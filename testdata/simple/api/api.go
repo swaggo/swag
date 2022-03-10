@@ -41,6 +41,7 @@ func GetStringByInt(w http.ResponseWriter, r *http.Request) {
 // @Security OAuth2Implicit[read, admin]
 // @Security OAuth2AccessCode[read]
 // @Security OAuth2Password[admin]
+// @Security OAuth2Implicit[read, write] || Firebase
 // @Router /testapi/get-struct-array-by-string/{some_id} [get]
 func GetStructArrayByString(w http.ResponseWriter, r *http.Request) {
 	//write your code
