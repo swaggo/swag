@@ -299,6 +299,13 @@
             "OAuth2Password": [
               "admin"
             ]
+          },
+          {
+            "Firebase": [],
+            "OAuth2Implicit": [
+              "read",
+              "write"
+            ]
           }
         ],
         "description": "get struct array by ID",
