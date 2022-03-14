@@ -3,6 +3,7 @@ package swag
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -2160,13 +2161,106 @@ func TestParseExternalModels(t *testing.T) {
 }
 
 func TestParseGoList(t *testing.T) {
-	searchDir := "testdata/golist"
 	mainAPIFile := "main.go"
-	p := New()
+	p := New(ParseUsingGoList(true))
 	p.ParseDependency = true
-	p.parseGoList = true
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
-	assert.NoError(t, err)
+
+	go111moduleEnv := os.Getenv("GO111MODULE")
+
+	cases := []struct {
+		name      string
+		gomodule  bool
+		searchDir string
+		err       error
+		run       func(searchDir string) error
+	}{
+		{
+			name:      "disableGOMODULE",
+			gomodule:  false,
+			searchDir: "testdata/golist_disablemodule",
+			run: func(searchDir string) error {
+				return p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+			},
+		},
+		{
+			name:      "enableGOMODULE",
+			gomodule:  true,
+			searchDir: "testdata/golist",
+			run: func(searchDir string) error {
+				return p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+			},
+		},
+		{
+			name:      "invalid_main",
+			gomodule:  true,
+			searchDir: "testdata/golist_invalid",
+			err:       errors.New("no such file or directory"),
+			run: func(searchDir string) error {
+				return p.ParseAPI(searchDir, "invalid/main.go", defaultParseDepth)
+			},
+		},
+		{
+			name:      "internal_invalid_pkg",
+			gomodule:  true,
+			searchDir: "testdata/golist_invalid",
+			err:       errors.New("expected 'package', found This"),
+			run: func(searchDir string) error {
+				mockErrGoFile := "testdata/golist_invalid/err.go"
+				f, err := os.OpenFile(mockErrGoFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				_, err = f.Write([]byte(`package invalid
+
+function a() {}`))
+				if err != nil {
+					return err
+				}
+				defer os.Remove(mockErrGoFile)
+				return p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+			},
+		},
+		{
+			name:      "invalid_pkg",
+			gomodule:  true,
+			searchDir: "testdata/golist_invalid",
+			err:       errors.New("expected 'package', found This"),
+			run: func(searchDir string) error {
+				mockErrGoFile := "testdata/invalid_external_pkg/invalid/err.go"
+				f, err := os.OpenFile(mockErrGoFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				_, err = f.Write([]byte(`package invalid
+
+function a() {}`))
+				if err != nil {
+					return err
+				}
+				defer os.Remove(mockErrGoFile)
+				return p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if c.gomodule {
+				os.Setenv("GO111MODULE", "on")
+			} else {
+				os.Setenv("GO111MODULE", "off")
+			}
+			err := c.run(c.searchDir)
+			os.Setenv("GO111MODULE", go111moduleEnv)
+			if c.err == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
 }
 
 func TestParser_ParseStructArrayObject(t *testing.T) {

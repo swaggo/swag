@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/swaggo/swag/example/basic/api"
-	goapi "github.com/swaggo/swag/testdata/golist/api"
+	internalapi "github.com/swaggo/swag/testdata/golist_disablemodule/api"
 )
 
 // @title Swagger Example API
@@ -23,14 +23,12 @@ import (
 // @in header
 // @name Authorization
 
-// @query.collection.format multi
 // @host petstore.swagger.io
 // @BasePath /v2
 func main() {
-	goapi.PrintInt(10, 5)
+	internalapi.PrintInt(0, 1)
 	http.HandleFunc("/testapi/get-string-by-int/", api.GetStringByInt)
 	http.HandleFunc("/testapi/get-struct-array-by-string/", api.GetStructArrayByString)
 	http.HandleFunc("/testapi/upload", api.Upload)
-	http.HandleFunc("/testapi/foo", goapi.GetFoo)
 	http.ListenAndServe(":8080", nil)
 }

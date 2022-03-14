@@ -53,11 +53,6 @@ func (parser *Parser) getAllGoFileInfoFromDepsByList(pkg *build.Package) error {
 		return nil
 	}
 
-	// Skip cgo
-	if pkg.Name == "C" {
-		return nil
-	}
-
 	srcDir := pkg.Dir
 	var err error
 	for i := range pkg.GoFiles {
@@ -67,8 +62,9 @@ func (parser *Parser) getAllGoFileInfoFromDepsByList(pkg *build.Package) error {
 		}
 	}
 
-	for i := range pkg.CFiles {
-		err = parser.parseFile(pkg.ImportPath, filepath.Join(srcDir, pkg.CFiles[i]), nil)
+	// parse .go source files that import "C"
+	for i := range pkg.CgoFiles {
+		err = parser.parseFile(pkg.ImportPath, filepath.Join(srcDir, pkg.CgoFiles[i]), nil)
 		if err != nil {
 			return err
 		}
