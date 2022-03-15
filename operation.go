@@ -535,6 +535,9 @@ func setDefault(param *spec.Parameter, schemaType string, value string) error {
 	return nil
 }
 
+// controlCharReplacer replaces \r \n \t in example string values
+var controlCharReplacer = strings.NewReplacer(`\r`, "\r", `\n`, "\n", `\t`, "\t")
+
 func setSchemaExample(param *spec.Parameter, schemaType string, value string) error {
 	val, err := defineType(schemaType, value)
 	if err != nil {
@@ -544,7 +547,14 @@ func setSchemaExample(param *spec.Parameter, schemaType string, value string) er
 	if param.Schema == nil {
 		return nil
 	}
-	param.Schema.Example = val
+
+	switch v := val.(type) {
+	case string:
+		param.Schema.Example = controlCharReplacer.Replace(v)
+	default:
+		param.Schema.Example = val
+	}
+
 	return nil
 }
 

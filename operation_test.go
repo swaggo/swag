@@ -1918,13 +1918,16 @@ func TestParseParamCommentBySchemaExampleUnsupportedType(t *testing.T) {
 
 	param.Schema = &spec.Schema{}
 	setSchemaExample(&param, STRING, "string value")
-	assert.Equal(t, param.Schema.Example, "string value")
+	assert.Equal(t, "string value", param.Schema.Example)
 
 	setSchemaExample(&param, INTEGER, "10")
-	assert.Equal(t, param.Schema.Example, 10)
+	assert.Equal(t, 10, param.Schema.Example)
 
 	setSchemaExample(&param, NUMBER, "10")
-	assert.Equal(t, param.Schema.Example, float64(10))
+	assert.Equal(t, float64(10), param.Schema.Example)
+
+	setSchemaExample(&param, STRING, "string \\r\\nvalue")
+	assert.Equal(t, "string \r\nvalue", param.Schema.Example)
 }
 
 func TestParseParamArrayWithEnums(t *testing.T) {
