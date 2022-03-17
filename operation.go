@@ -754,6 +754,8 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 		return nil, nil
 	case refType == "interface{}":
 		return PrimitiveSchema(OBJECT), nil
+	case refType == "any":
+		return PrimitiveSchema(OBJECT), nil
 	case IsGolangPrimitiveType(refType):
 		refType = TransToValidSchemeType(refType)
 
