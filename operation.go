@@ -754,6 +754,8 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 		return nil, nil
 	case refType == "interface{}":
 		return PrimitiveSchema(OBJECT), nil
+	case refType == "any":
+		return PrimitiveSchema(OBJECT), nil
 	case IsGolangPrimitiveType(refType):
 		refType = TransToValidSchemeType(refType)
 
@@ -774,7 +776,7 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 			return nil, fmt.Errorf("invalid type: %s", refType)
 		}
 		refType = refType[idx+1:]
-		if refType == "interface{}" {
+		if refType == "interface{}" || refType == "any" {
 			return spec.MapProperty(nil), nil
 		}
 		schema, err := operation.parseObjectSchema(refType, astFile)

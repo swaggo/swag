@@ -104,7 +104,8 @@ func IsGolangPrimitiveType(typeName string) bool {
 		"float32",
 		"float64",
 		"bool",
-		"string":
+		"string",
+		"any":
 		return true
 	}
 
