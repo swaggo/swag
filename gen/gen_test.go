@@ -486,7 +486,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 	swapTemplate := packageTemplate
 
 	packageTemplate = `{{{`
-	err := gen.writeGoDoc("docs", nil, nil, &Config{})
+	err := gen.writeGoDoc("docs", nil, nil, &GenConfig{})
 	assert.Error(t, err)
 
 	packageTemplate = `{{.Data}}`
@@ -496,7 +496,7 @@ func TestGen_writeGoDoc(t *testing.T) {
 			Info: &spec.Info{},
 		},
 	}
-	err = gen.writeGoDoc("docs", &mockWriter{}, swagger, &Config{})
+	err = gen.writeGoDoc("docs", &mockWriter{}, swagger, &GenConfig{})
 	assert.Error(t, err)
 
 	packageTemplate = `{{ if .GeneratedTime }}Fake Time{{ end }}`
@@ -505,14 +505,14 @@ func TestGen_writeGoDoc(t *testing.T) {
 			hook: func(data []byte) {
 				assert.Equal(t, "Fake Time", string(data))
 			},
-		}, swagger, &Config{GeneratedTime: true})
+		}, swagger, &GenConfig{GeneratedTime: true})
 	assert.NoError(t, err)
 	err = gen.writeGoDoc("docs",
 		&mockWriter{
 			hook: func(data []byte) {
 				assert.Equal(t, "", string(data))
 			},
-		}, swagger, &Config{GeneratedTime: false})
+		}, swagger, &GenConfig{GeneratedTime: false})
 	assert.NoError(t, err)
 
 	packageTemplate = swapTemplate

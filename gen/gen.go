@@ -57,6 +57,18 @@ func New() *Gen {
 	return gen
 }
 
+type GenConfig struct {
+	// OutputDir represents the output directory for all the generated files
+	OutputDir string
+
+	// InstanceName is used to get distinct names for different swagger documents in the
+	// same project. The default value is "swagger".
+	InstanceName string
+
+	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
+	GeneratedTime bool
+}
+
 // Config presents Gen configurations.
 type Config struct {
 	// SearchDir the swag would be parse,comma separated if multiple
@@ -111,10 +123,6 @@ type Config struct {
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
 func (g *Gen) Build(config *Config) error {
-	if config.InstanceName == "" {
-		config.InstanceName = swag.Name
-	}
-
 	searchDirs := strings.Split(config.SearchDir, ",")
 	for _, searchDir := range searchDirs {
 		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
@@ -155,7 +163,23 @@ func (g *Gen) Build(config *Config) error {
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
 	}
-	swagger := p.GetSwagger()
+
+	return g.Generate(p.GetSwagger(), &GenConfig{
+		OutputDir:     config.OutputDir,
+		InstanceName:  config.InstanceName,
+		GeneratedTime: config.GeneratedTime,
+	})
+}
+
+// Generate outputs a swagger spec
+func (g *Gen) Generate(swagger *spec.Swagger, config *GenConfig) error {
+	if config.InstanceName == "" {
+		config.InstanceName = swag.Name
+	}
+
+	if config.OutputDir == "" {
+		config.OutputDir = "docs/"
+	}
 
 	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
 		return err
@@ -313,7 +337,7 @@ func parseOverrides(r io.Reader) (map[string]string, error) {
 	return overrides, nil
 }
 
-func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swagger, config *Config) error {
+func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swagger, config *GenConfig) error {
 	generator, err := template.New("swagger_info").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
 			// Add schemes
