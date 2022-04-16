@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/agiledragon/gomonkey/v2"
-
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/assert"
 )
@@ -29,19 +28,12 @@ const (
 	MainFile  = "main.go"
 )
 
-func TestNewFormater(t *testing.T) {
-	formatterTimeMachine()
-	formater := NewFormater()
-
-	assert.NotEmpty(t, formater.Formatter)
-}
-
 func TestFormatter_FormatAPI(t *testing.T) {
 	t.Run("Format Test", func(t *testing.T) {
 		formatterTimeMachine()
 		formatter := NewFormatter()
-		assert.NoError(t, formatter.FormatAPI(SearchDir, Excludes, MainFile))
-
+		err := formatter.FormatAPI(SearchDir, Excludes, MainFile)
+		assert.NoError(t, err)
 		parsedFile, err := ioutil.ReadFile("./testdata/format_test/api/api.go")
 		assert.NoError(t, err)
 
@@ -55,17 +47,18 @@ func TestFormatter_FormatAPI(t *testing.T) {
 		mainFile, err := ioutil.ReadFile("./testdata/format_dst/main.go")
 		assert.NoError(t, err)
 		assert.Equal(t, parsedMainFile, mainFile)
-
 		formatterTimeMachine()
 	})
 
 	t.Run("TestWrongSearchDir", func(t *testing.T) {
 		t.Parallel()
-		assert.Error(t, NewFormatter().FormatAPI("/dir_not_have", "", ""))
+		formatter := NewFormatter()
+		err := formatter.FormatAPI("/dir_not_have", "", "")
+		assert.Error(t, err)
 	})
 
 	t.Run("TestWithMonkeyFilepathAbs", func(t *testing.T) {
-		formater := NewFormatter()
+		formatter := NewFormatter()
 		errFilePath := fmt.Errorf("file path error ")
 
 		patches := gomonkey.ApplyFunc(filepath.Abs, func(_ string) (string, error) {
@@ -73,12 +66,13 @@ func TestFormatter_FormatAPI(t *testing.T) {
 		})
 		defer patches.Reset()
 
-		assert.Equal(t, formater.FormatAPI(SearchDir, Excludes, MainFile), errFilePath)
+		err := formatter.FormatAPI(SearchDir, Excludes, MainFile)
+		assert.Equal(t, err, errFilePath)
 		formatterTimeMachine()
 	})
 
 	t.Run("TestWithMonkeyFormatMain", func(t *testing.T) {
-		formater := NewFormatter()
+		formatter := NewFormatter()
 
 		var s *Formatter
 		errFormatMain := fmt.Errorf("main format error ")
@@ -87,12 +81,13 @@ func TestFormatter_FormatAPI(t *testing.T) {
 		})
 		defer patches.Reset()
 
-		assert.Equal(t, formater.FormatAPI(SearchDir, Excludes, MainFile), errFormatMain)
+		err := formatter.FormatAPI(SearchDir, Excludes, MainFile)
+		assert.Equal(t, err, errFormatMain)
 		formatterTimeMachine()
 	})
 
 	t.Run("TestWithMonkeyFormatFile", func(t *testing.T) {
-		formater := NewFormatter()
+		formatter := NewFormatter()
 
 		var s *Formatter
 		errFormatFile := fmt.Errorf("file format error ")
@@ -101,7 +96,8 @@ func TestFormatter_FormatAPI(t *testing.T) {
 		})
 		defer patches.Reset()
 
-		assert.Equal(t, formater.FormatAPI(SearchDir, Excludes, MainFile), fmt.Errorf("ParseFile error:%s", errFormatFile))
+		err := formatter.FormatAPI(SearchDir, Excludes, MainFile)
+		assert.Equal(t, err, fmt.Errorf("ParseFile error:%s", errFormatFile))
 		formatterTimeMachine()
 	})
 }
@@ -109,8 +105,8 @@ func TestFormatter_FormatAPI(t *testing.T) {
 func TestFormatter_FormatMain(t *testing.T) {
 	t.Run("TestWrongMainPath", func(t *testing.T) {
 		t.Parallel()
-		formater := NewFormatter()
-		err := formater.FormatMain("/dir_not_have/main.go")
+		formatter := NewFormatter()
+		err := formatter.FormatMain("/dir_not_have/main.go")
 		assert.Error(t, err)
 	})
 }
@@ -118,8 +114,8 @@ func TestFormatter_FormatMain(t *testing.T) {
 func TestFormatter_FormatFile(t *testing.T) {
 	t.Run("TestWrongFilePath", func(t *testing.T) {
 		t.Parallel()
-		formater := NewFormatter()
-		err := formater.FormatFile("/dir_not_have/api.go")
+		formatter := NewFormatter()
+		err := formatter.FormatFile("/dir_not_have/api.go")
 		assert.Error(t, err)
 	})
 }
@@ -137,17 +133,15 @@ func Test_writeFormattedComments(t *testing.T) {
 	})
 }
 
-func TestFormater_visit(t *testing.T) {
-	formater := NewFormatter()
+func TestFormatter_visit(t *testing.T) {
+	formatter := NewFormatter()
 
-	err := formater.visit("./testdata/test_test.go", &mockFS{}, nil)
+	err := formatter.visit("./testdata/test_test.go", &mockFS{}, nil)
 	assert.NoError(t, err)
-
-	err = formater.visit("/testdata/api.md", &mockFS{}, nil)
+	err = formatter.visit("/testdata/api.md", &mockFS{}, nil)
 	assert.NoError(t, err)
-
-	formater.mainFile = "main.go"
-	err = formater.visit("/testdata/main.go", &mockFS{}, nil)
+	formatter.mainFile = "main.go"
+	err = formatter.visit("/testdata/main.go", &mockFS{}, nil)
 	assert.NoError(t, err)
 }
 

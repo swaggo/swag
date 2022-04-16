@@ -20,7 +20,7 @@ import (
 
 const splitTag = "&*"
 
-// Formatter implements a formater for Go source files.
+// Formatter implements a formatter for Go source files.
 type Formatter struct {
 	// debugging output goes here
 	debug Debugger
@@ -31,31 +31,13 @@ type Formatter struct {
 	mainFile string
 }
 
-// Formater creates a new formatter.
-type Formater struct {
-	*Formatter
-}
-
-// NewFormater Deprecated: Use NewFormatter instead.
-func NewFormater() *Formater {
-	formatter := Formater{
-		Formatter: NewFormatter(),
-	}
-
-	formatter.debug.Printf("warining: NewFormater is deprecated. use NewFormatter instead")
-
-	return &formatter
-}
-
-// NewFormatter create a new formater instance.
+// NewFormatter create a new formatter instance.
 func NewFormatter() *Formatter {
-	formatter := Formatter{
-		mainFile: "",
+	formatter := &Formatter{
 		debug:    log.New(os.Stdout, "", log.LstdFlags),
 		excludes: make(map[string]struct{}),
 	}
-
-	return &formatter
+	return formatter
 }
 
 // FormatAPI format the swag comment.
