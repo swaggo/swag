@@ -99,6 +99,7 @@ OPTIONS:
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
    --generatedTime                        Generate timestamp at the top of docs.go, disabled by default (default: false)
+   --defaultRequired                      Set validation required for all fields by default (default: false)
    --parseDepth value                     Dependency parse depth (default: 100)
    --instanceName value                   This parameter can be used to name different swagger document instances. It is optional.
    --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
@@ -487,7 +488,7 @@ type Foo struct {
 
 Field Name | Type | Description
 ---|:---:|---
-<a name="validate"></a>validate | `string` | 	Determines the validation for the parameter. Possible values are: `required`. 
+<a name="validate"></a>validate | `string` | 	Determines the validation for the parameter. Possible values are: `required,optional`. 
 <a name="parameterDefault"></a>default | * | Declares the value of the parameter that the server will use if none is provided, for example a "count" to control the number of results per page might default to 100 if not supplied by the client in the request. (Note: "default" has no meaning for required parameters.)  See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-6.2. Unlike JSON Schema this value MUST conform to the defined [`type`](#parameterType) for this parameter.
 <a name="parameterMaximum"></a>maximum | `number` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.1.2.
 <a name="parameterMinimum"></a>minimum | `number` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.1.3.
