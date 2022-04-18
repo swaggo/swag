@@ -439,8 +439,11 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	bindingTag := ps.tag.Get(bindingTag)
 	if bindingTag != "" {
 		for _, val := range strings.Split(bindingTag, ",") {
-			if val == "required" {
+			switch val {
+			case "required":
 				return true, nil
+			case "optional":
+				return false, nil
 			}
 		}
 	}
@@ -448,13 +451,16 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	validateTag := ps.tag.Get(validateTag)
 	if validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
-			if val == "required" {
+			switch val {
+			case "required":
 				return true, nil
+			case "optional":
+				return false, nil
 			}
 		}
 	}
 
-	return false, nil
+	return ps.p.DefaultRequired, nil
 }
 
 func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {

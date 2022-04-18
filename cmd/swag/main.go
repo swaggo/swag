@@ -26,6 +26,7 @@ const (
 	codeExampleFilesFlag = "codeExampleFiles"
 	parseInternalFlag    = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
+	defaultRequiredFlag  = "defaultRequired"
 	parseDepthFlag       = "parseDepth"
 	instanceNameFlag     = "instanceName"
 	overridesFileFlag    = "overridesFile"
@@ -100,6 +101,10 @@ var initFlags = []cli.Flag{
 		Value: 100,
 		Usage: "Dependency parse depth",
 	},
+	&cli.BoolFlag{
+		Name:  defaultRequiredFlag,
+		Usage: "Set validation required for all fields by default",
+	},
 	&cli.StringFlag{
 		Name:  instanceNameFlag,
 		Value: "",
@@ -138,6 +143,7 @@ func initAction(c *cli.Context) error {
 		MarkdownFilesDir:    c.String(markdownFilesFlag),
 		ParseInternal:       c.Bool(parseInternalFlag),
 		GeneratedTime:       c.Bool(generatedTimeFlag),
+		DefaultRequired:     c.Bool(defaultRequiredFlag),
 		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
 		ParseDepth:          c.Int(parseDepthFlag),
 		InstanceName:        c.String(instanceNameFlag),
