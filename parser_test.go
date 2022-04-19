@@ -539,7 +539,7 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
 			"@securitydefinitions.apikey ApiKey",
 			"@in header",
 			"@name X-API-KEY",
-			"@sec.def.description some"})
+			"@security.definition.description some"})
 		assert.NoError(t, err)
 
 		b, _ := json.MarshalIndent(parser.GetSwagger().SecurityDefinitions, "", "    ")

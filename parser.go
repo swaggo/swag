@@ -550,7 +550,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 }
 
 func tryAddDescription(spec *spec.SecurityScheme, extensions map[string]interface{}) *spec.SecurityScheme {
-	if val, ok := extensions["@sec.def.description"]; ok {
+	if val, ok := extensions["@security.definition.description"]; ok {
 		if str, ok := val.(string); ok {
 			spec.Description = str
 		}
@@ -605,7 +605,7 @@ func parseSecAttr(context string, search []string, lines []string) (map[string]s
 			extensions[securityAttr[1:]] = strings.TrimSpace(v[len(securityAttr):])
 		}
 		// Not mandatory field
-		if securityAttr == "@sec.def.description" {
+		if securityAttr == "@security.definition.description" {
 			extensions[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
 		}
 		// next securityDefinitions
