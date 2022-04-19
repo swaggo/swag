@@ -33,6 +33,7 @@ import (
 // @securityDefinitions.apikey  ApiKeyAuth
 // @in                          header
 // @name                        Authorization
+// @description					Description for what is this security definition being used
 
 // @securitydefinitions.oauth2.application  OAuth2Application
 // @tokenUrl                                https://example.com/oauth/token
