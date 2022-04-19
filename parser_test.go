@@ -3466,6 +3466,20 @@ func TestTryAddDescription(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "description has invalid format",
+			args: args{
+				spec: &spec.SecurityScheme{},
+				extensions: map[string]interface{}{
+					"@description": 12345,
+				},
+			},
+			want: &spec.SecurityScheme{
+				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Description: "",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
