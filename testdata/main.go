@@ -21,6 +21,7 @@ package main
 // @securityDefinitions.apikey ApiKeyAuth
 // @in header
 // @name Authorization
+// @description some description
 
 // @securitydefinitions.oauth2.application OAuth2Application
 // @tokenUrl https://example.com/oauth/token

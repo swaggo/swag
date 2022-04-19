@@ -152,6 +152,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
     "paths": {},
     "securityDefinitions": {
         "ApiKeyAuth": {
+            "description": "some description",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -539,7 +540,7 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
 			"@securitydefinitions.apikey ApiKey",
 			"@in header",
 			"@name X-API-KEY",
-			"@security.definition.description some"})
+			"@description some"})
 		assert.NoError(t, err)
 
 		b, _ := json.MarshalIndent(parser.GetSwagger().SecurityDefinitions, "", "    ")
