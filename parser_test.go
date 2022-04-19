@@ -10,8 +10,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
+	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -3424,4 +3426,52 @@ func TestGetFieldType(t *testing.T) {
 	field, err = getFieldType(&ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
 	assert.NoError(t, err)
 	assert.Equal(t, "models.User", field)
+}
+
+func TestTryAddDescription(t *testing.T) {
+	type args struct {
+		spec       *spec.SecurityScheme
+		extensions map[string]interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want *spec.SecurityScheme
+	}{
+		{
+			name: "added dscription",
+			args: args{
+				spec: &spec.SecurityScheme{},
+				extensions: map[string]interface{}{
+					"@description": "some description",
+				},
+			},
+			want: &spec.SecurityScheme{
+				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Description: "some description",
+				},
+			},
+		},
+		{
+			name: "no description",
+			args: args{
+				spec: &spec.SecurityScheme{},
+				extensions: map[string]interface{}{
+					"@not-description": "some description",
+				},
+			},
+			want: &spec.SecurityScheme{
+				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Description: "",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tryAddDescription(tt.args.spec, tt.args.extensions); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("tryAddDescription() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
