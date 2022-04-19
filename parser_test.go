@@ -542,7 +542,13 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
 			"@securitydefinitions.apikey ApiKey",
 			"@in header",
 			"@name X-API-KEY",
-			"@description some"})
+			"@description some",
+			"",
+			"@securitydefinitions.oauth2.accessCode OAuth2AccessCode",
+			"@tokenUrl https://example.com/oauth/token",
+			"@authorizationUrl https://example.com/oauth/authorize",
+			"@scope.admin foo",
+		})
 		assert.NoError(t, err)
 
 		b, _ := json.MarshalIndent(parser.GetSwagger().SecurityDefinitions, "", "    ")
@@ -552,6 +558,15 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
         "type": "apiKey",
         "name": "X-API-KEY",
         "in": "header"
+    },
+    "OAuth2AccessCode": {
+        "type": "oauth2",
+        "flow": "accessCode",
+        "authorizationUrl": "https://example.com/oauth/authorize",
+        "tokenUrl": "https://example.com/oauth/token",
+        "scopes": {
+            "admin": " foo"
+        }
     }
 }`
 		assert.Equal(t, expected, string(b))

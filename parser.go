@@ -616,6 +616,8 @@ func parseSecAttr(context string, search []string, lines []string, index *int) (
 		}
 		// next securityDefinitions
 		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+			// Go back to the previous line and break
+			*index--
 			break
 		}
 	}
