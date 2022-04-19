@@ -3439,7 +3439,7 @@ func TestTryAddDescription(t *testing.T) {
 		want *spec.SecurityScheme
 	}{
 		{
-			name: "added dscription",
+			name: "added description",
 			args: args{
 				spec: &spec.SecurityScheme{},
 				extensions: map[string]interface{}{
