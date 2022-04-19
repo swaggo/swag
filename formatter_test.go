@@ -1,149 +1,17 @@
 package swag
 
 import (
-	"bytes"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
-	"github.com/agiledragon/gomonkey/v2"
-	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/assert"
 )
-
-func formatterTimeMachine() {
-	// reset format_test to format_src
-	err := copy.Copy("./testdata/format_src", "./testdata/format_test")
-	if err != nil {
-		panic(err)
-	}
-}
 
 const (
 	SearchDir = "./testdata/format_test"
 	Excludes  = "./testdata/format_test/web"
 	MainFile  = "main.go"
 )
-
-func TestFormatter_FormatAPI(t *testing.T) {
-	t.Run("Format Test", func(t *testing.T) {
-		formatterTimeMachine()
-		formatter := NewFormatter()
-		err := formatter.FormatAPI(SearchDir, Excludes, MainFile)
-		assert.NoError(t, err)
-		parsedFile, err := ioutil.ReadFile("./testdata/format_test/api/api.go")
-		assert.NoError(t, err)
-
-		apiFile, err := ioutil.ReadFile("./testdata/format_dst/api/api.go")
-		assert.NoError(t, err)
-		assert.Equal(t, parsedFile, apiFile)
-
-		parsedMainFile, err := ioutil.ReadFile("./testdata/format_test/main.go")
-		assert.NoError(t, err)
-
-		mainFile, err := ioutil.ReadFile("./testdata/format_dst/main.go")
-		assert.NoError(t, err)
-		assert.Equal(t, parsedMainFile, mainFile)
-		formatterTimeMachine()
-	})
-
-	t.Run("TestWrongSearchDir", func(t *testing.T) {
-		t.Parallel()
-		formatter := NewFormatter()
-		err := formatter.FormatAPI("/dir_not_have", "", "")
-		assert.Error(t, err)
-	})
-
-	t.Run("TestWithMonkeyFilepathAbs", func(t *testing.T) {
-		formatter := NewFormatter()
-		errFilePath := fmt.Errorf("file path error ")
-
-		patches := gomonkey.ApplyFunc(filepath.Abs, func(_ string) (string, error) {
-			return "", errFilePath
-		})
-		defer patches.Reset()
-
-		err := formatter.FormatAPI(SearchDir, Excludes, MainFile)
-		assert.Equal(t, err, errFilePath)
-		formatterTimeMachine()
-	})
-
-	t.Run("TestWithMonkeyFormatMain", func(t *testing.T) {
-		formatter := NewFormatter()
-
-		var s *Formatter
-		errFormatMain := fmt.Errorf("main format error ")
-		patches := gomonkey.ApplyMethod(reflect.TypeOf(s), "FormatMain", func(_ *Formatter, _ string) error {
-			return errFormatMain
-		})
-		defer patches.Reset()
-
-		err := formatter.FormatAPI(SearchDir, Excludes, MainFile)
-		assert.Equal(t, err, errFormatMain)
-		formatterTimeMachine()
-	})
-
-	t.Run("TestWithMonkeyFormatFile", func(t *testing.T) {
-		formatter := NewFormatter()
-
-		var s *Formatter
-		errFormatFile := fmt.Errorf("file format error ")
-		patches := gomonkey.ApplyMethod(reflect.TypeOf(s), "FormatFile", func(_ *Formatter, _ string) error {
-			return errFormatFile
-		})
-		defer patches.Reset()
-
-		err := formatter.FormatAPI(SearchDir, Excludes, MainFile)
-		assert.Equal(t, err, fmt.Errorf("ParseFile error:%s", errFormatFile))
-		formatterTimeMachine()
-	})
-}
-
-func TestFormatter_FormatMain(t *testing.T) {
-	t.Run("TestWrongMainPath", func(t *testing.T) {
-		t.Parallel()
-		formatter := NewFormatter()
-		err := formatter.FormatMain("/dir_not_have/main.go")
-		assert.Error(t, err)
-	})
-}
-
-func TestFormatter_FormatFile(t *testing.T) {
-	t.Run("TestWrongFilePath", func(t *testing.T) {
-		t.Parallel()
-		formatter := NewFormatter()
-		err := formatter.FormatFile("/dir_not_have/api.go")
-		assert.Error(t, err)
-	})
-}
-
-func Test_writeFormattedComments(t *testing.T) {
-	t.Run("TestWrongPath", func(t *testing.T) {
-		t.Parallel()
-		var (
-			formatedComments = bytes.Buffer{}
-			// CommentCache
-			oldCommentsMap = make(map[string]string)
-		)
-		err := writeFormattedComments("/wrong_path", formatedComments, oldCommentsMap)
-		assert.Error(t, err)
-	})
-}
-
-func TestFormatter_visit(t *testing.T) {
-	formatter := NewFormatter()
-
-	err := formatter.visit("./testdata/test_test.go", &mockFS{}, nil)
-	assert.NoError(t, err)
-	err = formatter.visit("/testdata/api.md", &mockFS{}, nil)
-	assert.NoError(t, err)
-	formatter.mainFile = "main.go"
-	err = formatter.visit("/testdata/main.go", &mockFS{}, nil)
-	assert.NoError(t, err)
-}
 
 func Test_isBlankComment(t *testing.T) {
 	type args struct {
@@ -348,56 +216,4 @@ func Test_separatorFinder(t *testing.T) {
 			assert.Equal(t, got, tt.want)
 		})
 	}
-}
-
-func Test_writeBack(t *testing.T) {
-	t.Run("Test", func(t *testing.T) {
-		testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
-		assert.NoError(t, err)
-		defer func() {
-			_ = os.Remove(testFile)
-		}()
-
-		testBytes, err := ioutil.ReadFile(testFile)
-		assert.NoError(t, err)
-		newBytes := append(testBytes, []byte("import ()")...)
-
-		err = writeBack(testFile, newBytes, testBytes)
-		assert.NoError(t, err)
-
-		newTestBytes, err := ioutil.ReadFile(testFile)
-		assert.NoError(t, err)
-
-		assert.Equal(t, newTestBytes, newBytes)
-	})
-
-	t.Run("TestWrongPathError", func(t *testing.T) {
-		testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
-		assert.NoError(t, err)
-		defer func() {
-			_ = os.Remove(testFile)
-		}()
-
-		testBytes, err := ioutil.ReadFile(testFile)
-		assert.NoError(t, err)
-
-		newBytes := append(testBytes, []byte("import ()")...)
-		err = writeBack("/not_found_file_path", testBytes, newBytes)
-		assert.Error(t, err)
-	})
-
-	t.Run("TestWrongFile", func(t *testing.T) {
-		testFile, err := backupFile("test.go", []byte("package main \n"), 0644)
-		assert.NoError(t, err)
-		defer func() {
-			_ = os.Remove(testFile)
-		}()
-
-		testBytes, err := ioutil.ReadFile(testFile)
-		assert.NoError(t, err)
-		newBytes := append(testBytes, []byte("import ()")...)
-
-		err = writeBack("", testBytes, newBytes)
-		assert.Error(t, err)
-	})
 }

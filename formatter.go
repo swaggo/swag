@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"text/tabwriter"
 )
@@ -24,106 +23,22 @@ const splitTag = "&*"
 type Formatter struct {
 	// debugging output goes here
 	debug Debugger
-
-	// excludes excludes dirs and files in SearchDir
-	excludes map[string]struct{}
-
-	mainFile string
 }
 
 // NewFormatter create a new formatter instance.
 func NewFormatter() *Formatter {
 	formatter := &Formatter{
-		debug:    log.New(os.Stdout, "", log.LstdFlags),
-		excludes: make(map[string]struct{}),
+		debug: log.New(os.Stdout, "", log.LstdFlags),
 	}
 	return formatter
 }
 
-// FormatAPI format the swag comment.
-func (f *Formatter) FormatAPI(searchDir, excludeDir, mainFile string) error {
-	searchDirs := strings.Split(searchDir, ",")
-	for _, searchDir := range searchDirs {
-		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
-			return fmt.Errorf("dir: %s does not exist", searchDir)
-		}
-	}
-
-	for _, fi := range strings.Split(excludeDir, ",") {
-		fi = strings.TrimSpace(fi)
-		if fi != "" {
-			fi = filepath.Clean(fi)
-			f.excludes[fi] = struct{}{}
-		}
-	}
-
-	// parse main.go
-	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDirs[0], mainFile))
-	if err != nil {
-		return err
-	}
-
-	err = f.FormatMain(absMainAPIFilePath)
-	if err != nil {
-		return err
-	}
-
-	f.mainFile = mainFile
-
-	err = f.formatMultiSearchDir(searchDirs)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (f *Formatter) formatMultiSearchDir(searchDirs []string) error {
-	for _, searchDir := range searchDirs {
-		f.debug.Printf("Format API Info, search dir:%s", searchDir)
-
-		err := filepath.Walk(searchDir, f.visit)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (f *Formatter) visit(path string, fileInfo os.FileInfo, err error) error {
-	if err := walkWith(f.excludes, false)(path, fileInfo); err != nil {
-		return err
-	} else if fileInfo.IsDir() {
-		// skip if file is folder
-		return nil
-	}
-
-	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
-		// skip if file not has suffix "*.go"
-		return nil
-	}
-
-	if strings.HasSuffix(strings.ToLower(path), f.mainFile) {
-		// skip main file
-		return nil
-	}
-
-	err = f.FormatFile(path)
-	if err != nil {
-		return fmt.Errorf("ParseFile error:%+v", err)
-	}
-
-	return nil
-}
-
-// FormatMain format the main.go comment.
-func (f *Formatter) FormatMain(mainFilepath string) error {
+// Format swag comments in given file.
+func (f *Formatter) Format(filepath string) error {
 	fileSet := token.NewFileSet()
-
-	astFile, err := goparser.ParseFile(fileSet, mainFilepath, nil, goparser.ParseComments)
+	astFile, err := goparser.ParseFile(fileSet, filepath, nil, goparser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("cannot format file, err: %w path : %s ", err, mainFilepath)
+		return err
 	}
 
 	var (
@@ -135,31 +50,6 @@ func (f *Formatter) FormatMain(mainFilepath string) error {
 	if astFile.Comments != nil {
 		for _, comment := range astFile.Comments {
 			formatFuncDoc(comment.List, &formatedComments, oldCommentsMap)
-		}
-	}
-
-	return writeFormattedComments(mainFilepath, formatedComments, oldCommentsMap)
-}
-
-// FormatFile format the swag comment in go function.
-func (f *Formatter) FormatFile(filepath string) error {
-	fileSet := token.NewFileSet()
-
-	astFile, err := goparser.ParseFile(fileSet, filepath, nil, goparser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("cannot format file, err: %w path : %s ", err, filepath)
-	}
-
-	var (
-		formatedComments = bytes.Buffer{}
-		// CommentCache
-		oldCommentsMap = make(map[string]string)
-	)
-
-	for _, astDescription := range astFile.Decls {
-		astDeclaration, ok := astDescription.(*ast.FuncDecl)
-		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-			formatFuncDoc(astDeclaration.Doc.List, &formatedComments, oldCommentsMap)
 		}
 	}
 
@@ -186,8 +76,7 @@ func writeFormattedComments(filepath string, formatedComments bytes.Buffer, oldC
 			}
 		}
 	}
-
-	return writeBack(filepath, []byte(replaceSrc), srcBytes)
+	return writeBack(filepath, []byte(replaceSrc))
 }
 
 func formatFuncDoc(commentList []*ast.Comment, formattedComments io.Writer, oldCommentsMap map[string]string) {
@@ -323,48 +212,20 @@ func isBlankComment(comment string) bool {
 	return len(strings.TrimSpace(comment)) == 0
 }
 
-// writeBack write to file.
-func writeBack(filepath string, src, old []byte) error {
-	// make a temporary backup before overwriting original
-	backupName, err := backupFile(filepath+".", old, 0644)
+func writeBack(filename string, src []byte) error {
+	f, err := ioutil.TempFile(filepath.Dir(filename), filepath.Base(filename))
 	if err != nil {
 		return err
 	}
-
-	err = ioutil.WriteFile(filepath, src, 0644)
-	if err != nil {
-		_ = os.Rename(backupName, filepath)
-
+	defer os.Remove(f.Name())
+	if _, err := f.Write(src); err != nil {
 		return err
 	}
-
-	_ = os.Remove(backupName)
-
+	if err := f.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(f.Name(), filename); err != nil {
+		return err
+	}
 	return nil
-}
-
-const chmodSupported = runtime.GOOS != "windows"
-
-// backupFile writes data to a new file named filename<number> with permissions perm,
-// with <number randomly chosen such that the file name is unique. backupFile returns
-// the chosen file name.
-// copy from golang/cmd/gofmt.
-func backupFile(filename string, data []byte, perm os.FileMode) (string, error) {
-	// create backup file
-	file, err := ioutil.TempFile(filepath.Dir(filename), filepath.Base(filename))
-	if err != nil {
-		return "", err
-	}
-
-	if chmodSupported {
-		_ = file.Chmod(perm)
-	}
-
-	// write data to backup file
-	_, err = file.Write(data)
-	if err1 := file.Close(); err == nil {
-		err = err1
-	}
-
-	return file.Name(), err
 }
