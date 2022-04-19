@@ -450,15 +450,14 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 | securitydefinitions.oauth2.password     | [OAuth2 password](https://swagger.io/docs/specification/authentication/oauth2/) auth.          | tokenUrl, scope, sec.def.description                   | // @securitydefinitions.oauth2.password OAuth2Password       |
 | securitydefinitions.oauth2.accessCode   | [OAuth2 access code](https://swagger.io/docs/specification/authentication/oauth2/) auth.       | tokenUrl, authorizationUrl, scope, sec.def.description | // @securitydefinitions.oauth2.accessCode OAuth2AccessCode   |
 
-
-| parameters annotation | example                                                  |
-|-----------------------|----------------------------------------------------------|
-| in                    | // @in header                                            |
-| name                  | // @name Authorization                                   |
-| tokenUrl              | // @tokenUrl https://example.com/oauth/token             |
-| authorizationurl      | // @authorizationurl https://example.com/oauth/authorize |
-| scope.hoge            | // @scope.write Grants write access                      |
-
+| parameters annotation | example                                                     |
+|-----------------------|-------------------------------------------------------------|
+| in                    | // @in header                                               |
+| name                  | // @name Authorization                                      |
+| tokenUrl              | // @tokenUrl https://example.com/oauth/token                |
+| authorizationurl      | // @authorizationurl https://example.com/oauth/authorize    |
+| scope.hoge            | // @scope.write Grants write access                         |
+| sec.def.description   | // @sec.def.description OAuth protects our entity endpoints |
 
 ## Attribute
 

@@ -476,41 +476,31 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			if err != nil {
 				return err
 			}
-			secDef := spec.APIKeyAuth(attrMap["@name"], attrMap["@in"])
-			tryAddDescription(secDef, extensions)
-			parser.swagger.SecurityDefinitions[value] = secDef
+			parser.swagger.SecurityDefinitions[value] = tryAddDescription(spec.APIKeyAuth(attrMap["@name"], attrMap["@in"]), extensions)
 		case "@securitydefinitions.oauth2.application":
 			attrMap, scopes, extensions, err := parseSecAttr(attribute, []string{"@tokenurl"}, comments[i+1:])
 			if err != nil {
 				return err
 			}
-			secDef := secOAuth2Application(attrMap["@tokenurl"], scopes, extensions)
-			tryAddDescription(secDef, extensions)
-			parser.swagger.SecurityDefinitions[value] = secDef
+			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Application(attrMap["@tokenurl"], scopes, extensions), extensions)
 		case "@securitydefinitions.oauth2.implicit":
 			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@authorizationurl"}, comments[i+1:])
 			if err != nil {
 				return err
 			}
-			secDef := secOAuth2Implicit(attrs["@authorizationurl"], scopes, ext)
-			tryAddDescription(secDef, ext)
-			parser.swagger.SecurityDefinitions[value] = secDef
+			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Implicit(attrs["@authorizationurl"], scopes, ext), ext)
 		case "@securitydefinitions.oauth2.password":
 			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@tokenurl"}, comments[i+1:])
 			if err != nil {
 				return err
 			}
-			secDef := secOAuth2Password(attrs["@tokenurl"], scopes, ext)
-			tryAddDescription(secDef, ext)
-			parser.swagger.SecurityDefinitions[value] = secDef
+			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Password(attrs["@tokenurl"], scopes, ext), ext)
 		case "@securitydefinitions.oauth2.accesscode":
 			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@tokenurl", "@authorizationurl"}, comments[i+1:])
 			if err != nil {
 				return err
 			}
-			secDef := secOAuth2AccessToken(attrs["@authorizationurl"], attrs["@tokenurl"], scopes, ext)
-			tryAddDescription(secDef, ext)
-			parser.swagger.SecurityDefinitions[value] = secDef
+			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2AccessToken(attrs["@authorizationurl"], attrs["@tokenurl"], scopes, ext), ext)
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = value
 		default:
@@ -559,12 +549,13 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 	return nil
 }
 
-func tryAddDescription(spec *spec.SecurityScheme, extensions map[string]interface{}) {
+func tryAddDescription(spec *spec.SecurityScheme, extensions map[string]interface{}) *spec.SecurityScheme {
 	if val, ok := extensions["@sec.def.description"]; ok {
 		if str, ok := val.(string); ok {
 			spec.Description = str
 		}
 	}
+	return spec
 }
 
 // ParseAcceptComment parses comment for given `accept` comment string.
