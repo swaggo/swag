@@ -15,6 +15,10 @@ import (
 
 var _ FieldParser = &tagBaseFieldParser{}
 
+const (
+	requiredLabel = "required"
+)
+
 type tagBaseFieldParser struct {
 	p     *Parser
 	field *ast.Field
@@ -79,16 +83,19 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 }
 
 func toSnakeCase(in string) string {
-	runes := []rune(in)
-	length := len(runes)
+	var (
+		runes  = []rune(in)
+		length = len(runes)
+		out    []rune
+	)
 
-	var out []rune
-	for i := 0; i < length; i++ {
-		if i > 0 && unicode.IsUpper(runes[i]) &&
-			((i+1 < length && unicode.IsLower(runes[i+1])) || unicode.IsLower(runes[i-1])) {
+	for idx := 0; idx < length; idx++ {
+		if idx > 0 && unicode.IsUpper(runes[idx]) &&
+			((idx+1 < length && unicode.IsLower(runes[idx+1])) || unicode.IsLower(runes[idx-1])) {
 			out = append(out, '_')
 		}
-		out = append(out, unicode.ToLower(runes[i]))
+
+		out = append(out, unicode.ToLower(runes[idx]))
 	}
 
 	return string(out)
@@ -97,8 +104,11 @@ func toSnakeCase(in string) string {
 func toLowerCamelCase(in string) string {
 	runes := []rune(in)
 
-	var out []rune
-	flag := false
+	var (
+		out  []rune
+		flag bool
+	)
+
 	for i, curr := range runes {
 		if (i == 0 && unicode.IsUpper(curr)) || (flag && unicode.IsUpper(curr)) {
 			out = append(out, unicode.ToLower(curr))
@@ -155,32 +165,42 @@ func splitNotWrapped(s string, sep rune) []string {
 		'{': '}',
 	}
 
-	result := make([]string, 0)
-	current := ""
-	var openCount = 0
-	var openChar rune
+	var (
+		result    = make([]string, 0)
+		current   = strings.Builder{}
+		openCount = 0
+		openChar  rune
+	)
+
 	for _, char := range s {
-		if openChar == 0 && openCloseMap[char] != 0 {
+		switch {
+		case openChar == 0 && openCloseMap[char] != 0:
 			openChar = char
+
 			openCount++
-			current += string(char)
-		} else if char == openChar {
+
+			current.WriteRune(char)
+		case char == openChar:
 			openCount++
-			current = current + string(char)
-		} else if openCount > 0 && char == openCloseMap[openChar] {
+
+			current.WriteRune(char)
+		case openCount > 0 && char == openCloseMap[openChar]:
 			openCount--
-			current += string(char)
-		} else if openCount == 0 && char == sep {
-			result = append(result, current)
+
+			current.WriteRune(char)
+		case openCount == 0 && char == sep:
+			result = append(result, current.String())
+
 			openChar = 0
-			current = ""
-		} else {
-			current += string(char)
+
+			current = strings.Builder{}
+		default:
+			current.WriteRune(char)
 		}
 	}
 
-	if current != "" {
-		result = append(result, current)
+	if current.String() != "" {
+		result = append(result, current.String())
 	}
 
 	return result
@@ -196,9 +216,11 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		if ps.field.Doc != nil {
 			schema.Description = strings.TrimSpace(ps.field.Doc.Text())
 		}
+
 		if schema.Description == "" && ps.field.Comment != nil {
 			schema.Description = strings.TrimSpace(ps.field.Comment.Text())
 		}
+
 		return nil
 	}
 
@@ -215,21 +237,24 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	if ps.field.Doc != nil {
 		structField.desc = strings.TrimSpace(ps.field.Doc.Text())
 	}
+
 	if structField.desc == "" && ps.field.Comment != nil {
 		structField.desc = strings.TrimSpace(ps.field.Comment.Text())
 	}
 
 	jsonTag := ps.tag.Get(jsonTag)
-	// json:"name,string" or json:",string"
 
+	// json:"name,string" or json:",string"
 	exampleTag, ok := ps.tag.Lookup(exampleTag)
 	if ok {
 		structField.exampleValue = exampleTag
+
 		if !strings.Contains(jsonTag, ",string") {
 			example, err := defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
 			if err != nil {
 				return err
 			}
+
 			structField.exampleValue = example
 		}
 	}
@@ -246,8 +271,11 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 
 	extensionsTag := ps.tag.Get(extensionsTag)
 	if extensionsTag != "" {
+
 		structField.extensions = map[string]interface{}{}
+
 		for _, val := range splitNotWrapped(extensionsTag, ',') {
+
 			parts := strings.SplitN(val, "=", 2)
 			if len(parts) == 2 {
 				structField.extensions[parts[0]] = parts[1]
@@ -269,35 +297,44 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		}
 
 		structField.enums = nil
+
 		for _, e := range strings.Split(enumsTag, ",") {
 			value, err := defineType(enumType, e)
 			if err != nil {
 				return err
 			}
+
 			structField.enums = append(structField.enums, value)
 		}
 	}
+
 	varnamesTag := ps.tag.Get("x-enum-varnames")
 	if varnamesTag != "" {
 		if structField.extensions == nil {
 			structField.extensions = map[string]interface{}{}
 		}
+
 		varNames := strings.Split(varnamesTag, ",")
 		if len(varNames) != len(structField.enums) {
 			return fmt.Errorf("invalid count of x-enum-varnames. expected %d, got %d", len(structField.enums), len(varNames))
 		}
+
 		structField.enumVarNames = nil
+
 		for _, v := range varNames {
 			structField.enumVarNames = append(structField.enumVarNames, v)
 		}
+
 		structField.extensions["x-enum-varnames"] = structField.enumVarNames
 	}
+
 	defaultTag := ps.tag.Get(defaultTag)
 	if defaultTag != "" {
 		value, err := defineType(structField.schemaType, defaultTag)
 		if err != nil {
 			return err
 		}
+
 		structField.defaultValue = value
 	}
 
@@ -306,6 +343,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		if err != nil {
 			return err
 		}
+
 		if maximum != nil {
 			structField.maximum = maximum
 		}
@@ -314,6 +352,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		if err != nil {
 			return err
 		}
+
 		if minimum != nil {
 			structField.minimum = minimum
 		}
@@ -322,6 +361,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		if err != nil {
 			return err
 		}
+
 		if multipleOf != nil {
 			structField.multipleOf = multipleOf
 		}
@@ -332,6 +372,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		if err != nil {
 			return err
 		}
+
 		if maxLength != nil {
 			structField.maxLength = maxLength
 		}
@@ -340,13 +381,15 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		if err != nil {
 			return err
 		}
+
 		if minLength != nil {
 			structField.minLength = minLength
 		}
 	}
 
 	// perform this after setting everything else (min, max, etc...)
-	if strings.Contains(jsonTag, ",string") { // @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
+	if strings.Contains(jsonTag, ",string") {
+		// @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
 		defaultValues := map[string]string{
 			// Zero Values as string
 			STRING:  "",
@@ -374,17 +417,22 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 
 	schema.Description = structField.desc
 	schema.ReadOnly = structField.readOnly
+
 	if !reflect.ValueOf(schema.Ref).IsZero() && schema.ReadOnly {
 		schema.AllOf = []spec.Schema{*spec.RefSchema(schema.Ref.String())}
 		schema.Ref = spec.Ref{} // clear out existing ref
 	}
+
 	schema.Default = structField.defaultValue
 	schema.Example = structField.exampleValue
+
 	if structField.schemaType != ARRAY {
 		schema.Format = structField.formatType
 	}
+
 	schema.Extensions = structField.extensions
 	eleSchema := schema
+
 	if structField.schemaType == ARRAY {
 		// For Array only
 		schema.MaxItems = structField.maxItems
@@ -394,12 +442,14 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		eleSchema = schema.Items.Schema
 		eleSchema.Format = structField.formatType
 	}
+
 	eleSchema.Maximum = structField.maximum
 	eleSchema.Minimum = structField.minimum
 	eleSchema.MultipleOf = structField.multipleOf
 	eleSchema.MaxLength = structField.maxLength
 	eleSchema.MinLength = structField.minLength
 	eleSchema.Enum = structField.enums
+
 	return nil
 }
 
@@ -439,7 +489,7 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	bindingTag := ps.tag.Get(bindingTag)
 	if bindingTag != "" {
 		for _, val := range strings.Split(bindingTag, ",") {
-			if val == "required" {
+			if val == requiredLabel {
 				return true, nil
 			}
 		}
@@ -448,7 +498,7 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	validateTag := ps.tag.Get(validateTag)
 	if validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
-			if val == "required" {
+			if val == requiredLabel {
 				return true, nil
 			}
 		}
@@ -464,8 +514,9 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 		var (
 			valKey   string
 			valValue string
+			kv       = strings.Split(val, "=")
 		)
-		kv := strings.Split(val, "=")
+
 		switch len(kv) {
 		case 1:
 			valKey = kv[0]
@@ -475,7 +526,8 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 		default:
 			continue
 		}
-		valValue = strings.Replace(strings.Replace(valValue, utf8HexComma, ",", -1), utf8Pipe, "|", -1)
+
+		valValue = strings.ReplaceAll(strings.ReplaceAll(valValue, utf8HexComma, ","), utf8Pipe, "|")
 
 		switch valKey {
 		case "max", "lte":
@@ -513,6 +565,7 @@ func (sf *structField) setOneOf(valValue string) {
 		if err != nil {
 			continue
 		}
+
 		sf.enums = append(sf.enums, value)
 	}
 }
@@ -522,6 +575,7 @@ func (sf *structField) setMin(valValue string) {
 	if err != nil {
 		return
 	}
+
 	switch sf.schemaType {
 	case INTEGER, NUMBER:
 		sf.minimum = &value
@@ -539,6 +593,7 @@ func (sf *structField) setMax(valValue string) {
 	if err != nil {
 		return
 	}
+
 	switch sf.schemaType {
 	case INTEGER, NUMBER:
 		sf.maximum = &value
