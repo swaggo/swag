@@ -26,6 +26,8 @@ const (
 	STRING = "string"
 	// FUNC represent a function value.
 	FUNC = "func"
+	// INTERFACE represent a interface value.
+	INTERFACE = "interface{}"
 	// ANY represent a any value.
 	ANY = "any"
 	// NIL represent a empty value.

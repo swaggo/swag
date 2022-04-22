@@ -10,13 +10,16 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
 )
 
-var _ FieldParser = &tagBaseFieldParser{}
+var _ FieldParser = &tagBaseFieldParser{p: nil, field: nil, tag: ""}
 
 const (
-	requiredLabel = "required"
+	requiredLabel    = "required"
+	swaggerTypeTag   = "swaggertype"
+	swaggerIgnoreTag = "swaggerignore"
 )
 
 type tagBaseFieldParser struct {
@@ -26,15 +29,16 @@ type tagBaseFieldParser struct {
 }
 
 func newTagBaseFieldParser(p *Parser, field *ast.Field) FieldParser {
-	ps := &tagBaseFieldParser{
+	ps := tagBaseFieldParser{
 		p:     p,
 		field: field,
+		tag:   "",
 	}
 	if ps.field.Tag != nil {
-		ps.tag = reflect.StructTag(strings.Replace(field.Tag.Value, "`", "", -1))
+		ps.tag = reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
 	}
 
-	return ps
+	return &ps
 }
 
 func (ps *tagBaseFieldParser) ShouldSkip() (bool, error) {
@@ -47,13 +51,13 @@ func (ps *tagBaseFieldParser) ShouldSkip() (bool, error) {
 		return false, nil
 	}
 
-	ignoreTag := ps.tag.Get("swaggerignore")
+	ignoreTag := ps.tag.Get(swaggerIgnoreTag)
 	if strings.EqualFold(ignoreTag, "true") {
 		return true, nil
 	}
 
 	// json:"tag,hoge"
-	name := strings.TrimSpace(strings.Split(ps.tag.Get("json"), ",")[0])
+	name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
 	if name == "-" {
 		return true, nil
 	}
@@ -65,7 +69,7 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 	var name string
 	if ps.field.Tag != nil {
 		// json:"tag,hoge"
-		name = strings.TrimSpace(strings.Split(ps.tag.Get("json"), ",")[0])
+		name = strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
 
 		if name != "" {
 			return name, nil
@@ -127,7 +131,7 @@ func (ps *tagBaseFieldParser) CustomSchema() (*spec.Schema, error) {
 		return nil, nil
 	}
 
-	typeTag := ps.tag.Get("swaggertype")
+	typeTag := ps.tag.Get(swaggerTypeTag)
 	if typeTag != "" {
 		return BuildCustomSchema(strings.Split(typeTag, ","))
 	}
@@ -136,7 +140,6 @@ func (ps *tagBaseFieldParser) CustomSchema() (*spec.Schema, error) {
 }
 
 type structField struct {
-	desc         string
 	schemaType   string
 	arrayType    string
 	formatType   string
@@ -148,11 +151,8 @@ type structField struct {
 	maxItems     *int64
 	minItems     *int64
 	exampleValue interface{}
-	defaultValue interface{}
-	extensions   map[string]interface{}
 	enums        []interface{}
 	enumVarNames []interface{}
-	readOnly     bool
 	unique       bool
 }
 
@@ -224,79 +224,35 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		return nil
 	}
 
-	structField := &structField{
+	field := &structField{
 		schemaType: types[0],
 		formatType: ps.tag.Get(formatTag),
-		readOnly:   ps.tag.Get(readOnlyTag) == "true",
 	}
 
 	if len(types) > 1 && (types[0] == ARRAY || types[0] == OBJECT) {
-		structField.arrayType = types[1]
-	}
-
-	if ps.field.Doc != nil {
-		structField.desc = strings.TrimSpace(ps.field.Doc.Text())
-	}
-
-	if structField.desc == "" && ps.field.Comment != nil {
-		structField.desc = strings.TrimSpace(ps.field.Comment.Text())
+		field.arrayType = types[1]
 	}
 
 	jsonTag := ps.tag.Get(jsonTag)
 
-	// json:"name,string" or json:",string"
-	exampleTag, ok := ps.tag.Lookup(exampleTag)
-	if ok {
-		structField.exampleValue = exampleTag
-
-		if !strings.Contains(jsonTag, ",string") {
-			example, err := defineTypeOfExample(structField.schemaType, structField.arrayType, exampleTag)
-			if err != nil {
-				return err
-			}
-
-			structField.exampleValue = example
-		}
-	}
-
 	bindingTag := ps.tag.Get(bindingTag)
 	if bindingTag != "" {
-		ps.parseValidTags(bindingTag, structField)
+		ps.parseValidTags(bindingTag, field)
 	}
 
 	validateTag := ps.tag.Get(validateTag)
 	if validateTag != "" {
-		ps.parseValidTags(validateTag, structField)
-	}
-
-	extensionsTag := ps.tag.Get(extensionsTag)
-	if extensionsTag != "" {
-
-		structField.extensions = map[string]interface{}{}
-
-		for _, val := range splitNotWrapped(extensionsTag, ',') {
-
-			parts := strings.SplitN(val, "=", 2)
-			if len(parts) == 2 {
-				structField.extensions[parts[0]] = parts[1]
-			} else {
-				if len(parts[0]) > 0 && string(parts[0][0]) == "!" {
-					structField.extensions[parts[0][1:]] = false
-				} else {
-					structField.extensions[parts[0]] = true
-				}
-			}
-		}
+		ps.parseValidTags(validateTag, field)
 	}
 
 	enumsTag := ps.tag.Get(enumsTag)
 	if enumsTag != "" {
-		enumType := structField.schemaType
-		if structField.schemaType == ARRAY {
-			enumType = structField.arrayType
+		enumType := field.schemaType
+		if field.schemaType == ARRAY {
+			enumType = field.arrayType
 		}
 
-		structField.enums = nil
+		field.enums = nil
 
 		for _, e := range strings.Split(enumsTag, ",") {
 			value, err := defineType(enumType, e)
@@ -304,48 +260,18 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 				return err
 			}
 
-			structField.enums = append(structField.enums, value)
+			field.enums = append(field.enums, value)
 		}
 	}
 
-	varnamesTag := ps.tag.Get("x-enum-varnames")
-	if varnamesTag != "" {
-		if structField.extensions == nil {
-			structField.extensions = map[string]interface{}{}
-		}
-
-		varNames := strings.Split(varnamesTag, ",")
-		if len(varNames) != len(structField.enums) {
-			return fmt.Errorf("invalid count of x-enum-varnames. expected %d, got %d", len(structField.enums), len(varNames))
-		}
-
-		structField.enumVarNames = nil
-
-		for _, v := range varNames {
-			structField.enumVarNames = append(structField.enumVarNames, v)
-		}
-
-		structField.extensions["x-enum-varnames"] = structField.enumVarNames
-	}
-
-	defaultTag := ps.tag.Get(defaultTag)
-	if defaultTag != "" {
-		value, err := defineType(structField.schemaType, defaultTag)
-		if err != nil {
-			return err
-		}
-
-		structField.defaultValue = value
-	}
-
-	if IsNumericType(structField.schemaType) || IsNumericType(structField.arrayType) {
+	if IsNumericType(field.schemaType) || IsNumericType(field.arrayType) {
 		maximum, err := getFloatTag(ps.tag, maximumTag)
 		if err != nil {
 			return err
 		}
 
 		if maximum != nil {
-			structField.maximum = maximum
+			field.maximum = maximum
 		}
 
 		minimum, err := getFloatTag(ps.tag, minimumTag)
@@ -354,7 +280,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		}
 
 		if minimum != nil {
-			structField.minimum = minimum
+			field.minimum = minimum
 		}
 
 		multipleOf, err := getFloatTag(ps.tag, multipleOfTag)
@@ -363,18 +289,18 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		}
 
 		if multipleOf != nil {
-			structField.multipleOf = multipleOf
+			field.multipleOf = multipleOf
 		}
 	}
 
-	if structField.schemaType == STRING || structField.arrayType == STRING {
+	if field.schemaType == STRING || field.arrayType == STRING {
 		maxLength, err := getIntTag(ps.tag, "maxLength")
 		if err != nil {
 			return err
 		}
 
 		if maxLength != nil {
-			structField.maxLength = maxLength
+			field.maxLength = maxLength
 		}
 
 		minLength, err := getIntTag(ps.tag, "minLength")
@@ -383,7 +309,22 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		}
 
 		if minLength != nil {
-			structField.minLength = minLength
+			field.minLength = minLength
+		}
+	}
+
+	// json:"name,string" or json:",string"
+	exampleTag, ok := ps.tag.Lookup(exampleTag)
+	if ok {
+		field.exampleValue = exampleTag
+
+		if !strings.Contains(jsonTag, ",string") {
+			example, err := defineTypeOfExample(field.schemaType, field.arrayType, exampleTag)
+			if err != nil {
+				return err
+			}
+
+			field.exampleValue = example
 		}
 	}
 
@@ -398,57 +339,115 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			NUMBER:  "0",
 		}
 
-		defaultValue, ok := defaultValues[structField.schemaType]
+		defaultValue, ok := defaultValues[field.schemaType]
 		if ok {
-			structField.schemaType = STRING
+			field.schemaType = STRING
+			*schema = *PrimitiveSchema(field.schemaType)
 
-			if structField.exampleValue == nil {
+			if field.exampleValue == nil {
 				// if exampleValue is not defined by the user,
 				// we will force an example with a correct value
 				// (eg: int->"0", bool:"false")
-				structField.exampleValue = defaultValue
+				field.exampleValue = defaultValue
 			}
 		}
 	}
 
-	if structField.schemaType == STRING && types[0] != STRING {
-		*schema = *PrimitiveSchema(structField.schemaType)
+	if ps.field.Doc != nil {
+		schema.Description = strings.TrimSpace(ps.field.Doc.Text())
 	}
 
-	schema.Description = structField.desc
-	schema.ReadOnly = structField.readOnly
+	if schema.Description == "" && ps.field.Comment != nil {
+		schema.Description = strings.TrimSpace(ps.field.Comment.Text())
+	}
+
+	schema.ReadOnly = ps.tag.Get(readOnlyTag) == "true"
 
 	if !reflect.ValueOf(schema.Ref).IsZero() && schema.ReadOnly {
 		schema.AllOf = []spec.Schema{*spec.RefSchema(schema.Ref.String())}
-		schema.Ref = spec.Ref{} // clear out existing ref
+		schema.Ref = spec.Ref{
+			Ref: jsonreference.Ref{
+				HasFullURL:      false,
+				HasURLPathOnly:  false,
+				HasFragmentOnly: false,
+				HasFileScheme:   false,
+				HasFullFilePath: false,
+			},
+		} // clear out existing ref
 	}
 
-	schema.Default = structField.defaultValue
-	schema.Example = structField.exampleValue
+	defaultTag := ps.tag.Get(defaultTag)
+	if defaultTag != "" {
+		value, err := defineType(field.schemaType, defaultTag)
+		if err != nil {
+			return err
+		}
 
-	if structField.schemaType != ARRAY {
-		schema.Format = structField.formatType
+		schema.Default = value
 	}
 
-	schema.Extensions = structField.extensions
+	schema.Example = field.exampleValue
+
+	if field.schemaType != ARRAY {
+		schema.Format = field.formatType
+	}
+
+	extensionsTag := ps.tag.Get(extensionsTag)
+	if extensionsTag != "" {
+		schema.Extensions = map[string]interface{}{}
+
+		for _, val := range splitNotWrapped(extensionsTag, ',') {
+			parts := strings.SplitN(val, "=", 2)
+			if len(parts) == 2 {
+				schema.Extensions[parts[0]] = parts[1]
+			} else {
+				if len(parts[0]) > 0 && string(parts[0][0]) == "!" {
+					schema.Extensions[parts[0][1:]] = false
+				} else {
+					schema.Extensions[parts[0]] = true
+				}
+			}
+		}
+	}
+
+	varnamesTag := ps.tag.Get("x-enum-varnames")
+	if varnamesTag != "" {
+		if schema.Extensions == nil {
+			schema.Extensions = map[string]interface{}{}
+		}
+
+		varNames := strings.Split(varnamesTag, ",")
+		if len(varNames) != len(field.enums) {
+			return fmt.Errorf("invalid count of x-enum-varnames. expected %d, got %d", len(field.enums), len(varNames))
+		}
+
+		field.enumVarNames = nil
+
+		for _, v := range varNames {
+			field.enumVarNames = append(field.enumVarNames, v)
+		}
+
+		schema.Extensions["x-enum-varnames"] = field.enumVarNames
+	}
+
 	eleSchema := schema
 
-	if structField.schemaType == ARRAY {
+	if field.schemaType == ARRAY {
 		// For Array only
-		schema.MaxItems = structField.maxItems
-		schema.MinItems = structField.minItems
-		schema.UniqueItems = structField.unique
+		schema.MaxItems = field.maxItems
+		schema.MinItems = field.minItems
+		schema.UniqueItems = field.unique
 
 		eleSchema = schema.Items.Schema
-		eleSchema.Format = structField.formatType
+		eleSchema.Format = field.formatType
 	}
 
-	eleSchema.Maximum = structField.maximum
-	eleSchema.Minimum = structField.minimum
-	eleSchema.MultipleOf = structField.multipleOf
-	eleSchema.MaxLength = structField.maxLength
-	eleSchema.MinLength = structField.minLength
-	eleSchema.Enum = structField.enums
+	eleSchema.Maximum = field.maximum
+	eleSchema.Minimum = field.minimum
+	eleSchema.MultipleOf = field.multipleOf
+	eleSchema.MaxLength = field.maxLength
+	eleSchema.MinLength = field.minLength
+	eleSchema.Enum = field.enums
 
 	return nil
 }
@@ -628,7 +627,7 @@ func parseOneOfParam2(param string) []string {
 		values = splitParamsRegex.FindAllString(param, -1)
 
 		for i := 0; i < len(values); i++ {
-			values[i] = strings.Replace(values[i], "'", "", -1)
+			values[i] = strings.ReplaceAll(values[i], "'", "")
 		}
 
 		oneofValsCache[param] = values

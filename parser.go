@@ -142,7 +142,7 @@ type Parser struct {
 	Overrides map[string]string
 }
 
-// FieldParserFactory create FieldParser
+// FieldParserFactory create FieldParser.
 type FieldParserFactory func(ps *Parser, field *ast.Field) FieldParser
 
 // FieldParser parse struct field
@@ -161,8 +161,6 @@ type Debugger interface {
 
 // New creates a new Parser with default properties.
 func New(options ...func(*Parser)) *Parser {
-	// parser.swagger.SecurityDefinitions =
-
 	parser := &Parser{
 		swagger: &spec.Swagger{
 			SwaggerProps: spec.SwaggerProps{
@@ -1108,8 +1106,8 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 }
 
 func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
-	required := make([]string, 0)
-	properties := make(map[string]spec.Schema)
+	required, properties := make([]string, 0), make(map[string]spec.Schema)
+
 	for _, field := range fields.List {
 		fieldProps, requiredFromAnon, err := parser.parseStructField(file, field)
 		if err != nil {
@@ -1119,10 +1117,13 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 
 			return nil, err
 		}
+
 		if len(fieldProps) == 0 {
 			continue
 		}
+
 		required = append(required, requiredFromAnon...)
+
 		for k, v := range fieldProps {
 			properties[k] = v
 		}
@@ -1152,10 +1153,12 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		if err != nil {
 			return nil, nil, err
 		}
+
 		schema, err := parser.getTypeSchema(typeName, file, false)
 		if err != nil {
 			return nil, nil, err
 		}
+
 		if len(schema.Type) > 0 && schema.Type[0] == OBJECT {
 			if len(schema.Properties) == 0 {
 				return nil, nil, nil
@@ -1179,6 +1182,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if ok {
 		return nil, nil, nil
 	}
@@ -1192,6 +1196,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if schema == nil {
 		typeName, err := getFieldType(field.Type)
 		if err == nil {
@@ -1201,6 +1206,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 			// unnamed type
 			schema, err = parser.parseTypeExpr(file, field.Type, false)
 		}
+
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1212,10 +1218,12 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	}
 
 	var tagRequired []string
+
 	required, err := ps.IsRequired()
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if required {
 		tagRequired = append(tagRequired, fieldName)
 	}
