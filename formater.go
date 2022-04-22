@@ -37,6 +37,7 @@ func NewFormater() *Formater {
 		debug:    log.New(os.Stdout, "", log.LstdFlags),
 		excludes: make(map[string]struct{}),
 	}
+
 	return formater
 }
 
@@ -48,6 +49,7 @@ func (f *Formater) FormatAPI(searchDir, excludeDir, mainFile string) error {
 			return fmt.Errorf("dir: %s does not exist", searchDir)
 		}
 	}
+
 	for _, fi := range strings.Split(excludeDir, ",") {
 		fi = strings.TrimSpace(fi)
 		if fi != "" {
@@ -61,10 +63,12 @@ func (f *Formater) FormatAPI(searchDir, excludeDir, mainFile string) error {
 	if err != nil {
 		return err
 	}
+
 	err = f.FormatMain(absMainAPIFilePath)
 	if err != nil {
 		return err
 	}
+
 	f.mainFile = mainFile
 
 	err = f.formatMultiSearchDir(searchDirs)
@@ -84,6 +88,7 @@ func (f *Formater) formatMultiSearchDir(searchDirs []string) error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -99,6 +104,7 @@ func (f *Formater) visit(path string, fileInfo os.FileInfo, err error) error {
 		// skip if file not has suffix "*.go"
 		return nil
 	}
+
 	if strings.HasSuffix(strings.ToLower(path), f.mainFile) {
 		// skip main file
 		return nil
@@ -108,16 +114,19 @@ func (f *Formater) visit(path string, fileInfo os.FileInfo, err error) error {
 	if err != nil {
 		return fmt.Errorf("ParseFile error:%+v", err)
 	}
+
 	return nil
 }
 
 // FormatMain format the main.go comment.
 func (f *Formater) FormatMain(mainFilepath string) error {
 	fileSet := token.NewFileSet()
+
 	astFile, err := goparser.ParseFile(fileSet, mainFilepath, nil, goparser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("cannot format file, err: %w path : %s ", err, mainFilepath)
 	}
+
 	var (
 		formatedComments = bytes.Buffer{}
 		// CommentCache
@@ -136,6 +145,7 @@ func (f *Formater) FormatMain(mainFilepath string) error {
 // FormatFile format the swag comment in go function.
 func (f *Formater) FormatFile(filepath string) error {
 	fileSet := token.NewFileSet()
+
 	astFile, err := goparser.ParseFile(fileSet, filepath, nil, goparser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("cannot format file, err: %w path : %s ", err, filepath)
@@ -164,8 +174,9 @@ func writeFormatedComments(filepath string, formatedComments bytes.Buffer, oldCo
 	if err != nil {
 		return fmt.Errorf("cannot open file, err: %w path : %s ", err, filepath)
 	}
-	replaceSrc := string(srcBytes)
-	newComments := strings.Split(formatedComments.String(), "\n")
+
+	replaceSrc, newComments := string(srcBytes), strings.Split(formatedComments.String(), "\n")
+
 	for _, e := range newComments {
 		commentSplit := strings.Split(e, splitTag)
 		if len(commentSplit) == 2 {
@@ -176,6 +187,7 @@ func writeFormatedComments(filepath string, formatedComments bytes.Buffer, oldCo
 			}
 		}
 	}
+
 	return writeBack(filepath, []byte(replaceSrc), srcBytes)
 }
 
@@ -224,14 +236,16 @@ var skipCharEnd = map[byte]byte{
 }
 
 func separatorFinder(comment string, rp byte) string {
-	commentBytes := []byte(comment)
-	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "/"))
+	commentBytes, commentLine := []byte(comment), strings.TrimSpace(strings.TrimLeft(comment, "/"))
+
 	if len(commentLine) == 0 {
 		return ""
 	}
+
 	attribute := strings.Fields(commentLine)[0]
 	attrLen := strings.Index(comment, attribute) + len(attribute)
 	attribute = strings.ToLower(attribute)
+
 	var i = attrLen
 
 	if _, ok := specialTagForSplit[attribute]; ok {
@@ -242,8 +256,10 @@ func separatorFinder(comment string, rp byte) string {
 				for j < len(commentBytes) && commentBytes[j] == ' ' {
 					j++
 				}
+
 				commentBytes = replaceRange(commentBytes, i, j, rp)
 			}
+
 			if _, ok := skipChar[commentBytes[i]]; ok && !skipFlag {
 				skipFlag = true
 			} else if _, ok := skipCharEnd[commentBytes[i]]; ok && skipFlag {
@@ -254,11 +270,14 @@ func separatorFinder(comment string, rp byte) string {
 		for i < len(commentBytes) && commentBytes[i] == ' ' {
 			i++
 		}
+
 		if i >= len(commentBytes) {
 			return comment
 		}
+
 		commentBytes = replaceRange(commentBytes, attrLen, i, rp)
 	}
+
 	return string(commentBytes)
 }
 
@@ -266,11 +285,15 @@ func replaceRange(s []byte, start, end int, new byte) []byte {
 	if start > end || end < 1 {
 		return s
 	}
+
 	if end > len(s) {
 		end = len(s)
 	}
+
 	s = append(s[:start], s[end-1:]...)
+
 	s[start] = new
+
 	return s
 }
 
@@ -281,8 +304,7 @@ func isSwagComment(comment string) bool {
 }
 
 func isBlankComment(comment string) bool {
-	lc := strings.TrimSpace(comment)
-	return len(lc) == 0
+	return len(strings.TrimSpace(comment)) == 0
 }
 
 // writeBack write to file
@@ -292,12 +314,16 @@ func writeBack(filepath string, src, old []byte) error {
 	if err != nil {
 		return err
 	}
+
 	err = ioutil.WriteFile(filepath, src, 0644)
 	if err != nil {
 		_ = os.Rename(bakname, filepath)
+
 		return err
 	}
+
 	_ = os.Remove(bakname)
+
 	return nil
 }
 
@@ -313,6 +339,7 @@ func backupFile(filename string, data []byte, perm os.FileMode) (string, error) 
 	if err != nil {
 		return "", err
 	}
+
 	if chmodSupported {
 		_ = f.Chmod(perm)
 	}
@@ -322,5 +349,6 @@ func backupFile(filename string, data []byte, perm os.FileMode) (string, error) 
 	if err1 := f.Close(); err == nil {
 		err = err1
 	}
+
 	return f.Name(), err
 }
