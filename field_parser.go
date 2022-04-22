@@ -618,19 +618,24 @@ var oneofValsCache = map[string][]string{}
 var oneofValsCacheRWLock = sync.RWMutex{}
 var splitParamsRegex = regexp.MustCompile(`'[^']*'|\S+`)
 
-func parseOneOfParam2(s string) []string {
+func parseOneOfParam2(param string) []string {
 	oneofValsCacheRWLock.RLock()
-	values, ok := oneofValsCache[s]
+	values, ok := oneofValsCache[param]
 	oneofValsCacheRWLock.RUnlock()
+
 	if !ok {
 		oneofValsCacheRWLock.Lock()
-		values = splitParamsRegex.FindAllString(s, -1)
+		values = splitParamsRegex.FindAllString(param, -1)
+
 		for i := 0; i < len(values); i++ {
 			values[i] = strings.Replace(values[i], "'", "", -1)
 		}
-		oneofValsCache[s] = values
+
+		oneofValsCache[param] = values
+
 		oneofValsCacheRWLock.Unlock()
 	}
+
 	return values
 }
 
