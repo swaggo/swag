@@ -20,8 +20,8 @@ import (
 
 const splitTag = "&*"
 
-// Formater implements a formater for Go source files.
-type Formater struct {
+// Formatter implements a formater for Go source files.
+type Formatter struct {
 	// debugging output goes here
 	debug Debugger
 
@@ -31,18 +31,19 @@ type Formater struct {
 	mainFile string
 }
 
-// NewFormater create a new formater instance.
-func NewFormater() *Formater {
-	formater := &Formater{
+// NewFormatter create a new formater instance.
+func NewFormatter() *Formatter {
+	formatter := Formatter{
+		mainFile: "",
 		debug:    log.New(os.Stdout, "", log.LstdFlags),
 		excludes: make(map[string]struct{}),
 	}
 
-	return formater
+	return &formatter
 }
 
 // FormatAPI format the swag comment.
-func (f *Formater) FormatAPI(searchDir, excludeDir, mainFile string) error {
+func (f *Formatter) FormatAPI(searchDir, excludeDir, mainFile string) error {
 	searchDirs := strings.Split(searchDir, ",")
 	for _, searchDir := range searchDirs {
 		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
@@ -79,7 +80,7 @@ func (f *Formater) FormatAPI(searchDir, excludeDir, mainFile string) error {
 	return nil
 }
 
-func (f *Formater) formatMultiSearchDir(searchDirs []string) error {
+func (f *Formatter) formatMultiSearchDir(searchDirs []string) error {
 	for _, searchDir := range searchDirs {
 		f.debug.Printf("Format API Info, search dir:%s", searchDir)
 
@@ -92,7 +93,7 @@ func (f *Formater) formatMultiSearchDir(searchDirs []string) error {
 	return nil
 }
 
-func (f *Formater) visit(path string, fileInfo os.FileInfo, err error) error {
+func (f *Formatter) visit(path string, fileInfo os.FileInfo, err error) error {
 	if err := walkWith(f.excludes, false)(path, fileInfo); err != nil {
 		return err
 	} else if fileInfo.IsDir() {
@@ -119,7 +120,7 @@ func (f *Formater) visit(path string, fileInfo os.FileInfo, err error) error {
 }
 
 // FormatMain format the main.go comment.
-func (f *Formater) FormatMain(mainFilepath string) error {
+func (f *Formatter) FormatMain(mainFilepath string) error {
 	fileSet := token.NewFileSet()
 
 	astFile, err := goparser.ParseFile(fileSet, mainFilepath, nil, goparser.ParseComments)
@@ -139,11 +140,11 @@ func (f *Formater) FormatMain(mainFilepath string) error {
 		}
 	}
 
-	return writeFormatedComments(mainFilepath, formatedComments, oldCommentsMap)
+	return writeFormattedComments(mainFilepath, formatedComments, oldCommentsMap)
 }
 
 // FormatFile format the swag comment in go function.
-func (f *Formater) FormatFile(filepath string) error {
+func (f *Formatter) FormatFile(filepath string) error {
 	fileSet := token.NewFileSet()
 
 	astFile, err := goparser.ParseFile(fileSet, filepath, nil, goparser.ParseComments)
@@ -164,10 +165,10 @@ func (f *Formater) FormatFile(filepath string) error {
 		}
 	}
 
-	return writeFormatedComments(filepath, formatedComments, oldCommentsMap)
+	return writeFormattedComments(filepath, formatedComments, oldCommentsMap)
 }
 
-func writeFormatedComments(filepath string, formatedComments bytes.Buffer, oldCommentsMap map[string]string) error {
+func writeFormattedComments(filepath string, formatedComments bytes.Buffer, oldCommentsMap map[string]string) error {
 	// Replace the file
 	// Read the file
 	srcBytes, err := ioutil.ReadFile(filepath)
@@ -191,8 +192,8 @@ func writeFormatedComments(filepath string, formatedComments bytes.Buffer, oldCo
 	return writeBack(filepath, []byte(replaceSrc), srcBytes)
 }
 
-func formatFuncDoc(commentList []*ast.Comment, formatedComments io.Writer, oldCommentsMap map[string]string) {
-	tabw := tabwriter.NewWriter(formatedComments, 0, 0, 2, ' ', 0)
+func formatFuncDoc(commentList []*ast.Comment, formattedComments io.Writer, oldCommentsMap map[string]string) {
+	tabWriter := tabwriter.NewWriter(formattedComments, 0, 0, 2, ' ', 0)
 
 	for _, comment := range commentList {
 		commentLine := comment.Text
@@ -205,34 +206,11 @@ func formatFuncDoc(commentList []*ast.Comment, formatedComments io.Writer, oldCo
 
 			// md5 + splitTag + srcCommentLine
 			// eg. xxx&*@Description get struct array
-			_, _ = fmt.Fprintln(tabw, cmd5+splitTag+c)
+			_, _ = fmt.Fprintln(tabWriter, cmd5+splitTag+c)
 		}
 	}
-	// format by tabwriter
-	_ = tabw.Flush()
-}
-
-// Check of @Param @Success @Failure @Response @Header
-var specialTagForSplit = map[string]byte{
-	paramAttr:    1,
-	successAttr:  1,
-	failureAttr:  1,
-	responseAttr: 1,
-	headerAttr:   1,
-}
-
-var skipChar = map[byte]byte{
-	'"': 1,
-	'(': 1,
-	'{': 1,
-	'[': 1,
-}
-
-var skipCharEnd = map[byte]byte{
-	'"': 1,
-	')': 1,
-	'}': 1,
-	']': 1,
+	// format by tabWriter
+	_ = tabWriter.Flush()
 }
 
 func separatorFinder(comment string, rp byte) string {
@@ -246,36 +224,76 @@ func separatorFinder(comment string, rp byte) string {
 	attrLen := strings.Index(comment, attribute) + len(attribute)
 	attribute = strings.ToLower(attribute)
 
-	var i = attrLen
+	var (
+		i = attrLen
 
-	if _, ok := specialTagForSplit[attribute]; ok {
-		var skipFlag bool
-		for ; i < len(commentBytes); i++ {
-			if !skipFlag && commentBytes[i] == ' ' {
-				j := i
-				for j < len(commentBytes) && commentBytes[j] == ' ' {
-					j++
-				}
+		// Check of @Param @Success @Failure @Response @Header.
+		specialTagForSplit = map[string]byte{
+			paramAttr:    1,
+			successAttr:  1,
+			failureAttr:  1,
+			responseAttr: 1,
+			headerAttr:   1,
+		}
+	)
 
-				commentBytes = replaceRange(commentBytes, i, j, rp)
+	_, ok := specialTagForSplit[attribute]
+	if ok {
+		return splitSpecialTags(commentBytes, i, rp)
+	}
+
+	for i < len(commentBytes) && commentBytes[i] == ' ' {
+		i++
+	}
+
+	if i >= len(commentBytes) {
+		return comment
+	}
+
+	commentBytes = replaceRange(commentBytes, attrLen, i, rp)
+
+	return string(commentBytes)
+}
+
+func splitSpecialTags(commentBytes []byte, i int, rp byte) string {
+	var (
+		skipFlag bool
+		skipChar = map[byte]byte{
+			'"': 1,
+			'(': 1,
+			'{': 1,
+			'[': 1,
+		}
+
+		skipCharEnd = map[byte]byte{
+			'"': 1,
+			')': 1,
+			'}': 1,
+			']': 1,
+		}
+	)
+
+	for ; i < len(commentBytes); i++ {
+		if !skipFlag && commentBytes[i] == ' ' {
+			j := i
+			for j < len(commentBytes) && commentBytes[j] == ' ' {
+				j++
 			}
 
-			if _, ok := skipChar[commentBytes[i]]; ok && !skipFlag {
-				skipFlag = true
-			} else if _, ok := skipCharEnd[commentBytes[i]]; ok && skipFlag {
-				skipFlag = false
-			}
-		}
-	} else {
-		for i < len(commentBytes) && commentBytes[i] == ' ' {
-			i++
+			commentBytes = replaceRange(commentBytes, i, j, rp)
 		}
 
-		if i >= len(commentBytes) {
-			return comment
+		_, ok := skipChar[commentBytes[i]]
+		if ok && !skipFlag {
+			skipFlag = true
+
+			continue
 		}
 
-		commentBytes = replaceRange(commentBytes, attrLen, i, rp)
+		_, ok = skipCharEnd[commentBytes[i]]
+		if ok && skipFlag {
+			skipFlag = false
+		}
 	}
 
 	return string(commentBytes)
@@ -307,22 +325,22 @@ func isBlankComment(comment string) bool {
 	return len(strings.TrimSpace(comment)) == 0
 }
 
-// writeBack write to file
+// writeBack write to file.
 func writeBack(filepath string, src, old []byte) error {
 	// make a temporary backup before overwriting original
-	bakname, err := backupFile(filepath+".", old, 0644)
+	backupName, err := backupFile(filepath+".", old, 0644)
 	if err != nil {
 		return err
 	}
 
 	err = ioutil.WriteFile(filepath, src, 0644)
 	if err != nil {
-		_ = os.Rename(bakname, filepath)
+		_ = os.Rename(backupName, filepath)
 
 		return err
 	}
 
-	_ = os.Remove(bakname)
+	_ = os.Remove(backupName)
 
 	return nil
 }
@@ -332,23 +350,23 @@ const chmodSupported = runtime.GOOS != "windows"
 // backupFile writes data to a new file named filename<number> with permissions perm,
 // with <number randomly chosen such that the file name is unique. backupFile returns
 // the chosen file name.
-// copy from golang/cmd/gofmt
+// copy from golang/cmd/gofmt.
 func backupFile(filename string, data []byte, perm os.FileMode) (string, error) {
 	// create backup file
-	f, err := ioutil.TempFile(filepath.Dir(filename), filepath.Base(filename))
+	file, err := ioutil.TempFile(filepath.Dir(filename), filepath.Base(filename))
 	if err != nil {
 		return "", err
 	}
 
 	if chmodSupported {
-		_ = f.Chmod(perm)
+		_ = file.Chmod(perm)
 	}
 
 	// write data to backup file
-	_, err = f.Write(data)
-	if err1 := f.Close(); err == nil {
+	_, err = file.Write(data)
+	if err1 := file.Close(); err == nil {
 		err = err1
 	}
 
-	return f.Name(), err
+	return file.Name(), err
 }

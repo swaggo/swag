@@ -25,7 +25,7 @@ type Config struct {
 
 func (f *Fmt) Build(config *Config) error {
 	log.Println("Formating code.... ")
-	formater := swag.NewFormater()
+	formater := swag.NewFormatter()
 	if err := formater.FormatAPI(config.SearchDir, config.Excludes, config.MainFile); err != nil {
 		return err
 	}
