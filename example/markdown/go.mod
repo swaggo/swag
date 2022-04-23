@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/gorilla/mux v1.7.3
-	github.com/swaggo/http-swagger v1.2.5
+	github.com/swaggo/http-swagger v1.2.6
 	github.com/swaggo/swag v1.7.9
 )
 
