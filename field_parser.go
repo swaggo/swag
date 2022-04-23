@@ -29,40 +29,40 @@ type tagBaseFieldParser struct {
 }
 
 func newTagBaseFieldParser(p *Parser, field *ast.Field) FieldParser {
-	ps := tagBaseFieldParser{
+	fieldParser := tagBaseFieldParser{
 		p:     p,
 		field: field,
 		tag:   "",
 	}
-	if ps.field.Tag != nil {
-		ps.tag = reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
+	if fieldParser.field.Tag != nil {
+		fieldParser.tag = reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", ""))
 	}
 
-	return &ps
+	return &fieldParser
 }
 
-func (ps *tagBaseFieldParser) ShouldSkip() (bool, error) {
+func (ps *tagBaseFieldParser) ShouldSkip() bool {
 	// Skip non-exported fields.
 	if !ast.IsExported(ps.field.Names[0].Name) {
-		return true, nil
+		return true
 	}
 
 	if ps.field.Tag == nil {
-		return false, nil
+		return false
 	}
 
 	ignoreTag := ps.tag.Get(swaggerIgnoreTag)
 	if strings.EqualFold(ignoreTag, "true") {
-		return true, nil
+		return true
 	}
 
 	// json:"tag,hoge"
 	name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
 	if name == "-" {
-		return true, nil
+		return true
 	}
 
-	return false, nil
+	return false
 }
 
 func (ps *tagBaseFieldParser) FieldName() (string, error) {
@@ -233,34 +233,23 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		field.arrayType = types[1]
 	}
 
-	jsonTag := ps.tag.Get(jsonTag)
+	jsonTagValue := ps.tag.Get(jsonTag)
 
-	bindingTag := ps.tag.Get(bindingTag)
-	if bindingTag != "" {
-		ps.parseValidTags(bindingTag, field)
+	bindingTagValue := ps.tag.Get(bindingTag)
+	if bindingTagValue != "" {
+		parseValidTags(bindingTagValue, field)
 	}
 
-	validateTag := ps.tag.Get(validateTag)
-	if validateTag != "" {
-		ps.parseValidTags(validateTag, field)
+	validateTagValue := ps.tag.Get(validateTag)
+	if validateTagValue != "" {
+		parseValidTags(validateTagValue, field)
 	}
 
-	enumsTag := ps.tag.Get(enumsTag)
-	if enumsTag != "" {
-		enumType := field.schemaType
-		if field.schemaType == ARRAY {
-			enumType = field.arrayType
-		}
-
-		field.enums = nil
-
-		for _, e := range strings.Split(enumsTag, ",") {
-			value, err := defineType(enumType, e)
-			if err != nil {
-				return err
-			}
-
-			field.enums = append(field.enums, value)
+	enumsTagValue := ps.tag.Get(enumsTag)
+	if enumsTagValue != "" {
+		err := parseEnumTags(enumsTagValue, field)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -314,12 +303,12 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	}
 
 	// json:"name,string" or json:",string"
-	exampleTag, ok := ps.tag.Lookup(exampleTag)
+	exampleTagValue, ok := ps.tag.Lookup(exampleTag)
 	if ok {
-		field.exampleValue = exampleTag
+		field.exampleValue = exampleTagValue
 
-		if !strings.Contains(jsonTag, ",string") {
-			example, err := defineTypeOfExample(field.schemaType, field.arrayType, exampleTag)
+		if !strings.Contains(jsonTagValue, ",string") {
+			example, err := defineTypeOfExample(field.schemaType, field.arrayType, exampleTagValue)
 			if err != nil {
 				return err
 			}
@@ -329,7 +318,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	}
 
 	// perform this after setting everything else (min, max, etc...)
-	if strings.Contains(jsonTag, ",string") {
+	if strings.Contains(jsonTagValue, ",string") {
 		// @encoding/json: "It applies only to fields of string, floating point, integer, or boolean types."
 		defaultValues := map[string]string{
 			// Zero Values as string
@@ -376,9 +365,9 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		} // clear out existing ref
 	}
 
-	defaultTag := ps.tag.Get(defaultTag)
-	if defaultTag != "" {
-		value, err := defineType(field.schemaType, defaultTag)
+	defaultTagValue := ps.tag.Get(defaultTag)
+	if defaultTagValue != "" {
+		value, err := defineType(field.schemaType, defaultTagValue)
 		if err != nil {
 			return err
 		}
@@ -392,22 +381,9 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		schema.Format = field.formatType
 	}
 
-	extensionsTag := ps.tag.Get(extensionsTag)
-	if extensionsTag != "" {
-		schema.Extensions = map[string]interface{}{}
-
-		for _, val := range splitNotWrapped(extensionsTag, ',') {
-			parts := strings.SplitN(val, "=", 2)
-			if len(parts) == 2 {
-				schema.Extensions[parts[0]] = parts[1]
-			} else {
-				if len(parts[0]) > 0 && string(parts[0][0]) == "!" {
-					schema.Extensions[parts[0][1:]] = false
-				} else {
-					schema.Extensions[parts[0]] = true
-				}
-			}
-		}
+	extensionsTagValue := ps.tag.Get(extensionsTag)
+	if extensionsTagValue != "" {
+		schema.Extensions = setExtensionParam(extensionsTagValue)
 	}
 
 	varnamesTag := ps.tag.Get("x-enum-varnames")
@@ -506,29 +482,24 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	return false, nil
 }
 
-func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
+func parseValidTags(validTag string, sf *structField) {
 	// `validate:"required,max=10,min=1"`
 	// ps. required checked by IsRequired().
 	for _, val := range strings.Split(validTag, ",") {
 		var (
-			valKey   string
 			valValue string
 			kv       = strings.Split(val, "=")
 		)
 
 		switch len(kv) {
 		case 1:
-			valKey = kv[0]
 		case 2:
-			valKey = kv[0]
-			valValue = kv[1]
+			valValue = strings.ReplaceAll(strings.ReplaceAll(kv[1], utf8HexComma, ","), utf8Pipe, "|")
 		default:
 			continue
 		}
 
-		valValue = strings.ReplaceAll(strings.ReplaceAll(valValue, utf8HexComma, ","), utf8Pipe, "|")
-
-		switch valKey {
+		switch kv[0] {
 		case "max", "lte":
 			sf.setMax(valValue)
 		case "min", "gte":
@@ -546,6 +517,26 @@ func (ps *tagBaseFieldParser) parseValidTags(validTag string, sf *structField) {
 			continue
 		}
 	}
+}
+
+func parseEnumTags(enumTag string, field *structField) error {
+	enumType := field.schemaType
+	if field.schemaType == ARRAY {
+		enumType = field.arrayType
+	}
+
+	field.enums = nil
+
+	for _, e := range strings.Split(enumTag, ",") {
+		value, err := defineType(enumType, e)
+		if err != nil {
+			return err
+		}
+
+		field.enums = append(field.enums, value)
+	}
+
+	return nil
 }
 
 func (sf *structField) setOneOf(valValue string) {

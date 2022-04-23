@@ -65,7 +65,7 @@ var (
 	// ErrFailedConvertPrimitiveType Failed to convert for swag to interpretable type.
 	ErrFailedConvertPrimitiveType = errors.New("swag property: failed convert primitive type")
 
-	// ErrSkippedField .swaggo specifies field should be skipped
+	// ErrSkippedField .swaggo specifies field should be skipped.
 	ErrSkippedField = errors.New("field is skipped by global overrides")
 )
 
@@ -145,9 +145,9 @@ type Parser struct {
 // FieldParserFactory create FieldParser.
 type FieldParserFactory func(ps *Parser, field *ast.Field) FieldParser
 
-// FieldParser parse struct field
+// FieldParser parse struct field.
 type FieldParser interface {
-	ShouldSkip() (bool, error)
+	ShouldSkip() bool
 	FieldName() (string, error)
 	CustomSchema() (*spec.Schema, error)
 	ComplementSchema(schema *spec.Schema) error
@@ -175,9 +175,15 @@ func New(options ...func(*Parser)) *Parser {
 				},
 				Paths: &spec.Paths{
 					Paths: make(map[string]spec.PathItem),
+					VendorExtensible: spec.VendorExtensible{
+						Extensions: nil,
+					},
 				},
 				Definitions:         make(map[string]spec.Schema),
 				SecurityDefinitions: make(map[string]*spec.SecurityScheme),
+			},
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: nil,
 			},
 		},
 		packages:           NewPackagesDefinitions(),
@@ -327,7 +333,9 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 func getPkgName(searchDir string) (string, error) {
 	cmd := exec.Command("go", "list", "-f={{.ImportPath}}")
 	cmd.Dir = searchDir
+
 	var stdout, stderr strings.Builder
+
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
@@ -368,7 +376,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 		if !isGeneralAPIComment(comments) {
 			continue
 		}
-		err := parseGeneralAPIInfo(parser, comments)
+
+		err = parseGeneralAPIInfo(parser, comments)
 		if err != nil {
 			return err
 		}
@@ -389,6 +398,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 		if previousAttribute == attribute {
 			multilineBlock = true
 		}
+
 		switch strings.ToLower(attribute) {
 		case versionAttr:
 			parser.swagger.Info.Version = value
@@ -400,12 +410,14 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 
 				continue
 			}
+
 			parser.swagger.Info.Description = value
 		case "@description.markdown":
 			commentInfo, err := getMarkdownForTag("api", parser.markdownFileDir)
 			if err != nil {
 				return err
 			}
+
 			parser.swagger.Info.Description = string(commentInfo)
 		case "@termsofservice":
 			parser.swagger.Info.TermsOfService = value
@@ -449,23 +461,28 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			replaceLastTag(parser.swagger.Tags, tag)
 		case "@tag.description.markdown":
 			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+
 			commentInfo, err := getMarkdownForTag(tag.TagProps.Name, parser.markdownFileDir)
 			if err != nil {
 				return err
 			}
+
 			tag.TagProps.Description = string(commentInfo)
 			replaceLastTag(parser.swagger.Tags, tag)
 		case "@tag.docs.url":
 			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 			tag.TagProps.ExternalDocs = &spec.ExternalDocumentation{
-				URL: value,
+				URL:         value,
+				Description: "",
 			}
+
 			replaceLastTag(parser.swagger.Tags, tag)
 		case "@tag.docs.description":
 			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
 			if tag.TagProps.ExternalDocs == nil {
 				return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
 			}
+
 			tag.TagProps.ExternalDocs.Description = value
 			replaceLastTag(parser.swagger.Tags, tag)
 		case "@securitydefinitions.basic":
@@ -475,30 +492,35 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			if err != nil {
 				return err
 			}
+
 			parser.swagger.SecurityDefinitions[value] = tryAddDescription(spec.APIKeyAuth(attrMap["@name"], attrMap["@in"]), extensions)
 		case "@securitydefinitions.oauth2.application":
 			attrMap, scopes, extensions, err := parseSecAttr(attribute, []string{"@tokenurl"}, comments, &i)
 			if err != nil {
 				return err
 			}
+
 			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Application(attrMap["@tokenurl"], scopes, extensions), extensions)
 		case "@securitydefinitions.oauth2.implicit":
 			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@authorizationurl"}, comments, &i)
 			if err != nil {
 				return err
 			}
+
 			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Implicit(attrs["@authorizationurl"], scopes, ext), ext)
 		case "@securitydefinitions.oauth2.password":
 			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@tokenurl"}, comments, &i)
 			if err != nil {
 				return err
 			}
+
 			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Password(attrs["@tokenurl"], scopes, ext), ext)
 		case "@securitydefinitions.oauth2.accesscode":
 			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@tokenurl", "@authorizationurl"}, comments, &i)
 			if err != nil {
 				return err
 			}
+
 			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2AccessToken(attrs["@authorizationurl"], attrs["@tokenurl"], scopes, ext), ext)
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = value
@@ -516,17 +538,21 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 						break
 					}
 				}
+
 				// if it is present on security def, don't add it again
 				if extExistsInSecurityDef {
 					break
 				}
 
 				var valueJSON interface{}
+
 				split := strings.SplitAfter(commentLine, attribute+" ")
 				if len(split) < 2 {
 					return fmt.Errorf("annotation %s need a value", attribute)
 				}
+
 				extensionName := "x-" + strings.SplitAfter(attribute, prefixExtension)[1]
+
 				err := json.Unmarshal([]byte(split[1]), &valueJSON)
 				if err != nil {
 					return fmt.Errorf("annotation %s need a valid json value", attribute)
@@ -538,10 +564,12 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 					if parser.swagger.Extensions == nil {
 						parser.swagger.Extensions = make(map[string]interface{})
 					}
+
 					parser.swagger.Extensions[attribute[1:]] = valueJSON
 				}
 			}
 		}
+
 		previousAttribute = attribute
 	}
 
@@ -554,6 +582,7 @@ func tryAddDescription(spec *spec.SecurityScheme, extensions map[string]interfac
 			spec.Description = str
 		}
 	}
+
 	return spec
 }
 
@@ -590,32 +619,40 @@ func parseSecAttr(context string, search []string, lines []string, index *int) (
 
 	for ; *index < len(lines); *index++ {
 		v := lines[*index]
+
 		securityAttr := strings.ToLower(strings.Split(v, " ")[0])
 		for _, findterm := range search {
 			if securityAttr == findterm {
 				attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+
 				continue
 			}
 		}
+
 		isExists, err := isExistsScope(securityAttr)
 		if err != nil {
 			return nil, nil, nil, err
 		}
+
 		if isExists {
 			scopes[securityAttr[len(scopeAttrPrefix):]] = v[len(securityAttr):]
 		}
+
 		if strings.HasPrefix(securityAttr, "@x-") {
 			// Add the custom attribute without the @
 			extensions[securityAttr[1:]] = strings.TrimSpace(v[len(securityAttr):])
 		}
+
 		// Not mandatory field
 		if securityAttr == "@description" {
 			extensions[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
 		}
+
 		// next securityDefinitions
 		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
 			// Go back to the previous line and break
 			*index--
+
 			break
 		}
 	}
@@ -642,6 +679,7 @@ func secOAuth2Implicit(authorizationURL string, scopes map[string]string,
 	extensions map[string]interface{}) *spec.SecurityScheme {
 	securityScheme := spec.OAuth2Implicit(authorizationURL)
 	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+
 	for scope, description := range scopes {
 		securityScheme.AddScope(scope, description)
 	}
@@ -693,6 +731,7 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 		if fileInfo.IsDir() {
 			continue
 		}
+
 		fileName := fileInfo.Name()
 
 		if !strings.Contains(fileName, ".md") {
@@ -748,8 +787,10 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 			}
 
 			for _, routeProperties := range operation.RouterProperties {
-				var pathItem spec.PathItem
-				var ok bool
+				var (
+					pathItem spec.PathItem
+					ok       bool
+				)
 
 				pathItem, ok = parser.swagger.Paths.Paths[routeProperties.Path]
 				if !ok {
@@ -764,6 +805,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 					if parser.Strict {
 						return err
 					}
+
 					parser.debug.Printf("warning: %s\n", err)
 				}
 
@@ -802,6 +844,7 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 	if strings.ContainsRune(name, '.') {
 		name = strings.Split(name, ".")[1]
 	}
+
 	switch strings.ToUpper(name) {
 	case "TIME", "OBJECTID", "UUID":
 		return STRING, nil
@@ -913,6 +956,7 @@ func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema)
 		} else {
 			parser.existSchemaNames[schema.Name] = schema
 		}
+
 		parser.swagger.Definitions[schema.Name] = spec.Schema{}
 
 		if schema.Schema != nil {
@@ -963,6 +1007,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 			},
 			ErrRecursiveParseStruct
 	}
+
 	parser.structStack = append(parser.structStack, typeSpecDef)
 
 	parser.debug.Printf("Generating %s", typeName)
@@ -1178,12 +1223,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 
 	ps := parser.fieldParserFactory(parser, field)
 
-	ok, err := ps.ShouldSkip()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if ok {
+	if ps.ShouldSkip() {
 		return nil, nil, nil
 	}
 
@@ -1242,7 +1282,6 @@ func getFieldType(field ast.Expr) (string, error) {
 		}
 
 		return fullTypeName(packageName, fieldType.Sel.Name), nil
-
 	case *ast.StarExpr:
 		fullName, err := getFieldType(fieldType.X)
 		if err != nil {
@@ -1332,6 +1371,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 			if err != nil {
 				return nil, err
 			}
+
 			result = append(result, v)
 		}
 
@@ -1366,9 +1406,12 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
 func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 	return filepath.Walk(searchDir, func(path string, f os.FileInfo, _ error) error {
-		if err := parser.Skip(path, f); err != nil {
+		err := parser.Skip(path, f)
+		if err != nil {
 			return err
-		} else if f.IsDir() {
+		}
+
+		if f.IsDir() {
 			return nil
 		}
 
@@ -1391,7 +1434,9 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 	if pkg.Raw == nil && pkg.Name == "C" {
 		return nil
 	}
+
 	srcDir := pkg.Raw.Dir
+
 	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contain sub dir files)
 	if err != nil {
 		return err
@@ -1442,24 +1487,29 @@ func (parser *Parser) checkOperationIDUniqueness() error {
 
 	for path, item := range parser.swagger.Paths.Paths {
 		var method, id string
+
 		for method = range allMethod {
 			op := refRouteMethodOp(&item, method)
 			if *op != nil {
 				id = (**op).ID
+
 				break
 			}
 		}
+
 		if id == "" {
 			continue
 		}
 
 		current := fmt.Sprintf("%s %s", method, path)
+
 		previous, ok := operationsIds[id]
 		if ok {
 			return fmt.Errorf(
 				"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
 				id, current, previous)
 		}
+
 		operationsIds[id] = current
 	}
 

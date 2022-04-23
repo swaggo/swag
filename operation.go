@@ -475,7 +475,7 @@ func (operation *Operation) parseParamAttribute(comment, objectType, schemaType 
 		case schemaExampleTag:
 			err = setSchemaExample(param, schemaType, attr)
 		case extensionsTag:
-			_ = setExtensionParam(param, attr)
+			param.Extensions = setExtensionParam(attr)
 		case collectionFormatTag:
 			err = setCollectionFormatParam(param, attrKey, objectType, attr, comment)
 		}
@@ -560,21 +560,27 @@ func setEnumParam(param *spec.Parameter, attr, objectType, schemaType string) er
 	return nil
 }
 
-func setExtensionParam(param *spec.Parameter, attr string) error {
-	param.Extensions = map[string]interface{}{}
+func setExtensionParam(attr string) spec.Extensions {
+	extensions := spec.Extensions{}
 
 	for _, val := range splitNotWrapped(attr, ',') {
 		parts := strings.SplitN(val, "=", 2)
 		if len(parts) == 2 {
-			param.Extensions.Add(parts[0], parts[1])
+			extensions.Add(parts[0], parts[1])
 
 			continue
 		}
 
-		param.Extensions.Add(parts[0], true)
+		if len(parts[0]) > 0 && string(parts[0][0]) == "!" {
+			extensions.Add(parts[0][1:], false)
+
+			continue
+		}
+
+		extensions.Add(parts[0], true)
 	}
 
-	return nil
+	return extensions
 }
 
 func setCollectionFormatParam(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
@@ -998,16 +1004,27 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 func newHeaderSpec(schemaType, description string) spec.Header {
 	return spec.Header{
 		SimpleSchema: spec.SimpleSchema{
-			Type:     schemaType,
-			Nullable: false,
-			Format:   "",
+			Type: schemaType,
 		},
 		HeaderProps: spec.HeaderProps{
 			Description: description,
 		},
-		CommonValidations: spec.CommonValidations{},
 		VendorExtensible: spec.VendorExtensible{
 			Extensions: nil,
+		},
+		CommonValidations: spec.CommonValidations{
+			Maximum:          nil,
+			ExclusiveMaximum: false,
+			Minimum:          nil,
+			ExclusiveMinimum: false,
+			MaxLength:        nil,
+			MinLength:        nil,
+			Pattern:          "",
+			MaxItems:         nil,
+			MinItems:         nil,
+			UniqueItems:      false,
+			MultipleOf:       nil,
+			Enum:             nil,
 		},
 	}
 }
@@ -1119,7 +1136,8 @@ func (operation *Operation) DefaultResponse() *spec.Response {
 	if operation.Responses.Default == nil {
 		operation.Responses.Default = &spec.Response{
 			ResponseProps: spec.ResponseProps{
-				Headers: make(map[string]spec.Header),
+				Description: "",
+				Headers:     make(map[string]spec.Header),
 			},
 		}
 	}
@@ -1141,10 +1159,12 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 	// //five possible parameter types. 	query, path, body, header, form
 	result := spec.Parameter{
 		ParamProps: spec.ParamProps{
-			Name:        paramName,
-			Description: description,
-			Required:    required,
-			In:          paramType,
+			Name:            paramName,
+			Description:     description,
+			Required:        required,
+			In:              paramType,
+			Schema:          nil,
+			AllowEmptyValue: false,
 		},
 	}
 
@@ -1159,7 +1179,9 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 	}
 
 	result.SimpleSchema = spec.SimpleSchema{
-		Type: schemaType,
+		Type:     schemaType,
+		Nullable: false,
+		Format:   "",
 	}
 
 	return result
