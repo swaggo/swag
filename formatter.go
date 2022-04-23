@@ -283,15 +283,15 @@ func splitSpecialTags(commentBytes []byte, i int, rp byte) string {
 			commentBytes = replaceRange(commentBytes, i, j, rp)
 		}
 
-		_, ok := skipChar[commentBytes[i]]
-		if ok && !skipFlag {
+		_, found := skipChar[commentBytes[i]]
+		if found && !skipFlag {
 			skipFlag = true
 
 			continue
 		}
 
-		_, ok = skipCharEnd[commentBytes[i]]
-		if ok && skipFlag {
+		_, found = skipCharEnd[commentBytes[i]]
+		if found && skipFlag {
 			skipFlag = false
 		}
 	}

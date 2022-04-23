@@ -97,7 +97,6 @@ func TestFormatter_FormatAPI(t *testing.T) {
 		assert.Equal(t, formater.FormatAPI(SearchDir, Excludes, MainFile), fmt.Errorf("ParseFile error:%s", errFormatFile))
 		formatterTimeMachine()
 	})
-
 }
 
 func TestFormatter_FormatMain(t *testing.T) {
@@ -180,7 +179,8 @@ func Test_isBlankComment(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isBlankComment(tt.args.comment); got != tt.want {
+			got := isBlankComment(tt.args.comment)
+			if got != tt.want {
 				t.Errorf("isBlankComment() = %v, want %v", got, tt.want)
 			}
 		})
@@ -222,7 +222,8 @@ func Test_isSwagComment(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := isSwagComment(tt.args.comment); got != tt.want {
+			got := isSwagComment(tt.args.comment)
+			if got != tt.want {
 				t.Errorf("isSwagComment() = %v, want %v", got, tt.want)
 			}
 		})
