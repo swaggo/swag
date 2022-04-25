@@ -29,6 +29,13 @@ const (
 	MainFile  = "main.go"
 )
 
+func TestNewFormater(t *testing.T) {
+	formatterTimeMachine()
+	formater := NewFormater()
+
+	assert.NotEmpty(t, formater.Formatter)
+}
+
 func TestFormatter_FormatAPI(t *testing.T) {
 	t.Run("Format Test", func(t *testing.T) {
 		formatterTimeMachine()

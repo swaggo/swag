@@ -31,6 +31,22 @@ type Formatter struct {
 	mainFile string
 }
 
+// Formater creates a new formatter.
+type Formater struct {
+	*Formatter
+}
+
+// NewFormater Deprecated: Use NewFormatter instead.
+func NewFormater() *Formater {
+	formatter := Formater{
+		Formatter: NewFormatter(),
+	}
+
+	formatter.debug.Printf("warining: NewFormater is deprecated. use NewFormatter instead")
+
+	return &formatter
+}
+
 // NewFormatter create a new formater instance.
 func NewFormatter() *Formatter {
 	formatter := Formatter{
