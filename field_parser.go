@@ -290,7 +290,6 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		for _, v := range varNames {
 			structField.enumVarNames = append(structField.enumVarNames, v)
 		}
-		structField.extensions["x-enum-varnames"] = structField.enumVarNames
 	}
 	defaultTag := ps.tag.Get(defaultTag)
 	if defaultTag != "" {
@@ -380,10 +379,14 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	}
 	schema.Default = structField.defaultValue
 	schema.Example = structField.exampleValue
+	schema.Extensions = structField.extensions
 	if structField.schemaType != ARRAY {
 		schema.Format = structField.formatType
+		if len(structField.enumVarNames) > 0 {
+			schema.Extensions["x-enum-varname"] = structField.enumVarNames
+		}
 	}
-	schema.Extensions = structField.extensions
+
 	eleSchema := schema
 	if structField.schemaType == ARRAY {
 		// For Array only
@@ -393,6 +396,11 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 
 		eleSchema = schema.Items.Schema
 		eleSchema.Format = structField.formatType
+		if len(structField.enumVarNames) > 0 {
+			eleSchema.Extensions = map[string]interface{}{
+				"x-enum-varname": structField.enumVarNames,
+			}
+		}
 	}
 	eleSchema.Maximum = structField.maximum
 	eleSchema.Minimum = structField.minimum
