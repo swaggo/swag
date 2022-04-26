@@ -212,7 +212,9 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
+
 	p := New()
+
 	err := p.ParseGeneralAPIInfo("testdata/main.go")
 	assert.NoError(t, err)
 
@@ -295,7 +297,9 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
 }`
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
+
 	p := New()
+
 	err := p.ParseGeneralAPIInfo("testdata/templated.go")
 	assert.NoError(t, err)
 
@@ -311,7 +315,9 @@ func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
 		expected := "annotation @x-google-endpoints need a valid json value"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
+
 		p := New()
+
 		err := p.ParseGeneralAPIInfo("testdata/extensionsFail1.go")
 		if assert.Error(t, err) {
 			assert.Equal(t, expected, err.Error())
@@ -325,7 +331,9 @@ func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
 		expected := "annotation @x-google-endpoints need a value"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
+
 		p := New()
+
 		err := p.ParseGeneralAPIInfo("testdata/extensionsFail2.go")
 		if assert.Error(t, err) {
 			assert.Equal(t, expected, err.Error())
@@ -350,7 +358,9 @@ func TestParser_ParseGeneralApiInfoWithOpsInSameFile(t *testing.T) {
 
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
+
 	p := New()
+
 	err := p.ParseGeneralAPIInfo("testdata/single_file_api/main.go")
 	assert.NoError(t, err)
 
@@ -387,6 +397,7 @@ func TestParser_ParseGeneralAPIInfoMarkdown(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 
 	p = New()
+
 	err = p.ParseGeneralAPIInfo(mainAPIFile)
 	assert.Error(t, err)
 }
@@ -3332,7 +3343,8 @@ func TestDefineTypeOfExample(t *testing.T) {
 
 		example, err = defineTypeOfExample("array", "string", "one,two,three")
 		assert.NoError(t, err)
-		arr := []string{}
+
+		var arr []string
 
 		for _, v := range example.([]interface{}) {
 			arr = append(arr, v.(string))
