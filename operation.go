@@ -417,8 +417,8 @@ const (
 	validateTag         = "validate"
 	minimumTag          = "minimum"
 	maximumTag          = "maximum"
-	minLengthTag        = "minlength"
-	maxLengthTag        = "maxlength"
+	minLengthTag        = "minLength"
+	maxLengthTag        = "maxLength"
 	multipleOfTag       = "multipleOf"
 	readOnlyTag         = "readonly"
 	extensionsTag       = "extensions"
@@ -604,9 +604,6 @@ func setDefault(param *spec.Parameter, schemaType string, value string) error {
 	return nil
 }
 
-// controlCharReplacer replaces \r \n \t in example string values.
-var controlCharReplacer = strings.NewReplacer(`\r`, "\r", `\n`, "\n", `\t`, "\t")
-
 func setSchemaExample(param *spec.Parameter, schemaType string, value string) error {
 	val, err := defineType(schemaType, value)
 	if err != nil {
@@ -619,7 +616,8 @@ func setSchemaExample(param *spec.Parameter, schemaType string, value string) er
 
 	switch v := val.(type) {
 	case string:
-		param.Schema.Example = controlCharReplacer.Replace(v)
+		//  replaces \r \n \t in example string values.
+		param.Schema.Example = strings.NewReplacer(`\r`, "\r", `\n`, "\n", `\t`, "\t").Replace(v)
 	default:
 		param.Schema.Example = val
 	}
@@ -904,9 +902,7 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 
-	refType = matches[1]
-
-	schema, err := operation.parseObjectSchema(refType, astFile)
+	schema, err := operation.parseObjectSchema(matches[1], astFile)
 	if err != nil {
 		return nil, err
 	}
@@ -914,14 +910,14 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	fields, props := parseFields(matches[2]), map[string]spec.Schema{}
 
 	for _, field := range fields {
-		matches := strings.SplitN(field, "=", 2)
-		if len(matches) == 2 {
-			schema, err := operation.parseObjectSchema(matches[1], astFile)
+		keyVal := strings.SplitN(field, "=", 2)
+		if len(keyVal) == 2 {
+			schema, err := operation.parseObjectSchema(keyVal[1], astFile)
 			if err != nil {
 				return nil, err
 			}
 
-			props[matches[0]] = *schema
+			props[keyVal[0]] = *schema
 		}
 	}
 

@@ -32,8 +32,7 @@ func Register(name string, swagger Swagger) {
 		swags = make(map[string]Swagger)
 	}
 
-	_, ok := swags[name]
-	if ok {
+	if _, ok := swags[name]; ok {
 		panic("Register called twice for swag: " + name)
 	}
 

@@ -106,21 +106,21 @@ func toSnakeCase(in string) string {
 }
 
 func toLowerCamelCase(in string) string {
+	var flag bool
+
+	out := make([]rune, len(in))
+
 	runes := []rune(in)
-
-	var (
-		out  []rune
-		flag bool
-	)
-
 	for i, curr := range runes {
 		if (i == 0 && unicode.IsUpper(curr)) || (flag && unicode.IsUpper(curr)) {
-			out = append(out, unicode.ToLower(curr))
+			out[i] = unicode.ToLower(curr)
 			flag = true
-		} else {
-			out = append(out, curr)
-			flag = false
+
+			continue
 		}
+
+		out[i] = curr
+		flag = false
 	}
 
 	return string(out)
@@ -283,7 +283,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	}
 
 	if field.schemaType == STRING || field.arrayType == STRING {
-		maxLength, err := getIntTag(ps.tag, "maxLength")
+		maxLength, err := getIntTag(ps.tag, maxLengthTag)
 		if err != nil {
 			return err
 		}
@@ -292,7 +292,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			field.maxLength = maxLength
 		}
 
-		minLength, err := getIntTag(ps.tag, "minLength")
+		minLength, err := getIntTag(ps.tag, minLengthTag)
 		if err != nil {
 			return err
 		}
@@ -386,13 +386,13 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		schema.Extensions = setExtensionParam(extensionsTagValue)
 	}
 
-	varnamesTag := ps.tag.Get("x-enum-varnames")
-	if varnamesTag != "" {
+	varNamesTag := ps.tag.Get("x-enum-varnames")
+	if varNamesTag != "" {
 		if schema.Extensions == nil {
 			schema.Extensions = map[string]interface{}{}
 		}
 
-		varNames := strings.Split(varnamesTag, ",")
+		varNames := strings.Split(varNamesTag, ",")
 		if len(varNames) != len(field.enums) {
 			return fmt.Errorf("invalid count of x-enum-varnames. expected %d, got %d", len(field.enums), len(varNames))
 		}
@@ -488,18 +488,18 @@ func parseValidTags(validTag string, sf *structField) {
 	for _, val := range strings.Split(validTag, ",") {
 		var (
 			valValue string
-			kv       = strings.Split(val, "=")
+			keyVal   = strings.Split(val, "=")
 		)
 
-		switch len(kv) {
+		switch len(keyVal) {
 		case 1:
 		case 2:
-			valValue = strings.ReplaceAll(strings.ReplaceAll(kv[1], utf8HexComma, ","), utf8Pipe, "|")
+			valValue = strings.ReplaceAll(strings.ReplaceAll(keyVal[1], utf8HexComma, ","), utf8Pipe, "|")
 		default:
 			continue
 		}
 
-		switch kv[0] {
+		switch keyVal[0] {
 		case "max", "lte":
 			sf.setMax(valValue)
 		case "min", "gte":
@@ -603,7 +603,7 @@ const (
 
 // These code copy from
 // https://github.com/go-playground/validator/blob/d4271985b44b735c6f76abc7a06532ee997f9476/baked_in.go#L207
-// ---
+// ---.
 var oneofValsCache = map[string][]string{}
 var oneofValsCacheRWLock = sync.RWMutex{}
 var splitParamsRegex = regexp.MustCompile(`'[^']*'|\S+`)
@@ -629,4 +629,4 @@ func parseOneOfParam2(param string) []string {
 	return values
 }
 
-// ---
+// ---.

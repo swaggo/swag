@@ -229,7 +229,7 @@ func formatFuncDoc(commentList []*ast.Comment, formattedComments io.Writer, oldC
 	_ = tabWriter.Flush()
 }
 
-func separatorFinder(comment string, rp byte) string {
+func separatorFinder(comment string, replacer byte) string {
 	commentBytes, commentLine := []byte(comment), strings.TrimSpace(strings.TrimLeft(comment, "/"))
 
 	if len(commentLine) == 0 {
@@ -241,7 +241,7 @@ func separatorFinder(comment string, rp byte) string {
 	attribute = strings.ToLower(attribute)
 
 	var (
-		i = attrLen
+		length = attrLen
 
 		// Check of @Param @Success @Failure @Response @Header.
 		specialTagForSplit = map[string]byte{
@@ -255,23 +255,23 @@ func separatorFinder(comment string, rp byte) string {
 
 	_, ok := specialTagForSplit[attribute]
 	if ok {
-		return splitSpecialTags(commentBytes, i, rp)
+		return splitSpecialTags(commentBytes, length, replacer)
 	}
 
-	for i < len(commentBytes) && commentBytes[i] == ' ' {
-		i++
+	for length < len(commentBytes) && commentBytes[length] == ' ' {
+		length++
 	}
 
-	if i >= len(commentBytes) {
+	if length >= len(commentBytes) {
 		return comment
 	}
 
-	commentBytes = replaceRange(commentBytes, attrLen, i, rp)
+	commentBytes = replaceRange(commentBytes, attrLen, length, replacer)
 
 	return string(commentBytes)
 }
 
-func splitSpecialTags(commentBytes []byte, i int, rp byte) string {
+func splitSpecialTags(commentBytes []byte, length int, rp byte) string {
 	var (
 		skipFlag bool
 		skipChar = map[byte]byte{
@@ -289,24 +289,24 @@ func splitSpecialTags(commentBytes []byte, i int, rp byte) string {
 		}
 	)
 
-	for ; i < len(commentBytes); i++ {
-		if !skipFlag && commentBytes[i] == ' ' {
-			j := i
+	for ; length < len(commentBytes); length++ {
+		if !skipFlag && commentBytes[length] == ' ' {
+			j := length
 			for j < len(commentBytes) && commentBytes[j] == ' ' {
 				j++
 			}
 
-			commentBytes = replaceRange(commentBytes, i, j, rp)
+			commentBytes = replaceRange(commentBytes, length, j, rp)
 		}
 
-		_, found := skipChar[commentBytes[i]]
+		_, found := skipChar[commentBytes[length]]
 		if found && !skipFlag {
 			skipFlag = true
 
 			continue
 		}
 
-		_, found = skipCharEnd[commentBytes[i]]
+		_, found = skipCharEnd[commentBytes[length]]
 		if found && skipFlag {
 			skipFlag = false
 		}
