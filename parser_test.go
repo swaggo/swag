@@ -3516,11 +3516,6 @@ func TestTryAddDescription(t *testing.T) {
 					AuthorizationURL: "https://example.com/oauth/token",
 					Description:      "12345",
 				},
-				VendorExtensible: spec.VendorExtensible{
-					Extensions: spec.Extensions{
-						"@description": "12345",
-					},
-				},
 			},
 		},
 	}
@@ -3535,8 +3530,8 @@ func TestTryAddDescription(t *testing.T) {
 			commentLine := tt.lines[line]
 			attribute := strings.Split(commentLine, " ")[0]
 			value := strings.TrimSpace(commentLine[len(attribute):])
-			_ = setSwaggerSecurity(&swag, attribute, value, tt.lines, &line)
-			if !reflect.DeepEqual(swag.SecurityDefinitions[value], tt.want) {
+			secAttr, _ := parseSecAttributes(attribute, tt.lines, &line)
+			if !reflect.DeepEqual(secAttr, tt.want) {
 				t.Errorf("setSwaggerSecurity() = %#v, want %#v", swag.SecurityDefinitions[value], tt.want)
 			}
 		})

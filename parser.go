@@ -480,10 +480,13 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			replaceLastTag(parser.swagger.Tags, tag)
 
 		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr:
-			err := setSwaggerSecurity(parser.swagger, attr, value, comments, &line)
+			scheme, err := parseSecAttributes(attribute, comments, &line)
 			if err != nil {
 				return err
 			}
+
+			parser.swagger.SecurityDefinitions[value] = scheme
+
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = value
 		default:
@@ -563,120 +566,109 @@ func setSwaggerInfo(swagger *spec.Swagger, attribute, value string) {
 	}
 }
 
-func setSwaggerSecurity(swagger *spec.Swagger, attribute, value string, comments []string, line *int) error {
+func parseSecAttributes(context string, lines []string, index *int) (*spec.SecurityScheme, error) {
 	const (
 		in               = "@in"
 		name             = "@name"
-		description      = "@description"
+		descriptionAttr  = "@description"
 		tokenURL         = "@tokenurl"
 		authorizationURL = "@authorizationurl"
 	)
-	var (
-		attr, scopes authScopes
-		ext          authExtensions
-		err          error
-		scheme       *spec.SecurityScheme
-	)
 
+	var search []string
+
+	attribute := strings.ToLower(strings.Split(lines[*index], " ")[0])
 	switch attribute {
 	case secBasicAttr:
-		swagger.SecurityDefinitions[value] = spec.BasicAuth()
-
-		return nil
+		return spec.BasicAuth(), nil
 	case secAPIKeyAttr:
-		attr, _, ext, err = parseSecAttr(attribute, []string{in, name}, comments, line)
-		if err != nil {
-			return err
-		}
-
-		scheme = spec.APIKeyAuth(attr[name], attr[in])
+		search = []string{in, name}
 	case secApplicationAttr:
-		attr, scopes, ext, err = parseSecAttr(attribute, []string{tokenURL}, comments, line)
-		if err != nil {
-			return err
-		}
-
-		scheme = secOAuth2Application(attr[tokenURL], scopes, ext)
+		search = []string{tokenURL}
 	case secImplicitAttr:
-		attr, scopes, ext, err = parseSecAttr(attribute, []string{authorizationURL}, comments, line)
-		if err != nil {
-			return err
-		}
-
-		scheme = secOAuth2Implicit(attr[authorizationURL], scopes, ext)
+		search = []string{authorizationURL}
 	case secPasswordAttr:
-		attr, scopes, ext, err = parseSecAttr(attribute, []string{tokenURL}, comments, line)
-		if err != nil {
-			return err
-		}
-
-		scheme = secOAuth2Password(attr[tokenURL], scopes, ext)
+		search = []string{tokenURL}
 	case secAccessCodeAttr:
-		attr, scopes, ext, err = parseSecAttr(attribute, []string{tokenURL, authorizationURL}, comments, line)
+		search = []string{tokenURL, authorizationURL}
+	}
+
+	// For the first line we get the attributes in the context parameter, so we skip to the next one
+	*index++
+
+	attrMap, scopes := make(map[string]string), make(map[string]string)
+	extensions, description := make(map[string]interface{}), ""
+
+	for ; *index < len(lines); *index++ {
+		v := lines[*index]
+
+		securityAttr := strings.ToLower(strings.Split(v, " ")[0])
+		for _, findterm := range search {
+			if securityAttr == findterm {
+				attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+
+				continue
+			}
+		}
+
+		isExists, err := isExistsScope(securityAttr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		scheme = secOAuth2AccessToken(attr[authorizationURL], attr[tokenURL], scopes, ext)
-	}
+		if isExists {
+			scopes[securityAttr[len(scopeAttrPrefix):]] = v[len(securityAttr):]
+		}
 
-	if val, ok := ext[description]; ok {
-		if str, ok := val.(string); ok {
-			scheme.Description = str
+		if strings.HasPrefix(securityAttr, "@x-") {
+			// Add the custom attribute without the @
+			extensions[securityAttr[1:]] = strings.TrimSpace(v[len(securityAttr):])
+		}
+
+		// Not mandatory field
+		if securityAttr == descriptionAttr {
+			description = strings.TrimSpace(v[len(securityAttr):])
+		}
+
+		// next securityDefinitions
+		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
+			// Go back to the previous line and break
+			*index--
+
+			break
 		}
 	}
 
-	swagger.SecurityDefinitions[value] = scheme
-
-	return nil
-}
-
-type (
-	authExtensions map[string]interface{}
-	authScopes     map[string]string
-)
-
-func secOAuth2Application(tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
-	securityScheme := spec.OAuth2Application(tokenURL)
-	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
-	for scope, description := range scopes {
-		securityScheme.AddScope(scope, description)
+	if len(attrMap) != len(search) {
+		return nil, fmt.Errorf("%s is %v required", context, search)
 	}
 
-	return securityScheme
-}
+	var scheme *spec.SecurityScheme
 
-func secOAuth2Implicit(authorizationURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
-	securityScheme := spec.OAuth2Implicit(authorizationURL)
-	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
-
-	for scope, description := range scopes {
-		securityScheme.AddScope(scope, description)
+	switch attribute {
+	case secAPIKeyAttr:
+		scheme = spec.APIKeyAuth(attrMap[name], attrMap[in])
+	case secApplicationAttr:
+		scheme = spec.OAuth2Application(attrMap[tokenURL])
+	case secImplicitAttr:
+		scheme = spec.OAuth2Implicit(attrMap[authorizationURL])
+	case secPasswordAttr:
+		scheme = spec.OAuth2Password(attrMap[tokenURL])
+	case secAccessCodeAttr:
+		scheme = spec.OAuth2AccessToken(attrMap[authorizationURL], attrMap[tokenURL])
 	}
 
-	return securityScheme
-}
+	scheme.Description = description
 
-func secOAuth2Password(tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
-	securityScheme := spec.OAuth2Password(tokenURL)
-	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
-
-	for scope, description := range scopes {
-		securityScheme.AddScope(scope, description)
+	for extKey, extValue := range extensions {
+		scheme.VendorExtensible.AddExtension(extKey, extValue)
 	}
 
-	return securityScheme
-}
-
-func secOAuth2AccessToken(authorizationURL, tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
-	securityScheme := spec.OAuth2AccessToken(authorizationURL, tokenURL)
-	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
-
-	for scope, description := range scopes {
-		securityScheme.AddScope(scope, description)
+	for scope, scopeDescription := range scopes {
+		scheme.AddScope(scope, scopeDescription)
 	}
 
-	return securityScheme
+	return scheme, nil
 }
 
 func initIfEmpty(license *spec.License) *spec.License {
@@ -708,73 +700,6 @@ func isGeneralAPIComment(comments []string) bool {
 	}
 
 	return true
-}
-
-func parseSecAttr(context string, search []string, lines []string, index *int) (map[string]string, map[string]string, map[string]interface{}, error) {
-	attrMap := map[string]string{}
-	scopes := map[string]string{}
-	extensions := map[string]interface{}{}
-
-	// For the first line we get the attributes in the context parameter, so we skip to the next one
-	*index++
-
-	for ; *index < len(lines); *index++ {
-		v := lines[*index]
-
-		securityAttr := strings.ToLower(strings.Split(v, " ")[0])
-		for _, findterm := range search {
-			if securityAttr == findterm {
-				attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
-
-				continue
-			}
-		}
-
-		isExists, err := isExistsScope(securityAttr)
-		if err != nil {
-			return nil, nil, nil, err
-		}
-
-		if isExists {
-			scopes[securityAttr[len(scopeAttrPrefix):]] = v[len(securityAttr):]
-		}
-
-		if strings.HasPrefix(securityAttr, "@x-") {
-			// Add the custom attribute without the @
-			extensions[securityAttr[1:]] = strings.TrimSpace(v[len(securityAttr):])
-		}
-
-		// Not mandatory field
-		if securityAttr == "@description" {
-			extensions[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
-		}
-
-		// next securityDefinitions
-		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
-			// Go back to the previous line and break
-			*index--
-
-			break
-		}
-	}
-
-	if len(attrMap) != len(search) {
-		return nil, nil, nil, fmt.Errorf("%s is %v required", context, search)
-	}
-
-	return attrMap, scopes, extensions, nil
-}
-
-func handleSecuritySchemaExtensions(providedExtensions authExtensions) spec.Extensions {
-	var extensions spec.Extensions
-	if len(providedExtensions) > 0 {
-		extensions = make(map[string]interface{}, len(providedExtensions))
-		for key, value := range providedExtensions {
-			extensions[key] = value
-		}
-	}
-
-	return extensions
 }
 
 func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
