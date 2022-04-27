@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -3461,57 +3462,77 @@ func TestTryAddDescription(t *testing.T) {
 		extensions map[string]interface{}
 	}
 	tests := []struct {
-		name string
-		args args
-		want *spec.SecurityScheme
+		name  string
+		lines []string
+		args  args
+		want  *spec.SecurityScheme
 	}{
 		{
 			name: "added description",
-			args: args{
-				spec: &spec.SecurityScheme{},
-				extensions: map[string]interface{}{
-					"@description": "some description",
-				},
+			lines: []string{
+				"@securitydefinitions.apikey test",
+				"@in header",
+				"@name x-api-key",
+				"@description some description",
 			},
 			want: &spec.SecurityScheme{
 				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Name:        "x-api-key",
+					Type:        "apiKey",
+					In:          "header",
 					Description: "some description",
 				},
 			},
 		},
 		{
 			name: "no description",
-			args: args{
-				spec: &spec.SecurityScheme{},
-				extensions: map[string]interface{}{
-					"@not-description": "some description",
-				},
+			lines: []string{
+				"@securitydefinitions.oauth2.application swagger",
+				"@tokenurl https://example.com/oauth/token",
+				"@not-description some description",
 			},
 			want: &spec.SecurityScheme{
 				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Type:        "oauth2",
+					Flow:        "application",
+					TokenURL:    "https://example.com/oauth/token",
 					Description: "",
 				},
 			},
 		},
+
 		{
 			name: "description has invalid format",
-			args: args{
-				spec: &spec.SecurityScheme{},
-				extensions: map[string]interface{}{
-					"@description": 12345,
-				},
+			lines: []string{
+				"@securitydefinitions.oauth2.implicit swagger",
+				"@authorizationurl https://example.com/oauth/token",
+				"@description 12345",
 			},
+
 			want: &spec.SecurityScheme{
 				SecuritySchemeProps: spec.SecuritySchemeProps{
-					Description: "",
+					Type:             "oauth2",
+					Flow:             "implicit",
+					AuthorizationURL: "https://example.com/oauth/token",
+					Description:      "12345",
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tryAddDescription(tt.args.spec, tt.args.extensions); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("tryAddDescription() = %v, want %v", got, tt.want)
+			swag := spec.Swagger{
+				SwaggerProps: spec.SwaggerProps{
+					SecurityDefinitions: make(map[string]*spec.SecurityScheme),
+				},
+			}
+			line := 0
+			commentLine := tt.lines[line]
+			attribute := strings.Split(commentLine, " ")[0]
+			value := strings.TrimSpace(commentLine[len(attribute):])
+			_ = setSwaggerSecurity(&swag, attribute, value, tt.lines, &line)
+			if !reflect.DeepEqual(swag.SecurityDefinitions[value], tt.want) {
+				t.Errorf("setSwaggerSecurity() = %#v, want %#v", swag.SecurityDefinitions[value], tt.want)
 			}
 		})
 	}

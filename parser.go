@@ -48,9 +48,21 @@ const (
 	deprecatedAttr          = "@deprecated"
 	securityAttr            = "@security"
 	titleAttr               = "@title"
+	conNameAttr             = "@contact.name"
+	conURLAttr              = "@contact.url"
+	conEmailAttr            = "@contact.email"
+	licNameAttr             = "@license.name"
+	licURLAttr              = "@license.url"
 	versionAttr             = "@version"
 	descriptionAttr         = "@description"
 	descriptionMarkdownAttr = "@description.markdown"
+	secBasicAttr            = "@securitydefinitions.basic"
+	secAPIKeyAttr           = "@securitydefinitions.apikey"
+	secApplicationAttr      = "@securitydefinitions.oauth2.application"
+	secImplicitAttr         = "@securitydefinitions.oauth2.implicit"
+	secPasswordAttr         = "@securitydefinitions.oauth2.password"
+	secAccessCodeAttr       = "@securitydefinitions.oauth2.accesscode"
+	tosAttr                 = "@termsofservice"
 	xCodeSamplesAttr        = "@x-codesamples"
 	scopeAttrPrefix         = "@scope."
 )
@@ -356,14 +368,6 @@ func getPkgName(searchDir string) (string, error) {
 	return outStr, nil
 }
 
-func initIfEmpty(license *spec.License) *spec.License {
-	if license == nil {
-		return new(spec.License)
-	}
-
-	return license
-}
-
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path.
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileTree, err := goparser.ParseFile(token.NewFileSet(), mainAPIFile, nil, goparser.ParseComments)
@@ -396,16 +400,15 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 		commentLine := comments[line]
 		attribute := strings.Split(commentLine, " ")[0]
 		value := strings.TrimSpace(commentLine[len(attribute):])
+
 		multilineBlock := false
 		if previousAttribute == attribute {
 			multilineBlock = true
 		}
 
-		switch strings.ToLower(attribute) {
-		case versionAttr:
-			parser.swagger.Info.Version = value
-		case titleAttr:
-			parser.swagger.Info.Title = value
+		switch attr := strings.ToLower(attribute); attr {
+		case versionAttr, titleAttr, tosAttr, licNameAttr, licURLAttr, conNameAttr, conURLAttr, conEmailAttr:
+			setSwaggerInfo(parser.swagger, attr, value)
 		case descriptionAttr:
 			if multilineBlock {
 				parser.swagger.Info.Description += "\n" + value
@@ -413,32 +416,20 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 				continue
 			}
 
-			parser.swagger.Info.Description = value
-		case "@description.markdown":
+			setSwaggerInfo(parser.swagger, attr, value)
+		case descriptionMarkdownAttr:
 			commentInfo, err := getMarkdownForTag("api", parser.markdownFileDir)
 			if err != nil {
 				return err
 			}
 
-			parser.swagger.Info.Description = string(commentInfo)
-		case "@termsofservice":
-			parser.swagger.Info.TermsOfService = value
-		case "@contact.name":
-			parser.swagger.Info.Contact.Name = value
-		case "@contact.email":
-			parser.swagger.Info.Contact.Email = value
-		case "@contact.url":
-			parser.swagger.Info.Contact.URL = value
-		case "@license.name":
-			parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
-			parser.swagger.Info.License.Name = value
-		case "@license.url":
-			parser.swagger.Info.License = initIfEmpty(parser.swagger.Info.License)
-			parser.swagger.Info.License.URL = value
+			setSwaggerInfo(parser.swagger, descriptionAttr, string(commentInfo))
+
 		case "@host":
 			parser.swagger.Host = value
 		case "@basepath":
 			parser.swagger.BasePath = value
+
 		case acceptAttr:
 			err := parser.ParseAcceptComment(value)
 			if err != nil {
@@ -487,43 +478,12 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 
 			tag.TagProps.ExternalDocs.Description = value
 			replaceLastTag(parser.swagger.Tags, tag)
-		case "@securitydefinitions.basic":
-			parser.swagger.SecurityDefinitions[value] = spec.BasicAuth()
-		case "@securitydefinitions.apikey":
-			attrMap, _, extensions, err := parseSecAttr(attribute, []string{"@in", "@name"}, comments, &line)
+
+		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr:
+			err := setSwaggerSecurity(parser.swagger, attr, value, comments, &line)
 			if err != nil {
 				return err
 			}
-
-			parser.swagger.SecurityDefinitions[value] = tryAddDescription(spec.APIKeyAuth(attrMap["@name"], attrMap["@in"]), extensions)
-		case "@securitydefinitions.oauth2.application":
-			attrMap, scopes, extensions, err := parseSecAttr(attribute, []string{"@tokenurl"}, comments, &line)
-			if err != nil {
-				return err
-			}
-
-			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Application(attrMap["@tokenurl"], scopes, extensions), extensions)
-		case "@securitydefinitions.oauth2.implicit":
-			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@authorizationurl"}, comments, &line)
-			if err != nil {
-				return err
-			}
-
-			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Implicit(attrs["@authorizationurl"], scopes, ext), ext)
-		case "@securitydefinitions.oauth2.password":
-			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@tokenurl"}, comments, &line)
-			if err != nil {
-				return err
-			}
-
-			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2Password(attrs["@tokenurl"], scopes, ext), ext)
-		case "@securitydefinitions.oauth2.accesscode":
-			attrs, scopes, ext, err := parseSecAttr(attribute, []string{"@tokenurl", "@authorizationurl"}, comments, &line)
-			if err != nil {
-				return err
-			}
-
-			parser.swagger.SecurityDefinitions[value] = tryAddDescription(secOAuth2AccessToken(attrs["@authorizationurl"], attrs["@tokenurl"], scopes, ext), ext)
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = value
 		default:
@@ -578,14 +538,153 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 	return nil
 }
 
-func tryAddDescription(spec *spec.SecurityScheme, extensions map[string]interface{}) *spec.SecurityScheme {
-	if val, ok := extensions["@description"]; ok {
+func setSwaggerInfo(swagger *spec.Swagger, attribute, value string) {
+	switch attribute {
+	case versionAttr:
+		swagger.Info.Version = value
+	case titleAttr:
+		swagger.Info.Title = value
+	case tosAttr:
+		swagger.Info.TermsOfService = value
+	case descriptionAttr:
+		swagger.Info.Description = value
+	case conNameAttr:
+		swagger.Info.Contact.Name = value
+	case conEmailAttr:
+		swagger.Info.Contact.Email = value
+	case conURLAttr:
+		swagger.Info.Contact.URL = value
+	case licNameAttr:
+		swagger.Info.License = initIfEmpty(swagger.Info.License)
+		swagger.Info.License.Name = value
+	case licURLAttr:
+		swagger.Info.License = initIfEmpty(swagger.Info.License)
+		swagger.Info.License.URL = value
+	}
+}
+
+func setSwaggerSecurity(swagger *spec.Swagger, attribute, value string, comments []string, line *int) error {
+	const (
+		in               = "@in"
+		name             = "@name"
+		description      = "@description"
+		tokenURL         = "@tokenurl"
+		authorizationURL = "@authorizationurl"
+	)
+	var (
+		attr, scopes authScopes
+		ext          authExtensions
+		err          error
+		scheme       *spec.SecurityScheme
+	)
+
+	switch attribute {
+	case secBasicAttr:
+		swagger.SecurityDefinitions[value] = spec.BasicAuth()
+
+		return nil
+	case secAPIKeyAttr:
+		attr, _, ext, err = parseSecAttr(attribute, []string{in, name}, comments, line)
+		if err != nil {
+			return err
+		}
+
+		scheme = spec.APIKeyAuth(attr[name], attr[in])
+	case secApplicationAttr:
+		attr, scopes, ext, err = parseSecAttr(attribute, []string{tokenURL}, comments, line)
+		if err != nil {
+			return err
+		}
+
+		scheme = secOAuth2Application(attr[tokenURL], scopes, ext)
+	case secImplicitAttr:
+		attr, scopes, ext, err = parseSecAttr(attribute, []string{authorizationURL}, comments, line)
+		if err != nil {
+			return err
+		}
+
+		scheme = secOAuth2Implicit(attr[authorizationURL], scopes, ext)
+	case secPasswordAttr:
+		attr, scopes, ext, err = parseSecAttr(attribute, []string{tokenURL}, comments, line)
+		if err != nil {
+			return err
+		}
+
+		scheme = secOAuth2Password(attr[tokenURL], scopes, ext)
+	case secAccessCodeAttr:
+		attr, scopes, ext, err = parseSecAttr(attribute, []string{tokenURL, authorizationURL}, comments, line)
+		if err != nil {
+			return err
+		}
+
+		scheme = secOAuth2AccessToken(attr[authorizationURL], attr[tokenURL], scopes, ext)
+	}
+
+	if val, ok := ext[description]; ok {
 		if str, ok := val.(string); ok {
-			spec.Description = str
+			scheme.Description = str
 		}
 	}
 
-	return spec
+	swagger.SecurityDefinitions[value] = scheme
+
+	return nil
+}
+
+type (
+	authExtensions map[string]interface{}
+	authScopes     map[string]string
+)
+
+func secOAuth2Application(tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
+	securityScheme := spec.OAuth2Application(tokenURL)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+	for scope, description := range scopes {
+		securityScheme.AddScope(scope, description)
+	}
+
+	return securityScheme
+}
+
+func secOAuth2Implicit(authorizationURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
+	securityScheme := spec.OAuth2Implicit(authorizationURL)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+
+	for scope, description := range scopes {
+		securityScheme.AddScope(scope, description)
+	}
+
+	return securityScheme
+}
+
+func secOAuth2Password(tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
+	securityScheme := spec.OAuth2Password(tokenURL)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+
+	for scope, description := range scopes {
+		securityScheme.AddScope(scope, description)
+	}
+
+	return securityScheme
+}
+
+func secOAuth2AccessToken(authorizationURL, tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
+	securityScheme := spec.OAuth2AccessToken(authorizationURL, tokenURL)
+	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
+
+	for scope, description := range scopes {
+		securityScheme.AddScope(scope, description)
+	}
+
+	return securityScheme
+}
+
+func initIfEmpty(license *spec.License) *spec.License {
+	if license == nil {
+		return new(spec.License)
+	}
+
+	return license
 }
 
 // ParseAcceptComment parses comment for given `accept` comment string.
@@ -664,54 +763,6 @@ func parseSecAttr(context string, search []string, lines []string, index *int) (
 	}
 
 	return attrMap, scopes, extensions, nil
-}
-
-type (
-	authExtensions map[string]interface{}
-	authScopes     map[string]string
-)
-
-func secOAuth2Application(tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
-	securityScheme := spec.OAuth2Application(tokenURL)
-	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
-	for scope, description := range scopes {
-		securityScheme.AddScope(scope, description)
-	}
-
-	return securityScheme
-}
-
-func secOAuth2Implicit(authorizationURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
-	securityScheme := spec.OAuth2Implicit(authorizationURL)
-	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
-
-	for scope, description := range scopes {
-		securityScheme.AddScope(scope, description)
-	}
-
-	return securityScheme
-}
-
-func secOAuth2Password(tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
-	securityScheme := spec.OAuth2Password(tokenURL)
-	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
-
-	for scope, description := range scopes {
-		securityScheme.AddScope(scope, description)
-	}
-
-	return securityScheme
-}
-
-func secOAuth2AccessToken(authorizationURL, tokenURL string, scopes authScopes, extensions authExtensions) *spec.SecurityScheme {
-	securityScheme := spec.OAuth2AccessToken(authorizationURL, tokenURL)
-	securityScheme.VendorExtensible.Extensions = handleSecuritySchemaExtensions(extensions)
-
-	for scope, description := range scopes {
-		securityScheme.AddScope(scope, description)
-	}
-
-	return securityScheme
 }
 
 func handleSecuritySchemaExtensions(providedExtensions authExtensions) spec.Extensions {
@@ -1365,7 +1416,7 @@ func replaceLastTag(slice []spec.Tag, element spec.Tag) {
 	slice = append(slice[:len(slice)-1], element)
 }
 
-// defineTypeOfExample example value define the type (object and array unsupported)
+// defineTypeOfExample example value define the type (object and array unsupported).
 func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{}, error) {
 	switch schemaType {
 	case STRING:
