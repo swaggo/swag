@@ -441,7 +441,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 				return err
 			}
 		case "@schemes":
-			parser.swagger.Schemes = getSchemes(commentLine)
+			parser.swagger.Schemes = strings.Split(value, " ")
 		case "@tag.name":
 			parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
 				TagProps: spec.TagProps{
@@ -583,12 +583,10 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 		return spec.BasicAuth(), nil
 	case secAPIKeyAttr:
 		search = []string{in, name}
-	case secApplicationAttr:
+	case secApplicationAttr, secPasswordAttr:
 		search = []string{tokenURL}
 	case secImplicitAttr:
 		search = []string{authorizationURL}
-	case secPasswordAttr:
-		search = []string{tokenURL}
 	case secAccessCodeAttr:
 		search = []string{tokenURL, authorizationURL}
 	}
@@ -661,7 +659,7 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 	scheme.Description = description
 
 	for extKey, extValue := range extensions {
-		scheme.VendorExtensible.AddExtension(extKey, extValue)
+		scheme.AddExtension(extKey, extValue)
 	}
 
 	for scope, scopeDescription := range scopes {
@@ -745,13 +743,6 @@ func isExistsScope(scope string) (bool, error) {
 	}
 
 	return strings.Contains(scope, scopeAttrPrefix), nil
-}
-
-// getSchemes parses swagger schemes for given commentLine.
-func getSchemes(commentLine string) []string {
-	attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
-
-	return strings.Split(strings.TrimSpace(commentLine[len(attribute):]), " ")
 }
 
 // ParseRouterAPIInfo parses router api info for given astFile.

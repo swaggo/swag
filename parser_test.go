@@ -810,14 +810,6 @@ func TestParser_ParseType(t *testing.T) {
 	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet2"])
 }
 
-func TestGetSchemes(t *testing.T) {
-	t.Parallel()
-
-	schemes := getSchemes("@schemes http https")
-	expectedSchemes := []string{"http", "https"}
-	assert.Equal(t, expectedSchemes, schemes)
-}
-
 func TestParseSimpleApi1(t *testing.T) {
 	t.Parallel()
 
