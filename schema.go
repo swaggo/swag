@@ -81,7 +81,7 @@ func TransToValidSchemeType(typeName string) string {
 		return NUMBER
 	case "bool":
 		return BOOLEAN
-	case "string":
+	case "string", "error":
 		return STRING
 	}
 
@@ -107,7 +107,8 @@ func IsGolangPrimitiveType(typeName string) bool {
 		"float64",
 		"bool",
 		"string",
-		"any":
+		"any",
+		"error":
 		return true
 	}
 

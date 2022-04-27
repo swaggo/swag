@@ -30,6 +30,7 @@ func TestTransToValidSchemeType(t *testing.T) {
 	assert.Equal(t, TransToValidSchemeType("float32"), NUMBER)
 	assert.Equal(t, TransToValidSchemeType("bool"), BOOLEAN)
 	assert.Equal(t, TransToValidSchemeType("string"), STRING)
+	assert.Equal(t, TransToValidSchemeType("error"), STRING)
 
 	// should accept any type, due to user defined types
 	other := "oops"
