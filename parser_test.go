@@ -3516,6 +3516,11 @@ func TestTryAddDescription(t *testing.T) {
 					AuthorizationURL: "https://example.com/oauth/token",
 					Description:      "12345",
 				},
+				VendorExtensible: spec.VendorExtensible{
+					Extensions: spec.Extensions{
+						"@description": "12345",
+					},
+				},
 			},
 		},
 	}
