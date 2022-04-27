@@ -23,6 +23,7 @@ type Swagger interface {
 func Register(name string, swagger Swagger) {
 	swaggerMu.Lock()
 	defer swaggerMu.Unlock()
+
 	if swagger == nil {
 		panic("swagger is nil")
 	}
@@ -34,6 +35,7 @@ func Register(name string, swagger Swagger) {
 	if _, ok := swags[name]; ok {
 		panic("Register called twice for swag: " + name)
 	}
+
 	swags[name] = swagger
 }
 
