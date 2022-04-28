@@ -49,6 +49,19 @@ func TestFormat_ParseError(t *testing.T) {
 	assert.Error(t, New().Build(&Config{SearchDir: fx.basedir}))
 }
 
+func TestFormat_ReadError(t *testing.T) {
+	fx := setup(t)
+	os.Chmod(filepath.Join(fx.basedir, "main.go"), 0)
+	assert.Error(t, New().Build(&Config{SearchDir: fx.basedir}))
+}
+
+func TestFormat_WriteError(t *testing.T) {
+	fx := setup(t)
+	os.Chmod(fx.basedir, 0555)
+	assert.Error(t, New().Build(&Config{SearchDir: fx.basedir}))
+	os.Chmod(fx.basedir, 0755)
+}
+
 func TestFormat_InvalidSearchDir(t *testing.T) {
 	formatter := New()
 	assert.Error(t, formatter.Build(&Config{SearchDir: "no_such_dir"}))

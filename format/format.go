@@ -2,6 +2,7 @@ package format
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -66,24 +67,52 @@ func (f *Format) Build(config *Config) error {
 }
 
 func (f *Format) visit(path string, fileInfo os.FileInfo, err error) error {
-	if fileInfo.IsDir() {
-		return f.skipDir(path, fileInfo)
+	if fileInfo.IsDir() && f.excludeDir(path) {
+		return filepath.SkipDir
 	}
-	if f.exclude[path] ||
-		strings.HasSuffix(strings.ToLower(path), "_test.go") ||
-		filepath.Ext(path) != ".go" {
+	if f.excludeFile(path) {
 		return nil
 	}
-	if err := f.formatter.Format(path); err != nil {
+	if err := f.format(path); err != nil {
 		return fmt.Errorf("fmt: %w", err)
 	}
 	return nil
 }
 
-func (f *Format) skipDir(path string, info os.FileInfo) error {
-	if f.exclude[path] ||
-		len(info.Name()) > 1 && info.Name()[0] == '.' { // exclude hidden folders
-		return filepath.SkipDir
+func (f *Format) excludeDir(path string) bool {
+	return f.exclude[path] ||
+		filepath.Base(path)[0] == '.' && len(filepath.Base(path)) > 1 // exclude hidden folders
+}
+
+func (f *Format) excludeFile(path string) bool {
+	return f.exclude[path] ||
+		strings.HasSuffix(strings.ToLower(path), "_test.go") ||
+		filepath.Ext(path) != ".go"
+}
+
+func (f *Format) format(path string) error {
+	contents, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
 	}
-	return nil
+	formatted, err := f.formatter.Format(path, contents)
+	if err != nil {
+		return err
+	}
+	return write(path, formatted)
+}
+
+func write(path string, contents []byte) error {
+	f, err := ioutil.TempFile(filepath.Split(path))
+	if err != nil {
+		return err
+	}
+	defer os.Remove(f.Name())
+	if _, err := f.Write(contents); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(f.Name(), path)
 }

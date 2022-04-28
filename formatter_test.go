@@ -1,7 +1,6 @@
 package swag
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,207 +12,186 @@ const (
 	MainFile  = "main.go"
 )
 
-func Test_isBlankComment(t *testing.T) {
-	type args struct {
-		comment string
-	}
-
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "test1",
-			args: args{
-				comment: " ",
-			},
-			want: true,
-		},
-		{
-			name: "test2",
-			args: args{
-				comment: " A",
-			},
-			want: false,
-		},
-		{
-			name: "test3",
-			args: args{
-				comment: " \t",
-			},
-			want: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isBlankComment(tt.args.comment)
-			if got != tt.want {
-				t.Errorf("isBlankComment() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+func testFormat(t *testing.T, filename, contents, want string) {
+	got, err := NewFormatter().Format(filename, []byte(contents))
+	assert.NoError(t, err)
+	assert.Equal(t, want, string(got))
 }
 
-func Test_isSwagComment(t *testing.T) {
-	type args struct {
-		comment string
-	}
+func Test_FormatMain(t *testing.T) {
+	contents := `package main
+	// @title Swagger Example API
+	// @version 1.0
+	// @description This is a sample server Petstore server.
+	// @termsOfService http://swagger.io/terms/
 
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "test1",
-			args: args{
-				comment: "@Param some_id ",
-			},
-			want: true,
-		},
-		{
-			name: "test2",
-			args: args{
-				comment: "@ ",
-			},
-			want: false,
-		},
-		{
-			name: "test3",
-			args: args{
-				comment: "@Success {object} ",
-			},
-			want: true,
-		},
-	}
+	// @contact.name API Support
+	// @contact.url http://www.swagger.io/support
+	// @contact.email support@swagger.io
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isSwagComment(tt.args.comment)
-			if got != tt.want {
-				t.Errorf("isSwagComment() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	// @license.name Apache 2.0
+	// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+	// @host petstore.swagger.io
+	// @BasePath /v2
+
+	// @securityDefinitions.basic BasicAuth
+
+	// @securityDefinitions.apikey ApiKeyAuth
+	// @in header
+	// @name Authorization
+
+	// @securitydefinitions.oauth2.application OAuth2Application
+	// @tokenUrl https://example.com/oauth/token
+	// @scope.write Grants write access
+	// @scope.admin Grants read and write access to administrative information
+
+	// @securitydefinitions.oauth2.implicit OAuth2Implicit
+	// @authorizationurl https://example.com/oauth/authorize
+	// @scope.write Grants write access
+	// @scope.admin Grants read and write access to administrative information
+
+	// @securitydefinitions.oauth2.password OAuth2Password
+	// @tokenUrl https://example.com/oauth/token
+	// @scope.read Grants read access
+	// @scope.write Grants write access
+	// @scope.admin Grants read and write access to administrative information
+
+	// @securitydefinitions.oauth2.accessCode OAuth2AccessCode
+	// @tokenUrl https://example.com/oauth/token
+	// @authorizationurl https://example.com/oauth/authorize
+	// @scope.admin Grants read and write access to administrative information
+	func main() {}`
+
+	want := `package main
+	// @title           Swagger Example API
+	// @version         1.0
+	// @description     This is a sample server Petstore server.
+	// @termsOfService  http://swagger.io/terms/
+
+	// @contact.name   API Support
+	// @contact.url    http://www.swagger.io/support
+	// @contact.email  support@swagger.io
+
+	// @license.name  Apache 2.0
+	// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+	// @host      petstore.swagger.io
+	// @BasePath  /v2
+
+	// @securityDefinitions.basic  BasicAuth
+
+	// @securityDefinitions.apikey  ApiKeyAuth
+	// @in                          header
+	// @name                        Authorization
+
+	// @securitydefinitions.oauth2.application  OAuth2Application
+	// @tokenUrl                                https://example.com/oauth/token
+	// @scope.write                             Grants write access
+	// @scope.admin                             Grants read and write access to administrative information
+
+	// @securitydefinitions.oauth2.implicit  OAuth2Implicit
+	// @authorizationurl                     https://example.com/oauth/authorize
+	// @scope.write                          Grants write access
+	// @scope.admin                          Grants read and write access to administrative information
+
+	// @securitydefinitions.oauth2.password  OAuth2Password
+	// @tokenUrl                             https://example.com/oauth/token
+	// @scope.read                           Grants read access
+	// @scope.write                          Grants write access
+	// @scope.admin                          Grants read and write access to administrative information
+
+	// @securitydefinitions.oauth2.accessCode  OAuth2AccessCode
+	// @tokenUrl                               https://example.com/oauth/token
+	// @authorizationurl                       https://example.com/oauth/authorize
+	// @scope.admin                            Grants read and write access to administrative information
+	func main() {}`
+
+	testFormat(t, "main.go", contents, want)
 }
 
-func Test_replaceRange(t *testing.T) {
-	type args struct {
-		s     []byte
-		start int
-		end   int
-		new   byte
-	}
+func Test_FormatApi(t *testing.T) {
+	contents := `package api
 
-	tests := []struct {
-		name string
-		args args
-		want []byte
-	}{
-		{
-			name: "test_replaceSuccess",
-			args: args{
-				s:     []byte("// @ID  get-ids"),
-				start: 6,
-				end:   8,
-				new:   '\t',
-			},
-			want: []byte("// @ID\tget-ids"),
-		},
-		{
-			name: "test1_replaceFail",
-			args: args{
-				s:     []byte("// @ID  A pet"),
-				start: 6,
-				end:   8,
-				new:   '\t',
-			},
-			want: []byte("// @ID\tA pet"),
-		},
-		{
-			name: "test1_replaceFail2",
-			args: args{
-				s:     []byte("// @ID  "),
-				start: 6,
-				end:   12,
-				new:   '\t',
-			},
-			want: []byte("// @ID\t"),
-		},
-		{
-			name: "test1_replaceFail3",
-			args: args{
-				s:     []byte("// @ID  "),
-				start: 2,
-				end:   1,
-				new:   '\t',
-			},
-			want: []byte("// @ID  "),
-		},
-	}
+	import "net/http"
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := replaceRange(tt.args.s, tt.args.start, tt.args.end, tt.args.new); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("replaceRange() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	// @Summary Add a new pet to the store
+	// @Description get string by ID
+	// @ID get-string-by-int
+	// @Accept  json
+	// @Produce  json
+	// @Param   some_id      path   int     true  "Some ID" Format(int64)
+	// @Param   some_id      body web.Pet true  "Some ID"
+	// @Success 200 {string} string	"ok"
+	// @Failure 400 {object} web.APIError "We need ID!!"
+	// @Failure 404 {object} web.APIError "Can not find ID"
+	// @Router /testapi/get-string-by-int/{some_id} [get]
+	func GetStringByInt(w http.ResponseWriter, r *http.Request) {}`
+
+	want := `package api
+
+	import "net/http"
+
+	// @Summary      Add a new pet to the store
+	// @Description  get string by ID
+	// @ID           get-string-by-int
+	// @Accept       json
+	// @Produce      json
+	// @Param        some_id  path      int           true  "Some ID"  Format(int64)
+	// @Param        some_id  body      web.Pet       true  "Some ID"
+	// @Success      200      {string}  string        "ok"
+	// @Failure      400      {object}  web.APIError  "We need ID!!"
+	// @Failure      404      {object}  web.APIError  "Can not find ID"
+	// @Router       /testapi/get-string-by-int/{some_id} [get]
+	func GetStringByInt(w http.ResponseWriter, r *http.Request) {}`
+
+	testFormat(t, "api.go", contents, want)
 }
 
-func Test_separatorFinder(t *testing.T) {
-	type args struct {
-		comment string
-	}
+func Test_NonSwagComment(t *testing.T) {
+	contents := `package api
+	// @Summary Add a new pet to the store
+	// @Description get string by ID
+	// @ID get-string-by-int
+	// @ Accept json
+	// This is not a @swag comment`
+	want := `package api
+	// @Summary      Add a new pet to the store
+	// @Description  get string by ID
+	// @ID           get-string-by-int
+	// @ Accept json
+	// This is not a @swag comment`
 
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "test1",
-			args: args{
-				comment: `// @Param   some_id  query int  "some id  data" Enums(1, 2, 3)`,
-			},
-			want: `// @Param|some_id|query|int|"some id  data"|Enums(1, 2, 3)`,
-		},
-		{
-			name: "test2",
-			args: args{
-				comment: `// @Summary   A pet store. `,
-			},
-			want: `// @Summary|A pet store. `,
-		},
-		{
-			name: "test3",
-			args: args{
-				comment: `// @Summary    `,
-			},
-			want: `// @Summary    `,
-		},
-		{
-			name: "test4",
-			args: args{
-				comment: `// @Failure      400       {object}  web.APIError{data=web.D ,data2=web.D2}  "We need ID!!"`,
-			},
-			want: `// @Failure|400|{object}|web.APIError{data=web.D ,data2=web.D2}|"We need ID!!"`,
-		},
-		{
-			name: "test5",
-			args: args{
-				comment: `// `,
-			},
-			want: ``,
-		},
-	}
+	testFormat(t, "non_swag.go", contents, want)
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := separatorFinder(tt.args.comment, '|')
-			assert.Equal(t, got, tt.want)
-		})
-	}
+func Test_EmptyComment(t *testing.T) {
+	contents := `package empty
+	// @Summary Add a new pet to the store
+	// @Description  `
+	want := `package empty
+	// @Summary  Add a new pet to the store
+	// @Description`
+
+	testFormat(t, "empty.go", contents, want)
+}
+
+func Test_AlignAttribute(t *testing.T) {
+	contents := `package align
+	// @Summary Add a new pet to the store
+	//  @Description Description`
+	want := `package align
+	// @Summary      Add a new pet to the store
+	// @Description  Description`
+
+	testFormat(t, "align.go", contents, want)
+
+}
+
+func Test_SyntaxError(t *testing.T) {
+	contents := []byte(`package invalid
+	func invalid() {`)
+
+	_, err := NewFormatter().Format("invalid.go", contents)
+	assert.Error(t, err)
 }
