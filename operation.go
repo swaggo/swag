@@ -967,6 +967,15 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 
+	if strings.HasSuffix(matches[3], ",") && strings.Contains(matches[3], "[") {
+		// regexp may have broken generics syntax. find closing bracket and add it back
+		allMatchesLenOffset := strings.Index(commentLine, matches[3]) + len(matches[3])
+		lostPartEndIdx := strings.Index(commentLine[allMatchesLenOffset:], "]")
+		if lostPartEndIdx >= 0 {
+			matches[3] += commentLine[allMatchesLenOffset : allMatchesLenOffset+lostPartEndIdx+1]
+		}
+	}
+
 	description := strings.Trim(matches[4], "\"")
 
 	schema, err := operation.parseAPIObjectSchema(strings.Trim(matches[2], "{}"), matches[3], astFile)
