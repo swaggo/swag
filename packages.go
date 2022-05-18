@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 
@@ -78,6 +79,11 @@ func (pkgDefs *PackagesDefinitions) CollectAstFile(packageDir, path string, astF
 func rangeFiles(files map[*ast.File]*AstFileInfo, handle func(filename string, file *ast.File) error) error {
 	sortedFiles := make([]*AstFileInfo, 0, len(files))
 	for _, info := range files {
+		// ignore package path prefix with 'vendor' or $GOROOT,
+		// because the router info of api will not be included these files.
+		if strings.HasPrefix(info.PackagePath, "vendor") || strings.HasPrefix(info.Path, runtime.GOROOT()) {
+			continue
+		}
 		sortedFiles = append(sortedFiles, info)
 	}
 

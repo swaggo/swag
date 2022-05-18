@@ -29,6 +29,7 @@ const (
 	parseDepthFlag       = "parseDepth"
 	instanceNameFlag     = "instanceName"
 	overridesFileFlag    = "overridesFile"
+	parseGoListFlag      = "parseGoList"
 )
 
 var initFlags = []cli.Flag{
@@ -110,6 +111,11 @@ var initFlags = []cli.Flag{
 		Value: gen.DefaultOverridesFile,
 		Usage: "File to read global type overrides from.",
 	},
+	&cli.BoolFlag{
+		Name:  parseGoListFlag,
+		Value: true,
+		Usage: "Parse dependency via 'go list'",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -142,6 +148,7 @@ func initAction(ctx *cli.Context) error {
 		ParseDepth:          ctx.Int(parseDepthFlag),
 		InstanceName:        ctx.String(instanceNameFlag),
 		OverridesFile:       ctx.String(overridesFileFlag),
+		ParseGoList:         ctx.Bool(parseGoListFlag),
 	})
 }
 
