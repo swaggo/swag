@@ -1,10 +1,12 @@
 package gen
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -749,4 +751,31 @@ func TestGen_TypeOverridesFile(t *testing.T) {
 		err := New().Build(config)
 		assert.NoError(t, err)
 	})
+}
+func TestGen_Debugger(t *testing.T) {
+	var buf bytes.Buffer
+	config := &Config{
+		SearchDir:          searchDir,
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple/docs",
+		OutputTypes:        outputTypes,
+		PropNamingStrategy: "",
+		Debugger:           log.New(&buf, "", log.LstdFlags),
+	}
+	assert.True(t, buf.Len() == 0)
+	assert.NoError(t, New().Build(config))
+	assert.True(t, buf.Len() > 0)
+
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+
+		_ = os.Remove(expectedFile)
+	}
 }

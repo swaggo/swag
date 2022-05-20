@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -29,9 +30,16 @@ const (
 	parseDepthFlag       = "parseDepth"
 	instanceNameFlag     = "instanceName"
 	overridesFileFlag    = "overridesFile"
+	parseGoListFlag      = "parseGoList"
+	quietFlag            = "quiet"
 )
 
 var initFlags = []cli.Flag{
+	&cli.BoolFlag{
+		Name:    quietFlag,
+		Aliases: []string{"q"},
+		Usage:   "Make the logger quiet.",
+	},
 	&cli.StringFlag{
 		Name:    generalInfoFlag,
 		Aliases: []string{"g"},
@@ -110,6 +118,11 @@ var initFlags = []cli.Flag{
 		Value: gen.DefaultOverridesFile,
 		Usage: "File to read global type overrides from.",
 	},
+	&cli.BoolFlag{
+		Name:  parseGoListFlag,
+		Value: true,
+		Usage: "Parse dependency via 'go list'",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -124,6 +137,10 @@ func initAction(ctx *cli.Context) error {
 	outputTypes := strings.Split(ctx.String(outputTypesFlag), ",")
 	if len(outputTypes) == 0 {
 		return fmt.Errorf("no output types specified")
+	}
+	var logger swag.Debugger
+	if ctx.Bool(quietFlag) {
+		logger = log.New(ioutil.Discard, "", log.LstdFlags)
 	}
 
 	return gen.New().Build(&gen.Config{
@@ -142,6 +159,8 @@ func initAction(ctx *cli.Context) error {
 		ParseDepth:          ctx.Int(parseDepthFlag),
 		InstanceName:        ctx.String(instanceNameFlag),
 		OverridesFile:       ctx.String(overridesFileFlag),
+		ParseGoList:         ctx.Bool(parseGoListFlag),
+		Debugger:            logger,
 	})
 }
 

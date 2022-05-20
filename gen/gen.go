@@ -57,6 +57,8 @@ func New() *Gen {
 
 // Config presents Gen configurations.
 type Config struct {
+	Debugger swag.Debugger
+
 	// SearchDir the swag would parse,comma separated if multiple
 	SearchDir string
 
@@ -105,6 +107,9 @@ type Config struct {
 
 	// OverridesFile defines global type overrides.
 	OverridesFile string
+
+	// ParseGoList whether swag use go list to parse dependency
+	ParseGoList bool
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -142,10 +147,12 @@ func (g *Gen) Build(config *Config) error {
 	log.Println("Generate swagger docs....")
 
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
+		swag.SetDebugger(config.Debugger),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
 		swag.SetStrict(config.Strict),
 		swag.SetOverrides(overrides),
+		swag.ParseUsingGoList(config.ParseGoList),
 	)
 
 	p.PropNamingStrategy = config.PropNamingStrategy

@@ -13,7 +13,7 @@ GOPATH:=$(shell $(GOCMD) env GOPATH)
 u := $(if $(update),-u)
 
 BINARY_NAME:=swag
-PACKAGES:=$(shell $(GOLIST) github.com/swaggo/swag github.com/swaggo/swag/cmd/swag github.com/swaggo/swag/gen)
+PACKAGES:=$(shell $(GOLIST) github.com/swaggo/swag github.com/swaggo/swag/cmd/swag github.com/swaggo/swag/gen github.com/swaggo/swag/format)
 GOFILES:=$(shell find . -name "*.go" -type f)
 
 export GO111MODULE := on
@@ -63,9 +63,9 @@ deps:
 	$(GOGET) golang.org/x/tools/go/loader
 
 .PHONY: devel-deps
-devel-deps: 
+devel-deps:
 	GO111MODULE=off $(GOGET) -v -u \
-		golang.org/x/lint/golint 
+		golang.org/x/lint/golint
 
 .PHONY: lint
 lint: devel-deps

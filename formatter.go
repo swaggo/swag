@@ -8,381 +8,125 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"text/tabwriter"
 )
 
 const splitTag = "&*"
 
-// Formatter implements a formater for Go source files.
+// Check of @Param @Success @Failure @Response @Header
+var specialTagForSplit = map[string]bool{
+	paramAttr:    true,
+	successAttr:  true,
+	failureAttr:  true,
+	responseAttr: true,
+	headerAttr:   true,
+}
+
+var skipChar = map[byte]byte{
+	'"': '"',
+	'(': ')',
+	'{': '}',
+	'[': ']',
+}
+
+// Formatter implements a formatter for Go source files.
 type Formatter struct {
 	// debugging output goes here
 	debug Debugger
-
-	// excludes excludes dirs and files in SearchDir
-	excludes map[string]struct{}
-
-	mainFile string
 }
 
-// Formater creates a new formatter.
-type Formater struct {
-	*Formatter
-}
-
-// NewFormater Deprecated: Use NewFormatter instead.
-func NewFormater() *Formater {
-	formatter := Formater{
-		Formatter: NewFormatter(),
-	}
-
-	formatter.debug.Printf("warining: NewFormater is deprecated. use NewFormatter instead")
-
-	return &formatter
-}
-
-// NewFormatter create a new formater instance.
+// NewFormatter create a new formatter instance.
 func NewFormatter() *Formatter {
-	formatter := Formatter{
-		mainFile: "",
-		debug:    log.New(os.Stdout, "", log.LstdFlags),
-		excludes: make(map[string]struct{}),
+	formatter := &Formatter{
+		debug: log.New(os.Stdout, "", log.LstdFlags),
 	}
-
-	return &formatter
+	return formatter
 }
 
-// FormatAPI format the swag comment.
-func (f *Formatter) FormatAPI(searchDir, excludeDir, mainFile string) error {
-	searchDirs := strings.Split(searchDir, ",")
-	for _, searchDir := range searchDirs {
-		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
-			return fmt.Errorf("dir: %s does not exist", searchDir)
-		}
-	}
-
-	for _, fi := range strings.Split(excludeDir, ",") {
-		fi = strings.TrimSpace(fi)
-		if fi != "" {
-			fi = filepath.Clean(fi)
-			f.excludes[fi] = struct{}{}
-		}
-	}
-
-	// parse main.go
-	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDirs[0], mainFile))
-	if err != nil {
-		return err
-	}
-
-	err = f.FormatMain(absMainAPIFilePath)
-	if err != nil {
-		return err
-	}
-
-	f.mainFile = mainFile
-
-	err = f.formatMultiSearchDir(searchDirs)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (f *Formatter) formatMultiSearchDir(searchDirs []string) error {
-	for _, searchDir := range searchDirs {
-		f.debug.Printf("Format API Info, search dir:%s", searchDir)
-
-		err := filepath.Walk(searchDir, f.visit)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (f *Formatter) visit(path string, fileInfo os.FileInfo, err error) error {
-	if err := walkWith(f.excludes, false)(path, fileInfo); err != nil {
-		return err
-	} else if fileInfo.IsDir() {
-		// skip if file is folder
-		return nil
-	}
-
-	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
-		// skip if file not has suffix "*.go"
-		return nil
-	}
-
-	if strings.HasSuffix(strings.ToLower(path), f.mainFile) {
-		// skip main file
-		return nil
-	}
-
-	err = f.FormatFile(path)
-	if err != nil {
-		return fmt.Errorf("ParseFile error:%+v", err)
-	}
-
-	return nil
-}
-
-// FormatMain format the main.go comment.
-func (f *Formatter) FormatMain(mainFilepath string) error {
+// Format formats swag comments in contents. It uses fileName to report errors
+// that happen during parsing of contents.
+func (f *Formatter) Format(fileName string, contents []byte) ([]byte, error) {
 	fileSet := token.NewFileSet()
-
-	astFile, err := goparser.ParseFile(fileSet, mainFilepath, nil, goparser.ParseComments)
+	ast, err := goparser.ParseFile(fileSet, fileName, contents, goparser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("cannot format file, err: %w path : %s ", err, mainFilepath)
+		return nil, err
 	}
+	formattedComments := bytes.Buffer{}
+	oldComments := map[string]string{}
 
-	var (
-		formatedComments = bytes.Buffer{}
-		// CommentCache
-		oldCommentsMap = make(map[string]string)
-	)
-
-	if astFile.Comments != nil {
-		for _, comment := range astFile.Comments {
-			formatFuncDoc(comment.List, &formatedComments, oldCommentsMap)
+	if ast.Comments != nil {
+		for _, comment := range ast.Comments {
+			formatFuncDoc(comment.List, &formattedComments, oldComments)
 		}
 	}
-
-	return writeFormattedComments(mainFilepath, formatedComments, oldCommentsMap)
+	return formatComments(fileName, contents, formattedComments.Bytes(), oldComments), nil
 }
 
-// FormatFile format the swag comment in go function.
-func (f *Formatter) FormatFile(filepath string) error {
-	fileSet := token.NewFileSet()
-
-	astFile, err := goparser.ParseFile(fileSet, filepath, nil, goparser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("cannot format file, err: %w path : %s ", err, filepath)
-	}
-
-	var (
-		formatedComments = bytes.Buffer{}
-		// CommentCache
-		oldCommentsMap = make(map[string]string)
-	)
-
-	for _, astDescription := range astFile.Decls {
-		astDeclaration, ok := astDescription.(*ast.FuncDecl)
-		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-			formatFuncDoc(astDeclaration.Doc.List, &formatedComments, oldCommentsMap)
+func formatComments(fileName string, contents []byte, formattedComments []byte, oldComments map[string]string) []byte {
+	for _, comment := range bytes.Split(formattedComments, []byte("\n")) {
+		splits := bytes.SplitN(comment, []byte(splitTag), 2)
+		if len(splits) == 2 {
+			hash, line := splits[0], splits[1]
+			contents = bytes.Replace(contents, []byte(oldComments[string(hash)]), line, 1)
 		}
 	}
-
-	return writeFormattedComments(filepath, formatedComments, oldCommentsMap)
-}
-
-func writeFormattedComments(filepath string, formatedComments bytes.Buffer, oldCommentsMap map[string]string) error {
-	// Replace the file
-	// Read the file
-	srcBytes, err := ioutil.ReadFile(filepath)
-	if err != nil {
-		return fmt.Errorf("cannot open file, err: %w path : %s ", err, filepath)
-	}
-
-	replaceSrc, newComments := string(srcBytes), strings.Split(formatedComments.String(), "\n")
-
-	for _, e := range newComments {
-		commentSplit := strings.Split(e, splitTag)
-		if len(commentSplit) == 2 {
-			commentHash, commentContent := commentSplit[0], commentSplit[1]
-
-			if !isBlankComment(commentContent) {
-				replaceSrc = strings.Replace(replaceSrc, oldCommentsMap[commentHash], commentContent, 1)
-			}
-		}
-	}
-
-	return writeBack(filepath, []byte(replaceSrc), srcBytes)
+	return contents
 }
 
 func formatFuncDoc(commentList []*ast.Comment, formattedComments io.Writer, oldCommentsMap map[string]string) {
-	tabWriter := tabwriter.NewWriter(formattedComments, 0, 0, 2, ' ', 0)
+	w := tabwriter.NewWriter(formattedComments, 0, 0, 2, ' ', 0)
 
 	for _, comment := range commentList {
-		commentLine := comment.Text
-		if isSwagComment(commentLine) || isBlankComment(commentLine) {
-			cmd5 := fmt.Sprintf("%x", md5.Sum([]byte(commentLine)))
+		text := comment.Text
+		if attr, body, found := swagComment(text); found {
+			cmd5 := fmt.Sprintf("%x", md5.Sum([]byte(text)))
+			oldCommentsMap[cmd5] = text
 
-			// Find the separator and replace to \t
-			c := separatorFinder(commentLine, '\t')
-			oldCommentsMap[cmd5] = commentLine
-
+			formatted := "// " + attr
+			if body != "" {
+				formatted += "\t" + splitComment2(attr, body)
+			}
 			// md5 + splitTag + srcCommentLine
 			// eg. xxx&*@Description get struct array
-			_, _ = fmt.Fprintln(tabWriter, cmd5+splitTag+c)
+			_, _ = fmt.Fprintln(w, cmd5+splitTag+formatted)
 		}
 	}
-	// format by tabWriter
-	_ = tabWriter.Flush()
+	// format by tabwriter
+	_ = w.Flush()
 }
 
-func separatorFinder(comment string, replacer byte) string {
-	commentBytes, commentLine := []byte(comment), strings.TrimSpace(strings.TrimLeft(comment, "/"))
-
-	if len(commentLine) == 0 {
-		return ""
-	}
-
-	attribute := strings.Fields(commentLine)[0]
-	attrLen := strings.Index(comment, attribute) + len(attribute)
-	attribute = strings.ToLower(attribute)
-
-	var (
-		length = attrLen
-
-		// Check of @Param @Success @Failure @Response @Header.
-		specialTagForSplit = map[string]byte{
-			paramAttr:    1,
-			successAttr:  1,
-			failureAttr:  1,
-			responseAttr: 1,
-			headerAttr:   1,
-		}
-	)
-
-	_, ok := specialTagForSplit[attribute]
-	if ok {
-		return splitSpecialTags(commentBytes, length, replacer)
-	}
-
-	for length < len(commentBytes) && commentBytes[length] == ' ' {
-		length++
-	}
-
-	if length >= len(commentBytes) {
-		return comment
-	}
-
-	commentBytes = replaceRange(commentBytes, attrLen, length, replacer)
-
-	return string(commentBytes)
-}
-
-func splitSpecialTags(commentBytes []byte, length int, rp byte) string {
-	var (
-		skipFlag bool
-		skipChar = map[byte]byte{
-			'"': 1,
-			'(': 1,
-			'{': 1,
-			'[': 1,
-		}
-
-		skipCharEnd = map[byte]byte{
-			'"': 1,
-			')': 1,
-			'}': 1,
-			']': 1,
-		}
-	)
-
-	for ; length < len(commentBytes); length++ {
-		if !skipFlag && commentBytes[length] == ' ' {
-			j := length
-			for j < len(commentBytes) && commentBytes[j] == ' ' {
-				j++
+func splitComment2(attr, body string) string {
+	if specialTagForSplit[strings.ToLower(attr)] {
+		for i := 0; i < len(body); i++ {
+			if skipEnd, ok := skipChar[body[i]]; ok {
+				if skipLen := strings.IndexByte(body[i+1:], skipEnd); skipLen > 0 {
+					i += skipLen
+				}
+			} else if body[i] == ' ' {
+				j := i
+				for ; j < len(body) && body[j] == ' '; j++ {
+				}
+				body = replaceRange(body, i, j, "\t")
 			}
-
-			commentBytes = replaceRange(commentBytes, length, j, rp)
-		}
-
-		_, found := skipChar[commentBytes[length]]
-		if found && !skipFlag {
-			skipFlag = true
-
-			continue
-		}
-
-		_, found = skipCharEnd[commentBytes[length]]
-		if found && skipFlag {
-			skipFlag = false
 		}
 	}
-
-	return string(commentBytes)
+	return body
 }
 
-func replaceRange(s []byte, start, end int, new byte) []byte {
-	if start > end || end < 1 {
-		return s
-	}
-
-	if end > len(s) {
-		end = len(s)
-	}
-
-	s = append(s[:start], s[end-1:]...)
-
-	s[start] = new
-
-	return s
+func replaceRange(s string, start, end int, new string) string {
+	return s[:start] + new + s[end:]
 }
 
-var swagCommentExpression = regexp.MustCompile("@[A-z]+")
+var swagCommentLineExpression = regexp.MustCompile(`^\/\/\s+(@[\S.]+)\s*(.*)`)
 
-func isSwagComment(comment string) bool {
-	return swagCommentExpression.MatchString(strings.ToLower(comment))
-}
-
-func isBlankComment(comment string) bool {
-	return len(strings.TrimSpace(comment)) == 0
-}
-
-// writeBack write to file.
-func writeBack(filepath string, src, old []byte) error {
-	// make a temporary backup before overwriting original
-	backupName, err := backupFile(filepath+".", old, 0644)
-	if err != nil {
-		return err
+func swagComment(comment string) (string, string, bool) {
+	matches := swagCommentLineExpression.FindStringSubmatch(comment)
+	if matches == nil {
+		return "", "", false
 	}
-
-	err = ioutil.WriteFile(filepath, src, 0644)
-	if err != nil {
-		_ = os.Rename(backupName, filepath)
-
-		return err
-	}
-
-	_ = os.Remove(backupName)
-
-	return nil
-}
-
-const chmodSupported = runtime.GOOS != "windows"
-
-// backupFile writes data to a new file named filename<number> with permissions perm,
-// with <number randomly chosen such that the file name is unique. backupFile returns
-// the chosen file name.
-// copy from golang/cmd/gofmt.
-func backupFile(filename string, data []byte, perm os.FileMode) (string, error) {
-	// create backup file
-	file, err := ioutil.TempFile(filepath.Dir(filename), filepath.Base(filename))
-	if err != nil {
-		return "", err
-	}
-
-	if chmodSupported {
-		_ = file.Chmod(perm)
-	}
-
-	// write data to backup file
-	_, err = file.Write(data)
-	if err1 := file.Close(); err == nil {
-		err = err1
-	}
-
-	return file.Name(), err
+	return matches[1], matches[2], true
 }
