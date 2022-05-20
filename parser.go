@@ -898,6 +898,11 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 }
 
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
+	if override, ok := parser.Overrides[typeName]; ok {
+		parser.debug.Printf("Override detected for %s: using %s instead", typeName, override)
+		typeName = override
+	}
+
 	if IsGolangPrimitiveType(typeName) {
 		return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
 	}
