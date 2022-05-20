@@ -245,7 +245,10 @@ func SetStrict(strict bool) func(*Parser) {
 // SetDebugger allows the use of user-defined implementations.
 func SetDebugger(logger Debugger) func(parser *Parser) {
 	return func(p *Parser) {
-		p.debug = logger
+		if logger != nil {
+			p.debug = logger
+		}
+
 	}
 }
 
