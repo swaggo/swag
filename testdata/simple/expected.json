@@ -534,7 +534,7 @@
               1,
               2
             ],
-            "x-enum-varname": [
+            "x-enum-varnames": [
               "Wet",
               "Dry",
               "Raw"
@@ -603,7 +603,7 @@
             2,
             3
           ],
-          "x-enum-varname": [
+          "x-enum-varnames": [
             "one",
             "two",
             "three"
