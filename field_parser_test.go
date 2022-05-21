@@ -140,9 +140,8 @@ func TestDefaultFieldParser(t *testing.T) {
 				Value: `json:"test" enums:"0,1,2" x-enum-varnames:"Daily,Weekly,Monthly"`,
 			}},
 		).ComplementSchema(&schema)
-		schema.Extensions.Add("x-enum-varnames", []string{"Daily", "Weekly", "Monthly"})
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"Daily", "Weekly", "Monthly"}, schema.Extensions["x-enum-varnames"])
+		assert.Equal(t, []interface{}{"Daily", "Weekly", "Monthly"}, schema.Extensions["x-enum-varnames"])
 
 		schema = spec.Schema{}
 		schema.Type = []string{"int"}
