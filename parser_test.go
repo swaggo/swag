@@ -3,6 +3,7 @@ package swag
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -807,14 +809,6 @@ func TestParser_ParseType(t *testing.T) {
 	assert.NotNil(t, p.packages.uniqueDefinitions["api.Pet3"])
 	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet"])
 	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet2"])
-}
-
-func TestGetSchemes(t *testing.T) {
-	t.Parallel()
-
-	schemes := getSchemes("@schemes http https")
-	expectedSchemes := []string{"http", "https"}
-	assert.Equal(t, expectedSchemes, schemes)
 }
 
 func TestParseSimpleApi1(t *testing.T) {
@@ -2159,6 +2153,109 @@ func TestParseExternalModels(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseGoList(t *testing.T) {
+	mainAPIFile := "main.go"
+	p := New(ParseUsingGoList(true))
+	p.ParseDependency = true
+
+	go111moduleEnv := os.Getenv("GO111MODULE")
+
+	cases := []struct {
+		name      string
+		gomodule  bool
+		searchDir string
+		err       error
+		run       func(searchDir string) error
+	}{
+		{
+			name:      "disableGOMODULE",
+			gomodule:  false,
+			searchDir: "testdata/golist_disablemodule",
+			run: func(searchDir string) error {
+				return p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+			},
+		},
+		{
+			name:      "enableGOMODULE",
+			gomodule:  true,
+			searchDir: "testdata/golist",
+			run: func(searchDir string) error {
+				return p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+			},
+		},
+		{
+			name:      "invalid_main",
+			gomodule:  true,
+			searchDir: "testdata/golist_invalid",
+			err:       errors.New("no such file or directory"),
+			run: func(searchDir string) error {
+				return p.ParseAPI(searchDir, "invalid/main.go", defaultParseDepth)
+			},
+		},
+		{
+			name:      "internal_invalid_pkg",
+			gomodule:  true,
+			searchDir: "testdata/golist_invalid",
+			err:       errors.New("expected 'package', found This"),
+			run: func(searchDir string) error {
+				mockErrGoFile := "testdata/golist_invalid/err.go"
+				f, err := os.OpenFile(mockErrGoFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				_, err = f.Write([]byte(`package invalid
+
+function a() {}`))
+				if err != nil {
+					return err
+				}
+				defer os.Remove(mockErrGoFile)
+				return p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+			},
+		},
+		{
+			name:      "invalid_pkg",
+			gomodule:  true,
+			searchDir: "testdata/golist_invalid",
+			err:       errors.New("expected 'package', found This"),
+			run: func(searchDir string) error {
+				mockErrGoFile := "testdata/invalid_external_pkg/invalid/err.go"
+				f, err := os.OpenFile(mockErrGoFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				_, err = f.Write([]byte(`package invalid
+
+function a() {}`))
+				if err != nil {
+					return err
+				}
+				defer os.Remove(mockErrGoFile)
+				return p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if c.gomodule {
+				os.Setenv("GO111MODULE", "on")
+			} else {
+				os.Setenv("GO111MODULE", "off")
+			}
+			err := c.run(c.searchDir)
+			os.Setenv("GO111MODULE", go111moduleEnv)
+			if c.err == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestParser_ParseStructArrayObject(t *testing.T) {
 	t.Parallel()
 
@@ -3461,57 +3558,77 @@ func TestTryAddDescription(t *testing.T) {
 		extensions map[string]interface{}
 	}
 	tests := []struct {
-		name string
-		args args
-		want *spec.SecurityScheme
+		name  string
+		lines []string
+		args  args
+		want  *spec.SecurityScheme
 	}{
 		{
 			name: "added description",
-			args: args{
-				spec: &spec.SecurityScheme{},
-				extensions: map[string]interface{}{
-					"@description": "some description",
-				},
+			lines: []string{
+				"@securitydefinitions.apikey test",
+				"@in header",
+				"@name x-api-key",
+				"@description some description",
 			},
 			want: &spec.SecurityScheme{
 				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Name:        "x-api-key",
+					Type:        "apiKey",
+					In:          "header",
 					Description: "some description",
 				},
 			},
 		},
 		{
 			name: "no description",
-			args: args{
-				spec: &spec.SecurityScheme{},
-				extensions: map[string]interface{}{
-					"@not-description": "some description",
-				},
+			lines: []string{
+				"@securitydefinitions.oauth2.application swagger",
+				"@tokenurl https://example.com/oauth/token",
+				"@not-description some description",
 			},
 			want: &spec.SecurityScheme{
 				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Type:        "oauth2",
+					Flow:        "application",
+					TokenURL:    "https://example.com/oauth/token",
 					Description: "",
 				},
 			},
 		},
+
 		{
 			name: "description has invalid format",
-			args: args{
-				spec: &spec.SecurityScheme{},
-				extensions: map[string]interface{}{
-					"@description": 12345,
-				},
+			lines: []string{
+				"@securitydefinitions.oauth2.implicit swagger",
+				"@authorizationurl https://example.com/oauth/token",
+				"@description 12345",
 			},
+
 			want: &spec.SecurityScheme{
 				SecuritySchemeProps: spec.SecuritySchemeProps{
-					Description: "",
+					Type:             "oauth2",
+					Flow:             "implicit",
+					AuthorizationURL: "https://example.com/oauth/token",
+					Description:      "12345",
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tryAddDescription(tt.args.spec, tt.args.extensions); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("tryAddDescription() = %v, want %v", got, tt.want)
+			swag := spec.Swagger{
+				SwaggerProps: spec.SwaggerProps{
+					SecurityDefinitions: make(map[string]*spec.SecurityScheme),
+				},
+			}
+			line := 0
+			commentLine := tt.lines[line]
+			attribute := strings.Split(commentLine, " ")[0]
+			value := strings.TrimSpace(commentLine[len(attribute):])
+			secAttr, _ := parseSecAttributes(attribute, tt.lines, &line)
+			if !reflect.DeepEqual(secAttr, tt.want) {
+				t.Errorf("setSwaggerSecurity() = %#v, want %#v", swag.SecurityDefinitions[value], tt.want)
 			}
 		})
 	}

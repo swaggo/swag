@@ -14,7 +14,7 @@ import (
 // @Description  do ping
 // @Tags         example
 // @Accept       json
-// @Produce      json
+// @Produce      plain
 // @Success      200  {string}  string  "pong"
 // @Failure      400  {string}  string  "ok"
 // @Failure      404  {string}  string  "ok"
@@ -29,7 +29,7 @@ func (c *Controller) PingExample(ctx *gin.Context) {
 // @Description  plus
 // @Tags         example
 // @Accept       json
-// @Produce      json
+// @Produce      plain
 // @Param        val1  query      int     true  "used for calc"
 // @Param        val2  query      int     true  "used for calc"
 // @Success      200   {integer}  string  "answer"
@@ -57,7 +57,7 @@ func (c *Controller) CalcExample(ctx *gin.Context) {
 // @Description  path params
 // @Tags         example
 // @Accept       json
-// @Produce      json
+// @Produce      plain
 // @Param        group_id    path      int     true  "Group ID"
 // @Param        account_id  path      int     true  "Account ID"
 // @Success      200         {string}  string  "answer"
@@ -84,7 +84,7 @@ func (c *Controller) PathParamsExample(ctx *gin.Context) {
 // @Description  custome header
 // @Tags         example
 // @Accept       json
-// @Produce      json
+// @Produce      plain
 // @Param        Authorization  header    string  true  "Authentication header"
 // @Success      200            {string}  string  "answer"
 // @Failure      400            {string}  string  "ok"
@@ -117,7 +117,7 @@ func (c *Controller) SecuritiesExample(ctx *gin.Context) {
 // @Description  attribute
 // @Tags         example
 // @Accept       json
-// @Produce      json
+// @Produce      plain
 // @Param        enumstring  query     string  false  "string enums"    Enums(A, B, C)
 // @Param        enumint     query     int     false  "int enums"       Enums(1, 2, 3)
 // @Param        enumnumber  query     number  false  "int enums"       Enums(1.1, 1.2, 1.3)

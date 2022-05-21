@@ -469,6 +469,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 // @Param   string      query     string     false  "string valid"       minlength(5)  maxlength(10)
 // @Param   int         query     int        false  "int valid"          minimum(1)    maximum(10)
 // @Param   default     query     string     false  "string default"     default(A)
+// @Param   example     query     string     false  "string example"     example(string)
 // @Param   collection  query     []string   false  "string collection"  collectionFormat(multi)
 // @Param   extensions  query     []string   false  "string collection"  extensions(x-example=test,x-nullable)
 ```
@@ -477,7 +478,7 @@ It also works for the struct fields:
 
 ```go
 type Foo struct {
-    Bar string `minLength:"4" maxLength:"16"`
+    Bar string `minLength:"4" maxLength:"16" example:"random string"`
     Baz int `minimum:"10" maximum:"20" default:"15"`
     Qux []string `enums:"foo,bar,baz"`
 }
@@ -497,6 +498,7 @@ Field Name | Type | Description
 <a name="parameterEnums"></a>enums | [\*] | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.5.1.
 <a name="parameterFormat"></a>format | `string` | The extending format for the previously mentioned [`type`](#parameterType). See [Data Type Formats](https://swagger.io/specification/v2/#dataTypeFormat) for further details.
 <a name="parameterCollectionFormat"></a>collectionFormat | `string` |Determines the format of the array if type array is used. Possible values are: <ul><li>`csv` - comma separated values `foo,bar`. <li>`ssv` - space separated values `foo bar`. <li>`tsv` - tab separated values `foo\tbar`. <li>`pipes` - pipe separated values <code>foo&#124;bar</code>. <li>`multi` - corresponds to multiple parameter instances instead of multiple values for a single instance `foo=bar&foo=baz`. This is valid only for parameters [`in`](#parameterIn) "query" or "formData". </ul> Default value is `csv`.
+<a name="parameterExample"></a>example | * | Declares the example for the parameter value
 <a name="parameterExtensions"></a>extensions | `string` | Add extension to parameters.
 
 ### Future
