@@ -868,6 +868,9 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 }
 
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
+	if IsInterfaceLike(typeName) {
+		return &spec.Schema{}, nil
+	}
 	if IsGolangPrimitiveType(typeName) {
 		return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
 	}
