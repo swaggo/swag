@@ -77,6 +77,34 @@ func TestSetOverrides(t *testing.T) {
 	assert.Equal(t, overrides, p.Overrides)
 }
 
+func TestOverrides_getTypeSchema(t *testing.T) {
+	t.Parallel()
+
+	overrides := map[string]string{
+		"sql.NullString": "string",
+	}
+
+	p := New(SetOverrides(overrides))
+
+	t.Run("Override sql.NullString by string", func(t *testing.T) {
+		t.Parallel()
+
+		s, err := p.getTypeSchema("sql.NullString", nil, false)
+		if assert.NoError(t, err) {
+			assert.Truef(t, s.Type.Contains("string"), "type sql.NullString should be overridden by string")
+		}
+	})
+
+	t.Run("Missing Override for sql.NullInt64", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := p.getTypeSchema("sql.NullInt64", nil, false)
+		if assert.Error(t, err) {
+			assert.Equal(t, "cannot find type definition: sql.NullInt64", err.Error())
+		}
+	})
+}
+
 func TestParser_ParseDefinition(t *testing.T) {
 	p := New()
 
@@ -478,7 +506,7 @@ func TestParser_ParseProduceComment(t *testing.T) {
 	assert.Equal(t, parser.swagger.Produces, expected)
 }
 
-func TestParser_ParseGeneralAPIInfoCollectionFromat(t *testing.T) {
+func TestParser_ParseGeneralAPIInfoCollectionFormat(t *testing.T) {
 	t.Parallel()
 
 	parser := New()
