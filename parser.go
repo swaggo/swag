@@ -1309,6 +1309,12 @@ func getFieldType(field ast.Expr) (string, error) {
 		}
 
 		return fullName, nil
+	case *ast.IndexListExpr:
+		fullName, err := getFieldType(fieldType.X)
+		if err != nil {
+			return "", err
+		}
+		return fullName, nil
 	default:
 		return "", fmt.Errorf("unknown field type %#v", field)
 	}
