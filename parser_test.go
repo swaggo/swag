@@ -826,7 +826,7 @@ func TestParseSimpleApi1(t *testing.T) {
 	assert.JSONEq(t, string(expected), string(b))
 }
 
-func TestParseInterfaceError(t *testing.T) {
+func TestParseInterfaceAndError(t *testing.T) {
 	t.Parallel()
 
 	expected, err := ioutil.ReadFile("testdata/error/expected.json")
