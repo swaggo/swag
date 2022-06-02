@@ -145,6 +145,9 @@ type Parser struct {
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
 
+	// tells parser to include operations with "x-public: true" extension
+	parseExtension string
+
 	// debugging output goes here
 	debug Debugger
 
@@ -244,6 +247,13 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 				p.excludes[f] = struct{}{}
 			}
 		}
+	}
+}
+
+// SetParseExtension parses only those operations which match given extension
+func SetParseExtension(parseExtension string) func(*Parser) {
+	return func(p *Parser) {
+		p.parseExtension = parseExtension
 	}
 }
 
@@ -829,6 +839,14 @@ func processRouterOperation(parser *Parser, operation *Operation) error {
 		pathItem, ok = parser.swagger.Paths.Paths[routeProperties.Path]
 		if !ok {
 			pathItem = spec.PathItem{}
+		}
+
+		// enable filtering of public endpoints
+		if len(parser.parseExtension) > 0 {
+			if val, ok := operation.Extensions[fmt.Sprintf("x-%s", parser.parseExtension)]; !ok || val == false {
+				parser.debug.Printf("skipping operation %s %s as it's not matching extension %s\n", routeProperties.HTTPMethod, routeProperties.Path, parser.parseExtension)
+				continue
+			}
 		}
 
 		op := refRouteMethodOp(&pathItem, routeProperties.HTTPMethod)
