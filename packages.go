@@ -134,19 +134,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
 					}
 
-					fullName := typeSpecDef.FullName()
-
-					if typeSpecDef.TypeSpec.TypeParams != nil {
-						fullName = fullName + "["
-						for i, typeParam := range typeSpecDef.TypeSpec.TypeParams.List {
-							if i > 0 {
-								fullName = fullName + ","
-							}
-
-							fullName = fullName + typeParam.Names[0].Name
-						}
-						fullName = fullName + "]"
-					}
+					fullName := typeSpecFullName(typeSpecDef)
 
 					anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 					if ok {
