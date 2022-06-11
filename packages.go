@@ -135,6 +135,19 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 					}
 
 					fullName := typeSpecDef.FullName()
+
+					if typeSpecDef.TypeSpec.TypeParams != nil {
+						fullName = fullName + "["
+						for i, typeParam := range typeSpecDef.TypeSpec.TypeParams.List {
+							if i > 0 {
+								fullName = fullName + ","
+							}
+
+							fullName = fullName + typeParam.Names[0].Name
+						}
+						fullName = fullName + "]"
+					}
+
 					anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 					if ok {
 						if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
@@ -292,7 +305,7 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		return pkgDefs.uniqueDefinitions[typeName]
 	}
 
-	parts := strings.Split(typeName, ".")
+	parts := strings.Split(strings.Split(typeName, "[")[0], ".")
 	if len(parts) > 1 {
 		isAliasPkgName := func(file *ast.File, pkgName string) bool {
 			if file != nil && file.Imports != nil {
@@ -323,6 +336,22 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 				if pkgPath = pkgDefs.findPackagePathFromImports(parts[0], file, true); len(pkgPath) > 0 {
 					if err := pkgDefs.loadExternalPackage(pkgPath); err != nil {
 						return nil
+					}
+				}
+			}
+		}
+
+		if strings.Contains(typeName, "[") {
+			// joinedParts differs from typeName in that it does not contain any type parameters
+			joinedParts := strings.Join(parts, ".")
+			for tName, tSpec := range pkgDefs.uniqueDefinitions {
+				if !strings.Contains(tName, "[") {
+					continue
+				}
+
+				if strings.Contains(tName, joinedParts) {
+					if parametrized := pkgDefs.parametrizeStruct(tSpec, typeName); parametrized != nil {
+						return parametrized
 					}
 				}
 			}
