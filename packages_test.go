@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -150,6 +151,20 @@ func TestPackage_rangeFiles(t *testing.T) {
 			File:        &ast.File{Name: &ast.Ident{Name: "api.go"}},
 			Path:        "testdata/simple/api/api.go",
 			PackagePath: "api",
+		},
+		{
+			Name: &ast.Ident{Name: "foo.go"},
+		}: {
+			File:        &ast.File{Name: &ast.Ident{Name: "foo.go"}},
+			Path:        "vendor/foo/foo.go",
+			PackagePath: "vendor/foo",
+		},
+		{
+			Name: &ast.Ident{Name: "bar.go"},
+		}: {
+			File:        &ast.File{Name: &ast.Ident{Name: "bar.go"}},
+			Path:        filepath.Join(runtime.GOROOT(), "bar.go"),
+			PackagePath: "bar",
 		},
 	}
 

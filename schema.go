@@ -26,6 +26,8 @@ const (
 	STRING = "string"
 	// FUNC represent a function value.
 	FUNC = "func"
+	// INTERFACE represent a interface value.
+	INTERFACE = "interface{}"
 	// ANY represent a any value.
 	ANY = "any"
 	// NIL represent a empty value.
@@ -133,6 +135,7 @@ func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
 				}
 			}
 		}
+
 		if spec.Name != nil {
 			return fullTypeName(strings.Split(pkgName, ".")[0], spec.Name.Name)
 		}
@@ -168,6 +171,7 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 		if len(types) == 1 {
 			return nil, errors.New("need array item type after array")
 		}
+
 		schema, err := BuildCustomSchema(types[1:])
 		if err != nil {
 			return nil, err
@@ -178,6 +182,7 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 		if len(types) == 1 {
 			return PrimitiveSchema(types[0]), nil
 		}
+
 		schema, err := BuildCustomSchema(types[1:])
 		if err != nil {
 			return nil, err

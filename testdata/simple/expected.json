@@ -518,6 +518,30 @@
             ]
           }
         },
+        "food_brands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-some-extension": true
+        },
+        "food_types": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "x-enum-varnames": [
+              "Wet",
+              "Dry",
+              "Raw"
+            ]
+          },
+          "x-some-extension": true
+        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -571,6 +595,20 @@
           "minimum": 1,
           "multipleOf": 0.01,
           "example": 3.25
+        },
+        "single_enum_varname": {
+          "type": "integer",
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "x-enum-varnames": [
+            "one",
+            "two",
+            "three"
+          ],
+          "x-some-extension": true
         },
         "status": {
           "type": "string",

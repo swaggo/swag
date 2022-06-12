@@ -85,8 +85,10 @@ func TestIsSimplePrimitiveType(t *testing.T) {
 func TestBuildCustomSchema(t *testing.T) {
 	t.Parallel()
 
-	var schema *spec.Schema
-	var err error
+	var (
+		schema *spec.Schema
+		err    error
+	)
 
 	schema, err = BuildCustomSchema([]string{})
 	assert.NoError(t, err)
