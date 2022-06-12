@@ -130,8 +130,8 @@ type Parser struct {
 	// Strict whether swag should error or warn when it detects cases which are most likely user errors
 	Strict bool
 
-	// DefaultRequired set validation required for all fields by default
-	DefaultRequired bool
+	// RequiredByDefault set validation required for all fields by default
+	RequiredByDefault bool
 
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []*TypeSpecDef

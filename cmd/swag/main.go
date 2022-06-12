@@ -15,24 +15,24 @@ import (
 )
 
 const (
-	searchDirFlag        = "dir"
-	excludeFlag          = "exclude"
-	generalInfoFlag      = "generalInfo"
-	propertyStrategyFlag = "propertyStrategy"
-	outputFlag           = "output"
-	outputTypesFlag      = "outputTypes"
-	parseVendorFlag      = "parseVendor"
-	parseDependencyFlag  = "parseDependency"
-	markdownFilesFlag    = "markdownFiles"
-	codeExampleFilesFlag = "codeExampleFiles"
-	parseInternalFlag    = "parseInternal"
-	generatedTimeFlag    = "generatedTime"
-	defaultRequiredFlag  = "defaultRequired"
-	parseDepthFlag       = "parseDepth"
-	instanceNameFlag     = "instanceName"
-	overridesFileFlag    = "overridesFile"
-	parseGoListFlag      = "parseGoList"
-	quietFlag            = "quiet"
+	searchDirFlag         = "dir"
+	excludeFlag           = "exclude"
+	generalInfoFlag       = "generalInfo"
+	propertyStrategyFlag  = "propertyStrategy"
+	outputFlag            = "output"
+	outputTypesFlag       = "outputTypes"
+	parseVendorFlag       = "parseVendor"
+	parseDependencyFlag   = "parseDependency"
+	markdownFilesFlag     = "markdownFiles"
+	codeExampleFilesFlag  = "codeExampleFiles"
+	parseInternalFlag     = "parseInternal"
+	generatedTimeFlag     = "generatedTime"
+	requiredByDefaultFlag = "requiredByDefault"
+	parseDepthFlag        = "parseDepth"
+	instanceNameFlag      = "instanceName"
+	overridesFileFlag     = "overridesFile"
+	parseGoListFlag       = "parseGoList"
+	quietFlag             = "quiet"
 )
 
 var initFlags = []cli.Flag{
@@ -110,7 +110,7 @@ var initFlags = []cli.Flag{
 		Usage: "Dependency parse depth",
 	},
 	&cli.BoolFlag{
-		Name:  defaultRequiredFlag,
+		Name:  requiredByDefaultFlag,
 		Usage: "Set validation required for all fields by default",
 	},
 	&cli.StringFlag{
@@ -160,7 +160,7 @@ func initAction(ctx *cli.Context) error {
 		MarkdownFilesDir:    ctx.String(markdownFilesFlag),
 		ParseInternal:       ctx.Bool(parseInternalFlag),
 		GeneratedTime:       ctx.Bool(generatedTimeFlag),
-		DefaultRequired:     ctx.Bool(defaultRequiredFlag),
+		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
 		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
 		ParseDepth:          ctx.Int(parseDepthFlag),
 		InstanceName:        ctx.String(instanceNameFlag),

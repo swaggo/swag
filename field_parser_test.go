@@ -87,7 +87,7 @@ func TestDefaultFieldParser(t *testing.T) {
 
 		got, err := newTagBaseFieldParser(
 			&Parser{
-				DefaultRequired: true,
+				RequiredByDefault: true,
 			},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test"`,
@@ -102,7 +102,7 @@ func TestDefaultFieldParser(t *testing.T) {
 
 		got, err := newTagBaseFieldParser(
 			&Parser{
-				DefaultRequired: true,
+				RequiredByDefault: true,
 			},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" binding:"optional"`,
@@ -113,7 +113,7 @@ func TestDefaultFieldParser(t *testing.T) {
 
 		got, err = newTagBaseFieldParser(
 			&Parser{
-				DefaultRequired: true,
+				RequiredByDefault: true,
 			},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"optional"`,

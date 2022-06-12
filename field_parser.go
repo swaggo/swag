@@ -494,7 +494,7 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 		}
 	}
 
-	return ps.p.DefaultRequired, nil
+	return ps.p.RequiredByDefault, nil
 }
 
 func parseValidTags(validTag string, sf *structField) {

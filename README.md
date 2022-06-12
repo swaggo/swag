@@ -99,7 +99,7 @@ OPTIONS:
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
    --generatedTime                        Generate timestamp at the top of docs.go, disabled by default (default: false)
-   --defaultRequired                      Set validation required for all fields by default (default: false)
+   --requiredByDefault                    Set validation required for all fields by default (default: false)
    --parseDepth value                     Dependency parse depth (default: 100)
    --instanceName value                   This parameter can be used to name different swagger document instances. It is optional.
    --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
