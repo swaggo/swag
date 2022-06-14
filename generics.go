@@ -15,7 +15,7 @@ func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 		fullName = fullName + "["
 		for i, typeParam := range typeSpecDef.TypeSpec.TypeParams.List {
 			if i > 0 {
-				fullName = fullName + ","
+				fullName = fullName + "-"
 			}
 
 			fullName = fullName + typeParam.Names[0].Name
@@ -47,6 +47,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		if !ok {
 			return nil
 		}
+
 		genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = tdef
 	}
 
@@ -64,11 +65,13 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		NamePos: original.TypeSpec.Name.NamePos,
 		Obj:     original.TypeSpec.Name.Obj,
 	}
+
 	genNameParts := strings.Split(fullGenericForm, "[")
 	if strings.Contains(genNameParts[0], ".") {
 		genNameParts[0] = strings.Split(genNameParts[0], ".")[1]
 	}
-	ident.Name = genNameParts[0] + "[" + strings.Replace(strings.Join(genNameParts[1:], ""), ".", "_", -1)
+
+	ident.Name = genNameParts[0] + "-" + strings.Replace(strings.Join(genericParams, "-"), ".", "_", -1)
 	ident.Name = strings.Replace(strings.Replace(ident.Name, "\t", "", -1), " ", "", -1)
 
 	parametrizedTypeSpec.TypeSpec.Name = ident

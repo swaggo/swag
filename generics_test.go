@@ -5,6 +5,7 @@ package swag
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,13 +49,13 @@ func TestParseGenericsBasic(t *testing.T) {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponse[web_Post]"
+                            "$ref": "#/definitions/web.GenericResponse-web_Post"
                         }
                     },
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponseMulti[web_Post,web_Post]"
+                            "$ref": "#/definitions/web.GenericResponseMulti-web_Post-web_Post"
                         }
                     },
                     "400": {
@@ -96,7 +97,43 @@ func TestParseGenericsBasic(t *testing.T) {
                 }
             }
         },
-        "web.GenericResponseMulti[web_Post,web_Post]": {
+        "web.GenericResponse-web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponseMulti-web_Post-web_Post": {
             "type": "object",
             "properties": {
                 "data": {
@@ -159,42 +196,6 @@ func TestParseGenericsBasic(t *testing.T) {
                     "type": "string"
                 }
             }
-        },
-        "web.GenericResponse[web_Post]": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
         }
     }
 }`
@@ -204,5 +205,6 @@ func TestParseGenericsBasic(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	os.WriteFile("testdata/generics_basic/swagger.json", b, 0644)
 	assert.Equal(t, expected, string(b))
 }

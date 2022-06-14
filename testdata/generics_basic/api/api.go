@@ -2,6 +2,8 @@ package api
 
 import (
 	"net/http"
+
+	"github.com/swaggo/swag/testdata/generics_basic/web"
 )
 
 // @Summary Add a new pet to the store
@@ -16,4 +18,5 @@ import (
 // @Router /posts/{post_id} [get]
 func GetPost(w http.ResponseWriter, r *http.Request) {
 	//write your code
+	_ = web.GenericResponse[web.Post]{}
 }
