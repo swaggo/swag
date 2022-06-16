@@ -385,7 +385,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		if objectType == PRIMITIVE {
 			param.Schema = PrimitiveSchema(refType)
 		} else {
-			schema, err := operation.parseAPIObjectSchema(objectType, refType, astFile)
+			schema, err := operation.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
 			if err != nil {
 				return err
 			}
@@ -933,7 +933,16 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	}), nil
 }
 
-func (operation *Operation) parseAPIObjectSchema(schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
+func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
+	if strings.HasSuffix(refType, ",") && strings.Contains(refType, "[") {
+		// regexp may have broken generics syntax. find closing bracket and add it back
+		allMatchesLenOffset := strings.Index(commentLine, refType) + len(refType)
+		lostPartEndIdx := strings.Index(commentLine[allMatchesLenOffset:], "]")
+		if lostPartEndIdx >= 0 {
+			refType += commentLine[allMatchesLenOffset : allMatchesLenOffset+lostPartEndIdx+1]
+		}
+	}
+
 	switch schemaType {
 	case OBJECT:
 		if !strings.HasPrefix(refType, "[]") {
@@ -969,7 +978,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 
 	description := strings.Trim(matches[4], "\"")
 
-	schema, err := operation.parseAPIObjectSchema(strings.Trim(matches[2], "{}"), matches[3], astFile)
+	schema, err := operation.parseAPIObjectSchema(commentLine, strings.Trim(matches[2], "{}"), matches[3], astFile)
 	if err != nil {
 		return err
 	}
