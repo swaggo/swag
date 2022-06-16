@@ -5,7 +5,6 @@ package swag
 
 import (
 	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -204,7 +203,7 @@ func TestParseGenericsBasic(t *testing.T) {
 	p := New()
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
-	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	os.WriteFile("testdata/generics_basic/swagger.json", b, 0644)
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
 	assert.Equal(t, expected, string(b))
 }
