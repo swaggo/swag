@@ -142,6 +142,15 @@ func TestIsNumericType(t *testing.T) {
 	assert.Equal(t, IsNumericType(STRING), false)
 }
 
+func TestIsInterfaceLike(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, IsInterfaceLike(ERROR), true)
+	assert.Equal(t, IsInterfaceLike(ANY), true)
+
+	assert.Equal(t, IsInterfaceLike(STRING), false)
+}
+
 func TestTypeDocName(t *testing.T) {
 	t.Parallel()
 

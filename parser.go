@@ -873,6 +873,10 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		typeName = override
 	}
 
+	if IsInterfaceLike(typeName) {
+		return &spec.Schema{}, nil
+	}
+
 	if IsGolangPrimitiveType(typeName) {
 		return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
 	}

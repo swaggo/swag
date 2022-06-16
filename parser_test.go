@@ -854,6 +854,20 @@ func TestParseSimpleApi1(t *testing.T) {
 	assert.JSONEq(t, string(expected), string(b))
 }
 
+func TestParseInterfaceAndError(t *testing.T) {
+	t.Parallel()
+
+	expected, err := ioutil.ReadFile("testdata/error/expected.json")
+	assert.NoError(t, err)
+	searchDir := "testdata/error"
+	p := New()
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "  ")
+	assert.JSONEq(t, string(expected), string(b))
+}
+
 func TestParseSimpleApi_ForSnakecase(t *testing.T) {
 	t.Parallel()
 
