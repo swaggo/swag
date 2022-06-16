@@ -26,6 +26,8 @@ const (
 	STRING = "string"
 	// FUNC represent a function value.
 	FUNC = "func"
+	// ERROR represent a error value.
+	ERROR = "error"
 	// INTERFACE represent a interface value.
 	INTERFACE = "interface{}"
 	// ANY represent a any value.
@@ -61,6 +63,11 @@ func IsPrimitiveType(typeName string) bool {
 	}
 
 	return false
+}
+
+// IsInterfaceLike determines whether the swagger type name is an go named interface type like error type.
+func IsInterfaceLike(typeName string) bool {
+	return typeName == ERROR || typeName == ANY
 }
 
 // IsNumericType determines whether the swagger type name is a numeric type.
@@ -106,8 +113,7 @@ func IsGolangPrimitiveType(typeName string) bool {
 		"float32",
 		"float64",
 		"bool",
-		"string",
-		"any":
+		"string":
 		return true
 	}
 
