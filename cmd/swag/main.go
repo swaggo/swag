@@ -15,23 +15,24 @@ import (
 )
 
 const (
-	searchDirFlag        = "dir"
-	excludeFlag          = "exclude"
-	generalInfoFlag      = "generalInfo"
-	propertyStrategyFlag = "propertyStrategy"
-	outputFlag           = "output"
-	outputTypesFlag      = "outputTypes"
-	parseVendorFlag      = "parseVendor"
-	parseDependencyFlag  = "parseDependency"
-	markdownFilesFlag    = "markdownFiles"
-	codeExampleFilesFlag = "codeExampleFiles"
-	parseInternalFlag    = "parseInternal"
-	generatedTimeFlag    = "generatedTime"
-	parseDepthFlag       = "parseDepth"
-	instanceNameFlag     = "instanceName"
-	overridesFileFlag    = "overridesFile"
-	parseGoListFlag      = "parseGoList"
-	quietFlag            = "quiet"
+	searchDirFlag         = "dir"
+	excludeFlag           = "exclude"
+	generalInfoFlag       = "generalInfo"
+	propertyStrategyFlag  = "propertyStrategy"
+	outputFlag            = "output"
+	outputTypesFlag       = "outputTypes"
+	parseVendorFlag       = "parseVendor"
+	parseDependencyFlag   = "parseDependency"
+	markdownFilesFlag     = "markdownFiles"
+	codeExampleFilesFlag  = "codeExampleFiles"
+	parseInternalFlag     = "parseInternal"
+	generatedTimeFlag     = "generatedTime"
+	requiredByDefaultFlag = "requiredByDefault"
+	parseDepthFlag        = "parseDepth"
+	instanceNameFlag      = "instanceName"
+	overridesFileFlag     = "overridesFile"
+	parseGoListFlag       = "parseGoList"
+	quietFlag             = "quiet"
 )
 
 var initFlags = []cli.Flag{
@@ -108,6 +109,10 @@ var initFlags = []cli.Flag{
 		Value: 100,
 		Usage: "Dependency parse depth",
 	},
+	&cli.BoolFlag{
+		Name:  requiredByDefaultFlag,
+		Usage: "Set validation required for all fields by default",
+	},
 	&cli.StringFlag{
 		Name:  instanceNameFlag,
 		Value: "",
@@ -155,6 +160,7 @@ func initAction(ctx *cli.Context) error {
 		MarkdownFilesDir:    ctx.String(markdownFilesFlag),
 		ParseInternal:       ctx.Bool(parseInternalFlag),
 		GeneratedTime:       ctx.Bool(generatedTimeFlag),
+		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
 		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
 		ParseDepth:          ctx.Int(parseDepthFlag),
 		InstanceName:        ctx.String(instanceNameFlag),

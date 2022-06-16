@@ -105,6 +105,9 @@ type Config struct {
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
 
+	// RequiredByDefault set validation required for all fields by default
+	RequiredByDefault bool
+
 	// OverridesFile defines global type overrides.
 	OverridesFile string
 
@@ -159,6 +162,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
+	p.RequiredByDefault = config.RequiredByDefault
 
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err

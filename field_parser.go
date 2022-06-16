@@ -18,6 +18,7 @@ var _ FieldParser = &tagBaseFieldParser{p: nil, field: nil, tag: ""}
 
 const (
 	requiredLabel    = "required"
+	optionalLabel    = "optional"
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
 )
@@ -472,8 +473,11 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	bindingTag := ps.tag.Get(bindingTag)
 	if bindingTag != "" {
 		for _, val := range strings.Split(bindingTag, ",") {
-			if val == requiredLabel {
+			switch val {
+			case requiredLabel:
 				return true, nil
+			case optionalLabel:
+				return false, nil
 			}
 		}
 	}
@@ -481,13 +485,16 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	validateTag := ps.tag.Get(validateTag)
 	if validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
-			if val == requiredLabel {
+			switch val {
+			case requiredLabel:
 				return true, nil
+			case optionalLabel:
+				return false, nil
 			}
 		}
 	}
 
-	return false, nil
+	return ps.p.RequiredByDefault, nil
 }
 
 func parseValidTags(validTag string, sf *structField) {
