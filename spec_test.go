@@ -1,8 +1,9 @@
 package swag
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSpec_InstanceName(t *testing.T) {
@@ -16,6 +17,7 @@ func TestSpec_InstanceName(t *testing.T) {
 		InfoInstanceName string
 		SwaggerTemplate  string
 	}
+
 	tests := []struct {
 		name   string
 		fields fields
@@ -32,9 +34,10 @@ func TestSpec_InstanceName(t *testing.T) {
 			want: "TestInstanceName1",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &Spec{
+			doc := Spec{
 				Version:          tt.fields.Version,
 				Host:             tt.fields.Host,
 				BasePath:         tt.fields.BasePath,
@@ -44,7 +47,8 @@ func TestSpec_InstanceName(t *testing.T) {
 				InfoInstanceName: tt.fields.InfoInstanceName,
 				SwaggerTemplate:  tt.fields.SwaggerTemplate,
 			}
-			assert.Equal(t, tt.want, i.InstanceName())
+
+			assert.Equal(t, tt.want, doc.InstanceName())
 		})
 	}
 }
@@ -60,6 +64,7 @@ func TestSpec_ReadDoc(t *testing.T) {
 		InfoInstanceName string
 		SwaggerTemplate  string
 	}
+
 	tests := []struct {
 		name   string
 		fields fields
@@ -128,9 +133,10 @@ func TestSpec_ReadDoc(t *testing.T) {
 			want: "{{ .Schemesa }}",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &Spec{
+			doc := Spec{
 				Version:          tt.fields.Version,
 				Host:             tt.fields.Host,
 				BasePath:         tt.fields.BasePath,
@@ -140,7 +146,8 @@ func TestSpec_ReadDoc(t *testing.T) {
 				InfoInstanceName: tt.fields.InfoInstanceName,
 				SwaggerTemplate:  tt.fields.SwaggerTemplate,
 			}
-			assert.Equal(t, tt.want, i.ReadDoc())
+
+			assert.Equal(t, tt.want, doc.ReadDoc())
 		})
 	}
 }

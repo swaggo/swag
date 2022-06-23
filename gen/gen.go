@@ -22,7 +22,7 @@ import (
 
 var open = os.Open
 
-// DefaultOverridesFile is the location swaggo will look for type overrides.
+// DefaultOverridesFile is the location swagger will look for type overrides.
 const DefaultOverridesFile = ".swaggo"
 
 type genTypeWriter func(*Config, *spec.Swagger) error
@@ -37,10 +37,8 @@ type Gen struct {
 
 // New creates a new Gen.
 func New() *Gen {
-	gen := &Gen{
-		json: func(data interface{}) ([]byte, error) {
-			return json.Marshal(data)
-		},
+	gen := Gen{
+		json: json.Marshal,
 		jsonIndent: func(data interface{}) ([]byte, error) {
 			return json.MarshalIndent(data, "", "    ")
 		},
@@ -54,12 +52,14 @@ func New() *Gen {
 		"yml":  gen.writeYAMLSwagger,
 	}
 
-	return gen
+	return &gen
 }
 
 // Config presents Gen configurations.
 type Config struct {
-	// SearchDir the swag would be parse,comma separated if multiple
+	Debugger swag.Debugger
+
+	// SearchDir the swag would parse,comma separated if multiple
 	SearchDir string
 
 	// excludes dirs and files in SearchDir,comma separated
@@ -105,11 +105,17 @@ type Config struct {
 	// GeneratedTime whether swag should generate the timestamp at the top of docs.go
 	GeneratedTime bool
 
+	// RequiredByDefault set validation required for all fields by default
+	RequiredByDefault bool
+
 	// OverridesFile defines global type overrides.
 	OverridesFile string
+
+	// ParseGoList whether swag use go list to parse dependency
+	ParseGoList bool
 }
 
-// Build builds swagger json file  for given searchDir and mainAPIFile. Returns json
+// Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
 func (g *Gen) Build(config *Config) error {
 	if config.InstanceName == "" {
 		config.InstanceName = swag.Name
@@ -123,6 +129,7 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	var overrides map[string]string
+
 	if config.OverridesFile != "" {
 		overridesFile, err := open(config.OverridesFile)
 		if err != nil {
@@ -141,20 +148,26 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	log.Println("Generate swagger docs....")
+
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
+		swag.SetDebugger(config.Debugger),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
 		swag.SetStrict(config.Strict),
 		swag.SetOverrides(overrides),
+		swag.ParseUsingGoList(config.ParseGoList),
 	)
+
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
+	p.RequiredByDefault = config.RequiredByDefault
 
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
 	}
+
 	swagger := p.GetSwagger()
 
 	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
@@ -177,15 +190,18 @@ func (g *Gen) Build(config *Config) error {
 
 func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 	var filename = "docs.go"
+
 	if config.InstanceName != swag.Name {
 		filename = config.InstanceName + "_" + filename
 	}
+
 	docFileName := path.Join(config.OutputDir, filename)
 
 	absOutputDir, err := filepath.Abs(config.OutputDir)
 	if err != nil {
 		return err
 	}
+
 	packageName := filepath.Base(absOutputDir)
 
 	docs, err := os.Create(docFileName)
@@ -201,14 +217,17 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 	}
 
 	log.Printf("create docs.go at  %+v", docFileName)
+
 	return nil
 }
 
 func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 	var filename = "swagger.json"
+
 	if config.InstanceName != swag.Name {
 		filename = config.InstanceName + "_" + filename
 	}
+
 	jsonFileName := path.Join(config.OutputDir, filename)
 
 	b, err := g.jsonIndent(swagger)
@@ -222,14 +241,17 @@ func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 	}
 
 	log.Printf("create swagger.json at  %+v", jsonFileName)
+
 	return nil
 }
 
 func (g *Gen) writeYAMLSwagger(config *Config, swagger *spec.Swagger) error {
 	var filename = "swagger.yaml"
+
 	if config.InstanceName != swag.Name {
 		filename = config.InstanceName + "_" + filename
 	}
+
 	yamlFileName := path.Join(config.OutputDir, filename)
 
 	b, err := g.json(swagger)
@@ -248,6 +270,7 @@ func (g *Gen) writeYAMLSwagger(config *Config, swagger *spec.Swagger) error {
 	}
 
 	log.Printf("create swagger.yaml at  %+v", yamlFileName)
+
 	return nil
 }
 
@@ -256,21 +279,24 @@ func (g *Gen) writeFile(b []byte, file string) error {
 	if err != nil {
 		return err
 	}
+
 	defer f.Close()
 
 	_, err = f.Write(b)
+
 	return err
 }
 
 func (g *Gen) formatSource(src []byte) []byte {
 	code, err := format.Source(src)
 	if err != nil {
-		code = src // Output the unformatted code anyway
+		code = src // Formatter failed, return original code.
 	}
+
 	return code
 }
 
-// Read the swaggo overrides
+// Read and parse the overrides file.
 func parseOverrides(r io.Reader) (map[string]string, error) {
 	overrides := make(map[string]string)
 	scanner := bufio.NewScanner(r)
@@ -294,12 +320,14 @@ func parseOverrides(r io.Reader) (map[string]string, error) {
 			if parts[0] != "skip" {
 				return nil, fmt.Errorf("could not parse override: '%s'", line)
 			}
+
 			overrides[parts[1]] = ""
 		case 3:
 			// either a replace or malformed
 			if parts[0] != "replace" {
 				return nil, fmt.Errorf("could not parse override: '%s'", line)
 			}
+
 			overrides[parts[1]] = parts[2]
 		default:
 			return nil, fmt.Errorf("could not parse override: '%s'", line)
@@ -364,6 +392,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 	}
 
 	buffer := &bytes.Buffer{}
+
 	err = generator.Execute(buffer, struct {
 		Timestamp     time.Time
 		Doc           string
@@ -397,10 +426,11 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 
 	// write
 	_, err = output.Write(code)
+
 	return err
 }
 
-var packageTemplate = `// Package {{.PackageName}} GENERATED BY THE COMMAND ABOVE; DO NOT EDIT
+var packageTemplate = `// Package {{.PackageName}} GENERATED BY SWAG; DO NOT EDIT
 // This file was generated by swaggo/swag{{ if .GeneratedTime }} at
 // {{ .Timestamp }}{{ end }}
 package {{.PackageName}}

@@ -85,8 +85,10 @@ func TestIsSimplePrimitiveType(t *testing.T) {
 func TestBuildCustomSchema(t *testing.T) {
 	t.Parallel()
 
-	var schema *spec.Schema
-	var err error
+	var (
+		schema *spec.Schema
+		err    error
+	)
 
 	schema, err = BuildCustomSchema([]string{})
 	assert.NoError(t, err)
@@ -138,6 +140,15 @@ func TestIsNumericType(t *testing.T) {
 	assert.Equal(t, IsNumericType(NUMBER), true)
 
 	assert.Equal(t, IsNumericType(STRING), false)
+}
+
+func TestIsInterfaceLike(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, IsInterfaceLike(ERROR), true)
+	assert.Equal(t, IsInterfaceLike(ANY), true)
+
+	assert.Equal(t, IsInterfaceLike(STRING), false)
 }
 
 func TestTypeDocName(t *testing.T) {

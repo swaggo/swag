@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -14,24 +15,32 @@ import (
 )
 
 const (
-	searchDirFlag        = "dir"
-	excludeFlag          = "exclude"
-	generalInfoFlag      = "generalInfo"
-	propertyStrategyFlag = "propertyStrategy"
-	outputFlag           = "output"
-	outputTypesFlag      = "outputTypes"
-	parseVendorFlag      = "parseVendor"
-	parseDependencyFlag  = "parseDependency"
-	markdownFilesFlag    = "markdownFiles"
-	codeExampleFilesFlag = "codeExampleFiles"
-	parseInternalFlag    = "parseInternal"
-	generatedTimeFlag    = "generatedTime"
-	parseDepthFlag       = "parseDepth"
-	instanceNameFlag     = "instanceName"
-	overridesFileFlag    = "overridesFile"
+	searchDirFlag         = "dir"
+	excludeFlag           = "exclude"
+	generalInfoFlag       = "generalInfo"
+	propertyStrategyFlag  = "propertyStrategy"
+	outputFlag            = "output"
+	outputTypesFlag       = "outputTypes"
+	parseVendorFlag       = "parseVendor"
+	parseDependencyFlag   = "parseDependency"
+	markdownFilesFlag     = "markdownFiles"
+	codeExampleFilesFlag  = "codeExampleFiles"
+	parseInternalFlag     = "parseInternal"
+	generatedTimeFlag     = "generatedTime"
+	requiredByDefaultFlag = "requiredByDefault"
+	parseDepthFlag        = "parseDepth"
+	instanceNameFlag      = "instanceName"
+	overridesFileFlag     = "overridesFile"
+	parseGoListFlag       = "parseGoList"
+	quietFlag             = "quiet"
 )
 
 var initFlags = []cli.Flag{
+	&cli.BoolFlag{
+		Name:    quietFlag,
+		Aliases: []string{"q"},
+		Usage:   "Make the logger quiet.",
+	},
 	&cli.StringFlag{
 		Name:    generalInfoFlag,
 		Aliases: []string{"g"},
@@ -100,6 +109,10 @@ var initFlags = []cli.Flag{
 		Value: 100,
 		Usage: "Dependency parse depth",
 	},
+	&cli.BoolFlag{
+		Name:  requiredByDefaultFlag,
+		Usage: "Set validation required for all fields by default",
+	},
 	&cli.StringFlag{
 		Name:  instanceNameFlag,
 		Value: "",
@@ -110,10 +123,15 @@ var initFlags = []cli.Flag{
 		Value: gen.DefaultOverridesFile,
 		Usage: "File to read global type overrides from.",
 	},
+	&cli.BoolFlag{
+		Name:  parseGoListFlag,
+		Value: true,
+		Usage: "Parse dependency via 'go list'",
+	},
 }
 
-func initAction(c *cli.Context) error {
-	strategy := c.String(propertyStrategyFlag)
+func initAction(ctx *cli.Context) error {
+	strategy := ctx.String(propertyStrategyFlag)
 
 	switch strategy {
 	case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
@@ -121,27 +139,34 @@ func initAction(c *cli.Context) error {
 		return fmt.Errorf("not supported %s propertyStrategy", strategy)
 	}
 
-	outputTypes := strings.Split(c.String(outputTypesFlag), ",")
+	outputTypes := strings.Split(ctx.String(outputTypesFlag), ",")
 	if len(outputTypes) == 0 {
 		return fmt.Errorf("no output types specified")
 	}
+	var logger swag.Debugger
+	if ctx.Bool(quietFlag) {
+		logger = log.New(ioutil.Discard, "", log.LstdFlags)
+	}
 
 	return gen.New().Build(&gen.Config{
-		SearchDir:           c.String(searchDirFlag),
-		Excludes:            c.String(excludeFlag),
-		MainAPIFile:         c.String(generalInfoFlag),
+		SearchDir:           ctx.String(searchDirFlag),
+		Excludes:            ctx.String(excludeFlag),
+		MainAPIFile:         ctx.String(generalInfoFlag),
 		PropNamingStrategy:  strategy,
-		OutputDir:           c.String(outputFlag),
+		OutputDir:           ctx.String(outputFlag),
 		OutputTypes:         outputTypes,
-		ParseVendor:         c.Bool(parseVendorFlag),
-		ParseDependency:     c.Bool(parseDependencyFlag),
-		MarkdownFilesDir:    c.String(markdownFilesFlag),
-		ParseInternal:       c.Bool(parseInternalFlag),
-		GeneratedTime:       c.Bool(generatedTimeFlag),
-		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
-		ParseDepth:          c.Int(parseDepthFlag),
-		InstanceName:        c.String(instanceNameFlag),
-		OverridesFile:       c.String(overridesFileFlag),
+		ParseVendor:         ctx.Bool(parseVendorFlag),
+		ParseDependency:     ctx.Bool(parseDependencyFlag),
+		MarkdownFilesDir:    ctx.String(markdownFilesFlag),
+		ParseInternal:       ctx.Bool(parseInternalFlag),
+		GeneratedTime:       ctx.Bool(generatedTimeFlag),
+		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
+		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
+		ParseDepth:          ctx.Int(parseDepthFlag),
+		InstanceName:        ctx.String(instanceNameFlag),
+		OverridesFile:       ctx.String(overridesFileFlag),
+		ParseGoList:         ctx.Bool(parseGoListFlag),
+		Debugger:            logger,
 	})
 }
 
@@ -192,8 +217,8 @@ func main() {
 			},
 		},
 	}
-	err := app.Run(os.Args)
-	if err != nil {
+
+	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
 }
