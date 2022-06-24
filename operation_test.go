@@ -1071,7 +1071,7 @@ func TestParseEmptyResponseOnlyCode(t *testing.T) {
 	expected := `{
     "responses": {
         "200": {
-            "description": ""
+            "description": "OK"
         }
     }
 }`
@@ -1091,10 +1091,10 @@ func TestParseEmptyResponseOnlyCodes(t *testing.T) {
 	expected := `{
     "responses": {
         "200": {
-            "description": ""
+            "description": "OK"
         },
         "201": {
-            "description": ""
+            "description": "Created"
         },
         "default": {
             "description": ""

@@ -1130,7 +1130,7 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 
-		operation.AddResponse(code, spec.NewResponse())
+		operation.AddResponse(code, spec.NewResponse().WithDescription(http.StatusText(code)))
 	}
 
 	return nil
