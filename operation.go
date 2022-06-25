@@ -392,6 +392,12 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 			param.Schema = schema
 		}
+	case "form":
+		if objectType == PRIMITIVE {
+			param.Schema = PrimitiveSchema("form")
+		} else {
+			param.Schema = nil
+		}
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
