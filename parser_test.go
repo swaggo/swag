@@ -3105,7 +3105,7 @@ func Fun()  {
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -3162,7 +3162,7 @@ func Fun()  {
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -3326,7 +3326,7 @@ func TestParseJSONFieldString(t *testing.T) {
                         }
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
