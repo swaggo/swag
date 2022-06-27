@@ -103,7 +103,7 @@ func (f *Format) format(path string) error {
 }
 
 func write(path string, contents []byte) error {
-	f, err := ioutil.TempFile(filepath.Split(path))
+	f, err := ioutil.TempFile(filepath.Dir(path), filepath.Base(path))
 	if err != nil {
 		return err
 	}
