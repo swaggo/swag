@@ -78,7 +78,7 @@ func formatComments(fileName string, contents []byte, formattedComments []byte, 
 }
 
 func formatFuncDoc(commentList []*ast.Comment, formattedComments io.Writer, oldCommentsMap map[string]string) {
-	w := tabwriter.NewWriter(formattedComments, 0, 0, 2, ' ', 0)
+	w := tabwriter.NewWriter(formattedComments, 0, 0, 1, ' ', 0)
 
 	for _, comment := range commentList {
 		text := comment.Text
