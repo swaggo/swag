@@ -207,3 +207,171 @@ func TestParseGenericsBasic(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(b))
 }
+
+func TestParseGenericsArrays(t *testing.T) {
+	t.Parallel()
+
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/posts": {
+            "get": {
+                "description": "Get All of the Posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List Posts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponse-web_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponseMulti-web_Post-web_Post"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "web.GenericListResponse-web_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericListResponseMulti-web_Post-web_Post": {
+            "type": "object",
+            "properties": {
+                "itemsOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+	searchDir := "testdata/generics_arrays"
+	p := New()
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(b))
+}
