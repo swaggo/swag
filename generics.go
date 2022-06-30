@@ -94,11 +94,8 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 			Tag:     field.Tag,
 			Comment: field.Comment,
 		}
-		if genTypeSpec, ok := genericParamTypeDefs[field.Type.(*ast.Ident).Name]; ok {
-			newField.Type = genTypeSpec.TypeSpec.Type
-		} else {
-			newField.Type = field.Type
-		}
+
+		newField.Type = resolveType(field.Type, field, genericParamTypeDefs)
 
 		newStructTypeDef.Fields.List = append(newStructTypeDef.Fields.List, newField)
 	}
@@ -106,4 +103,16 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 	parametrizedTypeSpec.TypeSpec.Type = newStructTypeDef
 
 	return parametrizedTypeSpec
+}
+
+func resolveType(expr ast.Expr, field *ast.Field, genericParamTypeDefs map[string]*TypeSpecDef) ast.Expr {
+	if asIdent, ok := expr.(*ast.Ident); ok {
+		if genTypeSpec, ok := genericParamTypeDefs[asIdent.Name]; ok {
+			return genTypeSpec.TypeSpec.Type
+		}
+	} else if asArray, ok := expr.(*ast.ArrayType); ok {
+		return &ast.ArrayType{Elt: resolveType(asArray.Elt, field, genericParamTypeDefs), Len: asArray.Len, Lbrack: asArray.Lbrack}
+	}
+
+	return field.Type
 }
