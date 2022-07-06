@@ -8,7 +8,6 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -53,10 +52,10 @@ func TestNew(t *testing.T) {
 	t.Run("SetDebugger", func(t *testing.T) {
 		t.Parallel()
 
-		logger := log.New(&bytes.Buffer{}, "", log.LstdFlags)
+		logger := NewLogger(&bytes.Buffer{})
 
 		p := New(SetDebugger(logger))
-		assert.Equal(t, logger, p.debug)
+		assert.Equal(t, logger, p.logger)
 	})
 
 	t.Run("SetFieldParserFactory", func(t *testing.T) {

@@ -10,7 +10,6 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -23,6 +22,7 @@ import (
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -149,7 +149,7 @@ type Parser struct {
 	excludes map[string]struct{}
 
 	// debugging output goes here
-	debug Debugger
+	logger Logger
 
 	// fieldParserFactory create FieldParser
 	fieldParserFactory FieldParserFactory
@@ -174,8 +174,42 @@ type FieldParser interface {
 }
 
 // Debugger is the interface that wraps the basic Printf method.
-type Debugger interface {
-	Printf(format string, v ...interface{})
+type Logger interface {
+	WithField(key string, value interface{}) *logrus.Entry
+	WithFields(fields logrus.Fields) *logrus.Entry
+	WithError(err error) *logrus.Entry
+
+	Tracef(format string, args ...interface{})
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Printf(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Warningf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalf(format string, args ...interface{})
+	Panicf(format string, args ...interface{})
+
+	Trace(args ...interface{})
+	Debug(args ...interface{})
+	Info(args ...interface{})
+	Print(args ...interface{})
+	Warn(args ...interface{})
+	Warning(args ...interface{})
+	Error(args ...interface{})
+	Fatal(args ...interface{})
+	Panic(args ...interface{})
+
+	Traceln(args ...interface{})
+	Debugln(args ...interface{})
+	Infoln(args ...interface{})
+	Println(args ...interface{})
+	Warnln(args ...interface{})
+	Warningln(args ...interface{})
+	Errorln(args ...interface{})
+	Fatalln(args ...interface{})
+	Panicln(args ...interface{})
+
+	GetLevel() logrus.Level
 }
 
 // New creates a new Parser with default properties.
@@ -206,7 +240,7 @@ func New(options ...func(*Parser)) *Parser {
 			},
 		},
 		packages:           NewPackagesDefinitions(),
-		debug:              log.New(os.Stdout, "", log.LstdFlags),
+		logger:             NewLogger(),
 		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
 		outputSchemas:      make(map[*TypeSpecDef]*Schema),
 		existSchemaNames:   make(map[string]*Schema),
@@ -258,10 +292,10 @@ func SetStrict(strict bool) func(*Parser) {
 }
 
 // SetDebugger allows the use of user-defined implementations.
-func SetDebugger(logger Debugger) func(parser *Parser) {
+func SetDebugger(logger Logger) func(parser *Parser) {
 	return func(p *Parser) {
 		if logger != nil {
-			p.debug = logger
+			p.logger = logger
 		}
 
 	}
@@ -298,11 +332,11 @@ func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth 
 // ParseAPIMultiSearchDir is like ParseAPI but for multiple search dirs.
 func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile string, parseDepth int) error {
 	for _, searchDir := range searchDirs {
-		parser.debug.Printf("Generate general API Info, search dir:%s", searchDir)
+		parser.logger.Debugf("Generate general API Info, search dir:%s", searchDir)
 
 		packageDir, err := getPkgName(searchDir)
 		if err != nil {
-			parser.debug.Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
+			parser.logger.Debugf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
 		}
 
 		err = parser.getAllGoFileInfo(packageDir, searchDir)
@@ -843,7 +877,7 @@ func processRouterOperation(parser *Parser, operation *Operation) error {
 				return err
 			}
 
-			parser.debug.Printf("warning: %s\n", err)
+			parser.logger.Debugf("warning: %s\n", err)
 		}
 
 		*op = &operation.Operation
@@ -872,7 +906,7 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
 	if override, ok := parser.Overrides[typeName]; ok {
-		parser.debug.Printf("Override detected for %s: using %s instead", typeName, override)
+		parser.logger.Debugf("Override detected for %s: using %s instead", typeName, override)
 		typeName = override
 	}
 
@@ -888,19 +922,19 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return PrimitiveSchema(schemaType), nil
 	}
 
-	typeSpecDef := parser.packages.FindTypeSpec(typeName, file, parser.ParseDependency)
+	typeSpecDef := parser.packages.FindTypeSpec(typeName, file, parser.logger, parser.ParseDependency)
 	if typeSpecDef == nil {
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 
 	if override, ok := parser.Overrides[typeSpecDef.FullPath()]; ok {
 		if override == "" {
-			parser.debug.Printf("Override detected for %s: ignoring", typeSpecDef.FullPath())
+			parser.logger.Debugf("Override detected for %s: ignoring", typeSpecDef.FullPath())
 
 			return nil, ErrSkippedField
 		}
 
-		parser.debug.Printf("Override detected for %s: using %s instead", typeSpecDef.FullPath(), override)
+		parser.logger.Debugf("Override detected for %s: using %s instead", typeSpecDef.FullPath(), override)
 
 		separator := strings.LastIndex(override, ".")
 		if separator == -1 {
@@ -1020,13 +1054,13 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	schema, found := parser.parsedSchemas[typeSpecDef]
 	if found {
-		parser.debug.Printf("Skipping '%s', already parsed.", typeName)
+		parser.logger.Debugf("Skipping '%s', already parsed.", typeName)
 
 		return schema, nil
 	}
 
 	if parser.isInStructStack(typeSpecDef) {
-		parser.debug.Printf("Skipping '%s', recursion detected.", typeName)
+		parser.logger.Debugf("Skipping '%s', recursion detected.", typeName)
 
 		return &Schema{
 				Name:    refTypeName,
@@ -1038,7 +1072,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	parser.structStack = append(parser.structStack, typeSpecDef)
 
-	parser.debug.Printf("Generating %s", typeName)
+	parser.logger.Debugf("Generating %s", typeName)
 
 	definition, err := parser.parseTypeExpr(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
 	if err != nil {
@@ -1175,7 +1209,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 		return nil, ErrFuncTypeField
 	// ...
 	default:
-		parser.debug.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
+		parser.logger.Debugf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}
 
 	return PrimitiveSchema(OBJECT), nil
@@ -1514,7 +1548,7 @@ func (parser *Parser) parseFile(packageDir, path string, src interface{}) error 
 		return fmt.Errorf("ParseFile error:%+v", err)
 	}
 
-	err = parser.packages.CollectAstFile(packageDir, path, astFile)
+	err = parser.packages.CollectAstFile(packageDir, path, astFile, parser.logger)
 	if err != nil {
 		return err
 	}

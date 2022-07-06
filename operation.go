@@ -137,6 +137,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	case paramAttr:
 		return operation.ParseParamComment(lineRemainder, astFile)
 	case successAttr, failureAttr, responseAttr:
+		operation.parser.logger.Trace("response found ", lowerAttribute)
 		return operation.ParseResponseComment(lineRemainder, astFile)
 	case headerAttr:
 		return operation.ParseResponseHeaderComment(lineRemainder, astFile)
@@ -354,7 +355,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				case IsSimplePrimitiveType(prop.Type[0]):
 					param = createParameter(paramType, prop.Description, name, prop.Type[0], findInSlice(schema.Required, name))
 				default:
-					operation.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
+					operation.parser.logger.Debugf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 
 					continue
 				}
@@ -945,6 +946,7 @@ func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refTyp
 
 	switch schemaType {
 	case OBJECT:
+		operation.parser.logger.Tracef("parse object schema of %s in %s", refType, astFile.Name)
 		if !strings.HasPrefix(refType, "[]") {
 			return operation.parseObjectSchema(refType, astFile)
 		}
@@ -953,6 +955,7 @@ func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refTyp
 
 		fallthrough
 	case ARRAY:
+		operation.parser.logger.Tracef("parse array schema of %s in %s", refType, astFile.Name)
 		schema, err := operation.parseObjectSchema(refType, astFile)
 		if err != nil {
 			return nil, err
