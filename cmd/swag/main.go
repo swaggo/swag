@@ -143,7 +143,7 @@ func initAction(ctx *cli.Context) error {
 	if len(outputTypes) == 0 {
 		return fmt.Errorf("no output types specified")
 	}
-	var logger swag.Debugger
+	logger := log.New(os.Stdout, "", log.LstdFlags)
 	if ctx.Bool(quietFlag) {
 		logger = log.New(ioutil.Discard, "", log.LstdFlags)
 	}

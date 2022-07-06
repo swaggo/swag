@@ -33,6 +33,12 @@ type Gen struct {
 	jsonIndent    func(data interface{}) ([]byte, error)
 	jsonToYAML    func(data []byte) ([]byte, error)
 	outputTypeMap map[string]genTypeWriter
+	debug         Debugger
+}
+
+// Debugger is the interface that wraps the basic Printf method.
+type Debugger interface {
+	Printf(format string, v ...interface{})
 }
 
 // New creates a new Gen.
@@ -117,6 +123,7 @@ type Config struct {
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
 func (g *Gen) Build(config *Config) error {
+	g.debug = config.Debugger
 	if config.InstanceName == "" {
 		config.InstanceName = swag.Name
 	}
@@ -138,7 +145,7 @@ func (g *Gen) Build(config *Config) error {
 				return fmt.Errorf("could not open overrides file: %w", err)
 			}
 		} else {
-			log.Printf("Using overrides from %s", config.OverridesFile)
+			g.debug.Printf("Using overrides from %s", config.OverridesFile)
 
 			overrides, err = parseOverrides(overridesFile)
 			if err != nil {
@@ -147,7 +154,7 @@ func (g *Gen) Build(config *Config) error {
 		}
 	}
 
-	log.Println("Generate swagger docs....")
+	g.debug.Printf("Generate swagger docs....")
 
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetDebugger(config.Debugger),
@@ -216,7 +223,7 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	log.Printf("create docs.go at  %+v", docFileName)
+	g.debug.Printf("create docs.go at  %+v", docFileName)
 
 	return nil
 }
@@ -240,7 +247,7 @@ func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	log.Printf("create swagger.json at  %+v", jsonFileName)
+	g.debug.Printf("create swagger.json at  %+v", jsonFileName)
 
 	return nil
 }
@@ -269,7 +276,7 @@ func (g *Gen) writeYAMLSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	log.Printf("create swagger.yaml at  %+v", yamlFileName)
+	g.debug.Printf("create swagger.yaml at  %+v", yamlFileName)
 
 	return nil
 }
