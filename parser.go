@@ -169,7 +169,7 @@ type FieldParser interface {
 	ShouldSkip() bool
 	FieldName() (string, error)
 	CustomSchema() (*spec.Schema, error)
-	ComplementSchema(schema *spec.Schema) error
+	ComplementSchema(schema *spec.Schema, logger Logger) error
 	IsRequired() (bool, error)
 }
 
@@ -1317,7 +1317,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		}
 	}
 
-	err = ps.ComplementSchema(schema)
+	err = ps.ComplementSchema(schema, parser.logger)
 	if err != nil {
 		return nil, nil, err
 	}
