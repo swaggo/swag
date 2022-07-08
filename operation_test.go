@@ -2380,3 +2380,14 @@ func TestParseCodeSamples(t *testing.T) {
 		assert.Error(t, err, "no error should be thrown")
 	})
 }
+
+func TestParseRouterCommentWithEqualSign(t *testing.T) {
+	t.Parallel()
+	comment := `/@Router /customer/get-wishlist/prx={proxy} [post]`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Len(t, operation.RouterProperties, 1)
+	assert.Equal(t, "/customer/get-wishlist/prx={proxy}", operation.RouterProperties[0].Path)
+	assert.Equal(t, "POST", operation.RouterProperties[0].HTTPMethod)
+}
