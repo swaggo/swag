@@ -817,15 +817,16 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 		astDeclaration, ok := astDescription.(*ast.FuncDecl)
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 			// for per 'function' comment, create a new 'Operation' object
+
 			operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
 			for _, comment := range astDeclaration.Doc.List {
-				err := operation.ParseComment(comment.Text, astFile)
+				err := operation.ParseComment(comment.Text, astFile, parser.logger)
 				if err != nil {
 					return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
 				}
 			}
 
-			err := processRouterOperation(parser, operation)
+			err := processRouterOperation(fileName, parser, operation)
 			if err != nil {
 				return err
 			}
@@ -856,7 +857,7 @@ func refRouteMethodOp(item *spec.PathItem, method string) (op **spec.Operation) 
 	return
 }
 
-func processRouterOperation(parser *Parser, operation *Operation) error {
+func processRouterOperation(fileName string, parser *Parser, operation *Operation) error {
 	for _, routeProperties := range operation.RouterProperties {
 		var (
 			pathItem spec.PathItem
@@ -878,6 +879,8 @@ func processRouterOperation(parser *Parser, operation *Operation) error {
 			}
 
 			parser.logger.Debugf("warning: %s\n", err)
+		} else {
+			parser.logger.Tracef("add route %s %s in %s", routeProperties.HTTPMethod, routeProperties.Path, fileName)
 		}
 
 		*op = &operation.Operation

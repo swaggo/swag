@@ -105,7 +105,7 @@ func SetCodeExampleFilesDirectory(directoryPath string) func(*Operation) {
 }
 
 // ParseComment parses comment for given comment string and returns error if error occurs.
-func (operation *Operation) ParseComment(comment string, astFile *ast.File) error {
+func (operation *Operation) ParseComment(comment string, astFile *ast.File, logger Logger) error {
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "/"))
 	if len(commentLine) == 0 {
 		return nil
@@ -135,10 +135,10 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	case produceAttr:
 		return operation.ParseProduceComment(lineRemainder)
 	case paramAttr:
-		return operation.ParseParamComment(lineRemainder, astFile)
+		return operation.ParseParamComment(lineRemainder, astFile, logger)
 	case successAttr, failureAttr, responseAttr:
 		operation.parser.logger.Trace("response found ", lowerAttribute)
-		return operation.ParseResponseComment(lineRemainder, astFile)
+		return operation.ParseResponseComment(lineRemainder, astFile, logger)
 	case headerAttr:
 		return operation.ParseResponseHeaderComment(lineRemainder, astFile)
 	case routerAttr:
@@ -273,10 +273,15 @@ func (operation *Operation) parseArrayParam(param *spec.Parameter, paramType, re
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
 //              [param name]    [paramType] [data type]  [is mandatory?]   [Comment]
 // E.g. @Param   some_id     path    int     true        "Some ID".
-func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
+func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File, logger Logger) error {
 	matches := paramPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 6 {
-		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
+		return fmt.Errorf(`
+missing required param comment parameters in \"%s\"
+should be：
+	[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
+E.g. 
+	queryText		formData	      string	  true		        "The email for login"`, commentLine)
 	}
 
 	name := matches[1]
@@ -386,7 +391,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		if objectType == PRIMITIVE {
 			param.Schema = PrimitiveSchema(refType)
 		} else {
-			schema, err := operation.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
+			schema, err := operation.parseAPIObjectSchema(commentLine, objectType, refType, astFile, logger)
 			if err != nil {
 				return err
 			}
@@ -822,7 +827,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 var responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\[\]]+)[^"]*(.*)?`)
 
 // ResponseType{data1=Type1,data2=Type2}.
-var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
+var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]*){(.*)}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
@@ -903,6 +908,10 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 
+	if matches[1] == "" {
+		matches[1] = "interface{}"
+	}
+
 	schema, err := operation.parseObjectSchema(matches[1], astFile)
 	if err != nil {
 		return nil, err
@@ -934,7 +943,7 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	}), nil
 }
 
-func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
+func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refType string, astFile *ast.File, logger Logger) (*spec.Schema, error) {
 	if strings.HasSuffix(refType, ",") && strings.Contains(refType, "[") {
 		// regexp may have broken generics syntax. find closing bracket and add it back
 		allMatchesLenOffset := strings.Index(commentLine, refType) + len(refType)
@@ -960,15 +969,17 @@ func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refTyp
 		if err != nil {
 			return nil, err
 		}
-
 		return spec.ArrayProperty(schema), nil
 	default:
+		if !IsPrimitiveType(schemaType) {
+			logger.Warningf("%s is not a primitve type, do you need to check the comments (%s)?", schemaType, commentLine)
+		}
 		return PrimitiveSchema(schemaType), nil
 	}
 }
 
 // ParseResponseComment parses comment for given `response` comment string.
-func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
+func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File, logger Logger) error {
 	matches := responsePattern.FindStringSubmatch(commentLine)
 	if len(matches) != 5 {
 		err := operation.ParseEmptyResponseComment(commentLine)
@@ -981,7 +992,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 
 	description := strings.Trim(matches[4], "\"")
 
-	schema, err := operation.parseAPIObjectSchema(commentLine, strings.Trim(matches[2], "{}"), matches[3], astFile)
+	schema, err := operation.parseAPIObjectSchema(commentLine, strings.Trim(matches[2], "{}"), matches[3], astFile, logger)
 	if err != nil {
 		return err
 	}
