@@ -24,12 +24,6 @@ func NewLogger(ws ...io.Writer) *logrus.Logger {
 }
 
 type logFormatter struct {
-	// Timestamp format
-	TimestampFormat string
-	// Available standard keys: time, msg, lvl
-	// Also can include custom fields but limited to strings.
-	// All of fields need to be wrapped inside %% i.e %time% %msg%
-	LogFormat string
 }
 
 // Format building log message.

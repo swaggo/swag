@@ -12,14 +12,14 @@ import (
 
 func TestPackagesDefinitions_CollectAstFile(t *testing.T) {
 	pd := PackagesDefinitions{}
-	assert.NoError(t, pd.CollectAstFile("", "", nil))
+	assert.NoError(t, pd.CollectAstFile("", "", nil, NewLogger()))
 
 	firstFile := &ast.File{
 		Name: &ast.Ident{Name: "main.go"},
 	}
 
 	packageDir := "github.com/swaggo/swag/testdata/simple"
-	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+firstFile.Name.String(), firstFile))
+	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+firstFile.Name.String(), firstFile, NewLogger()))
 	assert.NotEmpty(t, pd.packages[packageDir])
 
 	absPath, _ := filepath.Abs("testdata/simple/" + firstFile.Name.String())
@@ -31,14 +31,14 @@ func TestPackagesDefinitions_CollectAstFile(t *testing.T) {
 	assert.Equal(t, pd.files[firstFile], astFileInfo)
 
 	// Override
-	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+firstFile.Name.String(), firstFile))
+	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+firstFile.Name.String(), firstFile, NewLogger()))
 	assert.Equal(t, pd.files[firstFile], astFileInfo)
 
 	// Another file
 	secondFile := &ast.File{
 		Name: &ast.Ident{Name: "api.go"},
 	}
-	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+secondFile.Name.String(), secondFile))
+	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+secondFile.Name.String(), secondFile, NewLogger()))
 }
 
 func TestPackagesDefinitions_rangeFiles(t *testing.T) {
@@ -128,12 +128,12 @@ func TestPackagesDefinitions_FindTypeSpec(t *testing.T) {
 	}
 
 	var nilDef *TypeSpecDef
-	assert.Equal(t, nilDef, pkg.FindTypeSpec("int", nil, false))
-	assert.Equal(t, nilDef, pkg.FindTypeSpec("bool", nil, false))
-	assert.Equal(t, nilDef, pkg.FindTypeSpec("string", nil, false))
+	assert.Equal(t, nilDef, pkg.FindTypeSpec("int", nil, NewLogger(), false))
+	assert.Equal(t, nilDef, pkg.FindTypeSpec("bool", nil, NewLogger(), false))
+	assert.Equal(t, nilDef, pkg.FindTypeSpec("string", nil, NewLogger(), false))
 
-	assert.Equal(t, &userDef, pkg.FindTypeSpec("user.Model", nil, false))
-	assert.Equal(t, nilDef, pkg.FindTypeSpec("Model", nil, false))
+	assert.Equal(t, &userDef, pkg.FindTypeSpec("user.Model", nil, NewLogger(), false))
+	assert.Equal(t, nilDef, pkg.FindTypeSpec("Model", nil, NewLogger(), false))
 }
 
 func TestPackage_rangeFiles(t *testing.T) {

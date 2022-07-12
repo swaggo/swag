@@ -4,13 +4,12 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
 
-	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/loader" //b不带名称
 )
 
 // PackagesDefinitions map[package import path]*PackageDefinitions.
@@ -178,15 +177,33 @@ func (pkgDefs *PackagesDefinitions) findTypeSpec(pkgPath string, typeName string
 	return nil
 }
 
-func (pkgDefs *PackagesDefinitions) loadExternalPackage(importPath string) error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
+func (pkgDefs *PackagesDefinitions) parseImportName(importPath string) string {
+
+	conf := loader.Config{
+		ParserMode: goparser.PackageClauseOnly,
 	}
+
+	conf.Import(importPath)
+
+	loaderProgram, err := conf.Load()
+	if err != nil {
+		return ""
+	}
+
+	for _, info := range loaderProgram.AllPackages {
+		pkgPath := strings.TrimPrefix(info.Pkg.Path(), "vendor/")
+		if pkgPath == importPath {
+			return info.Pkg.Name()
+		}
+	}
+
+	return ""
+}
+
+func (pkgDefs *PackagesDefinitions) loadExternalPackage(importPath string) error {
 
 	conf := loader.Config{
 		ParserMode: goparser.ParseComments,
-		Cwd:        cwd,
 	}
 
 	conf.Import(importPath)
@@ -259,22 +276,14 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 				}
 			} else {
 				//try to parse imported file until parsedenpency is disabled
-				var filePath = importToPath(path) //TODO just support vendor until now
-				imports, err := goparser.ParseDir(token.NewFileSet(), filePath, nil, goparser.PackageClauseOnly)
-				if err != nil && !strings.Contains(err.Error(), "The system cannot find") {
-					logger.Traceln("error happen in parse unnamed import", err)
-				} else if err == nil {
-					if _, ok := imports[pkg]; ok {
-						pkgDefs.packages[filePath] = &PackageDefinitions{
-							Name: pkg,
-						}
-						//if pkg is named as imported,should try to add it in parser
-						err = pkgDefs.loadExternalPackage(path)
-						if err != nil {
-							logger.Traceln("error happen in get imported golang file info ", err)
-						}
-						return path
+				name := pkgDefs.parseImportName(path)
+				if name == pkg {
+					//if pkg is named as imported,should try to add it in parser
+					err := pkgDefs.loadExternalPackage(path)
+					if err != nil {
+						logger.Traceln("error happen in get imported golang file info ", err)
 					}
+					return path
 				}
 			}
 		}
