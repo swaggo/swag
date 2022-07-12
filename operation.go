@@ -393,7 +393,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			param.Schema = schema
 		}
 	default:
-		return fmt.Errorf("%s is not supported paramType", paramType)
+		return fmt.Errorf("%s is not supported paramType (valid type: path|header|query|formData|body)", paramType)
 	}
 
 	err := operation.parseParamAttribute(commentLine, objectType, refType, &param)
