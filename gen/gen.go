@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"go/format"
 	"io"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -57,7 +56,7 @@ func New() *Gen {
 
 // Config presents Gen configurations.
 type Config struct {
-	Debugger swag.Debugger
+	Logger swag.Logger
 
 	// SearchDir the swag would parse,comma separated if multiple
 	SearchDir string
@@ -138,7 +137,7 @@ func (g *Gen) Build(config *Config) error {
 				return fmt.Errorf("could not open overrides file: %w", err)
 			}
 		} else {
-			log.Printf("Using overrides from %s", config.OverridesFile)
+			config.Logger.Infof("Using overrides from %s", config.OverridesFile)
 
 			overrides, err = parseOverrides(overridesFile)
 			if err != nil {
@@ -147,10 +146,10 @@ func (g *Gen) Build(config *Config) error {
 		}
 	}
 
-	log.Println("Generate swagger docs....")
+	config.Logger.Println("Generate swagger docs....")
 
 	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
-		swag.SetDebugger(config.Debugger),
+		swag.SetDebugger(config.Logger),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
 		swag.SetStrict(config.Strict),
@@ -181,7 +180,7 @@ func (g *Gen) Build(config *Config) error {
 				return err
 			}
 		} else {
-			log.Printf("output type '%s' not supported", outputType)
+			config.Logger.Infof("output type '%s' not supported", outputType)
 		}
 	}
 
@@ -216,7 +215,7 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	log.Printf("create docs.go at  %+v", docFileName)
+	config.Logger.Infof("create docs.go at  %+v", docFileName)
 
 	return nil
 }
@@ -240,7 +239,7 @@ func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	log.Printf("create swagger.json at  %+v", jsonFileName)
+	config.Logger.Infof("create swagger.json at  %+v", jsonFileName)
 
 	return nil
 }
@@ -269,7 +268,7 @@ func (g *Gen) writeYAMLSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	log.Printf("create swagger.yaml at  %+v", yamlFileName)
+	config.Logger.Infof("create swagger.yaml at  %+v", yamlFileName)
 
 	return nil
 }

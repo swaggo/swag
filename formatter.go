@@ -8,8 +8,6 @@ import (
 	goparser "go/parser"
 	"go/token"
 	"io"
-	"log"
-	"os"
 	"regexp"
 	"strings"
 	"text/tabwriter"
@@ -36,13 +34,13 @@ var skipChar = map[byte]byte{
 // Formatter implements a formatter for Go source files.
 type Formatter struct {
 	// debugging output goes here
-	debug Debugger
+	logger Logger
 }
 
 // NewFormatter create a new formatter instance.
 func NewFormatter() *Formatter {
 	formatter := &Formatter{
-		debug: log.New(os.Stdout, "", log.LstdFlags),
+		logger: NewLogger(),
 	}
 	return formatter
 }

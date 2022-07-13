@@ -207,21 +207,48 @@ func splitNotWrapped(s string, sep rune) []string {
 	return result
 }
 
-func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
+func (ps *tagBaseFieldParser) complementDescriptionOfSchema(schema *spec.Schema, logger Logger) {
+	var doc, comment string
+	var docHasMark, commentHasMark bool
+	if ps.field.Doc != nil {
+		doc = strings.TrimSpace(ps.field.Doc.Text())
+		if strings.HasPrefix(doc, "@description") {
+			docHasMark = true
+			doc = strings.TrimSpace(strings.TrimPrefix(doc, "@description"))
+		}
+	}
+
+	if ps.field.Comment != nil {
+		comment = strings.TrimSpace(ps.field.Comment.Text())
+		if strings.HasPrefix(comment, "@description") {
+			commentHasMark = true
+			comment = strings.TrimSpace(strings.TrimPrefix(comment, "@description"))
+		}
+	}
+
+	if commentHasMark {
+		schema.Description = comment
+	} else if docHasMark {
+		schema.Description = doc
+	} else if doc != "" && comment != "" {
+		logger.Tracef("%s has comment both in previous line and line end, you can prepand @description to select one", ps.field.Names[0])
+		schema.Description = doc
+	} else if doc != "" {
+		schema.Description = doc
+	} else if comment != "" {
+		schema.Description = comment
+	}
+}
+
+func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema, logger Logger) error {
+
 	types := ps.p.GetSchemaTypePath(schema, 2)
 	if len(types) == 0 {
 		return fmt.Errorf("invalid type for field: %s", ps.field.Names[0])
 	}
 
 	if ps.field.Tag == nil {
-		if ps.field.Doc != nil {
-			schema.Description = strings.TrimSpace(ps.field.Doc.Text())
-		}
-
-		if schema.Description == "" && ps.field.Comment != nil {
-			schema.Description = strings.TrimSpace(ps.field.Comment.Text())
-		}
-
+		ps.complementDescriptionOfSchema(schema, logger)
 		return nil
 	}
 
@@ -343,13 +370,7 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		}
 	}
 
-	if ps.field.Doc != nil {
-		schema.Description = strings.TrimSpace(ps.field.Doc.Text())
-	}
-
-	if schema.Description == "" && ps.field.Comment != nil {
-		schema.Description = strings.TrimSpace(ps.field.Comment.Text())
-	}
+	ps.complementDescriptionOfSchema(schema, logger)
 
 	schema.ReadOnly = ps.tag.Get(readOnlyTag) == "true"
 

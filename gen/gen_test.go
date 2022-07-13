@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -760,7 +759,7 @@ func TestGen_Debugger(t *testing.T) {
 		OutputDir:          "../testdata/simple/docs",
 		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
-		Debugger:           log.New(&buf, "", log.LstdFlags),
+		Logger:             swag.NewLogger(&buf),
 	}
 	assert.True(t, buf.Len() == 0)
 	assert.NoError(t, New().Build(config))

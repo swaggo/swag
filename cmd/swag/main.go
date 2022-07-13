@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -12,6 +11,8 @@ import (
 	"github.com/swaggo/swag"
 	"github.com/swaggo/swag/format"
 	"github.com/swaggo/swag/gen"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -33,6 +34,7 @@ const (
 	overridesFileFlag     = "overridesFile"
 	parseGoListFlag       = "parseGoList"
 	quietFlag             = "quiet"
+	verboseFlag           = "verbose"
 )
 
 var initFlags = []cli.Flag{
@@ -128,6 +130,12 @@ var initFlags = []cli.Flag{
 		Value: true,
 		Usage: "Parse dependency via 'go list'",
 	},
+	&cli.BoolFlag{
+		Name:    verboseFlag,
+		Aliases: []string{"v"},
+		Value:   false,
+		Usage:   "Show more info of executation",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -143,9 +151,15 @@ func initAction(ctx *cli.Context) error {
 	if len(outputTypes) == 0 {
 		return fmt.Errorf("no output types specified")
 	}
-	var logger swag.Debugger
-	if ctx.Bool(quietFlag) {
-		logger = log.New(ioutil.Discard, "", log.LstdFlags)
+
+	// var logger swag.Debugger
+	var logger = swag.NewLogger()
+	if ctx.Bool(verboseFlag) {
+		logger.SetLevel(logrus.TraceLevel)
+	} else if ctx.Bool(quietFlag) {
+		logger.SetLevel(logrus.InfoLevel)
+	} else {
+		logger.SetLevel(logrus.DebugLevel)
 	}
 
 	return gen.New().Build(&gen.Config{
@@ -166,7 +180,7 @@ func initAction(ctx *cli.Context) error {
 		InstanceName:        ctx.String(instanceNameFlag),
 		OverridesFile:       ctx.String(overridesFileFlag),
 		ParseGoList:         ctx.Bool(parseGoListFlag),
-		Debugger:            logger,
+		Logger:              logger,
 	})
 }
 

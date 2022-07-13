@@ -19,7 +19,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" example:"one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, "one", schema.Example)
 
@@ -30,7 +30,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" example:""`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, "", schema.Example)
 
@@ -41,7 +41,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" example:"one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 	})
 
@@ -55,7 +55,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" format:"csv"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, "csv", schema.Format)
 	})
@@ -134,7 +134,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" extensions:"x-nullable,x-abc=def,!x-omitempty,x-example=[0, 9],x-example2={çãíœ, (bar=(abc, def)), [0,9]}"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, true, schema.Extensions["x-nullable"])
 		assert.Equal(t, "def", schema.Extensions["x-abc"])
@@ -153,7 +153,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"a,b,c"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"a", "b", "c"}, schema.Enum)
 
@@ -164,7 +164,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"a,b,c"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 	})
 
@@ -180,7 +180,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"0,1,2" x-enum-varnames:"Daily,Weekly,Monthly"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"Daily", "Weekly", "Monthly"}, schema.Extensions["x-enum-varnames"])
 
@@ -191,7 +191,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"0,1,2,3" x-enum-varnames:"Daily,Weekly,Monthly"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 
 		// Test for an array of enums
@@ -211,7 +211,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"0,1,2" x-enum-varnames:"Daily,Weekly,Monthly"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"Daily", "Weekly", "Monthly"}, schema.Items.Schema.Extensions["x-enum-varnames"])
 		assert.Equal(t, spec.Extensions{}, schema.Extensions)
@@ -227,7 +227,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" default:"pass"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, "pass", schema.Default)
 
@@ -238,7 +238,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" default:"pass"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 	})
 
@@ -252,7 +252,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maximum:"1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		max := float64(1)
 		assert.Equal(t, &max, schema.Maximum)
@@ -264,7 +264,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maximum:"one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 
 		schema = spec.Schema{}
@@ -274,7 +274,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maximum:"1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		max = float64(1)
 		assert.Equal(t, &max, schema.Maximum)
@@ -286,7 +286,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maximum:"one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 
 		schema = spec.Schema{}
@@ -296,7 +296,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" multipleOf:"1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		multipleOf := float64(1)
 		assert.Equal(t, &multipleOf, schema.MultipleOf)
@@ -308,7 +308,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" multipleOf:"one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 
 		schema = spec.Schema{}
@@ -318,7 +318,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" minimum:"1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		min := float64(1)
 		assert.Equal(t, &min, schema.Minimum)
@@ -330,7 +330,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" minimum:"one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 	})
 
@@ -344,7 +344,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maxLength:"1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		max := int64(1)
 		assert.Equal(t, &max, schema.MaxLength)
@@ -356,7 +356,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maxLength:"one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 
 		schema = spec.Schema{}
@@ -366,7 +366,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" minLength:"1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		min := int64(1)
 		assert.Equal(t, &min, schema.MinLength)
@@ -378,7 +378,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" minLength:"one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.Error(t, err)
 	})
 
@@ -392,7 +392,7 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" readonly:"true"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, true, schema.ReadOnly)
 	})
@@ -403,7 +403,7 @@ func TestDefaultFieldParser(t *testing.T) {
 		err := newTagBaseFieldParser(
 			&Parser{},
 			&ast.Field{Names: []*ast.Ident{{Name: "BasicStruct"}}},
-		).ComplementSchema(nil)
+		).ComplementSchema(nil, NewLogger())
 		assert.Error(t, err)
 	})
 }
@@ -419,7 +419,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,min=1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		max := int64(10)
 		min := int64(1)
 		assert.NoError(t, err)
@@ -433,7 +433,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,gte=1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, &max, schema.MaxLength)
 		assert.Equal(t, &min, schema.MinLength)
@@ -445,7 +445,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,min=1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		maxFloat64 := float64(10)
 		minFloat64 := float64(1)
 		assert.NoError(t, err)
@@ -466,7 +466,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,min=1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, &max, schema.MaxItems)
 		assert.Equal(t, &min, schema.MinItems)
@@ -477,7 +477,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=ten,min=1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Empty(t, schema.MaxItems)
 		assert.Equal(t, &min, schema.MinItems)
@@ -493,7 +493,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof='red book' 'green book'"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"red book", "green book"}, schema.Enum)
 
@@ -504,7 +504,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof=1 2 3"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{1, 2, 3}, schema.Enum)
 
@@ -522,7 +522,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof=red green yellow"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"red", "green", "yellow"}, schema.Items.Schema.Enum)
 
@@ -533,7 +533,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof='red green' blue 'c0x2Cc' 'd0x7Cd'"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"red green", "blue", "c,c", "d|d"}, schema.Enum)
 
@@ -544,7 +544,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof='c0x9Ab' book"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"c0x9Ab", "book"}, schema.Enum)
 
@@ -555,7 +555,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" binding:"oneof=foo bar" validate:"required,oneof=foo bar" enums:"a,b,c"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"a", "b", "c"}, schema.Enum)
 
@@ -566,7 +566,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" binding:"oneof=aa bb" validate:"required,oneof=foo bar"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, []interface{}{"aa", "bb"}, schema.Enum)
 	})
@@ -587,7 +587,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,unique"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, true, schema.UniqueItems)
 	})
@@ -608,7 +608,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,unique,max=10,min=1,oneof=a0x2Cc 'c0x7Cd book',omitempty,dive,max=1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, true, schema.UniqueItems)
 
@@ -632,7 +632,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof=,max=10=90,min=1"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Empty(t, schema.UniqueItems)
 		assert.Empty(t, schema.MaxItems)
@@ -652,7 +652,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,min=one"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Equal(t, &max, schema.MaxItems)
 		assert.Empty(t, schema.MinItems)
@@ -664,7 +664,7 @@ func TestValidTags(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof=one two"`,
 			}},
-		).ComplementSchema(&schema)
+		).ComplementSchema(&schema, NewLogger())
 		assert.NoError(t, err)
 		assert.Empty(t, schema.Enum)
 	})
