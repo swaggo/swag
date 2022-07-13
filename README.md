@@ -128,6 +128,8 @@ OPTIONS:
 - [echo](http://github.com/swaggo/echo-swagger)
 - [buffalo](https://github.com/swaggo/buffalo-swagger)
 - [net/http](https://github.com/swaggo/http-swagger)
+- [gorilla/mux](https://github.com/swaggo/http-swagger)
+- [go-chi/chi](https://github.com/swaggo/http-swagger)
 - [flamingo](https://github.com/i-love-flamingo/swagger)
 - [fiber](https://github.com/gofiber/swagger)
 - [atreugo](https://github.com/Nerzal/atreugo-swagger)

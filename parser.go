@@ -1432,7 +1432,6 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 				result[mapData[0]] = v
 
 				continue
-
 			}
 
 			return nil, fmt.Errorf("example value %s should format: key:value", exampleValue)
