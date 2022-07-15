@@ -1432,7 +1432,6 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 				result[mapData[0]] = v
 
 				continue
-
 			}
 
 			return nil, fmt.Errorf("example value %s should format: key:value", exampleValue)
@@ -1567,7 +1566,7 @@ func walkWith(excludes map[string]struct{}, parseVendor bool) func(path string, 
 		if f.IsDir() {
 			if !parseVendor && f.Name() == "vendor" || // ignore "vendor"
 				f.Name() == "docs" || // exclude docs
-				len(f.Name()) > 1 && f.Name()[0] == '.' { // exclude all hidden folder
+				len(f.Name()) > 1 && f.Name()[0] == '.' && f.Name() != ".." { // exclude all hidden folder
 				return filepath.SkipDir
 			}
 

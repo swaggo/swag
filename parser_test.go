@@ -3105,7 +3105,7 @@ func Fun()  {
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -3162,7 +3162,7 @@ func Fun()  {
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -3326,7 +3326,7 @@ func TestParseJSONFieldString(t *testing.T) {
                         }
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -3557,6 +3557,7 @@ func TestParser_Skip(t *testing.T) {
 	assert.NoError(t, parser.Skip("", &mockFS{FileName: "models", IsDirectory: true}))
 	assert.NoError(t, parser.Skip("", &mockFS{FileName: "admin", IsDirectory: true}))
 	assert.NoError(t, parser.Skip("", &mockFS{FileName: "release", IsDirectory: true}))
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "..", IsDirectory: true}))
 
 	parser = New(SetExcludedDirsAndFiles("admin/release,admin/models"))
 	assert.NoError(t, parser.Skip("admin", &mockFS{IsDirectory: true}))
