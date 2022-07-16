@@ -27,24 +27,19 @@ func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 }
 
 func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, fullGenericForm string) *TypeSpecDef {
-	genericParams := strings.Split(strings.TrimRight(fullGenericForm, "]"), "[")
-	if len(genericParams) == 1 {
+	genericTypeName, genericParams := splitStructName(fullGenericForm)
+	if genericParams == nil {
 		return nil
 	}
 
-	genericParams = strings.Split(genericParams[1], ",")
-	for i, p := range genericParams {
-		genericParams[i] = strings.TrimSpace(p)
-	}
 	genericParamTypeDefs := map[string]*TypeSpecDef{}
-
 	if len(genericParams) != len(original.TypeSpec.TypeParams.List) {
 		return nil
 	}
 
 	for i, genericParam := range genericParams {
-		tdef, ok := pkgDefs.uniqueDefinitions[genericParam]
-		if !ok {
+		tdef := pkgDefs.FindTypeSpec(genericParam, original.File, false)
+		if tdef == nil {
 			return nil
 		}
 
@@ -66,16 +61,22 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		Obj:     original.TypeSpec.Name.Obj,
 	}
 
-	genNameParts := strings.Split(fullGenericForm, "[")
-	if strings.Contains(genNameParts[0], ".") {
-		genNameParts[0] = strings.Split(genNameParts[0], ".")[1]
+	if strings.Contains(genericTypeName, ".") {
+		genericTypeName = strings.Split(genericTypeName, ".")[1]
 	}
 
-	ident.Name = genNameParts[0] + "-" + strings.Replace(strings.Join(genericParams, "-"), ".", "_", -1)
-	ident.Name = strings.Replace(strings.Replace(ident.Name, "\t", "", -1), " ", "", -1)
+	var typeName = []string{TypeDocName(genericTypeName, parametrizedTypeSpec.TypeSpec)}
+
+	for _, def := range original.TypeSpec.TypeParams.List {
+		if specDef, ok := genericParamTypeDefs[def.Names[0].Name]; ok {
+			typeName = append(typeName, strings.Replace(TypeDocName(specDef.FullName(), specDef.TypeSpec), "-", "_", -1))
+		}
+	}
+
+	ident.Name = strings.Join(typeName, "-")
+	ident.Name = strings.Replace(ident.Name, ".", "_", -1)
 
 	parametrizedTypeSpec.TypeSpec.Name = ident
-
 	origStructType := original.TypeSpec.Type.(*ast.StructType)
 
 	newStructTypeDef := &ast.StructType{
@@ -101,8 +102,27 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 	}
 
 	parametrizedTypeSpec.TypeSpec.Type = newStructTypeDef
-
 	return parametrizedTypeSpec
+}
+
+// splitStructName splits a generic struct name in his parts
+func splitStructName(fullGenericForm string) (string, []string) {
+	// split only at the first '[' and remove the last ']'
+	genericParams := strings.SplitN(strings.TrimSpace(fullGenericForm)[:len(fullGenericForm)-1], "[", 2)
+	if len(genericParams) == 1 {
+		return "", nil
+	}
+
+	// generic type name
+	genericTypeName := genericParams[0]
+
+	// generic params
+	genericParams = strings.Split(genericParams[1], ",")
+	for i, p := range genericParams {
+		genericParams[i] = strings.TrimSpace(p)
+	}
+
+	return genericTypeName, genericParams
 }
 
 func resolveType(expr ast.Expr, field *ast.Field, genericParamTypeDefs map[string]*TypeSpecDef) ast.Expr {
