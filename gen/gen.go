@@ -49,6 +49,7 @@ func New() *Gen {
 			return json.MarshalIndent(data, "", "    ")
 		},
 		jsonToYAML: yaml.JSONToYAML,
+		debug:      log.New(os.Stdout, "", log.LstdFlags),
 	}
 
 	gen.outputTypeMap = map[string]genTypeWriter{
@@ -123,7 +124,9 @@ type Config struct {
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
 func (g *Gen) Build(config *Config) error {
-	g.debug = config.Debugger
+	if config.Debugger != nil {
+		g.debug = config.Debugger
+	}
 	if config.InstanceName == "" {
 		config.InstanceName = swag.Name
 	}
