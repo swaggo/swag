@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+var genericsDefinitions = map[string]*TypeSpecDef{}
+
 func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 	fullName := typeSpecDef.FullName()
 
@@ -27,6 +29,10 @@ func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 }
 
 func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, fullGenericForm string) *TypeSpecDef {
+	if spec, ok := genericsDefinitions[fullGenericForm]; ok {
+		return spec
+	}
+
 	genericTypeName, genericParams := splitStructName(fullGenericForm)
 	if genericParams == nil {
 		return nil
@@ -102,6 +108,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 	}
 
 	parametrizedTypeSpec.TypeSpec.Type = newStructTypeDef
+	genericsDefinitions[fullGenericForm] = parametrizedTypeSpec
 	return parametrizedTypeSpec
 }
 
