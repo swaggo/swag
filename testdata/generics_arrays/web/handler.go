@@ -4,6 +4,15 @@ import (
 	"time"
 )
 
+type GenericListBody[T any] struct {
+	Data []T
+}
+
+type GenericListBodyMulti[T any, X any] struct {
+	Data []T
+	Meta []X
+}
+
 // GenericListResponse[T]
 // @Description Some Generic List Response
 type GenericListResponse[T any] struct {

@@ -4,18 +4,43 @@ import (
 	"time"
 )
 
-// GenericListResponse[T]
+// GenericNestedBody[T]
+// @Description Some Generic Body
+type GenericNestedBody[T any] struct {
+	// Items from the list response
+	Items T
+	// Status of some other stuff
+	Status string
+}
+
+// GenericInnerType[T]
+// @Description Some Generic Body
+type GenericInnerType[T any] struct {
+	// Items from the list response
+	Items T
+}
+
+// GenericInnerMultiType[T, X]
+// @Description Some Generic Body
+type GenericInnerMultiType[T any, X any] struct {
+	// ItemsOne is the first thing
+	ItemOne T
+	// ItemsTwo is the second thing
+	ItemsTwo []X
+}
+
+// GenericNestedResponse[T]
 // @Description Some Generic List Response
-type GenericListResponse[T any] struct {
+type GenericNestedResponse[T any] struct {
 	// Items from the list response
 	Items []T
 	// Status of some other stuff
 	Status string
 }
 
-// GenericListResponseMulti[T, X]
+// GenericNestedResponseMulti[T, X]
 // @Description this contains a few things
-type GenericListResponseMulti[T any, X any] struct {
+type GenericNestedResponseMulti[T any, X any] struct {
 	// ItemsOne is the first thing
 	ItemOne T
 	// ItemsTwo is the second thing

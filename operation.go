@@ -213,7 +213,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 	return nil
 }
 
-var paramPattern = regexp.MustCompile(`(\S+)\s+(\w+)\s+([\S.]+)\s+(\w+)\s+"([^"]+)"`)
+var paramPattern = regexp.MustCompile(`(\S+)\s+(\w+)\s+([\S. ]+?)\s+(\w+)\s+"([^"]+)"`)
 
 func findInSlice(arr []string, target string) bool {
 	for _, str := range arr {

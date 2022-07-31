@@ -24,8 +24,82 @@ func TestParseGenericsBasic(t *testing.T) {
     "host": "localhost:4000",
     "basePath": "/api",
     "paths": {
-        "/posts/{post_id}": {
-            "get": {
+        "/posts-multi/": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericBodyMulti-web_Post-web_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-web_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponseMulti-web_Post-web_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts-multis/": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericBodyMulti-array_web_Post-array2_web_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-array_web_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponseMulti-array_web_Post-array2_web_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/": {
+            "post": {
                 "description": "get string by ID",
                 "consumes": [
                     "application/json"
@@ -36,12 +110,13 @@ func TestParseGenericsBasic(t *testing.T) {
                 "summary": "Add a new pet to the store",
                 "parameters": [
                     {
-                        "type": "integer",
-                        "format": "int64",
                         "description": "Some ID",
-                        "name": "post_id",
-                        "in": "path",
-                        "required": true
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericBody-web_Post"
+                        }
                     }
                 ],
                 "responses": {
@@ -96,6 +171,209 @@ func TestParseGenericsBasic(t *testing.T) {
                 }
             }
         },
+        "web.GenericBody-web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                }
+            }
+        },
+        "web.GenericBodyMulti-array_web_Post-array2_web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "web.GenericBodyMulti-web_Post-web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                }
+            }
+        },
+        "web.GenericResponse-array_web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "web.GenericResponse-web_Post": {
             "type": "object",
             "properties": {
@@ -124,6 +402,79 @@ func TestParseGenericsBasic(t *testing.T) {
                             "description": "Post name",
                             "type": "string",
                             "example": "poti"
+                        }
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponseMulti-array_web_Post-array2_web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
                         }
                     }
                 },
@@ -232,6 +583,17 @@ func TestParseGenericsArrays(t *testing.T) {
                     "application/json"
                 ],
                 "summary": "List Posts",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListBody-web_Post"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -247,9 +609,300 @@ func TestParseGenericsArrays(t *testing.T) {
                     }
                 }
             }
+        },
+        "/posts-multi": {
+            "get": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListBodyMulti-web_Post-web_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponse-web_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponseMulti-web_Post-web_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts-multis": {
+            "get": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListBodyMulti-web_Post-array_web_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponse-array_web_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponseMulti-web_Post-array_web_Post"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "web.GenericListBody-web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "web.GenericListBodyMulti-web_Post-array_web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "web.GenericListBodyMulti-web_Post-web_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "web.GenericListResponse-array_web_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
         "web.GenericListResponse-web_Post": {
             "type": "object",
             "properties": {
@@ -287,6 +940,82 @@ func TestParseGenericsArrays(t *testing.T) {
                 },
                 "status": {
                     "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericListResponseMulti-web_Post-array_web_Post": {
+            "type": "object",
+            "properties": {
+                "itemsOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
                     "type": "string"
                 }
             }
@@ -378,7 +1107,6 @@ func TestParseGenericsArrays(t *testing.T) {
 
 func TestParseGenericsNested(t *testing.T) {
 	t.Parallel()
-
 	expected := `{
     "swagger": "2.0",
     "info": {
@@ -400,29 +1128,113 @@ func TestParseGenericsNested(t *testing.T) {
                     "application/json"
                 ],
                 "summary": "List Posts",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedBody-web_GenericInnerType_web_Post"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericListResponse-web_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponse-web_Post"
                         }
                     },
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericListResponse-web_GenericListResponse_web_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponse-web_GenericInnerType_web_Post"
                         }
                     },
                     "202": {
                         "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericListResponseMulti-web_Post-web_GenericListResponse_web_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_Post-web_GenericInnerMultiType_web_Post_web_Post"
+                        }
+                    },
+                    "203": {
+                        "description": "Non-Authoritative Information",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_Post-web_GenericInnerMultiType_web_Post_web_GenericInnerType_web_Post"
                         }
                     },
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericListResponseMulti-web_GenericListResponse_web_Post-web_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_GenericInnerType_web_Post-web_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts-multis/": {
+            "get": {
+                "description": "Get All of the Posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List Posts",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedBody-web_GenericInnerType_array_web_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedResponse-array_web_Post"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedResponse-array_web_GenericInnerType_web_Post"
+                        }
+                    },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedResponse-array_web_GenericInnerType_array_web_Post"
+                        }
+                    },
+                    "203": {
+                        "description": "Non-Authoritative Information",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-array_web_Post-web_GenericInnerMultiType_array_web_Post_web_Post"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-array_web_Post-array_web_GenericInnerMultiType_array_web_Post_web_Post"
+                        }
+                    },
+                    "205": {
+                        "description": "Reset Content",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_Post-web_GenericInnerMultiType_web_Post_array_web_GenericInnerType_array2_web_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_GenericInnerType_array_web_Post-array_web_Post"
                         }
                     }
                 }
@@ -430,19 +1242,163 @@ func TestParseGenericsNested(t *testing.T) {
         }
     },
     "definitions": {
-        "web.GenericListResponse-web_GenericListResponse_web_Post": {
+        "web.GenericNestedBody-web_GenericInnerType_array_web_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "object",
+                    "properties": {
+                        "items": {
+                            "description": "Items from the list response",
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "description": "Post data",
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "description": "Post tag",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "id": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "description": "Post name",
+                                        "type": "string",
+                                        "example": "poti"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedBody-web_GenericInnerType_web_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "object",
+                    "properties": {
+                        "items": {
+                            "description": "Items from the list response",
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponse-array_web_GenericInnerType_array_web_Post": {
             "type": "object",
             "properties": {
                 "items": {
                     "description": "Items from the list response",
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "items": {
-                                "description": "Items from the list response",
-                                "type": "array",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
                                 "items": {
+                                    "description": "Items from the list response",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "data": {
+                                                "description": "Post data",
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {
+                                                        "description": "Post tag",
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "id": {
+                                                "type": "integer",
+                                                "format": "int64",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "description": "Post name",
+                                                "type": "string",
+                                                "example": "poti"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponse-array_web_GenericInnerType_web_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "description": "Items from the list response",
                                     "type": "object",
                                     "properties": {
                                         "data": {
@@ -470,10 +1426,6 @@ func TestParseGenericsNested(t *testing.T) {
                                         }
                                     }
                                 }
-                            },
-                            "status": {
-                                "description": "Status of some other stuff",
-                                "type": "string"
                             }
                         }
                     }
@@ -484,7 +1436,98 @@ func TestParseGenericsNested(t *testing.T) {
                 }
             }
         },
-        "web.GenericListResponse-web_Post": {
+        "web.GenericNestedResponse-array_web_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponse-web_GenericInnerType_web_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "items": {
+                                "description": "Items from the list response",
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "description": "Post data",
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "description": "Post tag",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "id": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "description": "Post name",
+                                        "type": "string",
+                                        "example": "poti"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponse-web_Post": {
             "type": "object",
             "properties": {
                 "items": {
@@ -525,7 +1568,238 @@ func TestParseGenericsNested(t *testing.T) {
                 }
             }
         },
-        "web.GenericListResponseMulti-web_GenericListResponse_web_Post-web_Post": {
+        "web.GenericNestedResponseMulti-array_web_Post-array_web_GenericInnerMultiType_array_web_Post_web_Post": {
+            "type": "object",
+            "properties": {
+                "itemOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "itemOne": {
+                                    "description": "ItemsOne is the first thing",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "data": {
+                                                "description": "Post data",
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {
+                                                        "description": "Post tag",
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "id": {
+                                                "type": "integer",
+                                                "format": "int64",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "description": "Post name",
+                                                "type": "string",
+                                                "example": "poti"
+                                            }
+                                        }
+                                    }
+                                },
+                                "itemsTwo": {
+                                    "description": "ItemsTwo is the second thing",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "data": {
+                                                "description": "Post data",
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {
+                                                        "description": "Post tag",
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "id": {
+                                                "type": "integer",
+                                                "format": "int64",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "description": "Post name",
+                                                "type": "string",
+                                                "example": "poti"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponseMulti-array_web_Post-web_GenericInnerMultiType_array_web_Post_web_Post": {
+            "type": "object",
+            "properties": {
+                "itemOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "itemOne": {
+                                "description": "ItemsOne is the first thing",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "description": "Post data",
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "description": "Post tag",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "id": {
+                                            "type": "integer",
+                                            "format": "int64",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "description": "Post name",
+                                            "type": "string",
+                                            "example": "poti"
+                                        }
+                                    }
+                                }
+                            },
+                            "itemsTwo": {
+                                "description": "ItemsTwo is the second thing",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "description": "Post data",
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "description": "Post tag",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "id": {
+                                            "type": "integer",
+                                            "format": "int64",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "description": "Post name",
+                                            "type": "string",
+                                            "example": "poti"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponseMulti-web_GenericInnerType_array_web_Post-array_web_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -563,10 +1837,85 @@ func TestParseGenericsNested(t *testing.T) {
                                     }
                                 }
                             }
-                        },
-                        "status": {
-                            "description": "Status of some other stuff",
-                            "type": "string"
+                        }
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponseMulti-web_GenericInnerType_web_Post-web_Post": {
+            "type": "object",
+            "properties": {
+                "itemOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "object",
+                    "properties": {
+                        "items": {
+                            "description": "Items from the list response",
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "description": "Post data",
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "description": "Post tag",
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "id": {
+                                    "type": "integer",
+                                    "format": "int64",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "description": "Post name",
+                                    "type": "string",
+                                    "example": "poti"
+                                }
+                            }
                         }
                     }
                 },
@@ -608,7 +1957,7 @@ func TestParseGenericsNested(t *testing.T) {
                 }
             }
         },
-        "web.GenericListResponseMulti-web_Post-web_GenericListResponse_web_Post": {
+        "web.GenericNestedResponseMulti-web_Post-web_GenericInnerMultiType_web_Post_array_web_GenericInnerType_array2_web_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -646,8 +1995,274 @@ func TestParseGenericsNested(t *testing.T) {
                     "items": {
                         "type": "object",
                         "properties": {
-                            "items": {
-                                "description": "Items from the list response",
+                            "itemOne": {
+                                "description": "ItemsOne is the first thing",
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "description": "Post data",
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "description": "Post tag",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "id": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "description": "Post name",
+                                        "type": "string",
+                                        "example": "poti"
+                                    }
+                                }
+                            },
+                            "itemsTwo": {
+                                "description": "ItemsTwo is the second thing",
+                                "type": "array",
+                                "items": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "items": {
+                                                "description": "Items from the list response",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "data": {
+                                                                "description": "Post data",
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "name": {
+                                                                        "description": "Post tag",
+                                                                        "type": "array",
+                                                                        "items": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "format": "int64",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "description": "Post name",
+                                                                "type": "string",
+                                                                "example": "poti"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponseMulti-web_Post-web_GenericInnerMultiType_web_Post_web_GenericInnerType_web_Post": {
+            "type": "object",
+            "properties": {
+                "itemOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "itemOne": {
+                                "description": "ItemsOne is the first thing",
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "description": "Post data",
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "description": "Post tag",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "id": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "description": "Post name",
+                                        "type": "string",
+                                        "example": "poti"
+                                    }
+                                }
+                            },
+                            "itemsTwo": {
+                                "description": "ItemsTwo is the second thing",
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "items": {
+                                            "description": "Items from the list response",
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "description": "Post data",
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "name": {
+                                                            "description": "Post tag",
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                "id": {
+                                                    "type": "integer",
+                                                    "format": "int64",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "description": "Post name",
+                                                    "type": "string",
+                                                    "example": "poti"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericNestedResponseMulti-web_Post-web_GenericInnerMultiType_web_Post_web_Post": {
+            "type": "object",
+            "properties": {
+                "itemOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "itemOne": {
+                                "description": "ItemsOne is the first thing",
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "description": "Post data",
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "description": "Post tag",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "id": {
+                                        "type": "integer",
+                                        "format": "int64",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "description": "Post name",
+                                        "type": "string",
+                                        "example": "poti"
+                                    }
+                                }
+                            },
+                            "itemsTwo": {
+                                "description": "ItemsTwo is the second thing",
                                 "type": "array",
                                 "items": {
                                     "type": "object",
@@ -677,10 +2292,6 @@ func TestParseGenericsNested(t *testing.T) {
                                         }
                                     }
                                 }
-                            },
-                            "status": {
-                                "description": "Status of some other stuff",
-                                "type": "string"
                             }
                         }
                     }

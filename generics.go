@@ -4,11 +4,17 @@
 package swag
 
 import (
+	"fmt"
 	"go/ast"
 	"strings"
 )
 
-var genericsDefinitions = map[string]*TypeSpecDef{}
+var genericsDefinitions = map[*TypeSpecDef]map[string]*TypeSpecDef{}
+
+type genericTypeSpec struct {
+	ArrayDepth int
+	TypeSpec   *TypeSpecDef
+}
 
 func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 	fullName := typeSpecDef.FullName()
@@ -29,7 +35,7 @@ func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 }
 
 func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, fullGenericForm string) *TypeSpecDef {
-	if spec, ok := genericsDefinitions[fullGenericForm]; ok {
+	if spec, ok := genericsDefinitions[original][fullGenericForm]; ok {
 		return spec
 	}
 
@@ -38,18 +44,32 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		return nil
 	}
 
-	genericParamTypeDefs := map[string]*TypeSpecDef{}
+	genericParamTypeDefs := map[string]*genericTypeSpec{}
 	if len(genericParams) != len(original.TypeSpec.TypeParams.List) {
 		return nil
 	}
 
 	for i, genericParam := range genericParams {
-		tdef := pkgDefs.FindTypeSpec(genericParam, original.File, false)
+		arrayDepth := 0
+		for {
+			var isArray = len(genericParam) > 2 && genericParam[:2] == "[]"
+			if isArray {
+				genericParam = genericParam[2:]
+				arrayDepth++
+			} else {
+				break
+			}
+		}
+
+		tdef := pkgDefs.FindTypeSpec(genericParam, original.File, true)
 		if tdef == nil {
 			return nil
 		}
 
-		genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = tdef
+		genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
+			ArrayDepth: arrayDepth,
+			TypeSpec:   tdef,
+		}
 	}
 
 	parametrizedTypeSpec := &TypeSpecDef{
@@ -75,7 +95,14 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 
 	for _, def := range original.TypeSpec.TypeParams.List {
 		if specDef, ok := genericParamTypeDefs[def.Names[0].Name]; ok {
-			typeName = append(typeName, strings.Replace(TypeDocName(specDef.FullName(), specDef.TypeSpec), "-", "_", -1))
+			var prefix = ""
+			if specDef.ArrayDepth > 0 {
+				prefix = "array_"
+				if specDef.ArrayDepth > 1 {
+					prefix = fmt.Sprintf("array%d_", specDef.ArrayDepth)
+				}
+			}
+			typeName = append(typeName, prefix+strings.Replace(TypeDocName(specDef.TypeSpec.FullName(), specDef.TypeSpec.TypeSpec), "-", "_", -1))
 		}
 	}
 
@@ -108,7 +135,10 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 	}
 
 	parametrizedTypeSpec.TypeSpec.Type = newStructTypeDef
-	genericsDefinitions[fullGenericForm] = parametrizedTypeSpec
+	if genericsDefinitions[original] == nil {
+		genericsDefinitions[original] = map[string]*TypeSpecDef{}
+	}
+	genericsDefinitions[original][fullGenericForm] = parametrizedTypeSpec
 	return parametrizedTypeSpec
 }
 
@@ -124,18 +154,38 @@ func splitStructName(fullGenericForm string) (string, []string) {
 	genericTypeName := genericParams[0]
 
 	// generic params
-	genericParams = strings.Split(genericParams[1], ",")
-	for i, p := range genericParams {
-		genericParams[i] = strings.TrimSpace(p)
+	insideBrackets := 0
+	lastParam := ""
+	params := strings.Split(genericParams[1], ",")
+	genericParams = []string{}
+	for _, p := range params {
+		numOpened := strings.Count(p, "[")
+		numClosed := strings.Count(p, "]")
+		if numOpened == numClosed && insideBrackets == 0 {
+			genericParams = append(genericParams, strings.TrimSpace(p))
+			continue
+		}
+
+		insideBrackets += numOpened - numClosed
+		lastParam += p + ","
+
+		if insideBrackets == 0 {
+			genericParams = append(genericParams, strings.TrimSpace(strings.TrimRight(lastParam, ",")))
+			lastParam = ""
+		}
 	}
 
 	return genericTypeName, genericParams
 }
 
-func resolveType(expr ast.Expr, field *ast.Field, genericParamTypeDefs map[string]*TypeSpecDef) ast.Expr {
+func resolveType(expr ast.Expr, field *ast.Field, genericParamTypeDefs map[string]*genericTypeSpec) ast.Expr {
 	if asIdent, ok := expr.(*ast.Ident); ok {
 		if genTypeSpec, ok := genericParamTypeDefs[asIdent.Name]; ok {
-			return genTypeSpec.TypeSpec.Type
+			if genTypeSpec.ArrayDepth > 0 {
+				genTypeSpec.ArrayDepth--
+				return &ast.ArrayType{Elt: resolveType(expr, field, genericParamTypeDefs)}
+			}
+			return genTypeSpec.TypeSpec.TypeSpec.Type
 		}
 	} else if asArray, ok := expr.(*ast.ArrayType); ok {
 		return &ast.ArrayType{Elt: resolveType(asArray.Elt, field, genericParamTypeDefs), Len: asArray.Len, Lbrack: asArray.Lbrack}

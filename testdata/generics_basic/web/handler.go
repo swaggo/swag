@@ -4,6 +4,15 @@ import (
 	"time"
 )
 
+type GenericBody[T any] struct {
+	Data T
+}
+
+type GenericBodyMulti[T any, X any] struct {
+	Data T
+	Meta X
+}
+
 type GenericResponse[T any] struct {
 	Data T
 
