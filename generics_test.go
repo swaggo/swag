@@ -2313,3 +2313,228 @@ func TestParseGenericsNested(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, string(b))
 }
+
+func TestParseGenericsProperty(t *testing.T) {
+	t.Parallel()
+	expected := `{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/posts": {
+            "get": {
+                "description": "Get All of the Posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List Posts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "next_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "prev_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "rows",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/web.PostResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/web.PostResponses"
+                        }
+                    },
+                    "202": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/web.StringResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "web.PostResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                },
+                "items2": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                }
+            }
+        },
+        "web.PostResponses": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "data": {
+                                "description": "Post data",
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "description": "Post tag",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "example": 1
+                            },
+                            "name": {
+                                "description": "Post name",
+                                "type": "string",
+                                "example": "poti"
+                            }
+                        }
+                    }
+                },
+                "items2": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "description": "Post data",
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "description": "Post tag",
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "id": {
+                            "type": "integer",
+                            "format": "int64",
+                            "example": 1
+                        },
+                        "name": {
+                            "description": "Post name",
+                            "type": "string",
+                            "example": "poti"
+                        }
+                    }
+                }
+            }
+        },
+        "web.StringResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "items2": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}`
+
+	searchDir := "testdata/generics_property"
+	p := New()
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(b))
+}
