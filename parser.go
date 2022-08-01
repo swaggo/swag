@@ -1066,7 +1066,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 }
 
 func fullTypeName(pkgName, typeName string) string {
-	if pkgName != "" {
+	if pkgName != "" && !ignoreNameOverride(typeName) {
 		return pkgName + "." + typeName
 	}
 

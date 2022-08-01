@@ -56,6 +56,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		return spec
 	}
 
+	pkgName := strings.Split(fullGenericForm, ".")[0]
 	genericTypeName, genericParams := splitStructName(fullGenericForm)
 	if genericParams == nil {
 		return nil
@@ -112,7 +113,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		genericTypeName = strings.Split(genericTypeName, ".")[1]
 	}
 
-	var typeName = []string{TypeDocName(genericTypeName, parametrizedTypeSpec.TypeSpec)}
+	var typeName = []string{TypeDocName(fullTypeName(pkgName, genericTypeName), parametrizedTypeSpec.TypeSpec)}
 
 	for _, def := range original.TypeSpec.TypeParams.List {
 		if specDef, ok := genericParamTypeDefs[def.Names[0].Name]; ok {
@@ -128,7 +129,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 	}
 
 	ident.Name = strings.Join(typeName, "-")
-	ident.Name = strings.Replace(ident.Name, ".", "_", -1)
+	ident.Name = string(IgnoreNameOverridePrefix) + strings.Replace(strings.Replace(ident.Name, ".", "_", -1), "_", ".", 1)
 
 	parametrizedTypeSpec.TypeSpec.Name = ident
 	origStructType := original.TypeSpec.Type.(*ast.StructType)
