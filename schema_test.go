@@ -166,4 +166,14 @@ func TestTypeDocName(t *testing.T) {
 			List: []*ast.Comment{{Text: "// @name Model"}},
 		},
 	}))
+
+	expected = "package.ModelName"
+	assert.Equal(t, expected, TypeDocName("$package.ModelName", &ast.TypeSpec{Name: &ast.Ident{Name: "Model"}}))
+
+	expected = "Model"
+	assert.Equal(t, expected, TypeDocName("$Model", &ast.TypeSpec{
+		Comment: &ast.CommentGroup{
+			List: []*ast.Comment{{Text: "// @name ModelName"}},
+		},
+	}))
 }

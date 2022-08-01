@@ -129,7 +129,12 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 	}
 
 	ident.Name = strings.Join(typeName, "-")
-	ident.Name = string(IgnoreNameOverridePrefix) + strings.Replace(strings.Replace(ident.Name, ".", "_", -1), "_", ".", 1)
+	ident.Name = strings.Replace(ident.Name, ".", "_", -1)
+	pkgNamePrefix := pkgName + "_"
+	if strings.HasPrefix(ident.Name, pkgNamePrefix) {
+		ident.Name = fullTypeName(pkgName, ident.Name[len(pkgNamePrefix):])
+	}
+	ident.Name = string(IgnoreNameOverridePrefix) + ident.Name
 
 	parametrizedTypeSpec.TypeSpec.Name = ident
 	origStructType := original.TypeSpec.Type.(*ast.StructType)
