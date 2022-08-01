@@ -70,20 +70,17 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 	for i, genericParam := range genericParams {
 		arrayDepth := 0
 		for {
-			var isArray = len(genericParam) > 2 && genericParam[:2] == "[]"
-			if isArray {
-				genericParam = genericParam[2:]
-				arrayDepth++
-			} else {
+			if len(genericParam) <= 2 || genericParam[:2] != "[]" {
 				break
 			}
+			genericParam = genericParam[2:]
+			arrayDepth++
 		}
 
 		tdef := pkgDefs.FindTypeSpec(genericParam, original.File, parseDependency)
 		if tdef == nil {
 			genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
 				ArrayDepth: arrayDepth,
-				TypeSpec:   nil,
 				Name:       genericParam,
 			}
 		} else {
@@ -206,16 +203,21 @@ func splitStructName(fullGenericForm string) (string, []string) {
 }
 
 func resolveType(expr ast.Expr, field *ast.Field, genericParamTypeDefs map[string]*genericTypeSpec) ast.Expr {
-	if asIdent, ok := expr.(*ast.Ident); ok {
-		if genTypeSpec, ok := genericParamTypeDefs[asIdent.Name]; ok {
+	switch astExpr := expr.(type) {
+	case *ast.Ident:
+		if genTypeSpec, ok := genericParamTypeDefs[astExpr.Name]; ok {
 			if genTypeSpec.ArrayDepth > 0 {
 				genTypeSpec.ArrayDepth--
 				return &ast.ArrayType{Elt: resolveType(expr, field, genericParamTypeDefs)}
 			}
 			return genTypeSpec.Type()
 		}
-	} else if asArray, ok := expr.(*ast.ArrayType); ok {
-		return &ast.ArrayType{Elt: resolveType(asArray.Elt, field, genericParamTypeDefs), Len: asArray.Len, Lbrack: asArray.Lbrack}
+	case *ast.ArrayType:
+		return &ast.ArrayType{
+			Elt:    resolveType(astExpr.Elt, field, genericParamTypeDefs),
+			Len:    astExpr.Len,
+			Lbrack: astExpr.Lbrack,
+		}
 	}
 
 	return field.Type
