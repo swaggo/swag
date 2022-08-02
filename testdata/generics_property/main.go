@@ -13,7 +13,5 @@ import (
 // @basePath /api
 func main() {
 	http.HandleFunc("/posts/", api.GetPosts)
-	http.HandleFunc("/posts-multi/", api.GetPostMulti)
-	http.HandleFunc("/posts-multis/", api.GetPostArray)
 	http.ListenAndServe(":8080", nil)
 }
