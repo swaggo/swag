@@ -138,32 +138,7 @@
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/Post"
                 }
             }
         },
@@ -171,60 +146,10 @@
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/Post"
                 },
                 "meta": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/Post"
                 }
             }
         },
@@ -234,32 +159,7 @@
                 "data": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "data": {
-                                "description": "Post data",
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "description": "Post tag",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "id": {
-                                "type": "integer",
-                                "format": "int64",
-                                "example": 1
-                            },
-                            "name": {
-                                "description": "Post name",
-                                "type": "string",
-                                "example": "poti"
-                            }
-                        }
+                        "$ref": "#/definitions/Post"
                     }
                 },
                 "meta": {
@@ -267,32 +167,7 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "object",
-                            "properties": {
-                                "data": {
-                                    "description": "Post data",
-                                    "type": "object",
-                                    "properties": {
-                                        "name": {
-                                            "description": "Post tag",
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                },
-                                "id": {
-                                    "type": "integer",
-                                    "format": "int64",
-                                    "example": 1
-                                },
-                                "name": {
-                                    "description": "Post name",
-                                    "type": "string",
-                                    "example": "poti"
-                                }
-                            }
+                            "$ref": "#/definitions/Post"
                         }
                     }
                 }
@@ -302,60 +177,10 @@
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/Post"
                 },
                 "meta": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/Post"
                 },
                 "status": {
                     "type": "string"
@@ -368,32 +193,7 @@
                 "data": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "data": {
-                                "description": "Post data",
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "description": "Post tag",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "id": {
-                                "type": "integer",
-                                "format": "int64",
-                                "example": 1
-                            },
-                            "name": {
-                                "description": "Post name",
-                                "type": "string",
-                                "example": "poti"
-                            }
-                        }
+                        "$ref": "#/definitions/Post"
                     }
                 },
                 "meta": {
@@ -401,32 +201,7 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "object",
-                            "properties": {
-                                "data": {
-                                    "description": "Post data",
-                                    "type": "object",
-                                    "properties": {
-                                        "name": {
-                                            "description": "Post tag",
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                },
-                                "id": {
-                                    "type": "integer",
-                                    "format": "int64",
-                                    "example": 1
-                                },
-                                "name": {
-                                    "description": "Post name",
-                                    "type": "string",
-                                    "example": "poti"
-                                }
-                            }
+                            "$ref": "#/definitions/Post"
                         }
                     }
                 },
@@ -435,36 +210,42 @@
                 }
             }
         },
+        "Post": {
+            "type": "object",
+            "properties": {
+                "@uri": {
+                    "type": "string"
+                },
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        },
         "Response-Post": {
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/Post"
                 },
                 "status": {
                     "type": "string"
@@ -477,32 +258,7 @@
                 "data": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "data": {
-                                "description": "Post data",
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "description": "Post tag",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "id": {
-                                "type": "integer",
-                                "format": "int64",
-                                "example": 1
-                            },
-                            "name": {
-                                "description": "Post name",
-                                "type": "string",
-                                "example": "poti"
-                            }
-                        }
+                        "$ref": "#/definitions/Post"
                     }
                 },
                 "status": {

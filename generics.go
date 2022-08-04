@@ -19,7 +19,10 @@ type genericTypeSpec struct {
 
 func (s *genericTypeSpec) Type() ast.Expr {
 	if s.TypeSpec != nil {
-		return s.TypeSpec.TypeSpec.Type
+		return &ast.SelectorExpr{
+			X:   &ast.Ident{Name: ""},
+			Sel: &ast.Ident{Name: s.Name},
+		}
 	}
 
 	return &ast.Ident{Name: s.Name}
@@ -78,16 +81,10 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		}
 
 		tdef := pkgDefs.FindTypeSpec(genericParam, original.File, parseDependency)
-		if tdef == nil {
-			genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
-				ArrayDepth: arrayDepth,
-				Name:       genericParam,
-			}
-		} else {
-			genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
-				ArrayDepth: arrayDepth,
-				TypeSpec:   tdef,
-			}
+		genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
+			ArrayDepth: arrayDepth,
+			TypeSpec:   tdef,
+			Name:       genericParam,
 		}
 	}
 
