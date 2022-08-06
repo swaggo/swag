@@ -4,6 +4,7 @@
 package swag
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"strings"
@@ -251,10 +252,10 @@ func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
 
 		return strings.TrimRight(fullName, ",") + "]", nil
 	case *ast.IndexExpr:
-		packageName, err := getFieldType(file, file.Name)
-		if err != nil {
-			return "", err
+		if file.Name == nil {
+			return "", errors.New("file name is nil")
 		}
+		packageName, _ := getFieldType(file, file.Name)
 
 		x, err := getFieldType(file, fieldType.X)
 		if err != nil {
