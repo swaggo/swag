@@ -37,6 +37,18 @@
                             "$ref": "#/definitions/web.GenericResponse-types_Post"
                         }
                     },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Hello"
+                        }
+                    },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field_string"
+                        }
+                    },
                     "222": {
                         "description": "",
                         "schema": {
@@ -72,6 +84,12 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/web.GenericResponse-array_types_Post"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-array_types_Hello"
                         }
                     },
                     "222": {
@@ -111,6 +129,24 @@
                             "$ref": "#/definitions/web.GenericResponse-types_Post"
                         }
                     },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Hello"
+                        }
+                    },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field_string"
+                        }
+                    },
+                    "203": {
+                        "description": "Non-Authoritative Information",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field_int"
+                        }
+                    },
                     "222": {
                         "description": "",
                         "schema": {
@@ -134,6 +170,28 @@
         }
     },
     "definitions": {
+        "types.Field-int": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.Hello": {
+            "type": "object",
+            "properties": {
+                "myNewField": {
+                    "type": "string"
+                },
+                "myStringField1": {
+                    "type": "string"
+                },
+                "myStringField2": {
+                    "type": "string"
+                }
+            }
+        },
         "types.Post": {
             "type": "object",
             "properties": {
@@ -226,6 +284,20 @@
                 }
             }
         },
+        "web.GenericResponse-array_types_Hello": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Hello"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "web.GenericResponse-array_types_Post": {
             "type": "object",
             "properties": {
@@ -234,6 +306,39 @@
                     "items": {
                         "$ref": "#/definitions/types.Post"
                     }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Field_int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Field_string": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Hello": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Hello"
                 },
                 "status": {
                     "type": "string"

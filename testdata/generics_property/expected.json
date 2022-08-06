@@ -70,11 +70,19 @@
         }
     },
     "definitions": {
+        "types.Field-string": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
         "types.Post": {
             "type": "object",
             "properties": {
                 "@uri": {
-                    "type": "string"
+                    "$ref": "#/definitions/types.Field-string"
                 },
                 "data": {
                     "description": "Post data",

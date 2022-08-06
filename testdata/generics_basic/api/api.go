@@ -13,6 +13,9 @@ import (
 // @Produce  json
 // @Param   data        body   web.GenericBody[types.Post]    true  "Some ID"
 // @Success 200 {object} web.GenericResponse[types.Post]
+// @Success 201 {object} web.GenericResponse[types.Hello]
+// @Success 202 {object} web.GenericResponse[types.Field[string]]
+// @Success 203 {object} web.GenericResponse[types.Field[int]]
 // @Success 222 {object} web.GenericResponseMulti[types.Post, types.Post]
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
@@ -28,6 +31,8 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 // @Produce  json
 // @Param   data	body	web.GenericBodyMulti[types.Post, types.Post]	true	"Some ID"
 // @Success 200 {object} web.GenericResponse[types.Post]
+// @Success 201 {object} web.GenericResponse[types.Hello]
+// @Success 202 {object} web.GenericResponse[types.Field[string]]
 // @Success 222 {object} web.GenericResponseMulti[types.Post, types.Post]
 // @Router /posts-multi/ [post]
 func GetPostMulti(w http.ResponseWriter, r *http.Request) {
@@ -41,6 +46,7 @@ func GetPostMulti(w http.ResponseWriter, r *http.Request) {
 // @Produce  json
 // @Param   data	body	web.GenericBodyMulti[[]types.Post, [][]types.Post]	true	"Some ID"
 // @Success 200 {object} web.GenericResponse[[]types.Post]
+// @Success 201 {object} web.GenericResponse[[]types.Hello]
 // @Success 222 {object} web.GenericResponseMulti[[]types.Post, [][]types.Post]
 // @Router /posts-multis/ [post]
 func GetPostArray(w http.ResponseWriter, r *http.Request) {

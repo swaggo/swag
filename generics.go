@@ -246,10 +246,27 @@ func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
 				return "", err
 			}
 
-			fullName += fieldName + ", "
+			fullName += fieldName + ","
 		}
 
-		return strings.TrimRight(fullName, ", ") + "]", nil
+		return strings.TrimRight(fullName, ",") + "]", nil
+	case *ast.IndexExpr:
+		packageName, err := getFieldType(file, file.Name)
+		if err != nil {
+			return "", err
+		}
+
+		x, err := getFieldType(file, fieldType.X)
+		if err != nil {
+			return "", err
+		}
+
+		i, err := getFieldType(file, fieldType.Index)
+		if err != nil {
+			return "", err
+		}
+
+		return strings.TrimLeft(fmt.Sprintf("%s.%s[%s]", packageName, x, i), "."), nil
 	}
 
 	return "", fmt.Errorf("unknown field type %#v", field)

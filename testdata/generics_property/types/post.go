@@ -1,8 +1,12 @@
 package types
 
+type Field[T any] struct {
+	Value T
+}
+
 type APIBase struct {
-	APIUrl string `json:"@uri,omitempty"`
-	ID     int    `json:"id" example:"1" format:"int64"`
+	APIUrl Field[string] `json:"@uri,omitempty"`
+	ID     int           `json:"id" example:"1" format:"int64"`
 }
 
 type Post struct {
