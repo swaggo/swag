@@ -178,6 +178,10 @@ func TypeDocNameFuncScoped(pkgName string, spec *ast.TypeSpec, fnName string) st
 		}
 	}
 
+	if ignoreNameOverride(pkgName) {
+		return pkgName[1:]
+	}
+
 	return pkgName
 }
 
