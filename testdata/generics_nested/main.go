@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/swaggo/swag/testdata/generics_arrays/api"
+	"github.com/swaggo/swag/testdata/generics_nested/api"
 )
 
 // @title Swagger Example API
@@ -13,7 +13,5 @@ import (
 // @basePath /api
 func main() {
 	http.HandleFunc("/posts/", api.GetPosts)
-	http.HandleFunc("/posts-multi/", api.GetPostMulti)
-	http.HandleFunc("/posts-multis/", api.GetPostArray)
 	http.ListenAndServe(":8080", nil)
 }

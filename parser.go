@@ -1071,7 +1071,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 }
 
 func fullTypeName(pkgName, typeName string) string {
-	if pkgName != "" {
+	if pkgName != "" && !ignoreNameOverride(typeName) {
 		return pkgName + "." + typeName
 	}
 
@@ -1238,7 +1238,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 			}
 		}
 
-		typeName, err := getFieldType(field.Type)
+		typeName, err := getFieldType(file, field.Type)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1282,7 +1282,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	}
 
 	if schema == nil {
-		typeName, err := getFieldType(field.Type)
+		typeName, err := getFieldType(file, field.Type)
 		if err == nil {
 			// named type
 			schema, err = parser.getTypeSchema(typeName, file, true)
@@ -1315,26 +1315,26 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil
 }
 
-func getFieldType(field ast.Expr) (string, error) {
+func getFieldType(file *ast.File, field ast.Expr) (string, error) {
 	switch fieldType := field.(type) {
 	case *ast.Ident:
 		return fieldType.Name, nil
 	case *ast.SelectorExpr:
-		packageName, err := getFieldType(fieldType.X)
+		packageName, err := getFieldType(file, fieldType.X)
 		if err != nil {
 			return "", err
 		}
 
 		return fullTypeName(packageName, fieldType.Sel.Name), nil
 	case *ast.StarExpr:
-		fullName, err := getFieldType(fieldType.X)
+		fullName, err := getFieldType(file, fieldType.X)
 		if err != nil {
 			return "", err
 		}
 
 		return fullName, nil
 	default:
-		return "", fmt.Errorf("unknown field type %#v", field)
+		return getGenericFieldType(file, field)
 	}
 }
 
