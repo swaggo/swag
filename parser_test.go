@@ -3233,6 +3233,130 @@ func Fun()  {
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }
 
+func TestParseFunctionScopedStructDefinition(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+// @Param request body main.Fun.request true "query params" 
+// @Success 200 {object} main.Fun.response
+// @Router /test [post]
+func Fun()  {
+	type request struct {
+		Name string
+	}
+	
+	type response struct {
+		Name string
+		Child string
+	}
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	_, ok := p.swagger.Definitions["main.Fun.response"]
+	assert.True(t, ok)
+}
+
+func TestParseFunctionScopedStructRequestResponseJSON(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+// @Param request body main.Fun.request true "query params" 
+// @Success 200 {object} main.Fun.response
+// @Router /test [post]
+func Fun()  {
+	type request struct {
+		Name string
+	}
+	
+	type response struct {
+		Name string
+		Child string
+	}
+}
+`
+	expected := `{
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/test": {
+            "post": {
+                "parameters": [
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.Fun.request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Fun.response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.Fun.request": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Fun.response": {
+            "type": "object",
+            "properties": {
+                "child": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	t.Log(string(b))
+	assert.Equal(t, expected, string(b))
+}
+
 func TestPackagesDefinitions_CollectAstFileInit(t *testing.T) {
 	t.Parallel()
 
