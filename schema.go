@@ -163,7 +163,7 @@ func ignoreNameOverride(name string) bool {
 
 // TypeDocNameFuncScoped get alias from comment '// @name ', otherwise the original type name to display in doc.
 func TypeDocNameFuncScoped(pkgName string, spec *ast.TypeSpec, fnName string) string {
-	if spec != nil {
+	if spec != nil && !ignoreNameOverride(pkgName) {
 		if spec.Comment != nil {
 			for _, comment := range spec.Comment.List {
 				texts := strings.Split(strings.TrimSpace(strings.TrimLeft(comment.Text, "/")), " ")
