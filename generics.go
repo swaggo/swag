@@ -4,6 +4,7 @@
 package swag
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"strings"
@@ -19,7 +20,10 @@ type genericTypeSpec struct {
 
 func (s *genericTypeSpec) Type() ast.Expr {
 	if s.TypeSpec != nil {
-		return s.TypeSpec.TypeSpec.Type
+		return &ast.SelectorExpr{
+			X:   &ast.Ident{Name: ""},
+			Sel: &ast.Ident{Name: s.Name},
+		}
 	}
 
 	return &ast.Ident{Name: s.Name}
@@ -78,16 +82,10 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		}
 
 		tdef := pkgDefs.FindTypeSpec(genericParam, original.File, parseDependency)
-		if tdef == nil {
-			genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
-				ArrayDepth: arrayDepth,
-				Name:       genericParam,
-			}
-		} else {
-			genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
-				ArrayDepth: arrayDepth,
-				TypeSpec:   tdef,
-			}
+		genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
+			ArrayDepth: arrayDepth,
+			TypeSpec:   tdef,
+			Name:       genericParam,
 		}
 	}
 
@@ -249,10 +247,27 @@ func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
 				return "", err
 			}
 
-			fullName += fieldName + ", "
+			fullName += fieldName + ","
 		}
 
-		return strings.TrimRight(fullName, ", ") + "]", nil
+		return strings.TrimRight(fullName, ",") + "]", nil
+	case *ast.IndexExpr:
+		if file.Name == nil {
+			return "", errors.New("file name is nil")
+		}
+		packageName, _ := getFieldType(file, file.Name)
+
+		x, err := getFieldType(file, fieldType.X)
+		if err != nil {
+			return "", err
+		}
+
+		i, err := getFieldType(file, fieldType.Index)
+		if err != nil {
+			return "", err
+		}
+
+		return strings.TrimLeft(fmt.Sprintf("%s.%s[%s]", packageName, x, i), "."), nil
 	}
 
 	return "", fmt.Errorf("unknown field type %#v", field)

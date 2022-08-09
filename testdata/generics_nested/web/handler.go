@@ -50,17 +50,6 @@ type GenericNestedResponseMulti[T any, X any] struct {
 	Status string
 }
 
-type Post struct {
-	ID int `json:"id" example:"1" format:"int64"`
-	// Post name
-	Name string `json:"name" example:"poti"`
-	// Post data
-	Data struct {
-		// Post tag
-		Tag []string `json:"name"`
-	} `json:"data"`
-}
-
 // APIError
 // @Description API error
 // @Description with information about it

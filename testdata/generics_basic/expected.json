@@ -26,7 +26,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.GenericBodyMulti-web_Post-web_Post"
+                            "$ref": "#/definitions/web.GenericBodyMulti-types_Post-types_Post"
                         }
                     }
                 ],
@@ -34,13 +34,25 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponse-web_Post"
+                            "$ref": "#/definitions/web.GenericResponse-types_Post"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Hello"
+                        }
+                    },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field_string"
                         }
                     },
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponseMulti-web_Post-web_Post"
+                            "$ref": "#/definitions/web.GenericResponseMulti-types_Post-types_Post"
                         }
                     }
                 }
@@ -63,7 +75,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.GenericBodyMulti-array_web_Post-array2_web_Post"
+                            "$ref": "#/definitions/web.GenericBodyMulti-array_types_Post-array2_types_Post"
                         }
                     }
                 ],
@@ -71,13 +83,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponse-array_web_Post"
+                            "$ref": "#/definitions/web.GenericResponse-array_types_Post"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-array_types_Hello"
                         }
                     },
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponseMulti-array_web_Post-array2_web_Post"
+                            "$ref": "#/definitions/web.GenericResponseMulti-array_types_Post-array2_types_Post"
                         }
                     }
                 }
@@ -100,7 +118,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.GenericBody-web_Post"
+                            "$ref": "#/definitions/web.GenericBody-types_Post"
                         }
                     }
                 ],
@@ -108,13 +126,31 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponse-web_Post"
+                            "$ref": "#/definitions/web.GenericResponse-types_Post"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Hello"
+                        }
+                    },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field_string"
+                        }
+                    },
+                    "203": {
+                        "description": "Non-Authoritative Information",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field_int"
                         }
                     },
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponseMulti-web_Post-web_Post"
+                            "$ref": "#/definitions/web.GenericResponseMulti-types_Post-types_Post"
                         }
                     },
                     "400": {
@@ -134,6 +170,59 @@
         }
     },
     "definitions": {
+        "types.Field-int": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.Hello": {
+            "type": "object",
+            "properties": {
+                "myNewField": {
+                    "type": "string"
+                },
+                "myStringField1": {
+                    "type": "string"
+                },
+                "myStringField2": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Post": {
+            "type": "object",
+            "properties": {
+                "@uri": {
+                    "type": "string"
+                },
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        },
         "web.APIError": {
             "description": "API error with information about it",
             "type": "object",
@@ -156,71 +245,21 @@
                 }
             }
         },
-        "web.GenericBody-web_Post": {
+        "web.GenericBody-types_Post": {
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/types.Post"
                 }
             }
         },
-        "web.GenericBodyMulti-array_web_Post-array2_web_Post": {
+        "web.GenericBodyMulti-array_types_Post-array2_types_Post": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "data": {
-                                "description": "Post data",
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "description": "Post tag",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "id": {
-                                "type": "integer",
-                                "format": "int64",
-                                "example": 1
-                            },
-                            "name": {
-                                "description": "Post name",
-                                "type": "string",
-                                "example": "poti"
-                            }
-                        }
+                        "$ref": "#/definitions/types.Post"
                     }
                 },
                 "meta": {
@@ -228,130 +267,30 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "object",
-                            "properties": {
-                                "data": {
-                                    "description": "Post data",
-                                    "type": "object",
-                                    "properties": {
-                                        "name": {
-                                            "description": "Post tag",
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                },
-                                "id": {
-                                    "type": "integer",
-                                    "format": "int64",
-                                    "example": 1
-                                },
-                                "name": {
-                                    "description": "Post name",
-                                    "type": "string",
-                                    "example": "poti"
-                                }
-                            }
+                            "$ref": "#/definitions/types.Post"
                         }
                     }
                 }
             }
         },
-        "web.GenericBodyMulti-web_Post-web_Post": {
+        "web.GenericBodyMulti-types_Post-types_Post": {
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/types.Post"
                 },
                 "meta": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/types.Post"
                 }
             }
         },
-        "web.GenericResponse-array_web_Post": {
+        "web.GenericResponse-array_types_Hello": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "data": {
-                                "description": "Post data",
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "description": "Post tag",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "id": {
-                                "type": "integer",
-                                "format": "int64",
-                                "example": 1
-                            },
-                            "name": {
-                                "description": "Post name",
-                                "type": "string",
-                                "example": "poti"
-                            }
-                        }
+                        "$ref": "#/definitions/types.Hello"
                     }
                 },
                 "status": {
@@ -359,35 +298,13 @@
                 }
             }
         },
-        "web.GenericResponse-web_Post": {
+        "web.GenericResponse-array_types_Post": {
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
                     }
                 },
                 "status": {
@@ -395,38 +312,57 @@
                 }
             }
         },
-        "web.GenericResponseMulti-array_web_Post-array2_web_Post": {
+        "web.GenericResponse-types_Field_int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Field_string": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Hello": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Hello"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponseMulti-array_types_Post-array2_types_Post": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "type": "object",
-                        "properties": {
-                            "data": {
-                                "description": "Post data",
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "description": "Post tag",
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            },
-                            "id": {
-                                "type": "integer",
-                                "format": "int64",
-                                "example": 1
-                            },
-                            "name": {
-                                "description": "Post name",
-                                "type": "string",
-                                "example": "poti"
-                            }
-                        }
+                        "$ref": "#/definitions/types.Post"
                     }
                 },
                 "meta": {
@@ -434,32 +370,7 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "type": "object",
-                            "properties": {
-                                "data": {
-                                    "description": "Post data",
-                                    "type": "object",
-                                    "properties": {
-                                        "name": {
-                                            "description": "Post tag",
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    }
-                                },
-                                "id": {
-                                    "type": "integer",
-                                    "format": "int64",
-                                    "example": 1
-                                },
-                                "name": {
-                                    "description": "Post name",
-                                    "type": "string",
-                                    "example": "poti"
-                                }
-                            }
+                            "$ref": "#/definitions/types.Post"
                         }
                     }
                 },
@@ -468,64 +379,14 @@
                 }
             }
         },
-        "web.GenericResponseMulti-web_Post-web_Post": {
+        "web.GenericResponseMulti-types_Post-types_Post": {
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/types.Post"
                 },
                 "meta": {
-                    "type": "object",
-                    "properties": {
-                        "data": {
-                            "description": "Post data",
-                            "type": "object",
-                            "properties": {
-                                "name": {
-                                    "description": "Post tag",
-                                    "type": "array",
-                                    "items": {
-                                        "type": "string"
-                                    }
-                                }
-                            }
-                        },
-                        "id": {
-                            "type": "integer",
-                            "format": "int64",
-                            "example": 1
-                        },
-                        "name": {
-                            "description": "Post name",
-                            "type": "string",
-                            "example": "poti"
-                        }
-                    }
+                    "$ref": "#/definitions/types.Post"
                 },
                 "status": {
                     "type": "string"

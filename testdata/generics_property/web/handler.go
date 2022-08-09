@@ -1,5 +1,7 @@
 package web
 
+import "github.com/swaggo/swag/testdata/generics_property/types"
+
 type PostSelector func(selector func())
 
 type Filter interface {
@@ -30,11 +32,11 @@ type PostPager struct {
 }
 
 type PostResponse struct {
-	GenericResponse[Post, Post]
+	GenericResponse[types.Post, types.Post]
 }
 
 type PostResponses struct {
-	GenericResponse[[]Post, Post]
+	GenericResponse[[]types.Post, types.Post]
 }
 
 type StringResponse struct {
@@ -44,15 +46,4 @@ type StringResponse struct {
 type GenericResponse[T any, T2 any] struct {
 	Items  T
 	Items2 T2
-}
-
-type Post struct {
-	ID int `json:"id" example:"1" format:"int64"`
-	// Post name
-	Name string `json:"name" example:"poti"`
-	// Post data
-	Data struct {
-		// Post tag
-		Tag []string `json:"name"`
-	} `json:"data"`
 }

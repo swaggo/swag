@@ -642,6 +642,20 @@ func TestGen_parseOverrides(t *testing.T) {
 			},
 		},
 		{
+			Name: "generic-simple",
+			Data: `replace types.Field[string] string`,
+			Expected: map[string]string{
+				"types.Field[string]": "string",
+			},
+		},
+		{
+			Name: "generic-double",
+			Data: `replace types.Field[string,string] string`,
+			Expected: map[string]string{
+				"types.Field[string,string]": "string",
+			},
+		},
+		{
 			Name: "comment",
 			Data: `// this is a comment
 			replace foo bar`,
