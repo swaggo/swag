@@ -46,11 +46,6 @@ func (t *TypeSpecDef) FullName() string {
 	return fullName
 }
 
-// FullNameFunctionScoped full name of the typeSpec.
-func (t *TypeSpecDef) FullNameFunctionScoped() string {
-	return fullTypeNameFunctionScoped(t.File.Name.Name, (t.ParentSpec.(*ast.FuncDecl)).Name.Name, t.TypeSpec.Name.Name)
-}
-
 // FullPath of the typeSpec.
 func (t *TypeSpecDef) FullPath() string {
 	return t.PkgPath + "." + t.Name()
