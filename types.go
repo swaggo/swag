@@ -46,7 +46,7 @@ func (t *TypeSpecDef) FullName() string {
 	return fullName
 }
 
-// FullNameFullNameFunctionScoped full name of the typeSpec.
+// FullNameFunctionScoped full name of the typeSpec.
 func (t *TypeSpecDef) FullNameFunctionScoped() string {
 	return fullTypeNameFunctionScoped(t.File.Name.Name, (t.ParentSpec.(*ast.FuncDecl)).Name.Name, t.TypeSpec.Name.Name)
 }
