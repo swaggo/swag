@@ -127,12 +127,11 @@ func TestPackagesDefinitions_parseFunctionScopedTypesFromFile(t *testing.T) {
 								Tok: token.TYPE,
 								Specs: []ast.Spec{
 									&ast.TypeSpec{
-										Doc:        nil,
-										Name:       ast.NewIdent("response"),
-										TypeParams: nil,
-										Assign:     0,
-										Type:       ast.NewIdent(""),
-										Comment:    nil,
+										Doc:     nil,
+										Name:    ast.NewIdent("response"),
+										Assign:  0,
+										Type:    ast.NewIdent(""),
+										Comment: nil,
 									},
 								},
 							},
