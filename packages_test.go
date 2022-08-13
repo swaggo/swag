@@ -116,10 +116,7 @@ func TestPackagesDefinitions_parseFunctionScopedTypesFromFile(t *testing.T) {
 		Name: &ast.Ident{Name: "main.go"},
 		Decls: []ast.Decl{
 			&ast.FuncDecl{
-				Doc:  nil,
-				Recv: nil,
 				Name: ast.NewIdent("TestFuncDecl"),
-				Type: nil,
 				Body: &ast.BlockStmt{
 					List: []ast.Stmt{
 						&ast.DeclStmt{
@@ -127,11 +124,12 @@ func TestPackagesDefinitions_parseFunctionScopedTypesFromFile(t *testing.T) {
 								Tok: token.TYPE,
 								Specs: []ast.Spec{
 									&ast.TypeSpec{
-										Doc:     nil,
-										Name:    ast.NewIdent("response"),
-										Assign:  0,
-										Type:    ast.NewIdent(""),
-										Comment: nil,
+										Name: ast.NewIdent("response"),
+										Type: ast.NewIdent("struct"),
+									},
+									&ast.TypeSpec{
+										Name: ast.NewIdent("stringResponse"),
+										Type: ast.NewIdent("string"),
 									},
 								},
 							},
@@ -146,7 +144,10 @@ func TestPackagesDefinitions_parseFunctionScopedTypesFromFile(t *testing.T) {
 		packages: make(map[string]*PackageDefinitions),
 	}
 
-	pd.parseFunctionScopedTypesFromFile(mainAST, "main", make(map[*TypeSpecDef]*Schema))
+	parsedSchema := make(map[*TypeSpecDef]*Schema)
+	pd.parseFunctionScopedTypesFromFile(mainAST, "main", parsedSchema)
+
+	assert.Len(t, parsedSchema, 1)
 
 	_, ok := pd.uniqueDefinitions["main.go.TestFuncDecl.response"]
 	assert.True(t, ok)

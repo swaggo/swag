@@ -2189,6 +2189,16 @@ func TestParseDuplicatedOtherMethods(t *testing.T) {
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
+func TestParseDuplicatedFunctionScoped(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/duplicated_function_scoped"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Errorf(t, err, "duplicated @id declarations successfully found")
+}
+
 func TestParseConflictSchemaName(t *testing.T) {
 	t.Parallel()
 
