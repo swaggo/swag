@@ -148,6 +148,28 @@ func TestParser_ParseDefinition(t *testing.T) {
 	}
 	_, err = p.ParseDefinition(definition)
 	assert.Error(t, err)
+
+	// Parsing *ast.FuncType with parent spec
+	definition = &TypeSpecDef{
+		PkgPath: "github.com/swagger/swag/model",
+		File: &ast.File{
+			Name: &ast.Ident{
+				Name: "model",
+			},
+		},
+		TypeSpec: &ast.TypeSpec{
+			Name: &ast.Ident{
+				Name: "Test",
+			},
+			Type: &ast.FuncType{},
+		},
+		ParentSpec: &ast.FuncDecl{
+			Name: ast.NewIdent("TestFuncDecl"),
+		},
+	}
+	_, err = p.ParseDefinition(definition)
+	assert.Error(t, err)
+	assert.Equal(t, "model.TestFuncDecl.Test", definition.FullName())
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -2167,6 +2189,16 @@ func TestParseDuplicatedOtherMethods(t *testing.T) {
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
+func TestParseDuplicatedFunctionScoped(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/duplicated_function_scoped"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Errorf(t, err, "duplicated @id declarations successfully found")
+}
+
 func TestParseConflictSchemaName(t *testing.T) {
 	t.Parallel()
 
@@ -3231,6 +3263,130 @@ func Fun()  {
 	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
 	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
+}
+
+func TestParseFunctionScopedStructDefinition(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+// @Param request body main.Fun.request true "query params" 
+// @Success 200 {object} main.Fun.response
+// @Router /test [post]
+func Fun()  {
+	type request struct {
+		Name string
+	}
+	
+	type response struct {
+		Name string
+		Child string
+	}
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	_, ok := p.swagger.Definitions["main.Fun.response"]
+	assert.True(t, ok)
+}
+
+func TestParseFunctionScopedStructRequestResponseJSON(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+// @Param request body main.Fun.request true "query params" 
+// @Success 200 {object} main.Fun.response
+// @Router /test [post]
+func Fun()  {
+	type request struct {
+		Name string
+	}
+	
+	type response struct {
+		Name string
+		Child string
+	}
+}
+`
+	expected := `{
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/test": {
+            "post": {
+                "parameters": [
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.Fun.request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Fun.response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.Fun.request": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Fun.response": {
+            "type": "object",
+            "properties": {
+                "child": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	t.Log(string(b))
+	assert.Equal(t, expected, string(b))
 }
 
 func TestPackagesDefinitions_CollectAstFileInit(t *testing.T) {
