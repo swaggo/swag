@@ -29,6 +29,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
  - [Examples](#examples)
 	- [Descriptions over multiple lines](#descriptions-over-multiple-lines)
 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
+	- [Function scoped struct declaration](#function-scoped-struct-declaration)
 	- [Model composition in response](#model-composition-in-response)
 	- [Add a headers in response](#add-a-headers-in-response)
 	- [Use multiple path params](#use-multiple-path-params)
@@ -539,6 +540,30 @@ type Account struct {
     Name string `json:"name" example:"account name"`
 }
 ```
+
+
+### Function scoped struct declaration
+
+You can declare your request response structs inside a function body. 
+You must have to follow the naming convention `<package-name>.<function-name>.<struct-name> `.
+
+```go
+package main
+
+// @Param request body main.MyHandler.request true "query params" 
+// @Success 200 {object} main.MyHandler.response
+// @Router /test [post]
+func MyHandler() {
+	type request struct {
+		RequestField string
+	}
+	
+	type response struct {
+		ResponseField string
+	}
+}
+```
+
 
 ### Model composition in response
 ```go
