@@ -410,6 +410,7 @@ const (
 	jsonTag             = "json"
 	bindingTag          = "binding"
 	defaultTag          = "default"
+	titleTag            = "name"
 	enumsTag            = "enums"
 	exampleTag          = "example"
 	schemaExampleTag    = "schemaExample"

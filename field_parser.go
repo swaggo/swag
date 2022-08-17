@@ -376,6 +376,12 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		schema.Default = value
 	}
 
+	// set title attr
+	titleTagValue := ps.tag.Get(titleTag)
+	if defaultTagValue != "" {
+		schema.Title = titleTagValue
+	}
+
 	schema.Example = field.exampleValue
 
 	if field.schemaType != ARRAY {
