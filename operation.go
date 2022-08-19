@@ -20,8 +20,10 @@ import (
 
 // RouteProperties describes HTTP properties of a single router comment.
 type RouteProperties struct {
-	HTTPMethod string
-	Path       string
+	HTTPMethod           string
+	Path                 string
+	operation            *spec.Operation //the basic operation definition sharing in all methods
+	deprecated_overrided bool
 }
 
 // Operation describes a single API operation on a path.
@@ -29,8 +31,10 @@ type RouteProperties struct {
 type Operation struct {
 	parser              *Parser
 	codeExampleFilesDir string
-	spec.Operation
-	RouterProperties []RouteProperties
+	basic_operation     *spec.Operation //the basic operation definition sharing in all methods
+	RouterProperties    []*RouteProperties
+	handling_operation  *spec.Operation //the handling operation pointer for parsing
+	handling_router     *RouteProperties
 }
 
 var mimeTypeAliases = map[string]string{
@@ -39,6 +43,7 @@ var mimeTypeAliases = map[string]string{
 	"plain":                 "text/plain",
 	"html":                  "text/html",
 	"mpfd":                  "multipart/form-data",
+	"form-data":             "multipart/form-data",
 	"x-www-form-urlencoded": "application/x-www-form-urlencoded",
 	"json-api":              "application/vnd.api+json",
 	"json-stream":           "application/x-json-stream",
@@ -57,37 +62,40 @@ func NewOperation(parser *Parser, options ...func(*Operation)) *Operation {
 		parser = New()
 	}
 
-	result := &Operation{
-		parser:           parser,
-		RouterProperties: []RouteProperties{},
-		Operation: spec.Operation{
-			OperationProps: spec.OperationProps{
-				ID:           "",
-				Description:  "",
-				Summary:      "",
-				Security:     nil,
-				ExternalDocs: nil,
-				Deprecated:   false,
-				Tags:         []string{},
-				Consumes:     []string{},
-				Produces:     []string{},
-				Schemes:      []string{},
-				Parameters:   []spec.Parameter{},
-				Responses: &spec.Responses{
-					VendorExtensible: spec.VendorExtensible{
-						Extensions: spec.Extensions{},
-					},
-					ResponsesProps: spec.ResponsesProps{
-						Default:             nil,
-						StatusCodeResponses: make(map[int]spec.Response),
-					},
+	var basic_operation = &spec.Operation{
+		OperationProps: spec.OperationProps{
+			ID:           "",
+			Description:  "",
+			Summary:      "",
+			Security:     nil,
+			ExternalDocs: nil,
+			Deprecated:   false,
+			Tags:         []string{},
+			Consumes:     []string{},
+			Produces:     []string{},
+			Schemes:      []string{},
+			Parameters:   []spec.Parameter{},
+			Responses: &spec.Responses{
+				VendorExtensible: spec.VendorExtensible{
+					Extensions: spec.Extensions{},
+				},
+				ResponsesProps: spec.ResponsesProps{
+					Default:             nil,
+					StatusCodeResponses: make(map[int]spec.Response),
 				},
 			},
-			VendorExtensible: spec.VendorExtensible{
-				Extensions: spec.Extensions{},
-			},
 		},
+		VendorExtensible: spec.VendorExtensible{
+			Extensions: spec.Extensions{},
+		},
+	}
+
+	result := &Operation{
+		parser:              parser,
+		RouterProperties:    []*RouteProperties{},
+		basic_operation:     basic_operation,
 		codeExampleFilesDir: "",
+		handling_operation:  basic_operation,
 	}
 
 	for _, option := range options {
@@ -114,6 +122,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File, logg
 	attribute := strings.Fields(commentLine)[0]
 	lineRemainder, lowerAttribute := strings.TrimSpace(commentLine[len(attribute):]), strings.ToLower(attribute)
 
+	var handling_operation = operation.handling_operation
+
 	switch lowerAttribute {
 	case descriptionAttr:
 		operation.ParseDescriptionComment(lineRemainder)
@@ -125,9 +135,9 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File, logg
 
 		operation.ParseDescriptionComment(string(commentInfo))
 	case summaryAttr:
-		operation.Summary = lineRemainder
+		handling_operation.Summary = lineRemainder
 	case idAttr:
-		operation.ID = lineRemainder
+		handling_operation.ID = lineRemainder
 	case tagsAttr:
 		operation.ParseTagsComment(lineRemainder)
 	case acceptAttr:
@@ -146,7 +156,10 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File, logg
 	case securityAttr:
 		return operation.ParseSecurityComment(lineRemainder)
 	case deprecatedAttr:
-		operation.Deprecate()
+		if operation.handling_router != nil {
+			operation.handling_router.deprecated_overrided = true
+		}
+		handling_operation.Deprecate()
 	case xCodeSamplesAttr:
 		return operation.ParseCodeSample(attribute, commentLine, lineRemainder)
 	default:
@@ -159,7 +172,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File, logg
 // ParseCodeSample godoc.
 func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) error {
 	if lineRemainder == "file" {
-		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
+		data, err := getCodeExampleForSummary(operation.handling_operation.Summary, operation.codeExampleFilesDir)
 		if err != nil {
 			return err
 		}
@@ -172,7 +185,7 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 		}
 
 		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
-		operation.Extensions[attribute[1:]] = valueJSON
+		operation.handling_operation.Extensions[attribute[1:]] = valueJSON
 
 		return nil
 	}
@@ -183,13 +196,13 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 
 // ParseDescriptionComment godoc.
 func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
-	if operation.Description == "" {
-		operation.Description = lineRemainder
+	if operation.handling_operation.Description == "" {
+		operation.handling_operation.Description = lineRemainder
 
 		return
 	}
 
-	operation.Description += "\n" + lineRemainder
+	operation.handling_operation.Description += "\n" + lineRemainder
 }
 
 // ParseMetadata godoc.
@@ -208,7 +221,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 		}
 
 		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
-		operation.Extensions[attribute[1:]] = valueJSON
+		operation.handling_operation.Extensions[attribute[1:]] = valueJSON
 	}
 
 	return nil
@@ -382,7 +395,7 @@ E.g.
 				param.CommonValidations.UniqueItems = prop.UniqueItems
 				param.CommonValidations.MultipleOf = prop.MultipleOf
 				param.CommonValidations.Enum = prop.Enum
-				operation.Operation.Parameters = append(operation.Operation.Parameters, param)
+				operation.handling_operation.Parameters = append(operation.handling_operation.Parameters, param)
 			}
 
 			return nil
@@ -407,7 +420,7 @@ E.g.
 		return err
 	}
 
-	operation.Operation.Parameters = append(operation.Operation.Parameters, param)
+	operation.handling_operation.Parameters = append(operation.handling_operation.Parameters, param)
 
 	return nil
 }
@@ -674,18 +687,18 @@ func defineType(schemaType string, value string) (v interface{}, err error) {
 // ParseTagsComment parses comment for given `tag` comment string.
 func (operation *Operation) ParseTagsComment(commentLine string) {
 	for _, tag := range strings.Split(commentLine, ",") {
-		operation.Tags = append(operation.Tags, strings.TrimSpace(tag))
+		operation.handling_operation.Tags = append(operation.handling_operation.Tags, strings.TrimSpace(tag))
 	}
 }
 
 // ParseAcceptComment parses comment for given `accept` comment string.
 func (operation *Operation) ParseAcceptComment(commentLine string) error {
-	return parseMimeTypeList(commentLine, &operation.Consumes, "%v accept type can't be accepted")
+	return parseMimeTypeList(commentLine, &operation.handling_operation.Consumes, "%v accept type can't be accepted")
 }
 
 // ParseProduceComment parses comment for given `produce` comment string.
 func (operation *Operation) ParseProduceComment(commentLine string) error {
-	return parseMimeTypeList(commentLine, &operation.Produces, "%v produce type can't be accepted")
+	return parseMimeTypeList(commentLine, &operation.handling_operation.Produces, "%v produce type can't be accepted")
 }
 
 // parseMimeTypeList parses a list of MIME Types for a comment like
@@ -722,13 +735,16 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	signature := RouteProperties{
 		Path:       matches[1],
 		HTTPMethod: strings.ToUpper(matches[2]),
+		operation:  new(spec.Operation),
 	}
 
 	if _, ok := allMethod[signature.HTTPMethod]; !ok {
 		return fmt.Errorf("invalid method: %s", signature.HTTPMethod)
 	}
 
-	operation.RouterProperties = append(operation.RouterProperties, signature)
+	operation.handling_operation = signature.operation
+	operation.handling_router = &signature
+	operation.RouterProperties = append(operation.RouterProperties, &signature)
 
 	return nil
 }
@@ -762,7 +778,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 		}
 	}
 
-	operation.Security = append(operation.Security, securityMap)
+	operation.handling_operation.Security = append(operation.handling_operation.Security, securityMap)
 
 	return nil
 }
@@ -908,7 +924,10 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 
+	var needCompose = true
+
 	if matches[1] == "" {
+		needCompose = false
 		matches[1] = "interface{}"
 	}
 
@@ -919,15 +938,27 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 
 	fields, props := parseFields(matches[2]), map[string]spec.Schema{}
 
+	var required []string
+
 	for _, field := range fields {
 		keyVal := strings.SplitN(field, "=", 2)
 		if len(keyVal) == 2 {
-			schema, err := operation.parseObjectSchema(keyVal[1], astFile)
+			keyValPars := strings.Split(keyVal[1], "|")
+			schemaOfElem, err := operation.parseObjectSchema(keyValPars[0], astFile)
 			if err != nil {
 				return nil, err
 			}
 
-			props[keyVal[0]] = *schema
+			if len(keyValPars) > 1 {
+				for _, attr := range keyValPars[1:] {
+					switch attr {
+					case "required":
+						required = append(required, keyVal[0])
+					}
+				}
+			}
+
+			props[keyVal[0]] = *schemaOfElem
 		}
 	}
 
@@ -935,12 +966,24 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 		return schema, nil
 	}
 
-	return spec.ComposedSchema(*schema, spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type:       []string{OBJECT},
-			Properties: props,
-		},
-	}), nil
+	if needCompose {
+		return spec.ComposedSchema(*schema, spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type:       []string{OBJECT},
+				Properties: props,
+				Required:   required,
+			},
+		}), nil
+	} else {
+		return &spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type:       []string{OBJECT},
+				Properties: props,
+				Required:   required,
+			},
+		}, nil
+	}
+
 }
 
 func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refType string, astFile *ast.File, logger Logger) (*spec.Schema, error) {
@@ -1060,14 +1103,14 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	headerKey := matches[3]
 
 	if strings.EqualFold(matches[1], "all") {
-		if operation.Responses.Default != nil {
-			operation.Responses.Default.Headers[headerKey] = header
+		if operation.handling_operation.Responses.Default != nil {
+			operation.handling_operation.Responses.Default.Headers[headerKey] = header
 		}
 
-		if operation.Responses.StatusCodeResponses != nil {
-			for code, response := range operation.Responses.StatusCodeResponses {
+		if operation.handling_operation.Responses.StatusCodeResponses != nil {
+			for code, response := range operation.handling_operation.Responses.StatusCodeResponses {
 				response.Headers[headerKey] = header
-				operation.Responses.StatusCodeResponses[code] = response
+				operation.handling_operation.Responses.StatusCodeResponses[code] = response
 			}
 		}
 
@@ -1076,8 +1119,8 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
 		if strings.EqualFold(codeStr, defaultTag) {
-			if operation.Responses.Default != nil {
-				operation.Responses.Default.Headers[headerKey] = header
+			if operation.handling_operation.Responses.Default != nil {
+				operation.handling_operation.Responses.Default.Headers[headerKey] = header
 			}
 
 			continue
@@ -1088,12 +1131,12 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 
-		if operation.Responses.StatusCodeResponses != nil {
-			response, responseExist := operation.Responses.StatusCodeResponses[code]
+		if operation.handling_operation.Responses.StatusCodeResponses != nil {
+			response, responseExist := operation.handling_operation.Responses.StatusCodeResponses[code]
 			if responseExist {
 				response.Headers[headerKey] = header
 
-				operation.Responses.StatusCodeResponses[code] = response
+				operation.handling_operation.Responses.StatusCodeResponses[code] = response
 			}
 		}
 	}
@@ -1152,8 +1195,8 @@ func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 
 // DefaultResponse return the default response member pointer.
 func (operation *Operation) DefaultResponse() *spec.Response {
-	if operation.Responses.Default == nil {
-		operation.Responses.Default = &spec.Response{
+	if operation.handling_operation.Responses.Default == nil {
+		operation.handling_operation.Responses.Default = &spec.Response{
 			ResponseProps: spec.ResponseProps{
 				Description: "",
 				Headers:     make(map[string]spec.Header),
@@ -1161,7 +1204,7 @@ func (operation *Operation) DefaultResponse() *spec.Response {
 		}
 	}
 
-	return operation.Responses.Default
+	return operation.handling_operation.Responses.Default
 }
 
 // AddResponse add a response for a code.
@@ -1170,7 +1213,60 @@ func (operation *Operation) AddResponse(code int, response *spec.Response) {
 		response.Headers = make(map[string]spec.Header)
 	}
 
-	operation.Responses.StatusCodeResponses[code] = *response
+	if operation.handling_operation.Responses == nil {
+		operation.handling_operation.Responses = new(spec.Responses)
+	}
+
+	if operation.handling_operation.Responses.StatusCodeResponses == nil {
+		operation.handling_operation.Responses.StatusCodeResponses = make(map[int]spec.Response)
+	}
+
+	operation.handling_operation.Responses.StatusCodeResponses[code] = *response
+}
+
+func (operation *Operation) mergeBasic(dest *RouteProperties) *spec.Operation {
+	for k, v := range operation.basic_operation.Extensions {
+		if dest.operation.Extensions == nil {
+			dest.operation.Extensions = make(spec.Extensions)
+		}
+		dest.operation.Extensions[k] = v
+	}
+	if dest.operation.Description == "" && operation.basic_operation.Description != "" {
+		dest.operation.Description = operation.basic_operation.Description
+	}
+	if len(dest.operation.Consumes) == 0 && len(operation.basic_operation.Consumes) != 0 {
+		dest.operation.Consumes = append(dest.operation.Consumes, operation.basic_operation.Consumes...)
+	}
+	if len(dest.operation.Produces) == 0 && len(operation.basic_operation.Produces) != 0 {
+		dest.operation.Produces = append(dest.operation.Produces, operation.basic_operation.Produces...)
+	}
+	if len(dest.operation.Schemes) == 0 && len(operation.basic_operation.Schemes) != 0 {
+		dest.operation.Schemes = append(dest.operation.Schemes, operation.basic_operation.Schemes...)
+	}
+	if len(dest.operation.Tags) == 0 && len(operation.basic_operation.Tags) != 0 {
+		dest.operation.Tags = append(dest.operation.Tags, operation.basic_operation.Tags...)
+	}
+	if dest.operation.Summary == "" && operation.basic_operation.Summary != "" {
+		dest.operation.Summary = operation.basic_operation.Summary
+	}
+	// ExternalDocs *ExternalDocumentation `json:"externalDocs,omitempty"`
+	if dest.operation.ExternalDocs == nil && operation.basic_operation.ExternalDocs != nil {
+		dest.operation.ExternalDocs = operation.basic_operation.ExternalDocs
+	}
+	if dest.operation.ID == "" && operation.basic_operation.ID != "" {
+		dest.operation.ID = operation.basic_operation.ID
+	}
+	if !dest.deprecated_overrided {
+		dest.operation.Deprecated = operation.basic_operation.Deprecated
+	}
+	if len(dest.operation.Security) == 0 && len(operation.basic_operation.Security) != 0 {
+		dest.operation.Security = append(dest.operation.Security, operation.basic_operation.Security...)
+	}
+	dest.operation.Parameters = append(dest.operation.Parameters, operation.basic_operation.Parameters...)
+	if dest.operation.Responses == nil && operation.basic_operation.Responses != nil {
+		dest.operation.Responses = operation.basic_operation.Responses
+	}
+	return dest.operation
 }
 
 // createParameter returns swagger spec.Parameter for given  paramType, description, paramName, schemaType, required.

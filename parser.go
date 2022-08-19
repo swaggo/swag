@@ -883,7 +883,7 @@ func processRouterOperation(fileName string, parser *Parser, operation *Operatio
 			parser.logger.Tracef("add route %s %s in %s", routeProperties.HTTPMethod, routeProperties.Path, fileName)
 		}
 
-		*op = &operation.Operation
+		*op = operation.mergeBasic(routeProperties)
 
 		parser.swagger.Paths.Paths[routeProperties.Path] = pathItem
 	}
