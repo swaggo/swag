@@ -39,6 +39,15 @@ func Register(name string, swagger Swagger) {
 	swags[name] = swagger
 }
 
+// GetSwagger returns the swagger instance for given name.
+// If not found, returns nil.
+func GetSwagger(name string) Swagger {
+	swaggerMu.RLock()
+	defer swaggerMu.RUnlock()
+
+	return swags[name]
+}
+
 // ReadDoc reads swagger document. An optional name parameter can be passed to read a specific document.
 // The default name is "swagger".
 func ReadDoc(optionalName ...string) (string, error) {
