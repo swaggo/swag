@@ -107,6 +107,7 @@ func (pkgDefs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, erro
 	parsedSchemas := make(map[*TypeSpecDef]*Schema)
 	for astFile, info := range pkgDefs.files {
 		pkgDefs.parseTypesFromFile(astFile, info.PackagePath, parsedSchemas)
+		pkgDefs.parseFunctionScopedTypesFromFile(astFile, info.PackagePath, parsedSchemas)
 	}
 	return parsedSchemas, nil
 }
@@ -154,6 +155,64 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						}
 					} else if _, ok = pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()]; !ok {
 						pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
+					}
+				}
+			}
+		}
+	}
+}
+
+func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *ast.File, packagePath string, parsedSchemas map[*TypeSpecDef]*Schema) {
+	for _, astDeclaration := range astFile.Decls {
+		if funcDeclaration, ok := astDeclaration.(*ast.FuncDecl); ok {
+			for _, stmt := range funcDeclaration.Body.List {
+				if declStmt, ok := (stmt).(*ast.DeclStmt); ok {
+					if genDecl, ok := (declStmt.Decl).(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
+						for _, astSpec := range genDecl.Specs {
+							if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
+								typeSpecDef := &TypeSpecDef{
+									PkgPath:    packagePath,
+									File:       astFile,
+									TypeSpec:   typeSpec,
+									ParentSpec: astDeclaration,
+								}
+
+								if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) && parsedSchemas != nil {
+									parsedSchemas[typeSpecDef] = &Schema{
+										PkgPath: typeSpecDef.PkgPath,
+										Name:    astFile.Name.Name,
+										Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
+									}
+								}
+
+								if pkgDefs.uniqueDefinitions == nil {
+									pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
+								}
+
+								fullName := typeSpecFullName(typeSpecDef)
+
+								anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
+								if ok {
+									if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
+										continue
+									} else {
+										delete(pkgDefs.uniqueDefinitions, fullName)
+									}
+								} else {
+									pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
+								}
+
+								if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
+									pkgDefs.packages[typeSpecDef.PkgPath] = &PackageDefinitions{
+										Name:            astFile.Name.Name,
+										TypeDefinitions: map[string]*TypeSpecDef{fullName: typeSpecDef},
+									}
+								} else if _, ok = pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[fullName]; !ok {
+									pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[fullName] = typeSpecDef
+								}
+							}
+						}
+
 					}
 				}
 			}
@@ -338,7 +397,7 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 				}
 
 				if strings.Contains(tName, joinedParts) {
-					if parametrized := pkgDefs.parametrizeStruct(tSpec, typeName); parametrized != nil {
+					if parametrized := pkgDefs.parametrizeStruct(tSpec, typeName, parseDependency); parametrized != nil {
 						return parametrized
 					}
 				}

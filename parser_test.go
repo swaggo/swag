@@ -148,6 +148,28 @@ func TestParser_ParseDefinition(t *testing.T) {
 	}
 	_, err = p.ParseDefinition(definition)
 	assert.Error(t, err)
+
+	// Parsing *ast.FuncType with parent spec
+	definition = &TypeSpecDef{
+		PkgPath: "github.com/swagger/swag/model",
+		File: &ast.File{
+			Name: &ast.Ident{
+				Name: "model",
+			},
+		},
+		TypeSpec: &ast.TypeSpec{
+			Name: &ast.Ident{
+				Name: "Test",
+			},
+			Type: &ast.FuncType{},
+		},
+		ParentSpec: &ast.FuncDecl{
+			Name: ast.NewIdent("TestFuncDecl"),
+		},
+	}
+	_, err = p.ParseDefinition(definition)
+	assert.Error(t, err)
+	assert.Equal(t, "model.TestFuncDecl.Test", definition.FullName())
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -2167,6 +2189,16 @@ func TestParseDuplicatedOtherMethods(t *testing.T) {
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
 
+func TestParseDuplicatedFunctionScoped(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/duplicated_function_scoped"
+	p := New()
+	p.ParseDependency = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Errorf(t, err, "duplicated @id declarations successfully found")
+}
+
 func TestParseConflictSchemaName(t *testing.T) {
 	t.Parallel()
 
@@ -3105,7 +3137,7 @@ func Fun()  {
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -3162,7 +3194,7 @@ func Fun()  {
                 ],
                 "responses": {
                     "200": {
-                        "description": ""
+                        "description": "OK"
                     }
                 }
             }
@@ -3231,6 +3263,130 @@ func Fun()  {
 	assert.Equal(t, "#/definitions/Teacher", path.Get.Parameters[0].Schema.Ref.String())
 	ref = path.Get.Responses.ResponsesProps.StatusCodeResponses[200].ResponseProps.Schema.Ref
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
+}
+
+func TestParseFunctionScopedStructDefinition(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+// @Param request body main.Fun.request true "query params" 
+// @Success 200 {object} main.Fun.response
+// @Router /test [post]
+func Fun()  {
+	type request struct {
+		Name string
+	}
+	
+	type response struct {
+		Name string
+		Child string
+	}
+}
+`
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	_, ok := p.swagger.Definitions["main.Fun.response"]
+	assert.True(t, ok)
+}
+
+func TestParseFunctionScopedStructRequestResponseJSON(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+// @Param request body main.Fun.request true "query params" 
+// @Success 200 {object} main.Fun.response
+// @Router /test [post]
+func Fun()  {
+	type request struct {
+		Name string
+	}
+	
+	type response struct {
+		Name string
+		Child string
+	}
+}
+`
+	expected := `{
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/test": {
+            "post": {
+                "parameters": [
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.Fun.request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Fun.response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.Fun.request": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Fun.response": {
+            "type": "object",
+            "properties": {
+                "child": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	p := New()
+	_ = p.packages.CollectAstFile("api", "api/api.go", f)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.ParseRouterAPIInfo("", f)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	t.Log(string(b))
+	assert.Equal(t, expected, string(b))
 }
 
 func TestPackagesDefinitions_CollectAstFileInit(t *testing.T) {
@@ -3326,7 +3482,7 @@ func TestParseJSONFieldString(t *testing.T) {
                         }
                     },
                     "500": {
-                        "description": ""
+                        "description": "Internal Server Error"
                     }
                 }
             }
@@ -3557,6 +3713,7 @@ func TestParser_Skip(t *testing.T) {
 	assert.NoError(t, parser.Skip("", &mockFS{FileName: "models", IsDirectory: true}))
 	assert.NoError(t, parser.Skip("", &mockFS{FileName: "admin", IsDirectory: true}))
 	assert.NoError(t, parser.Skip("", &mockFS{FileName: "release", IsDirectory: true}))
+	assert.NoError(t, parser.Skip("", &mockFS{FileName: "..", IsDirectory: true}))
 
 	parser = New(SetExcludedDirsAndFiles("admin/release,admin/models"))
 	assert.NoError(t, parser.Skip("admin", &mockFS{IsDirectory: true}))
@@ -3568,28 +3725,28 @@ func TestParser_Skip(t *testing.T) {
 func TestGetFieldType(t *testing.T) {
 	t.Parallel()
 
-	field, err := getFieldType(&ast.Ident{Name: "User"})
+	field, err := getFieldType(&ast.File{}, &ast.Ident{Name: "User"})
 	assert.NoError(t, err)
 	assert.Equal(t, "User", field)
 
-	_, err = getFieldType(&ast.FuncType{})
+	_, err = getFieldType(&ast.File{}, &ast.FuncType{})
 	assert.Error(t, err)
 
-	field, err = getFieldType(&ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}})
+	field, err = getFieldType(&ast.File{}, &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}})
 	assert.NoError(t, err)
 	assert.Equal(t, "models.User", field)
 
-	_, err = getFieldType(&ast.SelectorExpr{X: &ast.FuncType{}, Sel: &ast.Ident{Name: "User"}})
+	_, err = getFieldType(&ast.File{}, &ast.SelectorExpr{X: &ast.FuncType{}, Sel: &ast.Ident{Name: "User"}})
 	assert.Error(t, err)
 
-	field, err = getFieldType(&ast.StarExpr{X: &ast.Ident{Name: "User"}})
+	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.Ident{Name: "User"}})
 	assert.NoError(t, err)
 	assert.Equal(t, "User", field)
 
-	field, err = getFieldType(&ast.StarExpr{X: &ast.FuncType{}})
+	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.FuncType{}})
 	assert.Error(t, err)
 
-	field, err = getFieldType(&ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
+	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
 	assert.NoError(t, err)
 	assert.Equal(t, "models.User", field)
 }

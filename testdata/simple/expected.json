@@ -101,6 +101,18 @@
         }
       }
     },
+    "/GetPet6FunctionScopedResponse": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/api.GetPet6FunctionScopedResponse.response"
+            }
+          }
+        }
+      }
+    },
     "/GetPet6MapString": {
       "get": {
         "responses": {
@@ -389,6 +401,14 @@
     }
   },
   "definitions": {
+    "api.GetPet6FunctionScopedResponse.response": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "type": "string"
+        }
+      }
+    },
     "cross.Cross": {
       "type": "object",
       "properties": {
