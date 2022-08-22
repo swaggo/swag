@@ -27,7 +27,7 @@ type RouteProperties struct {
 }
 
 // Operation describes a single API operation on a path.
-// For more information: https://github.com/swaggo/swag#api-operation
+// For more information: https://github.com/extrame/swag#api-operation
 type Operation struct {
 	parser              *Parser
 	codeExampleFilesDir string

@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/swaggo/swag/testdata/generics_arrays/web"
+	"github.com/extrame/swag/testdata/generics_arrays/web"
 )
 
 // @Summary List Posts

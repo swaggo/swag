@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/extrame/swag/example/celler/httputil"
+	"github.com/extrame/swag/example/celler/model"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/example/celler/httputil"
-	"github.com/swaggo/swag/example/celler/model"
 )
 
 // Auth godoc

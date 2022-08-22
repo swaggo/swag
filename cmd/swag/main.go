@@ -8,9 +8,9 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/swaggo/swag"
-	"github.com/swaggo/swag/format"
-	"github.com/swaggo/swag/gen"
+	"github.com/extrame/swag"
+	"github.com/extrame/swag/format"
+	"github.com/extrame/swag/gen"
 
 	"github.com/sirupsen/logrus"
 )
