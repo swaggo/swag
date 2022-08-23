@@ -167,6 +167,10 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 // splitStructName splits a generic struct name in his parts
 func splitStructName(fullGenericForm string) (string, []string) {
 	// split only at the first '[' and remove the last ']'
+	if fullGenericForm[len(fullGenericForm)-1] != ']' {
+		return "", nil
+	}
+
 	genericParams := strings.SplitN(strings.TrimSpace(fullGenericForm)[:len(fullGenericForm)-1], "[", 2)
 	if len(genericParams) == 1 {
 		return "", nil
