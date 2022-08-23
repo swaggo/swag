@@ -28,7 +28,7 @@ func (String) Where(ps ...PostSelector) String {
 
 type PostPager struct {
 	Pager[String, PostSelector]
-	Search string `json:"search" form:"search"`
+	Search types.Field[string] `json:"search" form:"search"`
 }
 
 type PostResponse struct {
