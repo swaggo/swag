@@ -167,6 +167,10 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 // splitStructName splits a generic struct name in his parts
 func splitStructName(fullGenericForm string) (string, []string) {
 	// split only at the first '[' and remove the last ']'
+	if fullGenericForm[len(fullGenericForm)-1] != ']' {
+		return "", nil
+	}
+
 	genericParams := strings.SplitN(strings.TrimSpace(fullGenericForm)[:len(fullGenericForm)-1], "[", 2)
 	if len(genericParams) == 1 {
 		return "", nil
@@ -224,12 +228,11 @@ func resolveType(expr ast.Expr, field *ast.Field, genericParamTypeDefs map[strin
 func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
 	switch fieldType := field.(type) {
 	case *ast.IndexListExpr:
-		spec := &TypeSpecDef{
-			File:     file,
-			TypeSpec: getGenericTypeSpec(fieldType.X),
-			PkgPath:  file.Name.Name,
+		fullName, err := getGenericTypeName(file, fieldType.X)
+		if err != nil {
+			return "", err
 		}
-		fullName := spec.FullName() + "["
+		fullName += "["
 
 		for _, index := range fieldType.Indices {
 			var fieldName string
@@ -252,11 +255,6 @@ func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
 
 		return strings.TrimRight(fullName, ",") + "]", nil
 	case *ast.IndexExpr:
-		if file.Name == nil {
-			return "", errors.New("file name is nil")
-		}
-		packageName, _ := getFieldType(file, file.Name)
-
 		x, err := getFieldType(file, fieldType.X)
 		if err != nil {
 			return "", err
@@ -267,18 +265,38 @@ func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
 			return "", err
 		}
 
+		packageName := ""
+		if !strings.Contains(x, ".") {
+			if file.Name == nil {
+				return "", errors.New("file name is nil")
+			}
+			packageName, _ = getFieldType(file, file.Name)
+		}
+
 		return strings.TrimLeft(fmt.Sprintf("%s.%s[%s]", packageName, x, i), "."), nil
 	}
 
 	return "", fmt.Errorf("unknown field type %#v", field)
 }
 
-func getGenericTypeSpec(field ast.Expr) *ast.TypeSpec {
+func getGenericTypeName(file *ast.File, field ast.Expr) (string, error) {
 	switch indexType := field.(type) {
 	case *ast.Ident:
-		return indexType.Obj.Decl.(*ast.TypeSpec)
+		spec := &TypeSpecDef{
+			File:     file,
+			TypeSpec: indexType.Obj.Decl.(*ast.TypeSpec),
+			PkgPath:  file.Name.Name,
+		}
+		return spec.FullName(), nil
 	case *ast.ArrayType:
-		return indexType.Elt.(*ast.Ident).Obj.Decl.(*ast.TypeSpec)
+		spec := &TypeSpecDef{
+			File:     file,
+			TypeSpec: indexType.Elt.(*ast.Ident).Obj.Decl.(*ast.TypeSpec),
+			PkgPath:  file.Name.Name,
+		}
+		return spec.FullName(), nil
+	case *ast.SelectorExpr:
+		return fmt.Sprintf("%s.%s", indexType.X.(*ast.Ident).Name, indexType.Sel.Name), nil
 	}
-	return nil
+	return "", fmt.Errorf("unknown type %#v", field)
 }

@@ -39,11 +39,6 @@
                         "type": "integer",
                         "name": "rows",
                         "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "name": "search",
-                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -64,12 +59,32 @@
                         "schema": {
                             "$ref": "#/definitions/web.StringResponse"
                         }
+                    },
+                    "203": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/api.NestedResponse"
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
+        "api.NestedResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "items2": {
+                    "type": "integer"
+                }
+            }
+        },
         "types.Field-string": {
             "type": "object",
             "properties": {
