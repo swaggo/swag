@@ -164,7 +164,8 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 
 func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *ast.File, packagePath string, parsedSchemas map[*TypeSpecDef]*Schema) {
 	for _, astDeclaration := range astFile.Decls {
-		if funcDeclaration, ok := astDeclaration.(*ast.FuncDecl); ok {
+		funcDeclaration, ok := astDeclaration.(*ast.FuncDecl)
+		if ok && funcDeclaration.Body != nil {
 			for _, stmt := range funcDeclaration.Body.List {
 				if declStmt, ok := (stmt).(*ast.DeclStmt); ok {
 					if genDecl, ok := (declStmt.Decl).(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
