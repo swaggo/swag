@@ -98,55 +98,67 @@ func TestParametrizeStruct(t *testing.T) {
 		packages: make(map[string]*PackageDefinitions),
 	}
 	// valid
-	typeSpec := pd.parametrizeStruct(&TypeSpecDef{
-		TypeSpec: &ast.TypeSpec{
-			Name:       &ast.Ident{Name: "Field"},
-			TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
-			Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-		}}, "test.Field[string, []string]", false)
+	typeSpec := pd.parametrizeStruct(
+		&ast.File{Name: &ast.Ident{Name: "test2"}},
+		&TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name:       &ast.Ident{Name: "Field"},
+				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
+				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
+			}}, "test.Field[string, []string]", false)
 	assert.Equal(t, "$test.Field-string-array_string", typeSpec.Name())
 
 	// definition contains one type params, but two type params are provided
-	typeSpec = pd.parametrizeStruct(&TypeSpecDef{
-		TypeSpec: &ast.TypeSpec{
-			Name:       &ast.Ident{Name: "Field"},
-			TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}}},
-			Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-		}}, "test.Field[string, string]", false)
+	typeSpec = pd.parametrizeStruct(
+		&ast.File{Name: &ast.Ident{Name: "test2"}},
+		&TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name:       &ast.Ident{Name: "Field"},
+				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}}},
+				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
+			}}, "test.Field[string, string]", false)
 	assert.Nil(t, typeSpec)
 
 	// definition contains two type params, but only one is used
-	typeSpec = pd.parametrizeStruct(&TypeSpecDef{
-		TypeSpec: &ast.TypeSpec{
-			Name:       &ast.Ident{Name: "Field"},
-			TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
-			Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-		}}, "test.Field[string]", false)
+	typeSpec = pd.parametrizeStruct(
+		&ast.File{Name: &ast.Ident{Name: "test2"}},
+		&TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name:       &ast.Ident{Name: "Field"},
+				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
+				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
+			}}, "test.Field[string]", false)
 	assert.Nil(t, typeSpec)
 
 	// name is not a valid type name
-	typeSpec = pd.parametrizeStruct(&TypeSpecDef{
-		TypeSpec: &ast.TypeSpec{
-			Name:       &ast.Ident{Name: "Field"},
-			TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
-			Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-		}}, "test.Field[string", false)
+	typeSpec = pd.parametrizeStruct(
+		&ast.File{Name: &ast.Ident{Name: "test2"}},
+		&TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name:       &ast.Ident{Name: "Field"},
+				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
+				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
+			}}, "test.Field[string", false)
 	assert.Nil(t, typeSpec)
 
-	typeSpec = pd.parametrizeStruct(&TypeSpecDef{
-		TypeSpec: &ast.TypeSpec{
-			Name:       &ast.Ident{Name: "Field"},
-			TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
-			Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-		}}, "test.Field[string, [string]", false)
+	typeSpec = pd.parametrizeStruct(
+		&ast.File{Name: &ast.Ident{Name: "test2"}},
+		&TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name:       &ast.Ident{Name: "Field"},
+				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
+				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
+			}}, "test.Field[string, [string]", false)
 	assert.Nil(t, typeSpec)
 
-	typeSpec = pd.parametrizeStruct(&TypeSpecDef{
-		TypeSpec: &ast.TypeSpec{
-			Name:       &ast.Ident{Name: "Field"},
-			TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
-			Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-		}}, "test.Field[string, ]string]", false)
+	typeSpec = pd.parametrizeStruct(
+		&ast.File{Name: &ast.Ident{Name: "test2"}},
+		&TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name:       &ast.Ident{Name: "Field"},
+				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
+				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
+			}}, "test.Field[string, ]string]", false)
 	assert.Nil(t, typeSpec)
 }
 
@@ -293,4 +305,41 @@ func TestGetGenericTypeName(t *testing.T) {
 		&ast.BadExpr{},
 	)
 	assert.Error(t, err)
+}
+
+func TestParseGenericTypeExpr(t *testing.T) {
+	t.Parallel()
+
+	parser := New()
+	parser.packages.uniqueDefinitions["field.Name[string]"] = &TypeSpecDef{
+		File: &ast.File{Name: &ast.Ident{Name: "test"}},
+		TypeSpec: &ast.TypeSpec{
+			Name:       &ast.Ident{Name: "Field"},
+			TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}}},
+			Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
+		},
+	}
+	spec, err := parser.parseTypeExpr(
+		&ast.File{Name: &ast.Ident{Name: "test"}},
+		&ast.IndexExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "field"}, Sel: &ast.Ident{Name: "Name"}}, Index: &ast.Ident{Name: "string"}},
+		false,
+	)
+	assert.NotNil(t, spec)
+	assert.NoError(t, err)
+
+	spec, err = parser.parseTypeExpr(
+		&ast.File{Name: &ast.Ident{Name: "test"}},
+		&ast.IndexExpr{X: &ast.BadExpr{}, Index: &ast.Ident{Name: "string"}},
+		false,
+	)
+	assert.NotNil(t, spec)
+	assert.Equal(t, "object", spec.SchemaProps.Type[0])
+
+	spec, err = parser.parseTypeExpr(
+		&ast.File{Name: &ast.Ident{Name: "test"}},
+		&ast.BadExpr{},
+		false,
+	)
+	assert.NotNil(t, spec)
+	assert.Equal(t, "object", spec.SchemaProps.Type[0])
 }

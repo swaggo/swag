@@ -9,6 +9,37 @@
     "host": "localhost:4000",
     "basePath": "/api",
     "paths": {
+        "/movie": {
+            "post": {
+                "description": "Create a new movie production",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create movie",
+                "parameters": [
+                    {
+                        "description": "Movie Create-Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateMovie"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateMovie"
+                        }
+                    }
+                }
+            }
+        },
         "/posts": {
             "get": {
                 "description": "Get All of the Posts",
@@ -71,6 +102,29 @@
         }
     },
     "definitions": {
+        "api.CreateMovie": {
+            "type": "object",
+            "properties": {
+                "cameraPeople": {
+                    "$ref": "#/definitions/types.Field-array_api_Person"
+                },
+                "directors": {
+                    "$ref": "#/definitions/types.Field-array_api_Person"
+                },
+                "mainActor": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "producer": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "supportingCast": {
+                    "$ref": "#/definitions/types.Field-array_api_Person"
+                }
+            }
+        },
         "api.NestedResponse": {
             "type": "object",
             "properties": {
@@ -82,6 +136,47 @@
                 },
                 "items2": {
                     "type": "integer"
+                },
+                "post": {
+                    "$ref": "#/definitions/types.Field-array_types_Post"
+                }
+            }
+        },
+        "api.Person": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Field-api_Person": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "$ref": "#/definitions/api.Person"
+                }
+            }
+        },
+        "types.Field-array_api_Person": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                }
+            }
+        },
+        "types.Field-array_types_Post": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
                 }
             }
         },

@@ -398,7 +398,7 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 				}
 
 				if strings.Contains(tName, joinedParts) {
-					if parametrized := pkgDefs.parametrizeStruct(tSpec, typeName, parseDependency); parametrized != nil {
+					if parametrized := pkgDefs.parametrizeStruct(file, tSpec, typeName, parseDependency); parametrized != nil {
 						return parametrized
 					}
 				}
