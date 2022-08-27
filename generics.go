@@ -327,15 +327,24 @@ func getGenericTypeName(file *ast.File, field ast.Expr) (string, error) {
 
 func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr) (*spec.Schema, error) {
 	switch expr := typeExpr.(type) {
+	// suppress debug messages for these types
+	case *ast.InterfaceType:
+	case *ast.StructType:
+	case *ast.Ident:
+	case *ast.StarExpr:
+	case *ast.SelectorExpr:
+	case *ast.ArrayType:
+	case *ast.MapType:
+	case *ast.FuncType:
 	case *ast.IndexExpr:
 		name, err := getExtendedGenericFieldType(file, expr)
 		if err == nil {
 			if schema, err := parser.getTypeSchema(name, file, false); err == nil {
 				return spec.MapProperty(schema), nil
 			}
-		} else {
-			parser.debug.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead. (%s)\n", typeExpr, err)
 		}
+
+		parser.debug.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead. (%s)\n", typeExpr, err)
 	default:
 		parser.debug.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}

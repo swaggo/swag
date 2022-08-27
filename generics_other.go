@@ -23,6 +23,7 @@ func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
 
 func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr) (*spec.Schema, error) {
 	switch typeExpr.(type) {
+	// suppress debug messages for these types
 	case *ast.InterfaceType:
 	case *ast.StructType:
 	case *ast.Ident:

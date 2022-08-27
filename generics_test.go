@@ -5,6 +5,7 @@ package swag
 
 import (
 	"encoding/json"
+	"fmt"
 	"go/ast"
 	"io/ioutil"
 	"path/filepath"
@@ -12,6 +13,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+type testLogger struct {
+	Messages []string
+}
+
+func (t *testLogger) Printf(format string, v ...interface{}) {
+	t.Messages = append(t.Messages, fmt.Sprintf(format, v...))
+}
 
 func TestParseGenericsBasic(t *testing.T) {
 	t.Parallel()
@@ -311,6 +320,29 @@ func TestParseGenericTypeExpr(t *testing.T) {
 	t.Parallel()
 
 	parser := New()
+	logger := &testLogger{}
+	SetDebugger(logger)(parser)
+
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.InterfaceType{})
+	assert.Empty(t, logger.Messages)
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.StructType{})
+	assert.Empty(t, logger.Messages)
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.Ident{})
+	assert.Empty(t, logger.Messages)
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.StarExpr{})
+	assert.Empty(t, logger.Messages)
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.SelectorExpr{})
+	assert.Empty(t, logger.Messages)
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.ArrayType{})
+	assert.Empty(t, logger.Messages)
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.MapType{})
+	assert.Empty(t, logger.Messages)
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.FuncType{})
+	assert.Empty(t, logger.Messages)
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.BadExpr{})
+	assert.NotEmpty(t, logger.Messages)
+	assert.Len(t, logger.Messages, 1)
+
 	parser.packages.uniqueDefinitions["field.Name[string]"] = &TypeSpecDef{
 		File: &ast.File{Name: &ast.Ident{Name: "test"}},
 		TypeSpec: &ast.TypeSpec{
@@ -327,6 +359,7 @@ func TestParseGenericTypeExpr(t *testing.T) {
 	assert.NotNil(t, spec)
 	assert.NoError(t, err)
 
+	logger.Messages = []string{}
 	spec, err = parser.parseTypeExpr(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.IndexExpr{X: &ast.BadExpr{}, Index: &ast.Ident{Name: "string"}},
@@ -334,7 +367,10 @@ func TestParseGenericTypeExpr(t *testing.T) {
 	)
 	assert.NotNil(t, spec)
 	assert.Equal(t, "object", spec.SchemaProps.Type[0])
+	assert.NotEmpty(t, logger.Messages)
+	assert.Len(t, logger.Messages, 1)
 
+	logger.Messages = []string{}
 	spec, err = parser.parseTypeExpr(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.BadExpr{},
@@ -342,4 +378,6 @@ func TestParseGenericTypeExpr(t *testing.T) {
 	)
 	assert.NotNil(t, spec)
 	assert.Equal(t, "object", spec.SchemaProps.Type[0])
+	assert.NotEmpty(t, logger.Messages)
+	assert.Len(t, logger.Messages, 1)
 }
