@@ -6,10 +6,13 @@ package swag
 import (
 	"errors"
 	"fmt"
+	"github.com/go-openapi/spec"
 	"go/ast"
 	"strings"
+	"sync"
 )
 
+var genericDefinitionsMutex = &sync.RWMutex{}
 var genericsDefinitions = map[*TypeSpecDef]map[string]*TypeSpecDef{}
 
 type genericTypeSpec struct {
@@ -55,9 +58,12 @@ func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 	return fullName
 }
 
-func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
-	if spec, ok := genericsDefinitions[original][fullGenericForm]; ok {
-		return spec
+func (pkgDefs *PackagesDefinitions) parametrizeStruct(file *ast.File, original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
+	genericDefinitionsMutex.RLock()
+	tSpec, ok := genericsDefinitions[original][fullGenericForm]
+	genericDefinitionsMutex.RUnlock()
+	if ok {
+		return tSpec
 	}
 
 	pkgName := strings.Split(fullGenericForm, ".")[0]
@@ -81,7 +87,10 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 			arrayDepth++
 		}
 
-		tdef := pkgDefs.FindTypeSpec(genericParam, original.File, parseDependency)
+		tdef := pkgDefs.FindTypeSpec(genericParam, file, parseDependency)
+		if tdef != nil && !strings.Contains(genericParam, ".") {
+			genericParam = fullTypeName(file.Name.Name, genericParam)
+		}
 		genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
 			ArrayDepth: arrayDepth,
 			TypeSpec:   tdef,
@@ -156,6 +165,8 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(original *TypeSpecDef, ful
 		newStructTypeDef.Fields.List = append(newStructTypeDef.Fields.List, newField)
 	}
 
+	genericDefinitionsMutex.Lock()
+	defer genericDefinitionsMutex.Unlock()
 	parametrizedTypeSpec.TypeSpec.Type = newStructTypeDef
 	if genericsDefinitions[original] == nil {
 		genericsDefinitions[original] = map[string]*TypeSpecDef{}
@@ -225,27 +236,32 @@ func resolveType(expr ast.Expr, field *ast.Field, genericParamTypeDefs map[strin
 	return field.Type
 }
 
+func getExtendedGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
+	switch fieldType := field.(type) {
+	case *ast.ArrayType:
+		fieldName, err := getExtendedGenericFieldType(file, fieldType.Elt)
+		return "[]" + fieldName, err
+	case *ast.StarExpr:
+		return getExtendedGenericFieldType(file, fieldType.X)
+	default:
+		return getFieldType(file, field)
+	}
+}
+
 func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
+	var fullName string
+	var baseName string
+	var err error
 	switch fieldType := field.(type) {
 	case *ast.IndexListExpr:
-		fullName, err := getGenericTypeName(file, fieldType.X)
+		baseName, err = getGenericTypeName(file, fieldType.X)
 		if err != nil {
 			return "", err
 		}
-		fullName += "["
+		fullName = baseName + "["
 
 		for _, index := range fieldType.Indices {
-			var fieldName string
-			var err error
-
-			switch item := index.(type) {
-			case *ast.ArrayType:
-				fieldName, err = getFieldType(file, item.Elt)
-				fieldName = "[]" + fieldName
-			default:
-				fieldName, err = getFieldType(file, index)
-			}
-
+			fieldName, err := getExtendedGenericFieldType(file, index)
 			if err != nil {
 				return "", err
 			}
@@ -253,50 +269,85 @@ func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
 			fullName += fieldName + ","
 		}
 
-		return strings.TrimRight(fullName, ",") + "]", nil
+		fullName = strings.TrimRight(fullName, ",") + "]"
 	case *ast.IndexExpr:
-		x, err := getFieldType(file, fieldType.X)
+		baseName, err = getGenericTypeName(file, fieldType.X)
 		if err != nil {
 			return "", err
 		}
 
-		i, err := getFieldType(file, fieldType.Index)
+		indexName, err := getExtendedGenericFieldType(file, fieldType.Index)
 		if err != nil {
 			return "", err
 		}
 
-		packageName := ""
-		if !strings.Contains(x, ".") {
-			if file.Name == nil {
-				return "", errors.New("file name is nil")
-			}
-			packageName, _ = getFieldType(file, file.Name)
-		}
-
-		return strings.TrimLeft(fmt.Sprintf("%s.%s[%s]", packageName, x, i), "."), nil
+		fullName = fmt.Sprintf("%s[%s]", baseName, indexName)
 	}
 
-	return "", fmt.Errorf("unknown field type %#v", field)
+	if fullName == "" {
+		return "", fmt.Errorf("unknown field type %#v", field)
+	}
+
+	var packageName string
+	if !strings.Contains(baseName, ".") {
+		if file.Name == nil {
+			return "", errors.New("file name is nil")
+		}
+		packageName, _ = getFieldType(file, file.Name)
+	}
+
+	return strings.TrimLeft(fmt.Sprintf("%s.%s", packageName, fullName), "."), nil
 }
 
 func getGenericTypeName(file *ast.File, field ast.Expr) (string, error) {
 	switch indexType := field.(type) {
 	case *ast.Ident:
-		spec := &TypeSpecDef{
+		if indexType.Obj == nil {
+			return getFieldType(file, field)
+		}
+
+		tSpec := &TypeSpecDef{
 			File:     file,
 			TypeSpec: indexType.Obj.Decl.(*ast.TypeSpec),
 			PkgPath:  file.Name.Name,
 		}
-		return spec.FullName(), nil
+		return tSpec.FullName(), nil
 	case *ast.ArrayType:
-		spec := &TypeSpecDef{
+		tSpec := &TypeSpecDef{
 			File:     file,
 			TypeSpec: indexType.Elt.(*ast.Ident).Obj.Decl.(*ast.TypeSpec),
 			PkgPath:  file.Name.Name,
 		}
-		return spec.FullName(), nil
+		return tSpec.FullName(), nil
 	case *ast.SelectorExpr:
 		return fmt.Sprintf("%s.%s", indexType.X.(*ast.Ident).Name, indexType.Sel.Name), nil
 	}
 	return "", fmt.Errorf("unknown type %#v", field)
+}
+
+func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr) (*spec.Schema, error) {
+	switch expr := typeExpr.(type) {
+	// suppress debug messages for these types
+	case *ast.InterfaceType:
+	case *ast.StructType:
+	case *ast.Ident:
+	case *ast.StarExpr:
+	case *ast.SelectorExpr:
+	case *ast.ArrayType:
+	case *ast.MapType:
+	case *ast.FuncType:
+	case *ast.IndexExpr:
+		name, err := getExtendedGenericFieldType(file, expr)
+		if err == nil {
+			if schema, err := parser.getTypeSchema(name, file, false); err == nil {
+				return spec.MapProperty(schema), nil
+			}
+		}
+
+		parser.debug.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead. (%s)\n", typeExpr, err)
+	default:
+		parser.debug.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
+	}
+
+	return PrimitiveSchema(OBJECT), nil
 }
