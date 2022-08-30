@@ -179,7 +179,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(file *ast.File, original *
 // splitStructName splits a generic struct name in his parts
 func splitStructName(fullGenericForm string) (string, []string) {
 	//remove all spaces character
-	fullGenericForm = strings.Map(func(r rune) rune {
+	fullGenericForm := strings.Map(func(r rune) rune {
 		if unicode.IsSpace(r) {
 			return -1
 		}
@@ -210,6 +210,9 @@ func splitStructName(fullGenericForm string) (string, []string) {
 		}
 		return false
 	})
+	if depth != 0 {
+		return "", nil
+	}
 
 	return genericTypeName, genericParams
 }
