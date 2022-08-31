@@ -10,6 +10,7 @@ import (
 	"go/ast"
 	"strings"
 	"sync"
+	"unicode"
 )
 
 var genericDefinitionsMutex = &sync.RWMutex{}
@@ -177,12 +178,20 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(file *ast.File, original *
 
 // splitStructName splits a generic struct name in his parts
 func splitStructName(fullGenericForm string) (string, []string) {
+	//remove all spaces character
+	fullGenericForm = strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, fullGenericForm)
+
 	// split only at the first '[' and remove the last ']'
 	if fullGenericForm[len(fullGenericForm)-1] != ']' {
 		return "", nil
 	}
 
-	genericParams := strings.SplitN(strings.TrimSpace(fullGenericForm)[:len(fullGenericForm)-1], "[", 2)
+	genericParams := strings.SplitN(fullGenericForm[:len(fullGenericForm)-1], "[", 2)
 	if len(genericParams) == 1 {
 		return "", nil
 	}
@@ -190,26 +199,19 @@ func splitStructName(fullGenericForm string) (string, []string) {
 	// generic type name
 	genericTypeName := genericParams[0]
 
-	// generic params
-	insideBrackets := 0
-	lastParam := ""
-	params := strings.Split(genericParams[1], ",")
-	genericParams = []string{}
-	for _, p := range params {
-		numOpened := strings.Count(p, "[")
-		numClosed := strings.Count(p, "]")
-		if numOpened == numClosed && insideBrackets == 0 {
-			genericParams = append(genericParams, strings.TrimSpace(p))
-			continue
+	depth := 0
+	genericParams = strings.FieldsFunc(genericParams[1], func(r rune) bool {
+		if r == '[' {
+			depth++
+		} else if r == ']' {
+			depth--
+		} else if r == ',' && depth == 0 {
+			return true
 		}
-
-		insideBrackets += numOpened - numClosed
-		lastParam += p + ","
-
-		if insideBrackets == 0 {
-			genericParams = append(genericParams, strings.TrimSpace(strings.TrimRight(lastParam, ",")))
-			lastParam = ""
-		}
+		return false
+	})
+	if depth != 0 {
+		return "", nil
 	}
 
 	return genericTypeName, genericParams

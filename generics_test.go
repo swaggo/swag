@@ -186,13 +186,17 @@ func TestSplitStructNames(t *testing.T) {
 	assert.Empty(t, field)
 	assert.Nil(t, params)
 
-	field, params = splitStructName("test.Field[string]")
+	field, params = splitStructName("test.Field[string] ")
 	assert.Equal(t, "test.Field", field)
 	assert.Equal(t, []string{"string"}, params)
 
 	field, params = splitStructName("test.Field[string, []string]")
 	assert.Equal(t, "test.Field", field)
 	assert.Equal(t, []string{"string", "[]string"}, params)
+
+	field, params = splitStructName("test.Field[test.Field[ string, []string] ]")
+	assert.Equal(t, "test.Field", field)
+	assert.Equal(t, []string{"test.Field[string,[]string]"}, params)
 }
 
 func TestGetGenericFieldType(t *testing.T) {
