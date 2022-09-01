@@ -393,7 +393,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			param.Schema = schema
 		}
 	default:
-		return fmt.Errorf("%s is not supported paramType", paramType)
+		return fmt.Errorf("%s is not supported paramType (valid type: path|header|query|formData|body)", paramType)
 	}
 
 	err := operation.parseParamAttribute(commentLine, objectType, refType, &param)
@@ -821,7 +821,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 var responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\[\s\]]+)\s*(".*)?`)
 
 // ResponseType{data1=Type1,data2=Type2}.
-var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
+var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]*){(.*)}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
@@ -900,6 +900,10 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	matches := combinedPattern.FindStringSubmatch(refType)
 	if len(matches) != 3 {
 		return nil, fmt.Errorf("invalid type: %s", refType)
+	}
+
+	if matches[0] == "" {
+		matches[0] = "interface{}"
 	}
 
 	schema, err := operation.parseObjectSchema(matches[1], astFile)

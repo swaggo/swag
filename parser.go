@@ -458,6 +458,9 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			setSwaggerInfo(parser.swagger, descriptionAttr, string(commentInfo))
 
 		case "@host":
+			if strings.Contains(value, "/") {
+				return fmt.Errorf("invalid host %q. This MUST be the host only and does not include the scheme nor sub-paths. Please use @schemes to define schemes", value)
+			}
 			parser.swagger.Host = value
 		case "@basepath":
 			parser.swagger.BasePath = value
