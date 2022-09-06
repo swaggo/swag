@@ -2,20 +2,17 @@ package swag
 
 import (
 	"bytes"
-	"crypto/md5"
 	"fmt"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"io"
 	"log"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"text/tabwriter"
 )
-
-const splitTag = "&*"
 
 // Check of @Param @Success @Failure @Response @Header
 var specialTagForSplit = map[string]bool{
@@ -55,48 +52,93 @@ func (f *Formatter) Format(fileName string, contents []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	formattedComments := bytes.Buffer{}
-	oldComments := map[string]string{}
 
-	if ast.Comments != nil {
-		for _, comment := range ast.Comments {
-			formatFuncDoc(comment.List, &formattedComments, oldComments)
-		}
+	// Formatting changes are described as an edit list of byte range
+	// replacements. We make these content-level edits directly rather than
+	// changing the AST nodes and writing those out (via [go/printer] or
+	// [go/format]) so that we only change the formatting of Swag attribute
+	// comments. This won't touch the formatting of any other comments, or of
+	// functions, etc.
+	maxEdits := 0
+	for _, comment := range ast.Comments {
+		maxEdits += len(comment.List)
 	}
-	return formatComments(fileName, contents, formattedComments.Bytes(), oldComments), nil
+	edits := make(edits, 0, maxEdits)
+
+	for _, comment := range ast.Comments {
+		formatFuncDoc(fileSet, comment.List, &edits)
+	}
+
+	return edits.apply(contents), nil
 }
 
-func formatComments(fileName string, contents []byte, formattedComments []byte, oldComments map[string]string) []byte {
-	for _, comment := range bytes.Split(formattedComments, []byte("\n")) {
-		splits := bytes.SplitN(comment, []byte(splitTag), 2)
-		if len(splits) == 2 {
-			hash, line := splits[0], splits[1]
-			contents = bytes.Replace(contents, []byte(oldComments[string(hash)]), line, 1)
-		}
+type edit struct {
+	begin       int
+	end         int
+	replacement []byte
+}
+
+type edits []edit
+
+func (edits edits) apply(contents []byte) []byte {
+	// Apply the edits with the highest offset first, so that earlier edits
+	// don't affect the offsets of later edits.
+	sort.Slice(edits, func(i, j int) bool {
+		return edits[i].begin > edits[j].begin
+	})
+
+	for _, edit := range edits {
+		prefix := contents[:edit.begin]
+		suffix := contents[edit.end:]
+		contents = append(prefix, append(edit.replacement, suffix...)...)
 	}
+
 	return contents
 }
 
-func formatFuncDoc(commentList []*ast.Comment, formattedComments io.Writer, oldCommentsMap map[string]string) {
-	w := tabwriter.NewWriter(formattedComments, 0, 0, 1, ' ', 0)
+// formatFuncDoc reformats the comment lines in commentList, and appends any
+// changes to the edit list.
+func formatFuncDoc(fileSet *token.FileSet, commentList []*ast.Comment, edits *edits) {
+	// Building the edit list to format a comment block is a two-step process.
+	// First, we iterate over each comment line looking for Swag attributes. In
+	// each one we find, we replace alignment whitespace with a tab character,
+	// then write the result into a tab writer.
 
-	for _, comment := range commentList {
+	linesToComments := make(map[int]int, len(commentList))
+
+	buffer := &bytes.Buffer{}
+	w := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', 0)
+
+	for commentIndex, comment := range commentList {
 		text := comment.Text
 		if attr, body, found := swagComment(text); found {
-			cmd5 := fmt.Sprintf("%x", md5.Sum([]byte(text)))
-			oldCommentsMap[cmd5] = text
-
 			formatted := "// " + attr
 			if body != "" {
 				formatted += "\t" + splitComment2(attr, body)
 			}
-			// md5 + splitTag + srcCommentLine
-			// eg. xxx&*@Description get struct array
-			_, _ = fmt.Fprintln(w, cmd5+splitTag+formatted)
+			_, _ = fmt.Fprintln(w, formatted)
+			linesToComments[len(linesToComments)] = commentIndex
 		}
 	}
-	// format by tabwriter
+
+	// Once we've loaded all of the comment lines to be aligned into the tab
+	// writer, flushing it causes the aligned text to be written out to the
+	// backing buffer.
 	_ = w.Flush()
+
+	// Now the second step: we iterate over the aligned comment lines that were
+	// written into the backing buffer, pair each one up to its original
+	// comment line, and use the combination to describe the edit that needs to
+	// be made to the original input.
+	formattedComments := bytes.Split(buffer.Bytes(), []byte("\n"))
+	for lineIndex, commentIndex := range linesToComments {
+		comment := commentList[commentIndex]
+		*edits = append(*edits, edit{
+			begin:       fileSet.Position(comment.Pos()).Offset,
+			end:         fileSet.Position(comment.End()).Offset,
+			replacement: formattedComments[lineIndex],
+		})
+	}
 }
 
 func splitComment2(attr, body string) string {

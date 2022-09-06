@@ -110,6 +110,36 @@ func Test_FormatMain(t *testing.T) {
 	testFormat(t, "main.go", contents, want)
 }
 
+func Test_FormatMultipleFunctions(t *testing.T) {
+	contents := `package main
+
+	// @Produce json
+	// @Success 200 {object} string
+	// @Failure 400 {object} string
+	func A() {}
+
+	// @Description Description of B.
+	// @Produce json
+	// @Success 200 {array} string
+	// @Failure 400 {object} string
+	func B() {}`
+
+	want := `package main
+
+	// @Produce json
+	// @Success 200 {object} string
+	// @Failure 400 {object} string
+	func A() {}
+
+	// @Description Description of B.
+	// @Produce     json
+	// @Success     200 {array}  string
+	// @Failure     400 {object} string
+	func B() {}`
+
+	testFormat(t, "main.go", contents, want)
+}
+
 func Test_FormatApi(t *testing.T) {
 	contents := `package api
 
