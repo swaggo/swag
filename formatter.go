@@ -59,10 +59,14 @@ func (f *Formatter) Format(fileName string, contents []byte) ([]byte, error) {
 	// [go/format]) so that we only change the formatting of Swag attribute
 	// comments. This won't touch the formatting of any other comments, or of
 	// functions, etc.
-	edits := edits{}
+	maxEdits := 0
+	for _, comment := range ast.Comments {
+		maxEdits += len(comment.List)
+	}
+	edits := make(edits, 0, maxEdits)
 
 	for _, comment := range ast.Comments {
-		edits = append(edits, formatFuncDoc(fileSet, comment.List)...)
+		formatFuncDoc(fileSet, comment.List, &edits)
 	}
 
 	return edits.apply(contents), nil
@@ -92,14 +96,15 @@ func (edits edits) apply(contents []byte) []byte {
 	return contents
 }
 
-func formatFuncDoc(fileSet *token.FileSet, commentList []*ast.Comment) edits {
+// formatFuncDoc reformats the comment lines in commentList, and appends any
+// changes to the edit list.
+func formatFuncDoc(fileSet *token.FileSet, commentList []*ast.Comment, edits *edits) {
 	// Building the edit list to format a comment block is a two-step process.
 	// First, we iterate over each comment line looking for Swag attributes. In
 	// each one we find, we replace alignment whitespace with a tab character,
 	// then write the result into a tab writer.
 
 	linesToComments := make(map[int]int, len(commentList))
-	edits := edits{}
 
 	buffer := &bytes.Buffer{}
 	w := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', 0)
@@ -128,14 +133,12 @@ func formatFuncDoc(fileSet *token.FileSet, commentList []*ast.Comment) edits {
 	formattedComments := bytes.Split(buffer.Bytes(), []byte("\n"))
 	for lineIndex, commentIndex := range linesToComments {
 		comment := commentList[commentIndex]
-		edits = append(edits, edit{
+		*edits = append(*edits, edit{
 			begin:       fileSet.Position(comment.Pos()).Offset,
 			end:         fileSet.Position(comment.End()).Offset,
 			replacement: formattedComments[lineIndex],
 		})
 	}
-
-	return edits
 }
 
 func splitComment2(attr, body string) string {
