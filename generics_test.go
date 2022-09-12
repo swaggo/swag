@@ -31,8 +31,9 @@ func TestParseGenericsBasic(t *testing.T) {
 
 	p := New()
 	p.Overrides = map[string]string{
-		"types.Field[string]":              "string",
-		"types.DoubleField[string,string]": "string",
+		"types.Field[string]":               "string",
+		"types.DoubleField[string,string]":  "[]string",
+		"types.TrippleField[string,string]": "[][]string",
 	}
 
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)

@@ -871,21 +871,22 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 }
 
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
+	var arrayDepth = 0
 	if override, ok := parser.Overrides[typeName]; ok {
 		parser.debug.Printf("Override detected for %s: using %s instead", typeName, override)
-		typeName = override
+		arrayDepth, typeName = getArrayDepth(override)
 	}
 
 	if IsInterfaceLike(typeName) {
-		return &spec.Schema{}, nil
+		return transformToArray(&spec.Schema{}, arrayDepth), nil
 	}
 	if IsGolangPrimitiveType(typeName) {
-		return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
+		return transformToArray(PrimitiveSchema(TransToValidSchemeType(typeName)), arrayDepth), nil
 	}
 
 	schemaType, err := convertFromSpecificToPrimitive(typeName)
 	if err == nil {
-		return PrimitiveSchema(schemaType), nil
+		return transformToArray(PrimitiveSchema(schemaType), arrayDepth), nil
 	}
 
 	typeSpecDef := parser.packages.FindTypeSpec(typeName, file, parser.ParseDependency)
@@ -901,13 +902,18 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		}
 
 		parser.debug.Printf("Override detected for %s: using %s instead", typeSpecDef.FullPath(), override)
+		arrayDepth, override = getArrayDepth(override)
 
 		separator := strings.LastIndex(override, ".")
 		if separator == -1 {
 			// treat as a swaggertype tag
 			parts := strings.Split(override, ",")
 
-			return BuildCustomSchema(parts)
+			s, err := BuildCustomSchema(parts)
+			if err != nil {
+				return nil, err
+			}
+			return transformToArray(s, arrayDepth), nil
 		}
 
 		typeSpecDef = parser.packages.findTypeSpec(override[0:separator], override[separator+1:])
@@ -920,7 +926,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		schema, err = parser.ParseDefinition(typeSpecDef)
 		if err != nil {
 			if err == ErrRecursiveParseStruct && ref {
-				return parser.getRefTypeSchema(typeSpecDef, schema), nil
+				return transformToArray(parser.getRefTypeSchema(typeSpecDef, schema), arrayDepth), nil
 			}
 
 			return nil, err
@@ -928,10 +934,10 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 	}
 
 	if ref && len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == OBJECT {
-		return parser.getRefTypeSchema(typeSpecDef, schema), nil
+		return transformToArray(parser.getRefTypeSchema(typeSpecDef, schema), arrayDepth), nil
 	}
 
-	return schema.Schema, nil
+	return transformToArray(schema.Schema, arrayDepth), nil
 }
 
 func (parser *Parser) renameRefSchemas() {
@@ -1606,4 +1612,20 @@ func (parser *Parser) addTestType(typename string) {
 		Name:    typename,
 		Schema:  PrimitiveSchema(OBJECT),
 	}
+}
+
+func getArrayDepth(typename string) (int, string) {
+	var d = 0
+	for strings.HasPrefix(typename, "[]") {
+		typename = typename[2:]
+		d++
+	}
+	return d, typename
+}
+
+func transformToArray(s *spec.Schema, arrayDepth int) *spec.Schema {
+	for i := 0; i < arrayDepth; i++ {
+		s = spec.ArrayProperty(s)
+	}
+	return s
 }
