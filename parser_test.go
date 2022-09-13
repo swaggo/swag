@@ -2133,6 +2133,13 @@ func TestParseImportAliases(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestAddExtXGoType(t *testing.T) {
+	p := New()
+	assert.NotPanics(t, func() {
+		p.addExtXGoType(nil, "hello")
+	})
+
+}
 func TestParseTypeOverrides(t *testing.T) {
 	t.Parallel()
 

@@ -870,6 +870,28 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 	return typeName, ErrFailedConvertPrimitiveType
 }
 
+func (parser *Parser) addExtXGoType(schema *spec.Schema, typeFullName string) {
+	if schema == nil {
+		return
+	}
+	typ := typeFullName
+	pkg := ""
+	idx := strings.LastIndex(typeFullName, ".")
+	if idx > -1 {
+		pkg = typeFullName[0:idx]
+		typ = typeFullName[idx+1:]
+	}
+
+	ext := map[string]interface{}{
+		"type": typ,
+	}
+	if pkg != "" {
+		ext["import"] = map[string]string{"package": pkg}
+	}
+
+	schema.AddExtension("x-go-type", ext)
+}
+
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
 	if override, ok := parser.Overrides[typeName]; ok {
 		parser.debug.Printf("Override detected for %s: using %s instead", typeName, override)
@@ -906,8 +928,9 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		if separator == -1 {
 			// treat as a swaggertype tag
 			parts := strings.Split(override, ",")
-
-			return BuildCustomSchema(parts)
+			spec, err := BuildCustomSchema(parts)
+			parser.addExtXGoType(spec, typeSpecDef.FullPath())
+			return spec, err
 		}
 
 		typeSpecDef = parser.packages.findTypeSpec(override[0:separator], override[separator+1:])

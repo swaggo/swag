@@ -45,7 +45,13 @@
             "type": "object",
             "properties": {
                 "application": {
-                    "type": "string"
+                    "type": "string",
+                    "x-go-type": {
+                        "import": {
+                            "package": "github.com/swaggo/swag/testdata/global_override/types"
+                        },
+                        "type": "Application"
+                    }
                 },
                 "application2": {
                     "$ref": "#/definitions/othertypes.Application"
@@ -53,7 +59,13 @@
                 "application_array": {
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "x-go-type": {
+                            "import": {
+                                "package": "github.com/swaggo/swag/testdata/global_override/types"
+                            },
+                            "type": "Application"
+                        }
                     }
                 },
                 "application_time": {
