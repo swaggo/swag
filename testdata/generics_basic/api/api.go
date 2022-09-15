@@ -7,6 +7,17 @@ import (
 	"github.com/swaggo/swag/testdata/generics_basic/web"
 )
 
+type Response[T any, X any] struct {
+	Data T
+	Meta X
+
+	Status string
+}
+
+type StringStruct struct {
+	Data string
+}
+
 // @Summary Add a new pet to the store
 // @Description get string by ID
 // @Accept  json
@@ -16,6 +27,8 @@ import (
 // @Success 201 {object} web.GenericResponse[types.Hello]
 // @Success 202 {object} web.GenericResponse[types.Field[string]]
 // @Success 203 {object} web.GenericResponse[types.Field[int]]
+// @Success 204 {object} Response[string, types.Field[int]]
+// @Success 205 {object} Response[StringStruct, types.Field[int]]
 // @Success 222 {object} web.GenericResponseMulti[types.Post, types.Post]
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
