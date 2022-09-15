@@ -181,8 +181,20 @@
         "types.Hello": {
             "type": "object",
             "properties": {
+                "myNewArrayField": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
                 "myNewField": {
-                    "type": "string"
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "myStringField1": {
                     "type": "string"

@@ -873,7 +873,7 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
 	if override, ok := parser.Overrides[typeName]; ok {
 		parser.debug.Printf("Override detected for %s: using %s instead", typeName, override)
-		typeName = override
+		return parseObjectSchema(parser, override, file)
 	}
 
 	if IsInterfaceLike(typeName) {

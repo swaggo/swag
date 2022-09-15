@@ -824,6 +824,10 @@ var responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\
 var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+	return parseObjectSchema(operation.parser, refType, astFile)
+}
+
+func parseObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec.Schema, error) {
 	switch {
 	case refType == NIL:
 		return nil, nil
@@ -838,7 +842,7 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 	case IsPrimitiveType(refType):
 		return PrimitiveSchema(refType), nil
 	case strings.HasPrefix(refType, "[]"):
-		schema, err := operation.parseObjectSchema(refType[2:], astFile)
+		schema, err := parseObjectSchema(parser, refType[2:], astFile)
 		if err != nil {
 			return nil, err
 		}
@@ -856,17 +860,17 @@ func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File)
 			return spec.MapProperty(nil), nil
 		}
 
-		schema, err := operation.parseObjectSchema(refType, astFile)
+		schema, err := parseObjectSchema(parser, refType, astFile)
 		if err != nil {
 			return nil, err
 		}
 
 		return spec.MapProperty(schema), nil
 	case strings.Contains(refType, "{"):
-		return operation.parseCombinedObjectSchema(refType, astFile)
+		return parseCombinedObjectSchema(parser, refType, astFile)
 	default:
-		if operation.parser != nil { // checking refType has existing in 'TypeDefinitions'
-			schema, err := operation.parser.getTypeSchema(refType, astFile, true)
+		if parser != nil { // checking refType has existing in 'TypeDefinitions'
+			schema, err := parser.getTypeSchema(refType, astFile, true)
 			if err != nil {
 				return nil, err
 			}
@@ -896,13 +900,13 @@ func parseFields(s string) []string {
 	})
 }
 
-func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+func parseCombinedObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec.Schema, error) {
 	matches := combinedPattern.FindStringSubmatch(refType)
 	if len(matches) != 3 {
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 
-	schema, err := operation.parseObjectSchema(matches[1], astFile)
+	schema, err := parseObjectSchema(parser, matches[1], astFile)
 	if err != nil {
 		return nil, err
 	}
@@ -912,7 +916,7 @@ func (operation *Operation) parseCombinedObjectSchema(refType string, astFile *a
 	for _, field := range fields {
 		keyVal := strings.SplitN(field, "=", 2)
 		if len(keyVal) == 2 {
-			schema, err := operation.parseObjectSchema(keyVal[1], astFile)
+			schema, err := parseObjectSchema(parser, keyVal[1], astFile)
 			if err != nil {
 				return nil, err
 			}
