@@ -147,6 +147,18 @@
                             "$ref": "#/definitions/web.GenericResponse-types_Field_int"
                         }
                     },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response-string-types_Field_int"
+                        }
+                    },
+                    "205": {
+                        "description": "Reset Content",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response-api_StringStruct-types_Field_int"
+                        }
+                    },
                     "222": {
                         "description": "",
                         "schema": {
@@ -170,6 +182,42 @@
         }
     },
     "definitions": {
+        "api.Response-api_StringStruct-types_Field_int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.StringStruct"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Response-string-types_Field_int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.StringStruct": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                }
+            }
+        },
         "types.Field-int": {
             "type": "object",
             "properties": {

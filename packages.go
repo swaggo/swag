@@ -389,23 +389,15 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 			}
 		}
 
-		if strings.Contains(typeName, "[") {
-			// joinedParts differs from typeName in that it does not contain any type parameters
-			joinedParts := strings.Join(parts, ".")
-			for tName, tSpec := range pkgDefs.uniqueDefinitions {
-				if !strings.Contains(tName, "[") {
-					continue
-				}
-
-				if strings.Contains(tName, joinedParts) {
-					if parametrized := pkgDefs.parametrizeStruct(file, tSpec, typeName, parseDependency); parametrized != nil {
-						return parametrized
-					}
-				}
-			}
+		if def := pkgDefs.findGenericTypeSpec(typeName, file, parseDependency); def != nil {
+			return def
 		}
 
 		return pkgDefs.findTypeSpec(pkgPath, parts[1])
+	}
+
+	if def := pkgDefs.findGenericTypeSpec(fullTypeName(file.Name.Name, typeName), file, parseDependency); def != nil {
+		return def
 	}
 
 	typeDef, ok := pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
@@ -427,5 +419,24 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		}
 	}
 
+	return nil
+}
+
+func (pkgDefs *PackagesDefinitions) findGenericTypeSpec(typeName string, file *ast.File, parseDependency bool) *TypeSpecDef {
+	if strings.Contains(typeName, "[") {
+		// genericName differs from typeName in that it does not contain any type parameters
+		genericName := strings.SplitN(typeName, "[", 2)[0]
+		for tName, tSpec := range pkgDefs.uniqueDefinitions {
+			if !strings.Contains(tName, "[") {
+				continue
+			}
+
+			if strings.Contains(tName, genericName) {
+				if parametrized := pkgDefs.parametrizeStruct(file, tSpec, typeName, parseDependency); parametrized != nil {
+					return parametrized
+				}
+			}
+		}
+	}
 	return nil
 }
