@@ -52,12 +52,9 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 
 2. Download swag by using:
 ```sh
-$ go get -u github.com/swaggo/swag/cmd/swag
-
-# 1.16 or newer
 $ go install github.com/swaggo/swag/cmd/swag@latest
 ```
-To build from source you need [Go](https://golang.org/dl/) (1.15 or newer).
+To build from source you need [Go](https://golang.org/dl/) (1.16 or newer).
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
