@@ -24,10 +24,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set output
-        id: vars
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
-
       - name: Build image and push to Docker Hub and GitHub Container Registry
         uses: docker/build-push-action@v2
         with:
@@ -35,7 +31,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/swaggo/swag:latest
-            ghcr.io/swaggo/swag:${{ steps.vars.outputs.tag }}
+            ghcr.io/swaggo/swag:${GITHUB_REF#refs/*/}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
