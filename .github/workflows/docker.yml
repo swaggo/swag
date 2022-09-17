@@ -31,7 +31,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/swaggo/swag:latest
-            ghcr.io/swaggo/swag:${{GITHUB_REF#refs/*/}}
+            ghcr.io/swaggo/swag:${{github.ref_name}}
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
