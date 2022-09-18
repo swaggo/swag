@@ -226,7 +226,7 @@ func findInSlice(arr []string, target string) bool {
 }
 
 func (operation *Operation) parseArrayParam(param *spec.Parameter, paramType, refType, objectType string) error {
-	if !IsPrimitiveType(refType) {
+	if !IsPrimitiveType(refType) && !(refType == "file" && paramType == "formData") {
 		return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
 	}
 
