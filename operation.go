@@ -6,7 +6,6 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -270,7 +269,9 @@ func (operation *Operation) parseArrayParam(param *spec.Parameter, paramType, re
 
 // ParseParamComment parses params return []string of param properties
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
-//              [param name]    [paramType] [data type]  [is mandatory?]   [Comment]
+//
+//	[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
+//
 // E.g. @Param   some_id     path    int     true        "Some ID".
 func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
 	matches := paramPattern.FindStringSubmatch(commentLine)
@@ -1197,17 +1198,17 @@ func createParameter(paramType, description, paramName, schemaType string, requi
 }
 
 func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error) {
-	filesInfos, err := ioutil.ReadDir(dirPath)
+	dirEntries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, fileInfo := range filesInfos {
-		if fileInfo.IsDir() {
+	for _, entry := range dirEntries {
+		if entry.IsDir() {
 			continue
 		}
 
-		fileName := fileInfo.Name()
+		fileName := entry.Name()
 
 		if !strings.Contains(fileName, ".json") {
 			continue
@@ -1216,7 +1217,7 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 		if strings.Contains(fileName, summaryName) {
 			fullPath := filepath.Join(dirPath, fileName)
 
-			commentInfo, err := ioutil.ReadFile(fullPath)
+			commentInfo, err := os.ReadFile(fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
 			}

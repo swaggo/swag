@@ -7,7 +7,6 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -864,7 +863,7 @@ func TestParser_ParseType(t *testing.T) {
 func TestParseSimpleApi1(t *testing.T) {
 	t.Parallel()
 
-	expected, err := ioutil.ReadFile("testdata/simple/expected.json")
+	expected, err := os.ReadFile("testdata/simple/expected.json")
 	assert.NoError(t, err)
 	searchDir := "testdata/simple"
 	p := New()
@@ -879,7 +878,7 @@ func TestParseSimpleApi1(t *testing.T) {
 func TestParseInterfaceAndError(t *testing.T) {
 	t.Parallel()
 
-	expected, err := ioutil.ReadFile("testdata/error/expected.json")
+	expected, err := os.ReadFile("testdata/error/expected.json")
 	assert.NoError(t, err)
 	searchDir := "testdata/error"
 	p := New()
@@ -2108,7 +2107,7 @@ func TestParseComposition(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2125,7 +2124,7 @@ func TestParseImportAliases(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2145,7 +2144,7 @@ func TestParseTypeOverrides(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2162,7 +2161,7 @@ func TestParseNested(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2208,7 +2207,7 @@ func TestParseConflictSchemaName(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
@@ -2222,7 +2221,7 @@ func TestParseExternalModels(t *testing.T) {
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	//ioutil.WriteFile("./testdata/external_models/main/expected.json",b,0777)
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -145,7 +145,7 @@ func initAction(ctx *cli.Context) error {
 	}
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 	if ctx.Bool(quietFlag) {
-		logger = log.New(ioutil.Discard, "", log.LstdFlags)
+		logger = log.New(io.Discard, "", log.LstdFlags)
 	}
 
 	return gen.New().Build(&gen.Config{
