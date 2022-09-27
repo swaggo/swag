@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -26,7 +26,7 @@ func TestParseGenericsBasic(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/generics_basic"
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	p := New()
@@ -47,7 +47,7 @@ func TestParseGenericsArrays(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/generics_arrays"
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	p := New()
@@ -62,7 +62,7 @@ func TestParseGenericsNested(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/generics_nested"
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	p := New()
@@ -77,7 +77,7 @@ func TestParseGenericsProperty(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/generics_property"
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	p := New()
@@ -92,7 +92,7 @@ func TestParseGenericsNames(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/generics_names"
-	expected, err := ioutil.ReadFile(filepath.Join(searchDir, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	p := New()

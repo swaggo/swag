@@ -2,7 +2,6 @@ package format
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -44,7 +43,7 @@ func TestFormat_DefaultExcludes(t *testing.T) {
 
 func TestFormat_ParseError(t *testing.T) {
 	fx := setup(t)
-	ioutil.WriteFile(filepath.Join(fx.basedir, "parse_error.go"), []byte(`package main
+	os.WriteFile(filepath.Join(fx.basedir, "parse_error.go"), []byte(`package main
 		func invalid() {`), 0644)
 	assert.Error(t, New().Build(&Config{SearchDir: fx.basedir}))
 }
@@ -82,7 +81,7 @@ func setup(t *testing.T) *fixture {
 		if err := os.MkdirAll(filepath.Dir(fullpath), 0755); err != nil {
 			t.Fatal(err)
 		}
-		if err := ioutil.WriteFile(fullpath, contents, 0644); err != nil {
+		if err := os.WriteFile(fullpath, contents, 0644); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -90,7 +89,7 @@ func setup(t *testing.T) *fixture {
 }
 
 func (fx *fixture) isFormatted(file string) bool {
-	contents, err := ioutil.ReadFile(filepath.Join(fx.basedir, filepath.Clean(file)))
+	contents, err := os.ReadFile(filepath.Join(fx.basedir, filepath.Clean(file)))
 	if err != nil {
 		fx.t.Fatal(err)
 	}

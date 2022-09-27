@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -95,7 +94,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	goSourceFile := filepath.Join(config.OutputDir, "docs.go")
 
 	// Validate default registration name
-	expectedCode, err := ioutil.ReadFile(goSourceFile)
+	expectedCode, err := os.ReadFile(goSourceFile)
 	if err != nil {
 		require.NoError(t, err)
 	}
@@ -119,7 +118,7 @@ func TestGen_BuildInstanceName(t *testing.T) {
 	goSourceFile = filepath.Join(config.OutputDir, config.InstanceName+"_"+"docs.go")
 	assert.NoError(t, New().Build(config))
 
-	expectedCode, err = ioutil.ReadFile(goSourceFile)
+	expectedCode, err = os.ReadFile(goSourceFile)
 	if err != nil {
 		require.NoError(t, err)
 	}
@@ -254,7 +253,7 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	expectedJSON, err := ioutil.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
+	expectedJSON, err := os.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
 	if err != nil {
 		require.NoError(t, err)
 	}
@@ -694,7 +693,7 @@ func TestGen_parseOverrides(t *testing.T) {
 func TestGen_TypeOverridesFile(t *testing.T) {
 	customPath := "/foo/bar/baz"
 
-	tmp, err := ioutil.TempFile("", "")
+	tmp, err := os.CreateTemp("", "")
 	require.NoError(t, err)
 
 	defer os.Remove(tmp.Name())
@@ -824,11 +823,11 @@ func TestGen_ErrorAndInterface(t *testing.T) {
 	}
 
 	// check content
-	jsonOutput, err := ioutil.ReadFile(filepath.Join(config.OutputDir, "swagger.json"))
+	jsonOutput, err := os.ReadFile(filepath.Join(config.OutputDir, "swagger.json"))
 	if err != nil {
 		require.NoError(t, err)
 	}
-	expectedJSON, err := ioutil.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
+	expectedJSON, err := os.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
 	if err != nil {
 		require.NoError(t, err)
 	}

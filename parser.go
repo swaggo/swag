@@ -9,7 +9,6 @@ import (
 	"go/build"
 	goparser "go/parser"
 	"go/token"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -733,17 +732,17 @@ func isGeneralAPIComment(comments []string) bool {
 }
 
 func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
-	filesInfos, err := ioutil.ReadDir(dirPath)
+	dirEntries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, fileInfo := range filesInfos {
-		if fileInfo.IsDir() {
+	for _, entry := range dirEntries {
+		if entry.IsDir() {
 			continue
 		}
 
-		fileName := fileInfo.Name()
+		fileName := entry.Name()
 
 		if !strings.Contains(fileName, ".md") {
 			continue
@@ -752,7 +751,7 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 		if strings.Contains(fileName, tagName) {
 			fullPath := filepath.Join(dirPath, fileName)
 
-			commentInfo, err := ioutil.ReadFile(fullPath)
+			commentInfo, err := os.ReadFile(fullPath)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to read markdown file %s error: %s ", fullPath, err)
 			}
@@ -1488,7 +1487,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 
 	srcDir := pkg.Raw.Dir
 
-	files, err := ioutil.ReadDir(srcDir) // only parsing files in the dir(don't contain sub dir files)
+	files, err := os.ReadDir(srcDir) // only parsing files in the dir(don't contain sub dir files)
 	if err != nil {
 		return err
 	}
