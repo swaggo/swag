@@ -108,7 +108,7 @@ func TestParametrizeStruct(t *testing.T) {
 		packages: make(map[string]*PackageDefinitions),
 	}
 	// valid
-	typeSpec := pd.parametrizeStruct(
+	typeSpec := pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
 			TypeSpec: &ast.TypeSpec{
@@ -119,7 +119,7 @@ func TestParametrizeStruct(t *testing.T) {
 	assert.Equal(t, "$test.Field-string-array_string", typeSpec.Name())
 
 	// definition contains one type params, but two type params are provided
-	typeSpec = pd.parametrizeStruct(
+	typeSpec = pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
 			TypeSpec: &ast.TypeSpec{
@@ -130,7 +130,7 @@ func TestParametrizeStruct(t *testing.T) {
 	assert.Nil(t, typeSpec)
 
 	// definition contains two type params, but only one is used
-	typeSpec = pd.parametrizeStruct(
+	typeSpec = pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
 			TypeSpec: &ast.TypeSpec{
@@ -141,7 +141,7 @@ func TestParametrizeStruct(t *testing.T) {
 	assert.Nil(t, typeSpec)
 
 	// name is not a valid type name
-	typeSpec = pd.parametrizeStruct(
+	typeSpec = pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
 			TypeSpec: &ast.TypeSpec{
@@ -151,7 +151,7 @@ func TestParametrizeStruct(t *testing.T) {
 			}}, "test.Field[string", false)
 	assert.Nil(t, typeSpec)
 
-	typeSpec = pd.parametrizeStruct(
+	typeSpec = pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
 			TypeSpec: &ast.TypeSpec{
@@ -161,7 +161,7 @@ func TestParametrizeStruct(t *testing.T) {
 			}}, "test.Field[string, [string]", false)
 	assert.Nil(t, typeSpec)
 
-	typeSpec = pd.parametrizeStruct(
+	typeSpec = pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
 			TypeSpec: &ast.TypeSpec{

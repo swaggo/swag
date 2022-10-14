@@ -432,7 +432,7 @@ func (pkgDefs *PackagesDefinitions) findGenericTypeSpec(typeName string, file *a
 			}
 
 			if strings.Contains(tName, genericName) {
-				if parametrized := pkgDefs.parametrizeStruct(file, tSpec, typeName, parseDependency); parametrized != nil {
+				if parametrized := pkgDefs.parametrizeGenericType(file, tSpec, typeName, parseDependency); parametrized != nil {
 					return parametrized
 				}
 			}
