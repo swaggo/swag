@@ -220,10 +220,7 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 			X:    pkgDefs.resolveGenericType(file, astExpr.X, genericParamTypeDefs, parseDependency),
 		}
 	case *ast.IndexExpr, *ast.IndexListExpr:
-		fullGenericName, err := getGenericFieldType(file, expr, genericParamTypeDefs)
-		if err != nil {
-			panic(err)
-		}
+		fullGenericName, _ := getGenericFieldType(file, expr, genericParamTypeDefs)
 		typeDef := pkgDefs.findGenericTypeSpec(fullGenericName, file, parseDependency)
 		if typeDef != nil {
 			return typeDef.TypeSpec.Type
@@ -292,7 +289,7 @@ func getGenericFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs ma
 	var err error
 	switch fieldType := field.(type) {
 	case *ast.IndexListExpr:
-		baseName, err = getGenericTypeName(file, fieldType.X, genericParamTypeDefs)
+		baseName, err = getGenericTypeName(file, fieldType.X)
 		if err != nil {
 			return "", err
 		}
@@ -309,7 +306,7 @@ func getGenericFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs ma
 
 		fullName = strings.TrimRight(fullName, ",") + "]"
 	case *ast.IndexExpr:
-		baseName, err = getGenericTypeName(file, fieldType.X, genericParamTypeDefs)
+		baseName, err = getGenericTypeName(file, fieldType.X)
 		if err != nil {
 			return "", err
 		}
@@ -337,15 +334,9 @@ func getGenericFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs ma
 	return strings.TrimLeft(fmt.Sprintf("%s.%s", packageName, fullName), "."), nil
 }
 
-func getGenericTypeName(file *ast.File, field ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec) (string, error) {
+func getGenericTypeName(file *ast.File, field ast.Expr) (string, error) {
 	switch fieldType := field.(type) {
 	case *ast.Ident:
-		if genericParamTypeDefs != nil {
-			if typeSpec, ok := genericParamTypeDefs[fieldType.Name]; ok {
-				return typeSpec.Name, nil
-			}
-		}
-
 		if fieldType.Obj == nil {
 			return fieldType.Name, nil
 		}
