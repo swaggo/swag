@@ -237,6 +237,7 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 
 		for _, field := range astExpr.Fields.List {
 			newField := &ast.Field{
+				Type:    field.Type,
 				Doc:     field.Doc,
 				Names:   field.Names,
 				Tag:     field.Tag,
@@ -244,15 +245,12 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 			}
 
 			newField.Type = pkgDefs.resolveGenericType(file, field.Type, genericParamTypeDefs, parseDependency)
-			if newField.Type == nil {
-				newField.Type = field.Type
-			}
 
 			newStructTypeDef.Fields.List = append(newStructTypeDef.Fields.List, newField)
 		}
 		return newStructTypeDef
 	}
-	return nil
+	return expr
 }
 
 func getExtendedGenericFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec) (string, error) {
