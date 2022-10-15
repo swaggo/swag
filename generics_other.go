@@ -9,6 +9,12 @@ import (
 	"go/ast"
 )
 
+type genericTypeSpec struct {
+	ArrayDepth int
+	TypeSpec   *TypeSpecDef
+	Name       string
+}
+
 func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 	return typeSpecDef.FullName()
 }
