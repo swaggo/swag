@@ -120,6 +120,12 @@
                 "cameraPeople": {
                     "$ref": "#/definitions/types.Field-array_api_Person"
                 },
+                "detail1": {
+                    "$ref": "#/definitions/types.Field-types_Field_api_Person"
+                },
+                "detail2": {
+                    "$ref": "#/definitions/types.Field-types_Field_string"
+                },
                 "directors": {
                     "$ref": "#/definitions/types.Field-array_api_Person"
                 },
@@ -284,6 +290,62 @@
                     "properties": {
                         "subValue1": {
                             "type": "string"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "types.Field-types_Field_api_Person": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "value2": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Field-api_Person"
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/types.Field-api_Person"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "types.Field-types_Field_string": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "$ref": "#/definitions/types.Field-string"
+                },
+                "value2": {
+                    "$ref": "#/definitions/types.Field-string"
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Field-string"
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/types.Field-string"
                         },
                         "subValue2": {
                             "type": "string"

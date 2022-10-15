@@ -268,13 +268,19 @@ func getExtendedGenericFieldType(file *ast.File, field ast.Expr, genericParamTyp
 	case *ast.Ident:
 		if genericParamTypeDefs != nil {
 			if typeSpec, ok := genericParamTypeDefs[fieldType.Name]; ok {
-				if typeSpec.TypeSpec == nil && IsGolangPrimitiveType(typeSpec.Name) {
-					return typeSpec.Name, nil
-				}
-				return typeSpec.TypeSpec.FullName(), nil
+				return typeSpec.Name, nil
 			}
 		}
-		return getFieldType(file, field)
+		if fieldType.Obj == nil {
+			return fieldType.Name, nil
+		}
+
+		tSpec := &TypeSpecDef{
+			File:     file,
+			TypeSpec: fieldType.Obj.Decl.(*ast.TypeSpec),
+			PkgPath:  file.Name.Name,
+		}
+		return tSpec.FullName(), nil
 	default:
 		return getFieldType(file, field)
 	}
@@ -334,15 +340,13 @@ func getGenericFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs ma
 func getGenericTypeName(file *ast.File, field ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec) (string, error) {
 	switch fieldType := field.(type) {
 	case *ast.Ident:
-		if fieldType.Obj == nil {
-			if genericParamTypeDefs != nil {
-				if typeSpec, ok := genericParamTypeDefs[fieldType.Name]; ok {
-					if typeSpec.TypeSpec == nil && IsGolangPrimitiveType(typeSpec.Name) {
-						return typeSpec.Name, nil
-					}
-					return typeSpec.TypeSpec.FullName(), nil
-				}
+		if genericParamTypeDefs != nil {
+			if typeSpec, ok := genericParamTypeDefs[fieldType.Name]; ok {
+				return typeSpec.Name, nil
 			}
+		}
+
+		if fieldType.Obj == nil {
 			return fieldType.Name, nil
 		}
 
