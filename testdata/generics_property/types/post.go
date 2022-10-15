@@ -1,7 +1,15 @@
 package types
 
+type SubField1[T any, T2 any] struct {
+	SubValue1 T
+	SubValue2 T2
+}
+
 type Field[T any] struct {
-	Value T
+	Value  T
+	Value2 *T
+	Value3 []T
+	Value4 SubField1[T, string]
 }
 
 type APIBase struct {

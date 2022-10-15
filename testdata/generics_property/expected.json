@@ -167,6 +167,26 @@
             "properties": {
                 "value": {
                     "$ref": "#/definitions/api.Person"
+                },
+                "value2": {
+                    "$ref": "#/definitions/api.Person"
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/api.Person"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
                 }
             }
         },
@@ -177,6 +197,32 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "value2": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/api.Person"
+                        }
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/api.Person"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
                     }
                 }
             }
@@ -189,6 +235,32 @@
                     "items": {
                         "$ref": "#/definitions/types.Post"
                     }
+                },
+                "value2": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/types.Post"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
                 }
             }
         },
@@ -197,6 +269,26 @@
             "properties": {
                 "value": {
                     "type": "string"
+                },
+                "value2": {
+                    "type": "string"
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "type": "string"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
                 }
             }
         },

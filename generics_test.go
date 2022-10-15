@@ -296,6 +296,7 @@ func TestGetGenericTypeName(t *testing.T) {
 	field, err := getGenericTypeName(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.Ident{Name: "types", Obj: &ast.Object{Decl: &ast.TypeSpec{Name: &ast.Ident{Name: "Field"}}}},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "test.Field", field)
@@ -303,6 +304,7 @@ func TestGetGenericTypeName(t *testing.T) {
 	field, err = getGenericTypeName(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.ArrayType{Elt: &ast.Ident{Name: "types", Obj: &ast.Object{Decl: &ast.TypeSpec{Name: &ast.Ident{Name: "Field"}}}}},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "test.Field", field)
@@ -310,6 +312,7 @@ func TestGetGenericTypeName(t *testing.T) {
 	field, err = getGenericTypeName(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.SelectorExpr{X: &ast.Ident{Name: "field"}, Sel: &ast.Ident{Name: "Name"}},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "field.Name", field)
@@ -317,6 +320,7 @@ func TestGetGenericTypeName(t *testing.T) {
 	_, err = getGenericTypeName(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.BadExpr{},
+		nil,
 	)
 	assert.Error(t, err)
 }

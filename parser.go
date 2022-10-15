@@ -1331,7 +1331,7 @@ func getFieldType(file *ast.File, field ast.Expr) (string, error) {
 
 		return fullName, nil
 	default:
-		return getGenericFieldType(file, field)
+		return getGenericFieldType(file, field, nil)
 	}
 }
 
