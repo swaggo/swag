@@ -105,6 +105,18 @@
         "api.CreateMovie": {
             "type": "object",
             "properties": {
+                "audience": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "audienceNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "cameraPeople": {
                     "$ref": "#/definitions/types.Field-array_api_Person"
                 },

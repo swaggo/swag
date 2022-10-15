@@ -59,7 +59,7 @@ func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 	return fullName
 }
 
-func (pkgDefs *PackagesDefinitions) parametrizeStruct(file *ast.File, original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
+func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
 	genericDefinitionsMutex.RLock()
 	tSpec, ok := genericsDefinitions[original][fullGenericForm]
 	genericDefinitionsMutex.RUnlock()
@@ -92,6 +92,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(file *ast.File, original *
 		if tdef != nil && !strings.Contains(genericParam, ".") {
 			genericParam = fullTypeName(file.Name.Name, genericParam)
 		}
+
 		genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
 			ArrayDepth: arrayDepth,
 			TypeSpec:   tdef,
@@ -142,33 +143,12 @@ func (pkgDefs *PackagesDefinitions) parametrizeStruct(file *ast.File, original *
 	ident.Name = string(IgnoreNameOverridePrefix) + ident.Name
 
 	parametrizedTypeSpec.TypeSpec.Name = ident
-	origStructType := original.TypeSpec.Type.(*ast.StructType)
 
-	newStructTypeDef := &ast.StructType{
-		Struct:     origStructType.Struct,
-		Incomplete: origStructType.Incomplete,
-		Fields: &ast.FieldList{
-			Opening: origStructType.Fields.Opening,
-			Closing: origStructType.Fields.Closing,
-		},
-	}
-
-	for _, field := range origStructType.Fields.List {
-		newField := &ast.Field{
-			Doc:     field.Doc,
-			Names:   field.Names,
-			Tag:     field.Tag,
-			Comment: field.Comment,
-		}
-
-		newField.Type = resolveType(field.Type, field, genericParamTypeDefs)
-
-		newStructTypeDef.Fields.List = append(newStructTypeDef.Fields.List, newField)
-	}
+	newType := resolveGenericType(original.TypeSpec.Type, genericParamTypeDefs)
 
 	genericDefinitionsMutex.Lock()
 	defer genericDefinitionsMutex.Unlock()
-	parametrizedTypeSpec.TypeSpec.Type = newStructTypeDef
+	parametrizedTypeSpec.TypeSpec.Type = newType
 	if genericsDefinitions[original] == nil {
 		genericsDefinitions[original] = map[string]*TypeSpecDef{}
 	}
@@ -217,25 +197,50 @@ func splitStructName(fullGenericForm string) (string, []string) {
 	return genericTypeName, genericParams
 }
 
-func resolveType(expr ast.Expr, field *ast.Field, genericParamTypeDefs map[string]*genericTypeSpec) ast.Expr {
+func resolveGenericType(expr ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec) ast.Expr {
 	switch astExpr := expr.(type) {
 	case *ast.Ident:
 		if genTypeSpec, ok := genericParamTypeDefs[astExpr.Name]; ok {
 			if genTypeSpec.ArrayDepth > 0 {
 				genTypeSpec.ArrayDepth--
-				return &ast.ArrayType{Elt: resolveType(expr, field, genericParamTypeDefs)}
+				return &ast.ArrayType{Elt: resolveGenericType(expr, genericParamTypeDefs)}
 			}
 			return genTypeSpec.Type()
 		}
 	case *ast.ArrayType:
 		return &ast.ArrayType{
-			Elt:    resolveType(astExpr.Elt, field, genericParamTypeDefs),
+			Elt:    resolveGenericType(astExpr.Elt, genericParamTypeDefs),
 			Len:    astExpr.Len,
 			Lbrack: astExpr.Lbrack,
 		}
-	}
+	case *ast.StructType:
+		newStructTypeDef := &ast.StructType{
+			Struct:     astExpr.Struct,
+			Incomplete: astExpr.Incomplete,
+			Fields: &ast.FieldList{
+				Opening: astExpr.Fields.Opening,
+				Closing: astExpr.Fields.Closing,
+			},
+		}
 
-	return field.Type
+		for _, field := range astExpr.Fields.List {
+			newField := &ast.Field{
+				Doc:     field.Doc,
+				Names:   field.Names,
+				Tag:     field.Tag,
+				Comment: field.Comment,
+			}
+
+			newField.Type = resolveGenericType(field.Type, genericParamTypeDefs)
+			if newField.Type == nil {
+				newField.Type = field.Type
+			}
+
+			newStructTypeDef.Fields.List = append(newStructTypeDef.Fields.List, newField)
+		}
+		return newStructTypeDef
+	}
+	return nil
 }
 
 func getExtendedGenericFieldType(file *ast.File, field ast.Expr) (string, error) {

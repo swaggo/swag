@@ -13,7 +13,7 @@ func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 	return typeSpecDef.FullName()
 }
 
-func (pkgDefs *PackagesDefinitions) parametrizeStruct(file *ast.File, original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
+func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
 	return original
 }
 
