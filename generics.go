@@ -207,7 +207,6 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 			}
 			return retType
 		}
-		return expr
 	case *ast.ArrayType:
 		return &ast.ArrayType{
 			Elt:    pkgDefs.resolveGenericType(file, astExpr.Elt, genericParamTypeDefs, parseDependency),
