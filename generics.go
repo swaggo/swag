@@ -372,7 +372,7 @@ func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr) (*
 		name, err := getExtendedGenericFieldType(file, expr, nil)
 		if err == nil {
 			if schema, err := parser.getTypeSchema(name, file, false); err == nil {
-				return spec.MapProperty(schema), nil
+				return schema, nil
 			}
 		}
 
