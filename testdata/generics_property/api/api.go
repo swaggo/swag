@@ -22,6 +22,8 @@ type CreateMovie struct {
 	Producer       types.Field[*Person]
 	Audience       Audience[Person]
 	AudienceNames  Audience[string]
+	Detail1        types.Field[types.Field[Person]]
+	Detail2        types.Field[types.Field[string]]
 }
 
 type Person struct {

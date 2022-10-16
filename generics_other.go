@@ -9,6 +9,12 @@ import (
 	"go/ast"
 )
 
+type genericTypeSpec struct {
+	ArrayDepth int
+	TypeSpec   *TypeSpecDef
+	Name       string
+}
+
 func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
 	return typeSpecDef.FullName()
 }
@@ -17,7 +23,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 	return original
 }
 
-func getGenericFieldType(file *ast.File, field ast.Expr) (string, error) {
+func getGenericFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec) (string, error) {
 	return "", fmt.Errorf("unknown field type %#v", field)
 }
 
