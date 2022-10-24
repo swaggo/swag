@@ -131,6 +131,26 @@
                     }
                 }
             }
+        },
+        "/posts/aliaspkg": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add a new pet to the store",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/myweb.AliasPkgGenericResponse-Post"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -260,6 +280,17 @@
                     "items": {
                         "$ref": "#/definitions/Post"
                     }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "myweb.AliasPkgGenericResponse-Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Post"
                 },
                 "status": {
                     "type": "string"

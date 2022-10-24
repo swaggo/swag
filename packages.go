@@ -135,7 +135,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
 					}
 
-					fullName := typeSpecFullName(typeSpecDef)
+					fullName := typeSpecDef.FullName()
 
 					anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 					if ok {
@@ -190,7 +190,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
 								}
 
-								fullName := typeSpecFullName(typeSpecDef)
+								fullName := typeSpecDef.FullName()
 
 								anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 								if ok {
@@ -389,11 +389,9 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 			}
 		}
 
-		if def := pkgDefs.findGenericTypeSpec(typeName, file, parseDependency); def != nil {
-			return def
-		}
+		typeDef := pkgDefs.findTypeSpec(pkgPath, parts[1])
 
-		return pkgDefs.findTypeSpec(pkgPath, parts[1])
+		return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
 	}
 
 	if def := pkgDefs.findGenericTypeSpec(fullTypeName(file.Name.Name, typeName), file, parseDependency); def != nil {
@@ -406,20 +404,17 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 	}
 
 	typeDef = pkgDefs.findTypeSpec(pkgDefs.files[file].PackagePath, typeName)
-	if typeDef != nil {
-		return typeDef
-	}
-
-	for _, imp := range file.Imports {
-		if imp.Name != nil && imp.Name.Name == "." {
-			typeDef := pkgDefs.findTypeSpec(strings.Trim(imp.Path.Value, `"`), typeName)
-			if typeDef != nil {
-				return typeDef
+	if typeDef == nil {
+		for _, imp := range file.Imports {
+			if imp.Name != nil && imp.Name.Name == "." {
+				typeDef := pkgDefs.findTypeSpec(strings.Trim(imp.Path.Value, `"`), typeName)
+				if typeDef != nil {
+					break
+				}
 			}
 		}
 	}
-
-	return nil
+	return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
 }
 
 func (pkgDefs *PackagesDefinitions) findGenericTypeSpec(typeName string, file *ast.File, parseDependency bool) *TypeSpecDef {

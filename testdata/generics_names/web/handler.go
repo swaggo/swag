@@ -38,3 +38,9 @@ type APIError struct {
 	ErrorCtx  string    // Error `context` tick comment
 	CreatedAt time.Time // Error time
 }
+
+type AliasPkgGenericResponse[T any] struct {
+	Data T
+
+	Status string
+}

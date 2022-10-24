@@ -22,17 +22,6 @@ type genericTypeSpec struct {
 	Name       string
 }
 
-func (s *genericTypeSpec) Type() ast.Expr {
-	if s.TypeSpec != nil {
-		return &ast.SelectorExpr{
-			X:   &ast.Ident{Name: ""},
-			Sel: &ast.Ident{Name: s.Name},
-		}
-	}
-
-	return &ast.Ident{Name: s.Name}
-}
-
 func (s *genericTypeSpec) TypeDocName() string {
 	if s.TypeSpec != nil {
 		return strings.Replace(TypeDocName(s.TypeSpec.FullName(), s.TypeSpec.TypeSpec), "-", "_", -1)
@@ -41,25 +30,11 @@ func (s *genericTypeSpec) TypeDocName() string {
 	return s.Name
 }
 
-func typeSpecFullName(typeSpecDef *TypeSpecDef) string {
-	fullName := typeSpecDef.FullName()
-
-	if typeSpecDef.TypeSpec.TypeParams != nil {
-		fullName = fullName + "["
-		for i, typeParam := range typeSpecDef.TypeSpec.TypeParams.List {
-			if i > 0 {
-				fullName = fullName + "-"
-			}
-
-			fullName = fullName + typeParam.Names[0].Name
-		}
-		fullName = fullName + "]"
+func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
+	if original.TypeSpec.TypeParams == nil || len(original.TypeSpec.TypeParams.List) == 0 {
+		return original
 	}
 
-	return fullName
-}
-
-func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
 	genericDefinitionsMutex.RLock()
 	tSpec, ok := genericsDefinitions[original][fullGenericForm]
 	genericDefinitionsMutex.RUnlock()
@@ -68,7 +43,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 	}
 
 	pkgName := strings.Split(fullGenericForm, ".")[0]
-	genericTypeName, genericParams := splitStructName(fullGenericForm)
+	genericTypeName, genericParams := splitGenericsTypeName(fullGenericForm)
 	if genericParams == nil {
 		return nil
 	}
@@ -156,8 +131,8 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 	return parametrizedTypeSpec
 }
 
-// splitStructName splits a generic struct name in his parts
-func splitStructName(fullGenericForm string) (string, []string) {
+// splitGenericsTypeName splits a generic struct name in his parts
+func splitGenericsTypeName(fullGenericForm string) (string, []string) {
 	//remove all spaces character
 	fullGenericForm = strings.Map(func(r rune) rune {
 		if unicode.IsSpace(r) {
@@ -197,11 +172,44 @@ func splitStructName(fullGenericForm string) (string, []string) {
 	return genericTypeName, genericParams
 }
 
+func (pkgDefs *PackagesDefinitions) getParametrizedType(genTypeSpec *genericTypeSpec) ast.Expr {
+	if genTypeSpec.TypeSpec != nil && strings.Contains(genTypeSpec.Name, ".") {
+		parts := strings.SplitN(genTypeSpec.Name, ".", 2)
+
+		if genTypeSpec.TypeSpec.File.Name.Name == parts[0] { //no package alias
+			return &ast.SelectorExpr{
+				X:   &ast.Ident{Name: parts[0]},
+				Sel: &ast.Ident{Name: parts[1]},
+			}
+		}
+
+		// if there is an alias of package, use the package path as the unique package name
+		parts[0] = strings.Map(func(r rune) rune {
+			if unicode.IsDigit(r) || unicode.IsLetter(r) {
+				return r
+			}
+			return '_'
+		}, genTypeSpec.TypeSpec.PkgPath)
+		typeName := fullTypeName(parts[0], parts[1])
+		if _, ok := pkgDefs.uniqueDefinitions[typeName]; !ok {
+			pkgDefs.uniqueDefinitions[typeName] = genTypeSpec.TypeSpec
+		}
+
+		return &ast.SelectorExpr{
+			X:   &ast.Ident{Name: parts[0]},
+			Sel: &ast.Ident{Name: parts[1]},
+		}
+	}
+
+	//a primitive type name or a type name in current package
+	return &ast.Ident{Name: genTypeSpec.Name}
+}
+
 func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec, parseDependency bool) ast.Expr {
 	switch astExpr := expr.(type) {
 	case *ast.Ident:
 		if genTypeSpec, ok := genericParamTypeDefs[astExpr.Name]; ok {
-			retType := genTypeSpec.Type()
+			retType := pkgDefs.getParametrizedType(genTypeSpec)
 			for i := 0; i < genTypeSpec.ArrayDepth; i++ {
 				retType = &ast.ArrayType{Elt: retType}
 			}
