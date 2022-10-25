@@ -14,11 +14,11 @@ jobs:
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
         with:
           path: ./src/github.com/${{ github.repository }}
       - name: Set up Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
       - name: deps
