@@ -131,6 +131,7 @@ OPTIONS:
 - [flamingo](https://github.com/i-love-flamingo/swagger)
 - [fiber](https://github.com/gofiber/swagger)
 - [atreugo](https://github.com/Nerzal/atreugo-swagger)
+- [hertz](https://github.com/hertz-contrib/swagger)
 
 ## How to use it with Gin
 
