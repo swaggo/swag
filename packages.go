@@ -147,7 +147,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 							anotherTypeDef.IsUnique = false
 							typeSpecDef.IsUnique = false
 							pkgDefs.uniqueDefinitions[fullName] = nil
-							pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = typeSpecDef
+							pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
 							pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
 						}
 					} else {
@@ -207,7 +207,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 										anotherTypeDef.IsUnique = false
 										typeSpecDef.IsUnique = false
 										pkgDefs.uniqueDefinitions[fullName] = nil
-										pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = typeSpecDef
+										pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
 										pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
 									}
 								} else {

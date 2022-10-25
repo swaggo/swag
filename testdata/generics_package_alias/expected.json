@@ -1,0 +1,228 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/api1": {
+            "post": {
+                "description": "Create a new movie production",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create movie",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_path1_v1_ProductDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/api2": {
+            "post": {
+                "description": "Create a new movie production",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create movie",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListResultV1-ProductDtoV1"
+                        }
+                    }
+                }
+            }
+        },
+        "/api3": {
+            "post": {
+                "description": "Create a new movie production",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create movie",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_path2_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_path2_v1_ProductDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/api4": {
+            "post": {
+                "description": "Create a new movie production",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create movie",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListResultV2-ProductDtoV2"
+                        }
+                    }
+                }
+            }
+        },
+        "/api5": {
+            "post": {
+                "description": "Create a new movie production",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create movie",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_path2_v1_ProductDto"
+                        }
+                    }
+                }
+            }
+        },
+        "/api6": {
+            "post": {
+                "description": "Create a new movie production",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create movie",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListResultV1-ProductDtoV2"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "ListResultV1-ProductDtoV1": {
+            "type": "object",
+            "properties": {
+                "items11": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ProductDtoV1"
+                    }
+                }
+            }
+        },
+        "ListResultV1-ProductDtoV2": {
+            "type": "object",
+            "properties": {
+                "items11": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ProductDtoV2"
+                    }
+                }
+            }
+        },
+        "ListResultV2-ProductDtoV2": {
+            "type": "object",
+            "properties": {
+                "items22": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ProductDtoV2"
+                    }
+                }
+            }
+        },
+        "ProductDtoV1": {
+            "type": "object",
+            "properties": {
+                "name11": {
+                    "type": "string"
+                }
+            }
+        },
+        "ProductDtoV2": {
+            "type": "object",
+            "properties": {
+                "name22": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_swaggo_swag_testdata_generics_package_alias_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_path1_v1_ProductDto": {
+            "type": "object",
+            "properties": {
+                "items1": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_path1_v1.ProductDto"
+                    }
+                }
+            }
+        },
+        "github_com_swaggo_swag_testdata_generics_package_alias_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_path2_v1_ProductDto": {
+            "type": "object",
+            "properties": {
+                "items1": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_path2_v1.ProductDto"
+                    }
+                }
+            }
+        },
+        "github_com_swaggo_swag_testdata_generics_package_alias_path1_v1.ProductDto": {
+            "type": "object",
+            "properties": {
+                "name1": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_swaggo_swag_testdata_generics_package_alias_path2_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_path2_v1_ProductDto": {
+            "type": "object",
+            "properties": {
+                "items2": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_path2_v1.ProductDto"
+                    }
+                }
+            }
+        },
+        "github_com_swaggo_swag_testdata_generics_package_alias_path2_v1.ProductDto": {
+            "type": "object",
+            "properties": {
+                "name2": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
