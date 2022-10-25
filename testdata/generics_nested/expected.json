@@ -26,7 +26,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedBody-web_GenericInnerType_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedBody-web_GenericInnerType-types_Post"
                         }
                     }
                 ],
@@ -40,25 +40,25 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponse-web_GenericInnerType_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponse-web_GenericInnerType-types_Post"
                         }
                     },
                     "202": {
                         "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType_types_Post_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-types_Post"
                         }
                     },
                     "203": {
                         "description": "Non-Authoritative Information",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType_types_Post_web_GenericInnerType_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-web_GenericInnerType-types_Post"
                         }
                     },
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_GenericInnerType_types_Post-types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_GenericInnerType-types_Post-types_Post"
                         }
                     }
                 }
@@ -81,7 +81,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedBody-web_GenericInnerType_array_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedBody-web_GenericInnerType-array_types_Post"
                         }
                     }
                 ],
@@ -95,37 +95,37 @@
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponse-array_web_GenericInnerType_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponse-array_web_GenericInnerType-types_Post"
                         }
                     },
                     "202": {
                         "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponse-array_web_GenericInnerType_array_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponse-array_web_GenericInnerType-array_types_Post"
                         }
                     },
                     "203": {
                         "description": "Non-Authoritative Information",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponseMulti-array_types_Post-web_GenericInnerMultiType_array_types_Post_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-array_types_Post-web_GenericInnerMultiType-array_types_Post-types_Post"
                         }
                     },
                     "204": {
                         "description": "No Content",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponseMulti-array_types_Post-array_web_GenericInnerMultiType_array_types_Post_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-array_types_Post-array_web_GenericInnerMultiType-array_types_Post-types_Post"
                         }
                     },
                     "205": {
                         "description": "Reset Content",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType_types_Post_array_web_GenericInnerType_array2_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-array_web_GenericInnerType-array2_types_Post"
                         }
                     },
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_GenericInnerType_array_types_Post-array_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-web_GenericInnerType-array_types_Post-array_types_Post"
                         }
                     }
                 }
@@ -183,7 +183,7 @@
                 }
             }
         },
-        "web.GenericInnerMultiType-types_Post-array_web_GenericInnerType_array2_types_Post": {
+        "web.GenericInnerMultiType-types_Post-array_web_GenericInnerType-array2_types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -218,7 +218,7 @@
                 }
             }
         },
-        "web.GenericInnerMultiType-types_Post-web_GenericInnerType_types_Post": {
+        "web.GenericInnerMultiType-types_Post-web_GenericInnerType-types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -270,7 +270,7 @@
                 }
             }
         },
-        "web.GenericNestedBody-web_GenericInnerType_array_types_Post": {
+        "web.GenericNestedBody-web_GenericInnerType-array_types_Post": {
             "type": "object",
             "properties": {
                 "items": {
@@ -283,7 +283,7 @@
                 }
             }
         },
-        "web.GenericNestedBody-web_GenericInnerType_types_Post": {
+        "web.GenericNestedBody-web_GenericInnerType-types_Post": {
             "type": "object",
             "properties": {
                 "items": {
@@ -315,7 +315,7 @@
                 }
             }
         },
-        "web.GenericNestedResponse-array_web_GenericInnerType_array_types_Post": {
+        "web.GenericNestedResponse-array_web_GenericInnerType-array_types_Post": {
             "type": "object",
             "properties": {
                 "items": {
@@ -334,7 +334,7 @@
                 }
             }
         },
-        "web.GenericNestedResponse-array_web_GenericInnerType_types_Post": {
+        "web.GenericNestedResponse-array_web_GenericInnerType-types_Post": {
             "type": "object",
             "properties": {
                 "items": {
@@ -369,7 +369,7 @@
                 }
             }
         },
-        "web.GenericNestedResponse-web_GenericInnerType_types_Post": {
+        "web.GenericNestedResponse-web_GenericInnerType-types_Post": {
             "type": "object",
             "properties": {
                 "items": {
@@ -385,7 +385,7 @@
                 }
             }
         },
-        "web.GenericNestedResponseMulti-array_types_Post-array_web_GenericInnerMultiType_array_types_Post_types_Post": {
+        "web.GenericNestedResponseMulti-array_types_Post-array_web_GenericInnerMultiType-array_types_Post-types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -411,7 +411,7 @@
                 }
             }
         },
-        "web.GenericNestedResponseMulti-array_types_Post-web_GenericInnerMultiType_array_types_Post_types_Post": {
+        "web.GenericNestedResponseMulti-array_types_Post-web_GenericInnerMultiType-array_types_Post-types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -434,7 +434,7 @@
                 }
             }
         },
-        "web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType_types_Post_array_web_GenericInnerType_array2_types_Post": {
+        "web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-array_web_GenericInnerType-array2_types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -445,7 +445,7 @@
                     "description": "ItemsTwo is the second thing",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/web.GenericInnerMultiType-types_Post-array_web_GenericInnerType_array2_types_Post"
+                        "$ref": "#/definitions/web.GenericInnerMultiType-types_Post-array_web_GenericInnerType-array2_types_Post"
                     }
                 },
                 "status": {
@@ -454,7 +454,7 @@
                 }
             }
         },
-        "web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType_types_Post_types_Post": {
+        "web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -474,7 +474,7 @@
                 }
             }
         },
-        "web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType_types_Post_web_GenericInnerType_types_Post": {
+        "web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-web_GenericInnerType-types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -485,7 +485,7 @@
                     "description": "ItemsTwo is the second thing",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/web.GenericInnerMultiType-types_Post-web_GenericInnerType_types_Post"
+                        "$ref": "#/definitions/web.GenericInnerMultiType-types_Post-web_GenericInnerType-types_Post"
                     }
                 },
                 "status": {
@@ -494,7 +494,7 @@
                 }
             }
         },
-        "web.GenericNestedResponseMulti-web_GenericInnerType_array_types_Post-array_types_Post": {
+        "web.GenericNestedResponseMulti-web_GenericInnerType-array_types_Post-array_types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -517,7 +517,7 @@
                 }
             }
         },
-        "web.GenericNestedResponseMulti-web_GenericInnerType_types_Post-types_Post": {
+        "web.GenericNestedResponseMulti-web_GenericInnerType-types_Post-types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {

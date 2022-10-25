@@ -109,6 +109,7 @@ func (pkgDefs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, erro
 		pkgDefs.parseTypesFromFile(astFile, info.PackagePath, parsedSchemas)
 		pkgDefs.parseFunctionScopedTypesFromFile(astFile, info.PackagePath, parsedSchemas)
 	}
+	pkgDefs.removeAllNotUniqueTypes()
 	return parsedSchemas, nil
 }
 
@@ -121,6 +122,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						PkgPath:  packagePath,
 						File:     astFile,
 						TypeSpec: typeSpec,
+						IsUnique: true,
 					}
 
 					if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) && parsedSchemas != nil {
@@ -135,14 +137,18 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
 					}
 
-					fullName := typeSpecDef.FullName()
+					fullName := typeSpecDef.TypeName()
 
 					anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 					if ok {
 						if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
 							continue
 						} else {
-							delete(pkgDefs.uniqueDefinitions, fullName)
+							anotherTypeDef.IsUnique = false
+							typeSpecDef.IsUnique = false
+							pkgDefs.uniqueDefinitions[fullName] = nil
+							pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = typeSpecDef
+							pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
 						}
 					} else {
 						pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
@@ -176,6 +182,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									File:       astFile,
 									TypeSpec:   typeSpec,
 									ParentSpec: astDeclaration,
+									IsUnique:   true,
 								}
 
 								if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) && parsedSchemas != nil {
@@ -190,14 +197,18 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
 								}
 
-								fullName := typeSpecDef.FullName()
+								fullName := typeSpecDef.TypeName()
 
 								anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 								if ok {
 									if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
 										continue
 									} else {
-										delete(pkgDefs.uniqueDefinitions, fullName)
+										anotherTypeDef.IsUnique = false
+										typeSpecDef.IsUnique = false
+										pkgDefs.uniqueDefinitions[fullName] = nil
+										pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = typeSpecDef
+										pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
 									}
 								} else {
 									pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
@@ -217,6 +228,14 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 					}
 				}
 			}
+		}
+	}
+}
+
+func (pkgDefs *PackagesDefinitions) removeAllNotUniqueTypes() {
+	for key, ud := range pkgDefs.uniqueDefinitions {
+		if ud == nil {
+			delete(pkgDefs.uniqueDefinitions, key)
 		}
 	}
 }
@@ -353,6 +372,11 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		return pkgDefs.uniqueDefinitions[typeName]
 	}
 
+	typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
+	if ok {
+		return typeDef
+	}
+
 	parts := strings.Split(strings.Split(typeName, "[")[0], ".")
 	if len(parts) > 1 {
 		isAliasPkgName := func(file *ast.File, pkgName string) bool {
@@ -394,44 +418,30 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
 	}
 
-	if def := pkgDefs.findGenericTypeSpec(fullTypeName(file.Name.Name, typeName), file, parseDependency); def != nil {
-		return def
-	}
-
-	typeDef, ok := pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
+	typeDef, ok = pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
 	if ok {
 		return typeDef
 	}
 
-	typeDef = pkgDefs.findTypeSpec(pkgDefs.files[file].PackagePath, typeName)
-	if typeDef == nil {
+	typeDef = func() *TypeSpecDef {
+		name := parts[0]
+		typeDef, ok := pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, name)]
+		if ok {
+			return typeDef
+		}
+		typeDef = pkgDefs.findTypeSpec(pkgDefs.files[file].PackagePath, name)
+		if typeDef != nil {
+			return typeDef
+		}
 		for _, imp := range file.Imports {
 			if imp.Name != nil && imp.Name.Name == "." {
-				typeDef := pkgDefs.findTypeSpec(strings.Trim(imp.Path.Value, `"`), typeName)
+				typeDef = pkgDefs.findTypeSpec(strings.Trim(imp.Path.Value, `"`), name)
 				if typeDef != nil {
 					break
 				}
 			}
 		}
-	}
+		return typeDef
+	}()
 	return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
-}
-
-func (pkgDefs *PackagesDefinitions) findGenericTypeSpec(typeName string, file *ast.File, parseDependency bool) *TypeSpecDef {
-	if strings.Contains(typeName, "[") {
-		// genericName differs from typeName in that it does not contain any type parameters
-		genericName := strings.SplitN(typeName, "[", 2)[0]
-		for tName, tSpec := range pkgDefs.uniqueDefinitions {
-			if !strings.Contains(tName, "[") {
-				continue
-			}
-
-			if strings.Contains(tName, genericName) {
-				if parametrized := pkgDefs.parametrizeGenericType(file, tSpec, typeName, parseDependency); parametrized != nil {
-					return parametrized
-				}
-			}
-		}
-	}
-	return nil
 }

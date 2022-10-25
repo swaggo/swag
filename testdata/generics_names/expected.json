@@ -146,7 +146,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/myweb.AliasPkgGenericResponse-Post"
+                            "$ref": "#/definitions/web.AliasPkgGenericResponse-Post"
                         }
                     }
                 }
@@ -286,17 +286,6 @@
                 }
             }
         },
-        "myweb.AliasPkgGenericResponse-Post": {
-            "type": "object",
-            "properties": {
-                "data": {
-                    "$ref": "#/definitions/Post"
-                },
-                "status": {
-                    "type": "string"
-                }
-            }
-        },
         "web.APIError": {
             "description": "API error with information about it",
             "type": "object",
@@ -316,6 +305,17 @@
                 "errorNo": {
                     "description": "Error `number` tick comment",
                     "type": "integer"
+                }
+            }
+        },
+        "web.AliasPkgGenericResponse-Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Post"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         }

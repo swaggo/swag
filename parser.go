@@ -1014,14 +1014,7 @@ func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
 // given name and package, and populates swagger schema definitions registry
 // with a schema for the given type
 func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error) {
-	typeName := typeSpecDef.FullName()
-	var refTypeName string
-	if fn, ok := (typeSpecDef.ParentSpec).(*ast.FuncDecl); ok {
-		refTypeName = TypeDocNameFuncScoped(typeName, typeSpecDef.TypeSpec, fn.Name.Name)
-	} else {
-		refTypeName = TypeDocName(typeName, typeSpecDef.TypeSpec)
-	}
-
+	typeName := typeSpecDef.TypeName()
 	schema, found := parser.parsedSchemas[typeSpecDef]
 	if found {
 		parser.debug.Printf("Skipping '%s', already parsed.", typeName)
@@ -1033,7 +1026,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		parser.debug.Printf("Skipping '%s', recursion detected.", typeName)
 
 		return &Schema{
-				Name:    refTypeName,
+				Name:    typeName,
 				PkgPath: typeSpecDef.PkgPath,
 				Schema:  PrimitiveSchema(OBJECT),
 			},
@@ -1054,7 +1047,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	}
 
 	sch := Schema{
-		Name:    refTypeName,
+		Name:    typeName,
 		PkgPath: typeSpecDef.PkgPath,
 		Schema:  definition,
 	}
@@ -1069,12 +1062,8 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	return &sch, nil
 }
 
-func fullTypeName(pkgName, typeName string) string {
-	if pkgName != "" && !ignoreNameOverride(typeName) {
-		return pkgName + "." + typeName
-	}
-
-	return typeName
+func fullTypeName(parts ...string) string {
+	return strings.Join(parts, ".")
 }
 
 func fullTypeNameFunctionScoped(pkgName, fnName, typeName string) string {

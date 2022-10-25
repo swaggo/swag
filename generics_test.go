@@ -105,18 +105,23 @@ func TestParseGenericsNames(t *testing.T) {
 
 func TestParametrizeStruct(t *testing.T) {
 	pd := PackagesDefinitions{
-		packages: make(map[string]*PackageDefinitions),
+		packages:          make(map[string]*PackageDefinitions),
+		uniqueDefinitions: make(map[string]*TypeSpecDef),
 	}
 	// valid
 	typeSpec := pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
+			IsUnique: true,
+			File:     &ast.File{Name: &ast.Ident{Name: "test"}},
 			TypeSpec: &ast.TypeSpec{
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
 				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
 			}}, "test.Field[string, []string]", false)
+	assert.NotNil(t, typeSpec)
 	assert.Equal(t, "$test.Field-string-array_string", typeSpec.Name())
+	assert.Equal(t, "test.Field-string-array_string", typeSpec.TypeName())
 
 	// definition contains one type params, but two type params are provided
 	typeSpec = pd.parametrizeGenericType(
