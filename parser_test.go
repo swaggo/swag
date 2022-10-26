@@ -3384,7 +3384,6 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	t.Log(string(b))
 	assert.Equal(t, expected, string(b))
 }
 

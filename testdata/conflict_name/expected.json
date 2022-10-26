@@ -24,7 +24,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github.com_swaggo_swag_testdata_conflict_name_model.ErrorsResponse"
+                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_conflict_name_model.ErrorsResponse"
                         }
                     }
                 }
@@ -47,7 +47,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github.com_swaggo_swag_testdata_conflict_name_model2.ErrorsResponse"
+                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_conflict_name_model2.ErrorsResponse"
                         }
                     }
                 }
@@ -55,7 +55,7 @@
         }
     },
     "definitions": {
-        "github.com_swaggo_swag_testdata_conflict_name_model.ErrorsResponse": {
+        "github_com_swaggo_swag_testdata_conflict_name_model.ErrorsResponse": {
             "type": "object",
             "properties": {
                 "newTime": {
@@ -63,7 +63,7 @@
                 }
             }
         },
-        "github.com_swaggo_swag_testdata_conflict_name_model.MyStruct": {
+        "github_com_swaggo_swag_testdata_conflict_name_model.MyStruct": {
             "type": "object",
             "properties": {
                 "name": {
@@ -71,7 +71,7 @@
                 }
             }
         },
-        "github.com_swaggo_swag_testdata_conflict_name_model2.ErrorsResponse": {
+        "github_com_swaggo_swag_testdata_conflict_name_model2.ErrorsResponse": {
             "type": "object",
             "properties": {
                 "newTime": {
@@ -79,7 +79,7 @@
                 }
             }
         },
-        "github.com_swaggo_swag_testdata_conflict_name_model2.MyStruct": {
+        "github_com_swaggo_swag_testdata_conflict_name_model2.MyStruct": {
             "type": "object",
             "properties": {
                 "name": {
@@ -91,7 +91,7 @@
             "type": "object",
             "properties": {
                 "my": {
-                    "$ref": "#/definitions/github.com_swaggo_swag_testdata_conflict_name_model.MyStruct"
+                    "$ref": "#/definitions/github_com_swaggo_swag_testdata_conflict_name_model.MyStruct"
                 },
                 "name": {
                     "type": "string"
@@ -102,7 +102,7 @@
             "type": "object",
             "properties": {
                 "my": {
-                    "$ref": "#/definitions/github.com_swaggo_swag_testdata_conflict_name_model2.MyStruct"
+                    "$ref": "#/definitions/github_com_swaggo_swag_testdata_conflict_name_model2.MyStruct"
                 },
                 "name": {
                     "type": "string"
