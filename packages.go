@@ -140,9 +140,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 
 					anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 					if ok {
-						if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
-							continue
-						} else {
+						if typeSpecDef.PkgPath != anotherTypeDef.PkgPath {
 							anotherTypeDef.NotUnique = true
 							typeSpecDef.NotUnique = true
 							pkgDefs.uniqueDefinitions[fullName] = nil
@@ -199,9 +197,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 
 								anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 								if ok {
-									if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
-										continue
-									} else {
+									if typeSpecDef.PkgPath != anotherTypeDef.PkgPath {
 										anotherTypeDef.NotUnique = true
 										typeSpecDef.NotUnique = true
 										pkgDefs.uniqueDefinitions[fullName] = nil
@@ -370,30 +366,11 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		return pkgDefs.uniqueDefinitions[typeName]
 	}
 
-	typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
-	if ok {
-		return typeDef
-	}
-
 	parts := strings.Split(strings.Split(typeName, "[")[0], ".")
 	if len(parts) > 1 {
-		isAliasPkgName := func(file *ast.File, pkgName string) bool {
-			if file != nil && file.Imports != nil {
-				for _, pkg := range file.Imports {
-					if pkg.Name != nil && pkg.Name.Name == pkgName {
-						return true
-					}
-				}
-			}
-
-			return false
-		}
-
-		if !isAliasPkgName(file, parts[0]) {
-			typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
-			if ok {
-				return typeDef
-			}
+		typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
+		if ok {
+			return typeDef
 		}
 
 		pkgPath := pkgDefs.findPackagePathFromImports(parts[0], file, false)
@@ -411,12 +388,18 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 			}
 		}
 
-		typeDef := pkgDefs.findTypeSpec(pkgPath, parts[1])
+		typeDef = pkgDefs.findTypeSpec(pkgPath, parts[1])
 
 		return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
 	}
 
-	typeDef, ok = pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
+	typeDef, ok := pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
+	if ok {
+		return typeDef
+	}
+
+	//in case that comment //@name renamed the type with a name without a dot
+	typeDef, ok = pkgDefs.uniqueDefinitions[typeName]
 	if ok {
 		return typeDef
 	}
