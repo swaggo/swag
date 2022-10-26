@@ -127,8 +127,7 @@ func TestParametrizeStruct(t *testing.T) {
 	typeSpec := pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
-			IsUnique: true,
-			File:     &ast.File{Name: &ast.Ident{Name: "test"}},
+			File: &ast.File{Name: &ast.Ident{Name: "test"}},
 			TypeSpec: &ast.TypeSpec{
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},

@@ -95,9 +95,8 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 	}
 
 	parametrizedTypeSpec := &TypeSpecDef{
-		File:     original.File,
-		PkgPath:  original.PkgPath,
-		IsUnique: true,
+		File:    original.File,
+		PkgPath: original.PkgPath,
 		TypeSpec: &ast.TypeSpec{
 			Name: &ast.Ident{
 				Name:    name,

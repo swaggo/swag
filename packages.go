@@ -122,7 +122,6 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						PkgPath:  packagePath,
 						File:     astFile,
 						TypeSpec: typeSpec,
-						IsUnique: true,
 					}
 
 					if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) && parsedSchemas != nil {
@@ -144,8 +143,8 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
 							continue
 						} else {
-							anotherTypeDef.IsUnique = false
-							typeSpecDef.IsUnique = false
+							anotherTypeDef.NotUnique = true
+							typeSpecDef.NotUnique = true
 							pkgDefs.uniqueDefinitions[fullName] = nil
 							pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
 							pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
@@ -182,7 +181,6 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									File:       astFile,
 									TypeSpec:   typeSpec,
 									ParentSpec: astDeclaration,
-									IsUnique:   true,
 								}
 
 								if idt, ok := typeSpec.Type.(*ast.Ident); ok && IsGolangPrimitiveType(idt.Name) && parsedSchemas != nil {
@@ -204,8 +202,8 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									if typeSpecDef.PkgPath == anotherTypeDef.PkgPath {
 										continue
 									} else {
-										anotherTypeDef.IsUnique = false
-										typeSpecDef.IsUnique = false
+										anotherTypeDef.NotUnique = true
+										typeSpecDef.NotUnique = true
 										pkgDefs.uniqueDefinitions[fullName] = nil
 										pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
 										pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef

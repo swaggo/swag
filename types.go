@@ -26,7 +26,7 @@ type TypeSpecDef struct {
 	PkgPath    string
 	ParentSpec ast.Decl
 
-	IsUnique bool
+	NotUnique bool
 }
 
 // Name the name of the typeSpec.
@@ -53,9 +53,7 @@ func (t *TypeSpecDef) TypeName() string {
 	}
 
 	var names []string
-	if t.IsUnique {
-		names = append(names, t.File.Name.Name)
-	} else {
+	if t.NotUnique {
 		pkgPath := strings.Map(func(r rune) rune {
 			if r == '\\' || r == '/' || r == '.' {
 				return '_'
@@ -63,6 +61,8 @@ func (t *TypeSpecDef) TypeName() string {
 			return r
 		}, t.PkgPath)
 		names = append(names, pkgPath)
+	} else {
+		names = append(names, t.File.Name.Name)
 	}
 	if parentFun, ok := (t.ParentSpec).(*ast.FuncDecl); ok && parentFun != nil {
 		names = append(names, parentFun.Name.Name)
