@@ -2,6 +2,7 @@ package swag
 
 import (
 	"go/ast"
+	"strings"
 
 	"github.com/go-openapi/spec"
 )
@@ -24,6 +25,8 @@ type TypeSpecDef struct {
 	// path of package starting from under ${GOPATH}/src or from module path in go.mod
 	PkgPath    string
 	ParentSpec ast.Decl
+
+	NotUnique bool
 }
 
 // Name the name of the typeSpec.
@@ -35,18 +38,40 @@ func (t *TypeSpecDef) Name() string {
 	return ""
 }
 
-// FullName full name of the typeSpec.
-func (t *TypeSpecDef) FullName() string {
-	var fullName string
-	if parentFun, ok := (t.ParentSpec).(*ast.FuncDecl); ok && parentFun != nil {
-		fullName = fullTypeNameFunctionScoped(t.File.Name.Name, parentFun.Name.Name, t.TypeSpec.Name.Name)
-	} else {
-		fullName = fullTypeName(t.File.Name.Name, t.TypeSpec.Name.Name)
+// TypeName the type name of the typeSpec.
+func (t *TypeSpecDef) TypeName() string {
+	if ignoreNameOverride(t.TypeSpec.Name.Name) {
+		return t.TypeSpec.Name.Name[1:]
+	} else if t.TypeSpec.Comment != nil {
+		// get alias from comment '// @name '
+		for _, comment := range t.TypeSpec.Comment.List {
+			texts := strings.Split(strings.TrimSpace(strings.TrimLeft(comment.Text, "/")), " ")
+			if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
+				return texts[1]
+			}
+		}
 	}
-	return fullName
+
+	var names []string
+	if t.NotUnique {
+		pkgPath := strings.Map(func(r rune) rune {
+			if r == '\\' || r == '/' || r == '.' {
+				return '_'
+			}
+			return r
+		}, t.PkgPath)
+		names = append(names, pkgPath)
+	} else {
+		names = append(names, t.File.Name.Name)
+	}
+	if parentFun, ok := (t.ParentSpec).(*ast.FuncDecl); ok && parentFun != nil {
+		names = append(names, parentFun.Name.Name)
+	}
+	names = append(names, t.TypeSpec.Name.Name)
+	return fullTypeName(names...)
 }
 
-// FullPath of the typeSpec.
+// FullPath return the full path of the typeSpec.
 func (t *TypeSpecDef) FullPath() string {
 	return t.PkgPath + "." + t.Name()
 }

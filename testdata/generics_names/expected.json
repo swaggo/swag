@@ -131,6 +131,26 @@
                     }
                 }
             }
+        },
+        "/posts/aliaspkg": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add a new pet to the store",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.AliasPkgGenericResponse-Post"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -285,6 +305,17 @@
                 "errorNo": {
                     "description": "Error `number` tick comment",
                     "type": "integer"
+                }
+            }
+        },
+        "web.AliasPkgGenericResponse-Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Post"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         }

@@ -103,20 +103,39 @@ func TestParseGenericsNames(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseGenericsPackageAlias(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/generics_package_alias"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	p := New()
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParametrizeStruct(t *testing.T) {
 	pd := PackagesDefinitions{
-		packages: make(map[string]*PackageDefinitions),
+		packages:          make(map[string]*PackageDefinitions),
+		uniqueDefinitions: make(map[string]*TypeSpecDef),
 	}
 	// valid
 	typeSpec := pd.parametrizeGenericType(
 		&ast.File{Name: &ast.Ident{Name: "test2"}},
 		&TypeSpecDef{
+			File: &ast.File{Name: &ast.Ident{Name: "test"}},
 			TypeSpec: &ast.TypeSpec{
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
 				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
 			}}, "test.Field[string, []string]", false)
+	assert.NotNil(t, typeSpec)
 	assert.Equal(t, "$test.Field-string-array_string", typeSpec.Name())
+	assert.Equal(t, "test.Field-string-array_string", typeSpec.TypeName())
 
 	// definition contains one type params, but two type params are provided
 	typeSpec = pd.parametrizeGenericType(
@@ -172,30 +191,30 @@ func TestParametrizeStruct(t *testing.T) {
 	assert.Nil(t, typeSpec)
 }
 
-func TestSplitStructNames(t *testing.T) {
+func TestSplitGenericsTypeNames(t *testing.T) {
 	t.Parallel()
 
-	field, params := splitStructName("test.Field")
+	field, params := splitGenericsTypeName("test.Field")
 	assert.Empty(t, field)
 	assert.Nil(t, params)
 
-	field, params = splitStructName("test.Field]")
+	field, params = splitGenericsTypeName("test.Field]")
 	assert.Empty(t, field)
 	assert.Nil(t, params)
 
-	field, params = splitStructName("test.Field[string")
+	field, params = splitGenericsTypeName("test.Field[string")
 	assert.Empty(t, field)
 	assert.Nil(t, params)
 
-	field, params = splitStructName("test.Field[string] ")
+	field, params = splitGenericsTypeName("test.Field[string] ")
 	assert.Equal(t, "test.Field", field)
 	assert.Equal(t, []string{"string"}, params)
 
-	field, params = splitStructName("test.Field[string, []string]")
+	field, params = splitGenericsTypeName("test.Field[string, []string]")
 	assert.Equal(t, "test.Field", field)
 	assert.Equal(t, []string{"string", "[]string"}, params)
 
-	field, params = splitStructName("test.Field[test.Field[ string, []string] ]")
+	field, params = splitGenericsTypeName("test.Field[test.Field[ string, []string] ]")
 	assert.Equal(t, "test.Field", field)
 	assert.Equal(t, []string{"test.Field[string,[]string]"}, params)
 }

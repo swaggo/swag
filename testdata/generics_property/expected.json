@@ -121,10 +121,10 @@
                     "$ref": "#/definitions/types.Field-array_api_Person"
                 },
                 "detail1": {
-                    "$ref": "#/definitions/types.Field-types_Field_api_Person"
+                    "$ref": "#/definitions/types.Field-types_Field-api_Person"
                 },
                 "detail2": {
-                    "$ref": "#/definitions/types.Field-types_Field_string"
+                    "$ref": "#/definitions/types.Field-types_Field-string"
                 },
                 "directors": {
                     "$ref": "#/definitions/types.Field-array_api_Person"
@@ -298,7 +298,7 @@
                 }
             }
         },
-        "types.Field-types_Field_api_Person": {
+        "types.Field-types_Field-api_Person": {
             "type": "object",
             "properties": {
                 "value": {
@@ -326,7 +326,7 @@
                 }
             }
         },
-        "types.Field-types_Field_string": {
+        "types.Field-types_Field-string": {
             "type": "object",
             "properties": {
                 "value": {

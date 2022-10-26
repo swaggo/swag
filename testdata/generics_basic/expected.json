@@ -46,7 +46,7 @@
                     "202": {
                         "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponse-types_Field_string"
+                            "$ref": "#/definitions/web.GenericResponse-types_Field-string"
                         }
                     },
                     "222": {
@@ -138,25 +138,25 @@
                     "202": {
                         "description": "Accepted",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponse-types_Field_string"
+                            "$ref": "#/definitions/web.GenericResponse-types_Field-string"
                         }
                     },
                     "203": {
                         "description": "Non-Authoritative Information",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponse-types_Field_int"
+                            "$ref": "#/definitions/web.GenericResponse-types_Field-int"
                         }
                     },
                     "204": {
                         "description": "No Content",
                         "schema": {
-                            "$ref": "#/definitions/api.Response-string-types_Field_int"
+                            "$ref": "#/definitions/api.Response-string-types_Field-int"
                         }
                     },
                     "205": {
                         "description": "Reset Content",
                         "schema": {
-                            "$ref": "#/definitions/api.Response-api_StringStruct-types_Field_int"
+                            "$ref": "#/definitions/api.Response-api_StringStruct-types_Field-int"
                         }
                     },
                     "222": {
@@ -182,7 +182,7 @@
         }
     },
     "definitions": {
-        "api.Response-api_StringStruct-types_Field_int": {
+        "api.Response-api_StringStruct-types_Field-int": {
             "type": "object",
             "properties": {
                 "data": {
@@ -196,7 +196,7 @@
                 }
             }
         },
-        "api.Response-string-types_Field_int": {
+        "api.Response-string-types_Field-int": {
             "type": "object",
             "properties": {
                 "data": {
@@ -223,6 +223,14 @@
             "properties": {
                 "value": {
                     "type": "integer"
+                }
+            }
+        },
+        "types.Field-string": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "string"
                 }
             }
         },
@@ -372,7 +380,7 @@
                 }
             }
         },
-        "web.GenericResponse-types_Field_int": {
+        "web.GenericResponse-types_Field-int": {
             "type": "object",
             "properties": {
                 "data": {
@@ -383,11 +391,11 @@
                 }
             }
         },
-        "web.GenericResponse-types_Field_string": {
+        "web.GenericResponse-types_Field-string": {
             "type": "object",
             "properties": {
                 "data": {
-                    "type": "string"
+                    "$ref": "#/definitions/types.Field-string"
                 },
                 "status": {
                     "type": "string"

@@ -168,7 +168,7 @@ func TestParser_ParseDefinition(t *testing.T) {
 	}
 	_, err = p.ParseDefinition(definition)
 	assert.Error(t, err)
-	assert.Equal(t, "model.TestFuncDecl.Test", definition.FullName())
+	assert.Equal(t, "model.TestFuncDecl.Test", definition.TypeName())
 }
 
 func TestParser_ParseGeneralApiInfo(t *testing.T) {
@@ -3384,7 +3384,6 @@ func Fun()  {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	t.Log(string(b))
 	assert.Equal(t, expected, string(b))
 }
 
