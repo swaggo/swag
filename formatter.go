@@ -107,12 +107,12 @@ func formatFuncDoc(fileSet *token.FileSet, commentList []*ast.Comment, edits *ed
 	linesToComments := make(map[int]int, len(commentList))
 
 	buffer := &bytes.Buffer{}
-	w := tabwriter.NewWriter(buffer, 0, 0, 1, ' ', 0)
+	w := tabwriter.NewWriter(buffer, 0, 0, 2, ' ', 0)
 
 	for commentIndex, comment := range commentList {
 		text := comment.Text
 		if attr, body, found := swagComment(text); found {
-			formatted := "// " + attr
+			formatted := "//\t" + attr
 			if body != "" {
 				formatted += "\t" + splitComment2(attr, body)
 			}
