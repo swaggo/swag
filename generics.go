@@ -13,8 +13,6 @@ import (
 	"github.com/go-openapi/spec"
 )
 
-//var genericsDefinitions = map[*TypeSpecDef]map[string]*TypeSpecDef{}
-
 type genericTypeSpec struct {
 	ArrayDepth int
 	TypeSpec   *TypeSpecDef
@@ -83,13 +81,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 	}
 
 	name += strings.Replace(strings.Join(nameParts, "-"), ".", "_", -1)
-	/*if genericsMap, ok := genericsDefinitions[original]; ok {
-		if parametrizedTypeSpec, ok := genericsMap[name]; ok {
-			return parametrizedTypeSpec
-		}
-	} else {
-		genericsDefinitions[original] = map[string]*TypeSpecDef{}
-	}*/
+
 	if typeSpec, ok := pkgDefs.uniqueDefinitions[name]; ok {
 		return typeSpec
 	}
@@ -109,7 +101,6 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 		},
 	}
 	pkgDefs.uniqueDefinitions[name] = parametrizedTypeSpec
-	//genericsDefinitions[original][name] = parametrizedTypeSpec
 
 	return parametrizedTypeSpec
 }
@@ -157,8 +148,7 @@ func splitGenericsTypeName(fullGenericForm string) (string, []string) {
 
 func (pkgDefs *PackagesDefinitions) getParametrizedType(genTypeSpec *genericTypeSpec) ast.Expr {
 	if genTypeSpec.TypeSpec != nil && strings.Contains(genTypeSpec.Name, ".") {
-		uniqueFullTypeName := genTypeSpec.TypeName()
-		parts := strings.SplitN(uniqueFullTypeName, ".", 2)
+		parts := strings.SplitN(genTypeSpec.Name, ".", 2)
 		return &ast.SelectorExpr{
 			X:   &ast.Ident{Name: parts[0]},
 			Sel: &ast.Ident{Name: parts[1]},
