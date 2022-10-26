@@ -11,7 +11,6 @@ import (
 	"go/token"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -104,15 +103,6 @@ type Parser struct {
 
 	// outputSchemas store schemas which will be export to swagger
 	outputSchemas map[*TypeSpecDef]*Schema
-
-	// existSchemaNames store names of models for conflict determination
-	existSchemaNames map[string]*Schema
-
-	// toBeRenamedSchemas names of models to be renamed
-	toBeRenamedSchemas map[string]string
-
-	// toBeRenamedSchemas URLs of ref models to be renamed
-	toBeRenamedRefURLs []*url.URL
 
 	// PropNamingStrategy naming strategy
 	PropNamingStrategy string
@@ -208,8 +198,6 @@ func New(options ...func(*Parser)) *Parser {
 		debug:              log.New(os.Stdout, "", log.LstdFlags),
 		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
 		outputSchemas:      make(map[*TypeSpecDef]*Schema),
-		existSchemaNames:   make(map[string]*Schema),
-		toBeRenamedSchemas: make(map[string]string),
 		excludes:           make(map[string]struct{}),
 		fieldParserFactory: newTagBaseFieldParser,
 		Overrides:          make(map[string]string),
@@ -367,8 +355,6 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 	if err != nil {
 		return err
 	}
-
-	parser.renameRefSchemas()
 
 	return parser.checkOperationIDUniqueness()
 }
@@ -933,57 +919,9 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 	return schema.Schema, nil
 }
 
-func (parser *Parser) renameRefSchemas() {
-	if len(parser.toBeRenamedSchemas) == 0 {
-		return
-	}
-
-	// rename schemas in swagger.Definitions
-	for name, pkgPath := range parser.toBeRenamedSchemas {
-		if schema, ok := parser.swagger.Definitions[name]; ok {
-			delete(parser.swagger.Definitions, name)
-			name = parser.renameSchema(name, pkgPath)
-			parser.swagger.Definitions[name] = schema
-		}
-	}
-
-	// rename URLs if match
-	for _, refURL := range parser.toBeRenamedRefURLs {
-		parts := strings.Split(refURL.Fragment, "/")
-		name := parts[len(parts)-1]
-
-		if pkgPath, ok := parser.toBeRenamedSchemas[name]; ok {
-			parts[len(parts)-1] = parser.renameSchema(name, pkgPath)
-
-			refURL.Fragment = strings.Join(parts, "/")
-		}
-	}
-}
-
-func (parser *Parser) renameSchema(name, pkgPath string) string {
-	parts := strings.Split(name, ".")
-	name = fullTypeName(pkgPath, parts[len(parts)-1])
-	name = strings.ReplaceAll(name, "/", "_")
-
-	return name
-}
-
 func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema) *spec.Schema {
 	_, ok := parser.outputSchemas[typeSpecDef]
 	if !ok {
-		existSchema, ok := parser.existSchemaNames[schema.Name]
-		if ok {
-			// store the first one to be renamed after parsing over
-			_, ok = parser.toBeRenamedSchemas[existSchema.Name]
-			if !ok {
-				parser.toBeRenamedSchemas[existSchema.Name] = existSchema.PkgPath
-			}
-			// rename not the first one
-			schema.Name = parser.renameSchema(schema.Name, schema.PkgPath)
-		} else {
-			parser.existSchemaNames[schema.Name] = schema
-		}
-
 		parser.swagger.Definitions[schema.Name] = spec.Schema{}
 
 		if schema.Schema != nil {
@@ -994,8 +932,6 @@ func (parser *Parser) getRefTypeSchema(typeSpecDef *TypeSpecDef, schema *Schema)
 	}
 
 	refSchema := RefSchema(schema.Name)
-	// store every URL
-	parser.toBeRenamedRefURLs = append(parser.toBeRenamedRefURLs, refSchema.Ref.GetURL())
 
 	return refSchema
 }
@@ -1064,14 +1000,6 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 func fullTypeName(parts ...string) string {
 	return strings.Join(parts, ".")
-}
-
-func fullTypeNameFunctionScoped(pkgName, fnName, typeName string) string {
-	if pkgName != "" {
-		return pkgName + "." + fnName + "." + typeName
-	}
-
-	return typeName
 }
 
 // fillDefinitionDescription additionally fills fields in definition (spec.Schema)
