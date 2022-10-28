@@ -16,8 +16,9 @@ import (
 //  @license.name  Apache 2.0
 //  @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host      product_info.swagger.io
-// @BasePath  /v2
+//  @host      product_info.swagger.io
+//  @BasePath  /v2
+
 func main() {
 	http.HandleFunc("/testapi/update-product", UpdateProduct)
 	http.ListenAndServe(":8080", nil)
