@@ -13,12 +13,13 @@ type ProductUpdates struct {
 }
 
 // UpdateProduct example
-// @Summary Update product attributes
-// @ID update-product
-// @Accept  json
-// @Param   product_id      path   int     true  "Product ID"
-// @Param   _      body ProductUpdates true  " "
-// @Router /testapi/update-product/{product_id} [post]
+//
+//	@Summary  Update product attributes
+//	@ID       update-product
+//	@Accept   json
+//	@Param    product_id  path  int             true  "Product ID"
+//	@Param    _           body  ProductUpdates  true  " "
+//	@Router   /testapi/update-product/{product_id} [post]
 func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	var pUpdates ProductUpdates
 	if err := json.NewDecoder(r.Body).Decode(&pUpdates); err != nil {
