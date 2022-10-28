@@ -11,18 +11,19 @@ import (
 )
 
 // Auth godoc
-// @Summary      Auth admin
-// @Description  get admin info
-// @Tags         accounts,admin
-// @Accept       json
-// @Produce      json
-// @Success      200  {object}  model.Admin
-// @Failure      400  {object}  httputil.HTTPError
-// @Failure      401  {object}  httputil.HTTPError
-// @Failure      404  {object}  httputil.HTTPError
-// @Failure      500  {object}  httputil.HTTPError
-// @Security     ApiKeyAuth
-// @Router       /admin/auth [post]
+//
+//	@Summary      Auth admin
+//	@Description  get admin info
+//	@Tags         accounts,admin
+//	@Accept       json
+//	@Produce      json
+//	@Success      200  {object}  model.Admin
+//	@Failure      400  {object}  httputil.HTTPError
+//	@Failure      401  {object}  httputil.HTTPError
+//	@Failure      404  {object}  httputil.HTTPError
+//	@Failure      500  {object}  httputil.HTTPError
+//	@Security     ApiKeyAuth
+//	@Router       /admin/auth [post]
 func (c *Controller) Auth(ctx *gin.Context) {
 	authHeader := ctx.GetHeader("Authorization")
 	if len(authHeader) == 0 {
