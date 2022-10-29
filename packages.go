@@ -139,7 +139,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 					fullName := typeSpecDef.TypeName()
 
 					anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
-					if ok {
+					if ok && anotherTypeDef != nil {
 						if typeSpecDef.PkgPath != anotherTypeDef.PkgPath {
 							anotherTypeDef.NotUnique = true
 							typeSpecDef.NotUnique = true
