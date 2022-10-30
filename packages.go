@@ -140,7 +140,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 
 					anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 					if ok {
-						if anotherTypeDef != nil {
+						if anotherTypeDef == nil {
 							typeSpecDef.NotUnique = true
 							pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
 						} else if typeSpecDef.PkgPath != anotherTypeDef.PkgPath {
@@ -200,7 +200,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 
 								anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 								if ok {
-									if anotherTypeDef != nil {
+									if anotherTypeDef == nil {
 										typeSpecDef.NotUnique = true
 										pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
 									} else if typeSpecDef.PkgPath != anotherTypeDef.PkgPath {
