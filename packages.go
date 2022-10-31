@@ -354,21 +354,25 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 	return
 }
 
-func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths, externalPkgPaths []string, name string) (typeDef *TypeSpecDef) {
+func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths, externalPkgPaths []string, name string, parseDependency bool) (typeDef *TypeSpecDef) {
 	for _, pkgPath := range matchedPkgPaths {
 		typeDef = pkgDefs.findTypeSpec(pkgPath, name)
 		if typeDef != nil {
 			return typeDef
 		}
 	}
-	for _, pkgPath := range externalPkgPaths {
-		if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
-			typeDef = pkgDefs.findTypeSpec(pkgPath, name)
-			if typeDef != nil {
-				return typeDef
+
+	if parseDependency {
+		for _, pkgPath := range externalPkgPaths {
+			if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
+				typeDef = pkgDefs.findTypeSpec(pkgPath, name)
+				if typeDef != nil {
+					return typeDef
+				}
 			}
 		}
 	}
+
 	return typeDef
 }
 
@@ -393,7 +397,7 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		}
 
 		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports(parts[0], file)
-		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
+		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1], parseDependency)
 		return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
 	}
 
@@ -412,7 +416,7 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 	typeDef, ok = pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, name)]
 	if !ok {
 		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports("", file)
-		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name)
+		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name, parseDependency)
 	}
 	return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
 }
