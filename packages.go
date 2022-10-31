@@ -287,76 +287,89 @@ func (pkgDefs *PackagesDefinitions) loadExternalPackage(importPath string) error
 // findPackagePathFromImports finds out the package path of a package via ranging imports of an ast.File
 // @pkg the name of the target package
 // @file current ast.File in which to search imports
-// @fuzzy search for the package path that the last part matches the @pkg if true
-// @return the package path of a package of @pkg.
-func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File, fuzzy bool) string {
+// @return the package paths of a package of @pkg.
+func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file *ast.File) (matchedPkgPaths, externalPkgPaths []string) {
 	if file == nil {
-		return ""
+		return
 	}
 
 	if strings.ContainsRune(pkg, '.') {
 		pkg = strings.Split(pkg, ".")[0]
 	}
 
-	hasAnonymousPkg := false
-
 	matchLastPathPart := func(pkgPath string) bool {
 		paths := strings.Split(pkgPath, "/")
-
 		return paths[len(paths)-1] == pkg
 	}
 
 	// prior to match named package
 	for _, imp := range file.Imports {
+		path := strings.Trim(imp.Path.Value, `"`)
 		if imp.Name != nil {
 			if imp.Name.Name == pkg {
-				return strings.Trim(imp.Path.Value, `"`)
-			}
-
-			if imp.Name.Name == "_" {
-				hasAnonymousPkg = true
-			}
-
-			continue
-		}
-
-		if pkgDefs.packages != nil {
-			path := strings.Trim(imp.Path.Value, `"`)
-			if fuzzy {
-				if matchLastPathPart(path) {
-					return path
+				// if name match, break loop and return
+				_, ok := pkgDefs.packages[path]
+				if ok {
+					matchedPkgPaths = []string{path}
+					externalPkgPaths = nil
+				} else {
+					externalPkgPaths = []string{path}
+					matchedPkgPaths = nil
 				}
-
-				continue
-			}
-
-			pd, ok := pkgDefs.packages[path]
-			if ok && pd.Name == pkg {
-				return path
-			}
-		}
-	}
-
-	// match unnamed package
-	if hasAnonymousPkg && pkgDefs.packages != nil {
-		for _, imp := range file.Imports {
-			if imp.Name == nil {
-				continue
-			}
-			if imp.Name.Name == "_" {
-				path := strings.Trim(imp.Path.Value, `"`)
-				if fuzzy {
-					if matchLastPathPart(path) {
-						return path
+				break
+			} else if imp.Name.Name == "_" && len(pkg) > 0 {
+				//for unused types
+				pd, ok := pkgDefs.packages[path]
+				if ok {
+					if pd.Name == pkg {
+						matchedPkgPaths = append(matchedPkgPaths, path)
 					}
-				} else if pd, ok := pkgDefs.packages[path]; ok && pd.Name == pkg {
-					return path
+				} else if matchLastPathPart(path) {
+					externalPkgPaths = append(externalPkgPaths, path)
 				}
+			} else if imp.Name.Name == "." && len(pkg) == 0 {
+				_, ok := pkgDefs.packages[path]
+				if ok {
+					matchedPkgPaths = append(matchedPkgPaths, path)
+				} else if len(pkg) == 0 || matchLastPathPart(path) {
+					externalPkgPaths = append(externalPkgPaths, path)
+				}
+			}
+		} else if pkgDefs.packages != nil && len(pkg) > 0 {
+			pd, ok := pkgDefs.packages[path]
+			if ok {
+				if pd.Name == pkg {
+					matchedPkgPaths = append(matchedPkgPaths, path)
+				}
+			} else if matchLastPathPart(path) {
+				externalPkgPaths = append(externalPkgPaths, path)
 			}
 		}
 	}
 
-	return ""
+	if len(pkg) == 0 || file.Name.Name == pkg {
+		matchedPkgPaths = append(matchedPkgPaths, pkgDefs.files[file].PackagePath)
+	}
+
+	return
+}
+
+func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths, externalPkgPaths []string, name string) (typeDef *TypeSpecDef) {
+	for _, pkgPath := range matchedPkgPaths {
+		typeDef = pkgDefs.findTypeSpec(pkgPath, name)
+		if typeDef != nil {
+			return typeDef
+		}
+	}
+	for _, pkgPath := range externalPkgPaths {
+		if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
+			typeDef = pkgDefs.findTypeSpec(pkgPath, name)
+			if typeDef != nil {
+				return typeDef
+			}
+		}
+	}
+	return typeDef
 }
 
 // FindTypeSpec finds out TypeSpecDef of a type by typeName
@@ -379,23 +392,8 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 			return typeDef
 		}
 
-		pkgPath := pkgDefs.findPackagePathFromImports(parts[0], file, false)
-		if len(pkgPath) == 0 {
-			// check if the current package
-			if parts[0] == file.Name.Name {
-				pkgPath = pkgDefs.files[file].PackagePath
-			} else if parseDependency {
-				// take it as an external package, needs to be loaded
-				if pkgPath = pkgDefs.findPackagePathFromImports(parts[0], file, true); len(pkgPath) > 0 {
-					if err := pkgDefs.loadExternalPackage(pkgPath); err != nil {
-						return nil
-					}
-				}
-			}
-		}
-
-		typeDef = pkgDefs.findTypeSpec(pkgPath, parts[1])
-
+		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports(parts[0], file)
+		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
 		return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
 	}
 
@@ -410,25 +408,11 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		return typeDef
 	}
 
-	typeDef = func() *TypeSpecDef {
-		name := parts[0]
-		typeDef, ok := pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, name)]
-		if ok {
-			return typeDef
-		}
-		typeDef = pkgDefs.findTypeSpec(pkgDefs.files[file].PackagePath, name)
-		if typeDef != nil {
-			return typeDef
-		}
-		for _, imp := range file.Imports {
-			if imp.Name != nil && imp.Name.Name == "." {
-				typeDef = pkgDefs.findTypeSpec(strings.Trim(imp.Path.Value, `"`), name)
-				if typeDef != nil {
-					break
-				}
-			}
-		}
-		return typeDef
-	}()
+	name := parts[0]
+	typeDef, ok = pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, name)]
+	if !ok {
+		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports("", file)
+		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name)
+	}
 	return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
 }

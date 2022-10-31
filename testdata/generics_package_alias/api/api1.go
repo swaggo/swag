@@ -9,8 +9,8 @@ import (
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} myv1.ListResult[myv1.ProductDto] ""
-// @Router /api1 [post]
-func CreateMovie1() {
+// @Router /api01 [post]
+func CreateMovie01() {
 	_ = myv1.ListResult[myv1.ProductDto]{}
 }
 
@@ -19,7 +19,7 @@ func CreateMovie1() {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} myv1.RenamedListResult[myv1.RenamedProductDto] ""
-// @Router /api2 [post]
-func CreateMovie2() {
+// @Router /api02 [post]
+func CreateMovie02() {
 	_ = myv1.ListResult[myv1.ProductDto]{}
 }
