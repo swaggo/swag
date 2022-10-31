@@ -111,6 +111,7 @@ func TestParseGenericsPackageAlias(t *testing.T) {
 	assert.NoError(t, err)
 
 	p := New()
+	p.ParseDependency = true
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
