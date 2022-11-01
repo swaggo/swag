@@ -106,7 +106,7 @@ func TestParseGenericsNames(t *testing.T) {
 func TestParseGenericsPackageAlias(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "testdata/generics_package_alias"
+	searchDir := "testdata/generics_package_alias/internal"
 	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
