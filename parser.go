@@ -137,6 +137,9 @@ type Parser struct {
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
 
+	// add by tengfei choose dirs and files in SearchDir
+	specifieds map[string]struct{}
+
 	// debugging output goes here
 	debug Debugger
 
@@ -232,6 +235,19 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 			if f != "" {
 				f = filepath.Clean(f)
 				p.excludes[f] = struct{}{}
+			}
+		}
+	}
+}
+
+// add by tengfei SetSpecifiedDirsAndFiles sets directories and files to be Specified when searching.
+func SetSpecifiedDirsAndFiles(specifieds string) func(*Parser) {
+	return func(p *Parser) {
+		for _, f := range strings.Split(specifieds, ",") {
+			f = strings.TrimSpace(f)
+			if f != "" {
+				f = filepath.Clean(f)
+				p.specifieds[f] = struct{}{}
 			}
 		}
 	}
@@ -1387,7 +1403,7 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 			return err
 		}
 
-		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil)
+		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, f.Name(), nil)
 	})
 }
 
@@ -1415,7 +1431,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		}
 
 		path := filepath.Join(srcDir, f.Name())
-		if err := parser.parseFile(pkg.Name, path, nil); err != nil {
+		if err := parser.parseFile(pkg.Name, path, f.Name(), nil); err != nil {
 			return err
 		}
 	}
@@ -1429,9 +1445,24 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 	return nil
 }
 
-func (parser *Parser) parseFile(packageDir, path string, src interface{}) error {
+func (parser *Parser) parseFile(packageDir, path, name string, src interface{}) error {
 	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
 		return nil
+	}
+
+	// add by tengfei 增加是否包含文件名过滤
+	if parser.specifieds != nil && len(parser.specifieds) > 0 {
+		var flag = true
+		for k, _ := range parser.specifieds {
+			if strings.Contains(name, k) {
+				flag = false
+				break
+			}
+		}
+		// 如果没有找到则跳过
+		if flag {
+			return nil
+		}
 	}
 
 	// positions are relative to FileSet
