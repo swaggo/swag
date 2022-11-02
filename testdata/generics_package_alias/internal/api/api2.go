@@ -1,8 +1,8 @@
 package api
 
 import (
-	myv1 "github.com/swaggo/swag/testdata/generics_package_alias/path1/v1"
-	myv2 "github.com/swaggo/swag/testdata/generics_package_alias/path2/v1"
+	myv1 "github.com/swaggo/swag/testdata/generics_package_alias/internal/path1/v1"
+	myv2 "github.com/swaggo/swag/testdata/generics_package_alias/internal/path2/v1"
 )
 
 // @Summary Create movie
@@ -10,8 +10,8 @@ import (
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} myv2.ListResult[myv2.ProductDto] ""
-// @Router /api3 [post]
-func CreateMovie3() {
+// @Router /api03 [post]
+func CreateMovie03() {
 	_ = myv2.ListResult[myv2.ProductDto]{}
 }
 
@@ -20,8 +20,8 @@ func CreateMovie3() {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} myv2.RenamedListResult[myv2.RenamedProductDto] ""
-// @Router /api4 [post]
-func CreateMovie4() {
+// @Router /api04 [post]
+func CreateMovie04() {
 	_ = myv2.ListResult[myv2.ProductDto]{}
 }
 
@@ -30,8 +30,8 @@ func CreateMovie4() {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} myv1.ListResult[myv2.ProductDto] ""
-// @Router /api5 [post]
-func CreateMovie5() {
+// @Router /api05 [post]
+func CreateMovie05() {
 	_ = myv1.ListResult[myv2.ProductDto]{}
 }
 
@@ -40,7 +40,7 @@ func CreateMovie5() {
 // @Accept  json
 // @Produce  json
 // @Success 200 {object} myv1.RenamedListResult[myv2.RenamedProductDto] ""
-// @Router /api6 [post]
-func CreateMovie6() {
+// @Router /api06 [post]
+func CreateMovie06() {
 	_ = myv1.ListResult[myv2.ProductDto]{}
 }

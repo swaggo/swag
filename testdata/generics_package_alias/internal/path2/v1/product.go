@@ -15,3 +15,7 @@ type RenamedProductDto struct {
 type RenamedListResult[T any] struct {
 	Items22 []T `json:"items22,omitempty"`
 } // @name ListResultV2
+
+type UniqueProduct struct {
+	UniqueProductName string `json:"unique_product_name"`
+}
