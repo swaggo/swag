@@ -148,6 +148,9 @@ type Parser struct {
 
 	// parseGoList whether swag use go list to parse dependency
 	parseGoList bool
+
+	// include only mentioned tags
+	includeTags map[string]struct{}
 }
 
 // FieldParserFactory create FieldParser.
@@ -199,6 +202,7 @@ func New(options ...func(*Parser)) *Parser {
 		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
 		outputSchemas:      make(map[*TypeSpecDef]*Schema),
 		excludes:           make(map[string]struct{}),
+		includeTags:        make(map[string]struct{}),
 		fieldParserFactory: newTagBaseFieldParser,
 		Overrides:          make(map[string]string),
 	}
@@ -232,6 +236,18 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 			if f != "" {
 				f = filepath.Clean(f)
 				p.excludes[f] = struct{}{}
+			}
+		}
+	}
+}
+
+// SetIncludeTags sets the tags to be included
+func SetIncludeTags(include string) func(*Parser) {
+	return func(p *Parser) {
+		for _, f := range strings.Split(include, ",") {
+			f = strings.TrimSpace(f)
+			if f != "" {
+				p.includeTags[f] = struct{}{}
 			}
 		}
 	}
@@ -762,6 +778,38 @@ func isExistsScope(scope string) (bool, error) {
 	return strings.Contains(scope, scopeAttrPrefix), nil
 }
 
+func getTagsFromComment(comment string) (tags []string) {
+	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "/"))
+	if len(commentLine) == 0 {
+		return nil
+	}
+
+	attribute := strings.Fields(commentLine)[0]
+	lineRemainder, lowerAttribute := strings.TrimSpace(commentLine[len(attribute):]), strings.ToLower(attribute)
+
+	if lowerAttribute == tagsAttr {
+		for _, tag := range strings.Split(lineRemainder, ",") {
+			tags = append(tags, strings.TrimSpace(tag))
+		}
+	}
+	return
+
+}
+
+func (parser *Parser) isTagIncluded(comments []*ast.Comment) bool {
+	if len(parser.includeTags) != 0 {
+		for _, comment := range comments {
+			for _, tag := range getTagsFromComment(comment.Text) {
+				if _, has := parser.includeTags[tag]; has {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	return true
+}
+
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) error {
 	for _, astDescription := range astFile.Decls {
@@ -769,16 +817,17 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 			// for per 'function' comment, create a new 'Operation' object
 			operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
-			for _, comment := range astDeclaration.Doc.List {
-				err := operation.ParseComment(comment.Text, astFile)
-				if err != nil {
-					return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+			if parser.isTagIncluded(astDeclaration.Doc.List) {
+				for _, comment := range astDeclaration.Doc.List {
+					err := operation.ParseComment(comment.Text, astFile)
+					if err != nil {
+						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+					}
 				}
-			}
-
-			err := processRouterOperation(parser, operation)
-			if err != nil {
-				return err
+				err := processRouterOperation(parser, operation)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
