@@ -85,6 +85,7 @@ USAGE:
    swag init [command options] [arguments...]
 
 OPTIONS:
+   --quiet, -q                            Make the logger quiet. (default: false)
    --generalInfo value, -g value          Go file path in which 'swagger general API Info' is written (default: "main.go")
    --dir value, -d value                  Directories you want to parse,comma separated and general-info file must be in the first one (default: "./")
    --exclude value                        Exclude directories and files when searching, comma separated
@@ -97,10 +98,12 @@ OPTIONS:
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
    --generatedTime                        Generate timestamp at the top of docs.go, disabled by default (default: false)
-   --requiredByDefault                    Set validation required for all fields by default (default: false)
    --parseDepth value                     Dependency parse depth (default: 100)
+   --requiredByDefault                    Set validation required for all fields by default (default: false)
    --instanceName value                   This parameter can be used to name different swagger document instances. It is optional.
    --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
+   --parseGoList                          Parse dependency via 'go list' (default: true)
+   --tags value, -t value                 A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded
    --help, -h                             show help (default: false)
 ```
 

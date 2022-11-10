@@ -149,8 +149,8 @@ type Parser struct {
 	// parseGoList whether swag use go list to parse dependency
 	parseGoList bool
 
-	// include only mentioned tags
-	includeTags map[string]struct{}
+	// tags to filter the APIs after
+	tags map[string]struct{}
 }
 
 // FieldParserFactory create FieldParser.
@@ -202,7 +202,7 @@ func New(options ...func(*Parser)) *Parser {
 		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
 		outputSchemas:      make(map[*TypeSpecDef]*Schema),
 		excludes:           make(map[string]struct{}),
-		includeTags:        make(map[string]struct{}),
+		tags:               make(map[string]struct{}),
 		fieldParserFactory: newTagBaseFieldParser,
 		Overrides:          make(map[string]string),
 	}
@@ -241,13 +241,13 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 	}
 }
 
-// SetIncludeTags sets the tags to be included
-func SetIncludeTags(include string) func(*Parser) {
+// SetTags sets the tags to be included
+func SetTags(include string) func(*Parser) {
 	return func(p *Parser) {
 		for _, f := range strings.Split(include, ",") {
 			f = strings.TrimSpace(f)
 			if f != "" {
-				p.includeTags[f] = struct{}{}
+				p.tags[f] = struct{}{}
 			}
 		}
 	}
@@ -796,16 +796,19 @@ func getTagsFromComment(comment string) (tags []string) {
 
 }
 
-func (parser *Parser) isTagIncluded(comments []*ast.Comment) bool {
-	if len(parser.includeTags) != 0 {
+func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
+	if len(parser.tags) != 0 {
 		for _, comment := range comments {
 			for _, tag := range getTagsFromComment(comment.Text) {
-				if _, has := parser.includeTags[tag]; has {
-					return true
+				if _, has := parser.tags["!"+tag]; has {
+					return false
+				}
+				if _, has := parser.tags[tag]; has {
+					match = true // keep iterating as it may contain a tag that is excluded
 				}
 			}
 		}
-		return false
+		return
 	}
 	return true
 }
@@ -815,9 +818,9 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 	for _, astDescription := range astFile.Decls {
 		astDeclaration, ok := astDescription.(*ast.FuncDecl)
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-			// for per 'function' comment, create a new 'Operation' object
-			operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
-			if parser.isTagIncluded(astDeclaration.Doc.List) {
+			if parser.matchTags(astDeclaration.Doc.List) {
+				// for per 'function' comment, create a new 'Operation' object
+				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
 				for _, comment := range astDeclaration.Doc.List {
 					err := operation.ParseComment(comment.Text, astFile)
 					if err != nil {

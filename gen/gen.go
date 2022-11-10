@@ -122,7 +122,7 @@ type Config struct {
 	ParseGoList bool
 
 	// include only tags mentioned when searching, comma separated
-	IncludeTags string
+	Tags string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -169,7 +169,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetStrict(config.Strict),
 		swag.SetOverrides(overrides),
 		swag.ParseUsingGoList(config.ParseGoList),
-		swag.SetIncludeTags(config.IncludeTags),
+		swag.SetTags(config.Tags),
 	)
 
 	p.PropNamingStrategy = config.PropNamingStrategy

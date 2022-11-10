@@ -33,7 +33,7 @@ const (
 	overridesFileFlag     = "overridesFile"
 	parseGoListFlag       = "parseGoList"
 	quietFlag             = "quiet"
-	includeTagsFlag       = "includeTags"
+	tagsFlag              = "tags"
 )
 
 var initFlags = []cli.Flag{
@@ -130,10 +130,10 @@ var initFlags = []cli.Flag{
 		Usage: "Parse dependency via 'go list'",
 	},
 	&cli.StringFlag{
-		Name:    includeTagsFlag,
-		Aliases: []string{"it"},
+		Name:    tagsFlag,
+		Aliases: []string{"t"},
 		Value:   "",
-		Usage:   "Include only tags mentioned when searching, comma separated",
+		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
 	},
 }
 
@@ -173,7 +173,7 @@ func initAction(ctx *cli.Context) error {
 		InstanceName:        ctx.String(instanceNameFlag),
 		OverridesFile:       ctx.String(overridesFileFlag),
 		ParseGoList:         ctx.Bool(parseGoListFlag),
-		IncludeTags:         ctx.String(includeTagsFlag),
+		Tags:                ctx.String(tagsFlag),
 		Debugger:            logger,
 	})
 }
