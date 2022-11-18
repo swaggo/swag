@@ -1,7 +1,6 @@
 package swag
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +15,6 @@ const (
 func testFormat(t *testing.T, filename, contents, want string) {
 	got, err := NewFormatter().Format(filename, []byte(contents))
 	assert.NoError(t, err)
-	fmt.Println(string(got))
 	assert.Equal(t, want, string(got))
 }
 
