@@ -4,13 +4,13 @@ import "github.com/gin-gonic/gin"
 
 // GetMap godoc
 //
-//	@Summary      Get Map Example
-//	@Description  get map
-//	@ID           get-map
-//	@Accept       json
-//	@Produce      json
-//	@Success      200  {object}  Response
-//	@Router       /test [get]
+//	@Summary		Get Map Example
+//	@Description	get map
+//	@ID				get-map
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	Response
+//	@Router			/test [get]
 func (c *Controller) GetMap(ctx *gin.Context) {
 	ctx.JSON(200, Response{
 		Title: map[string]string{
