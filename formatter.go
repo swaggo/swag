@@ -107,7 +107,7 @@ func formatFuncDoc(fileSet *token.FileSet, commentList []*ast.Comment, edits *ed
 	linesToComments := make(map[int]int, len(commentList))
 
 	buffer := &bytes.Buffer{}
-	w := tabwriter.NewWriter(buffer, 0, 0, 2, ' ', 0)
+	w := tabwriter.NewWriter(buffer, 1, 4, 1, '\t', 0)
 
 	for commentIndex, comment := range commentList {
 		text := comment.Text
