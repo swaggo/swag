@@ -18,7 +18,7 @@ import (
 //	@Tags			bottles
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path				int	true	"Bottle ID"
+//	@Param			id	path		int	true	"Bottle ID"
 //	@Success		200	{object}	model.Bottle
 //	@Failure		400	{object}	httputil.HTTPError
 //	@Failure		404	{object}	httputil.HTTPError
@@ -46,7 +46,7 @@ func (c *Controller) ShowBottle(ctx *gin.Context) {
 //	@Tags			bottles
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{array}				model.Bottle
+//	@Success		200	{array}		model.Bottle
 //	@Failure		400	{object}	httputil.HTTPError
 //	@Failure		404	{object}	httputil.HTTPError
 //	@Failure		500	{object}	httputil.HTTPError

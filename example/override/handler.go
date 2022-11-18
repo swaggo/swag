@@ -17,8 +17,8 @@ type ProductUpdates struct {
 //	@Summary	Update product attributes
 //	@ID			update-product
 //	@Accept		json
-//	@Param		product_id	path	int														true	"Product ID"
-//	@Param		_									body	ProductUpdates	true	" "
+//	@Param		product_id	path	int				true	"Product ID"
+//	@Param		_			body	ProductUpdates	true	" "
 //	@Router		/testapi/update-product/{product_id} [post]
 func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	var pUpdates ProductUpdates

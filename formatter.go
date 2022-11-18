@@ -148,9 +148,9 @@ func splitComment2(attr, body string) string {
 				if skipLen := strings.IndexByte(body[i+1:], skipEnd); skipLen > 0 {
 					i += skipLen
 				}
-			} else if body[i] == ' ' {
+			} else if body[i] == ' ' || body[i] == '\t' {
 				j := i
-				for ; j < len(body) && body[j] == ' '; j++ {
+				for ; j < len(body) && (body[j] == ' ' || body[j] == '\t'); j++ {
 				}
 				body = replaceRange(body, i, j, "\t")
 			}

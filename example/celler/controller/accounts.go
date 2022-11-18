@@ -17,7 +17,7 @@ import (
 //	@Tags			accounts
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path				int	true	"Account ID"
+//	@Param			id	path		int	true	"Account ID"
 //	@Success		200	{object}	model.Account
 //	@Failure		400	{object}	httputil.HTTPError
 //	@Failure		404	{object}	httputil.HTTPError
@@ -45,8 +45,8 @@ func (c *Controller) ShowAccount(ctx *gin.Context) {
 //	@Tags			accounts
 //	@Accept			json
 //	@Produce		json
-//	@Param			q	query				string	false	"name search by q"	Format(email)
-//	@Success		200	{array}				model.Account
+//	@Param			q	query		string	false	"name search by q"	Format(email)
+//	@Success		200	{array}		model.Account
 //	@Failure		400	{object}	httputil.HTTPError
 //	@Failure		404	{object}	httputil.HTTPError
 //	@Failure		500	{object}	httputil.HTTPError
@@ -68,11 +68,11 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 //	@Tags			accounts
 //	@Accept			json
 //	@Produce		json
-//	@Param			account	body						model.AddAccount	true	"Add account"
-//	@Success		200						{object}	model.Account
-//	@Failure		400						{object}	httputil.HTTPError
-//	@Failure		404						{object}	httputil.HTTPError
-//	@Failure		500						{object}	httputil.HTTPError
+//	@Param			account	body		model.AddAccount	true	"Add account"
+//	@Success		200		{object}	model.Account
+//	@Failure		400		{object}	httputil.HTTPError
+//	@Failure		404		{object}	httputil.HTTPError
+//	@Failure		500		{object}	httputil.HTTPError
 //	@Router			/accounts [post]
 func (c *Controller) AddAccount(ctx *gin.Context) {
 	var addAccount model.AddAccount
@@ -103,12 +103,12 @@ func (c *Controller) AddAccount(ctx *gin.Context) {
 //	@Tags			accounts
 //	@Accept			json
 //	@Produce		json
-//	@Param			id						path													int						true	"Account ID"
-//	@Param			account	body						model.UpdateAccount	true	"Update account"
-//	@Success		200						{object}	model.Account
-//	@Failure		400						{object}	httputil.HTTPError
-//	@Failure		404						{object}	httputil.HTTPError
-//	@Failure		500						{object}	httputil.HTTPError
+//	@Param			id		path		int					true	"Account ID"
+//	@Param			account	body		model.UpdateAccount	true	"Update account"
+//	@Success		200		{object}	model.Account
+//	@Failure		400		{object}	httputil.HTTPError
+//	@Failure		404		{object}	httputil.HTTPError
+//	@Failure		500		{object}	httputil.HTTPError
 //	@Router			/accounts/{id} [patch]
 func (c *Controller) UpdateAccount(ctx *gin.Context) {
 	id := ctx.Param("id")
@@ -141,7 +141,7 @@ func (c *Controller) UpdateAccount(ctx *gin.Context) {
 //	@Tags			accounts
 //	@Accept			json
 //	@Produce		json
-//	@Param			id	path				int	true	"Account ID"	Format(int64)
+//	@Param			id	path		int	true	"Account ID"	Format(int64)
 //	@Success		204	{object}	model.Account
 //	@Failure		400	{object}	httputil.HTTPError
 //	@Failure		404	{object}	httputil.HTTPError
@@ -169,12 +169,12 @@ func (c *Controller) DeleteAccount(ctx *gin.Context) {
 //	@Tags			accounts
 //	@Accept			multipart/form-data
 //	@Produce		json
-//	@Param			id										path				int		true	"Account ID"
-//	@Param			file	formData	file		true	"account image"
-//	@Success		200										{object}	controller.Message
-//	@Failure		400										{object}	httputil.HTTPError
-//	@Failure		404										{object}	httputil.HTTPError
-//	@Failure		500										{object}	httputil.HTTPError
+//	@Param			id		path		int		true	"Account ID"
+//	@Param			file	formData	file	true	"account image"
+//	@Success		200		{object}	controller.Message
+//	@Failure		400		{object}	httputil.HTTPError
+//	@Failure		404		{object}	httputil.HTTPError
+//	@Failure		500		{object}	httputil.HTTPError
 //	@Router			/accounts/{id}/images [post]
 func (c *Controller) UploadAccountImage(ctx *gin.Context) {
 	id, err := strconv.Atoi(ctx.Param("id"))

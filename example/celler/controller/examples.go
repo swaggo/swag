@@ -32,12 +32,12 @@ func (c *Controller) PingExample(ctx *gin.Context) {
 //	@Tags			example
 //	@Accept			json
 //	@Produce		plain
-//	@Param			val1	query						int				true	"used for calc"
-//	@Param			val2	query						int				true	"used for calc"
-//	@Success		200						{integer}	string	"answer"
-//	@Failure		400						{string}	string	"ok"
-//	@Failure		404						{string}	string	"ok"
-//	@Failure		500						{string}	string	"ok"
+//	@Param			val1	query		int		true	"used for calc"
+//	@Param			val2	query		int		true	"used for calc"
+//	@Success		200		{integer}	string	"answer"
+//	@Failure		400		{string}	string	"ok"
+//	@Failure		404		{string}	string	"ok"
+//	@Failure		500		{string}	string	"ok"
 //	@Router			/examples/calc [get]
 func (c *Controller) CalcExample(ctx *gin.Context) {
 	val1, err := strconv.Atoi(ctx.Query("val1"))
@@ -61,12 +61,12 @@ func (c *Controller) CalcExample(ctx *gin.Context) {
 //	@Tags			example
 //	@Accept			json
 //	@Produce		plain
-//	@Param			group_id	path		int								true	"Group ID"
-//	@Param			account_id	path		int								true	"Account ID"
-//	@Success		200									{string}	string	"answer"
-//	@Failure		400									{string}	string	"ok"
-//	@Failure		404									{string}	string	"ok"
-//	@Failure		500									{string}	string	"ok"
+//	@Param			group_id	path		int		true	"Group ID"
+//	@Param			account_id	path		int		true	"Account ID"
+//	@Success		200			{string}	string	"answer"
+//	@Failure		400			{string}	string	"ok"
+//	@Failure		404			{string}	string	"ok"
+//	@Failure		500			{string}	string	"ok"
 //	@Router			/examples/groups/{group_id}/accounts/{account_id} [get]
 func (c *Controller) PathParamsExample(ctx *gin.Context) {
 	groupID, err := strconv.Atoi(ctx.Param("group_id"))
@@ -89,11 +89,11 @@ func (c *Controller) PathParamsExample(ctx *gin.Context) {
 //	@Tags			example
 //	@Accept			json
 //	@Produce		plain
-//	@Param			Authorization	header		string	true		"Authentication header"
-//	@Success		200															{string}	string	"answer"
-//	@Failure		400															{string}	string	"ok"
-//	@Failure		404															{string}	string	"ok"
-//	@Failure		500															{string}	string	"ok"
+//	@Param			Authorization	header		string	true	"Authentication header"
+//	@Success		200				{string}	string	"answer"
+//	@Failure		400				{string}	string	"ok"
+//	@Failure		404				{string}	string	"ok"
+//	@Failure		500				{string}	string	"ok"
 //	@Router			/examples/header [get]
 func (c *Controller) HeaderExample(ctx *gin.Context) {
 	ctx.String(http.StatusOK, ctx.GetHeader("Authorization"))
@@ -106,11 +106,11 @@ func (c *Controller) HeaderExample(ctx *gin.Context) {
 //	@Tags			example
 //	@Accept			json
 //	@Produce		json
-//	@Param			Authorization	header		string	true		"Authentication header"
-//	@Success		200															{string}	string	"answer"
-//	@Failure		400															{string}	string	"ok"
-//	@Failure		404															{string}	string	"ok"
-//	@Failure		500															{string}	string	"ok"
+//	@Param			Authorization	header		string	true	"Authentication header"
+//	@Success		200				{string}	string	"answer"
+//	@Failure		400				{string}	string	"ok"
+//	@Failure		404				{string}	string	"ok"
+//	@Failure		500				{string}	string	"ok"
 //	@Security		ApiKeyAuth
 //	@Security		OAuth2Implicit[admin, write]
 //	@Router			/examples/securities [get]
@@ -124,16 +124,16 @@ func (c *Controller) SecuritiesExample(ctx *gin.Context) {
 //	@Tags			example
 //	@Accept			json
 //	@Produce		plain
-//	@Param			enumstring	query			string		false	"string enums"												Enums(A, B, C)
-//	@Param			enumint						query								int												false				"int enums"			Enums(1, 2, 3)
-//	@Param			enumnumber	query			number		false	"int enums"																		Enums(1.1, 1.2, 1.3)
-//	@Param			string						query								string	false			"string valid"							minlength(5)	maxlength(10)
-//	@Param			int												query								int																	false		"int valid"				minimum(1)		maximum(10)
-//	@Param			default						query								string	false			"string default"	default(A)
-//	@Success		200												{string}		string	"answer"
-//	@Failure		400												{string}		string	"ok"
-//	@Failure		404												{string}		string	"ok"
-//	@Failure		500												{string}		string	"ok"
+//	@Param			enumstring	query		string	false	"string enums"		Enums(A, B, C)
+//	@Param			enumint		query		int		false	"int enums"			Enums(1, 2, 3)
+//	@Param			enumnumber	query		number	false	"int enums"			Enums(1.1, 1.2, 1.3)
+//	@Param			string		query		string	false	"string valid"		minlength(5)	maxlength(10)
+//	@Param			int			query		int		false	"int valid"			minimum(1)		maximum(10)
+//	@Param			default		query		string	false	"string default"	default(A)
+//	@Success		200			{string}	string	"answer"
+//	@Failure		400			{string}	string	"ok"
+//	@Failure		404			{string}	string	"ok"
+//	@Failure		500			{string}	string	"ok"
 //	@Router			/examples/attribute [get]
 func (c *Controller) AttributeExample(ctx *gin.Context) {
 	ctx.String(http.StatusOK, fmt.Sprintf("enumstring=%s enumint=%s enumnumber=%s string=%s int=%s default=%s",
@@ -152,9 +152,9 @@ func (c *Controller) AttributeExample(ctx *gin.Context) {
 //	@Description	post request example
 //	@Accept			json
 //	@Produce		plain
-//	@Param			message	body						model.Account	true	"Account Info"
-//	@Success		200						{string}	string									"success"
-//	@Failure		500						{string}	string									"fail"
+//	@Param			message	body		model.Account	true	"Account Info"
+//	@Success		200		{string}	string			"success"
+//	@Failure		500		{string}	string			"fail"
 //	@Router			/examples/post [post]
 func (c *Controller) PostExample(ctx *gin.Context) {
 }
