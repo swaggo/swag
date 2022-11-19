@@ -20,6 +20,7 @@ type PackageDefinitions struct {
 	Name string
 }
 
+// NewPackageDefinitions new a PackageDefinitions object
 func NewPackageDefinitions(name string) *PackageDefinitions {
 	return &PackageDefinitions{
 		Name:            name,

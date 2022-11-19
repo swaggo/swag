@@ -14,6 +14,7 @@ type ConstVariable struct {
 	Comment *ast.CommentGroup
 }
 
+// EvaluateValue evaluate the value
 func (cv *ConstVariable) EvaluateValue(constTable map[string]*ConstVariable) interface{} {
 	if expr, ok := cv.Value.(ast.Expr); ok {
 		value, evalType := evaluateConstValue(cv.Name.Name, cv.Name.Obj.Data.(int), expr, constTable, make(map[string]struct{}))
