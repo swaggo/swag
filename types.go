@@ -22,6 +22,8 @@ type TypeSpecDef struct {
 	// the TypeSpec of this type definition
 	TypeSpec *ast.TypeSpec
 
+	Enums []EnumValue
+
 	// path of package starting from under ${GOPATH}/src or from module path in go.mod
 	PkgPath    string
 	ParentSpec ast.Decl

@@ -405,13 +405,13 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			if schema.Items.Schema.Extensions == nil {
 				schema.Items.Schema.Extensions = map[string]interface{}{}
 			}
-			schema.Items.Schema.Extensions["x-enum-varnames"] = field.enumVarNames
+			schema.Items.Schema.Extensions[enumVarNamesExtension] = field.enumVarNames
 		} else {
 			// Add to top level schema
 			if schema.Extensions == nil {
 				schema.Extensions = map[string]interface{}{}
 			}
-			schema.Extensions["x-enum-varnames"] = field.enumVarNames
+			schema.Extensions[enumVarNamesExtension] = field.enumVarNames
 		}
 	}
 

@@ -109,6 +109,9 @@ func (pkgDefs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, erro
 		pkgDefs.parseTypesFromFile(astFile, info.PackagePath, parsedSchemas)
 		pkgDefs.parseFunctionScopedTypesFromFile(astFile, info.PackagePath, parsedSchemas)
 	}
+	for astFile, info := range pkgDefs.files {
+		pkgDefs.parseConstEnumsFromFile(astFile, info.PackagePath, parsedSchemas)
+	}
 	pkgDefs.removeAllNotUniqueTypes()
 	return parsedSchemas, nil
 }
@@ -142,13 +145,15 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 					if ok {
 						if anotherTypeDef == nil {
 							typeSpecDef.NotUnique = true
-							pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
+							fullName = typeSpecDef.TypeName()
+							pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 						} else if typeSpecDef.PkgPath != anotherTypeDef.PkgPath {
-							anotherTypeDef.NotUnique = true
-							typeSpecDef.NotUnique = true
 							pkgDefs.uniqueDefinitions[fullName] = nil
+							anotherTypeDef.NotUnique = true
 							pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
-							pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
+							typeSpecDef.NotUnique = true
+							fullName = typeSpecDef.TypeName()
+							pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 						}
 					} else {
 						pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
@@ -202,13 +207,15 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 								if ok {
 									if anotherTypeDef == nil {
 										typeSpecDef.NotUnique = true
-										pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
+										fullName = typeSpecDef.TypeName()
+										pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 									} else if typeSpecDef.PkgPath != anotherTypeDef.PkgPath {
-										anotherTypeDef.NotUnique = true
-										typeSpecDef.NotUnique = true
 										pkgDefs.uniqueDefinitions[fullName] = nil
+										anotherTypeDef.NotUnique = true
 										pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
-										pkgDefs.uniqueDefinitions[typeSpecDef.TypeName()] = typeSpecDef
+										typeSpecDef.NotUnique = true
+										fullName = typeSpecDef.TypeName()
+										pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 									}
 								} else {
 									pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
@@ -225,6 +232,82 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 							}
 						}
 
+					}
+				}
+			}
+		}
+	}
+}
+
+func (pkgDefs *PackagesDefinitions) parseConstEnumsFromFile(astFile *ast.File, packagePath string, parsedSchemas map[*TypeSpecDef]*Schema) {
+	for _, astDeclaration := range astFile.Decls {
+		generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
+		if !ok || generalDeclaration.Tok != token.CONST {
+			continue
+		}
+		pkg, ok := pkgDefs.packages[packagePath]
+		if !ok {
+			continue
+		}
+		var lastType, lastValueExpr ast.Expr
+		for i, astSpec := range generalDeclaration.Specs {
+			if valueSpec, ok := astSpec.(*ast.ValueSpec); ok {
+				if valueSpec.Type != nil {
+					lastType = valueSpec.Type
+				} else if len(valueSpec.Values) > 0 {
+					lastType = nil
+					continue
+				}
+
+				if lastType == nil {
+					continue
+				}
+
+				if len(valueSpec.Values) == 1 {
+					lastValueExpr = valueSpec.Values[0]
+				} else if len(valueSpec.Values) > 1 {
+					lastValueExpr = nil
+				}
+				ident, ok := lastType.(*ast.Ident)
+				if !ok || IsGolangPrimitiveType(ident.Name) {
+					continue
+				}
+				typeDef, ok := pkg.TypeDefinitions[ident.Name]
+				if !ok {
+					continue
+				}
+
+				//delete it from parsed schemas, and will parse it again
+				if _, ok := parsedSchemas[typeDef]; ok {
+					delete(parsedSchemas, typeDef)
+				}
+
+				if typeDef.Enums == nil {
+					typeDef.Enums = make([]EnumValue, 0)
+				}
+
+				addEnums := func(name string, valueExpr ast.Expr) {
+					enumValue := EnumValue{
+						key:   name,
+						Value: evaluateEnumValue(i, "", valueExpr),
+					}
+					if valueSpec.Comment != nil && len(valueSpec.Comment.List) > 0 {
+						enumValue.Comment = valueSpec.Comment.List[0].Text
+						enumValue.Comment = strings.TrimLeft(enumValue.Comment, "//")
+						enumValue.Comment = strings.TrimLeft(enumValue.Comment, "/*")
+						enumValue.Comment = strings.TrimRight(enumValue.Comment, "*/")
+						enumValue.Comment = strings.TrimSpace(enumValue.Comment)
+					}
+					typeDef.Enums = append(typeDef.Enums, enumValue)
+				}
+
+				if len(valueSpec.Values) == 0 {
+					for j := 0; j < len(valueSpec.Names); j++ {
+						addEnums(valueSpec.Names[j].Name, lastValueExpr)
+					}
+				} else if len(valueSpec.Values) == len(valueSpec.Names) {
+					for j := 0; j < len(valueSpec.Names); j++ {
+						addEnums(valueSpec.Names[j].Name, valueSpec.Values[j])
 					}
 				}
 			}
