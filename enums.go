@@ -66,7 +66,7 @@ func evaluateEnumValue(iota int, expr ast.Expr) interface{} {
 		case token.OR:
 			return x.(int) | y.(int)
 		case token.XOR:
-			return x.(int) & y.(int)
+			return x.(int) ^ y.(int)
 		case token.SHL:
 			return x.(int) << y.(int)
 		case token.SHR:
