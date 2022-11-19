@@ -89,15 +89,3 @@ type AstFileInfo struct {
 	// PackagePath package import path of the ast.File
 	PackagePath string
 }
-
-// PackageDefinitions files and definition in a package.
-type PackageDefinitions struct {
-	// files in this package, map key is file's relative path starting package path
-	Files map[string]*ast.File
-
-	// definitions in this package, map key is typeName
-	TypeDefinitions map[string]*TypeSpecDef
-
-	// package name
-	Name string
-}

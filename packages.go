@@ -59,11 +59,7 @@ func (pkgDefs *PackagesDefinitions) CollectAstFile(packageDir, path string, astF
 
 		dependency.Files[path] = astFile
 	} else {
-		pkgDefs.packages[packageDir] = &PackageDefinitions{
-			Name:            astFile.Name.Name,
-			Files:           map[string]*ast.File{path: astFile},
-			TypeDefinitions: make(map[string]*TypeSpecDef),
-		}
+		pkgDefs.packages[packageDir] = NewPackageDefinitions(astFile.Name.Name).AddFile(path, astFile)
 	}
 
 	pkgDefs.files[astFile] = &AstFileInfo{
@@ -109,16 +105,19 @@ func (pkgDefs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, erro
 		pkgDefs.parseTypesFromFile(astFile, info.PackagePath, parsedSchemas)
 		pkgDefs.parseFunctionScopedTypesFromFile(astFile, info.PackagePath, parsedSchemas)
 	}
-	for astFile, info := range pkgDefs.files {
-		pkgDefs.parseConstEnumsFromFile(astFile, info.PackagePath, parsedSchemas)
-	}
 	pkgDefs.removeAllNotUniqueTypes()
+	pkgDefs.evaluateConstVariables()
+	pkgDefs.collectConstEnums(parsedSchemas)
 	return parsedSchemas, nil
 }
 
 func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packagePath string, parsedSchemas map[*TypeSpecDef]*Schema) {
 	for _, astDeclaration := range astFile.Decls {
-		if generalDeclaration, ok := astDeclaration.(*ast.GenDecl); ok && generalDeclaration.Tok == token.TYPE {
+		generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
+		if !ok {
+			continue
+		}
+		if generalDeclaration.Tok == token.TYPE {
 			for _, astSpec := range generalDeclaration.Specs {
 				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
 					typeSpecDef := &TypeSpecDef{
@@ -160,15 +159,15 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 					}
 
 					if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
-						pkgDefs.packages[typeSpecDef.PkgPath] = &PackageDefinitions{
-							Name:            astFile.Name.Name,
-							TypeDefinitions: map[string]*TypeSpecDef{typeSpecDef.Name(): typeSpecDef},
-						}
+						pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name).AddTypeSpec(typeSpecDef.Name(), typeSpecDef)
 					} else if _, ok = pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()]; !ok {
-						pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()] = typeSpecDef
+						pkgDefs.packages[typeSpecDef.PkgPath].AddTypeSpec(typeSpecDef.Name(), typeSpecDef)
 					}
 				}
 			}
+		} else if generalDeclaration.Tok == token.CONST {
+			// collect const
+			pkgDefs.collectConstVariables(astFile, packagePath, generalDeclaration)
 		}
 	}
 }
@@ -222,12 +221,9 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 								}
 
 								if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
-									pkgDefs.packages[typeSpecDef.PkgPath] = &PackageDefinitions{
-										Name:            astFile.Name.Name,
-										TypeDefinitions: map[string]*TypeSpecDef{fullName: typeSpecDef},
-									}
+									pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name).AddTypeSpec(fullName, typeSpecDef)
 								} else if _, ok = pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[fullName]; !ok {
-									pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[fullName] = typeSpecDef
+									pkgDefs.packages[typeSpecDef.PkgPath].AddTypeSpec(fullName, typeSpecDef)
 								}
 							}
 						}
@@ -239,78 +235,79 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 	}
 }
 
-func (pkgDefs *PackagesDefinitions) parseConstEnumsFromFile(astFile *ast.File, packagePath string, parsedSchemas map[*TypeSpecDef]*Schema) {
-	for _, astDeclaration := range astFile.Decls {
-		generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
-		if !ok || generalDeclaration.Tok != token.CONST {
-			continue
-		}
-		pkg, ok := pkgDefs.packages[packagePath]
+func (pkgDefs *PackagesDefinitions) collectConstVariables(astFile *ast.File, packagePath string, generalDeclaration *ast.GenDecl) {
+	pkg, ok := pkgDefs.packages[packagePath]
+	if !ok {
+		pkg = NewPackageDefinitions(astFile.Name.Name)
+		pkgDefs.packages[packagePath] = pkg
+	}
+
+	var lastValueSpec *ast.ValueSpec
+	for _, astSpec := range generalDeclaration.Specs {
+		valueSpec, ok := astSpec.(*ast.ValueSpec)
 		if !ok {
 			continue
 		}
-		var lastType, lastValueExpr ast.Expr
-		for i, astSpec := range generalDeclaration.Specs {
-			if valueSpec, ok := astSpec.(*ast.ValueSpec); ok {
-				if valueSpec.Type != nil {
-					lastType = valueSpec.Type
-				} else if len(valueSpec.Values) > 0 {
-					lastType = nil
-					continue
-				}
+		if len(valueSpec.Names) == 1 && len(valueSpec.Values) == 1 {
+			lastValueSpec = valueSpec
+		} else if len(valueSpec.Names) == 1 && len(valueSpec.Values) == 0 && valueSpec.Type == nil && lastValueSpec != nil {
+			valueSpec.Type = lastValueSpec.Type
+			valueSpec.Values = lastValueSpec.Values
+		}
+		pkg.AddConst(valueSpec)
+	}
+}
 
-				if lastType == nil {
-					continue
-				}
+func (pkgDefs *PackagesDefinitions) evaluateConstVariables() {
+	//TODO evaluate enum cross packages
+	for _, pkg := range pkgDefs.packages {
+		for _, constVar := range pkg.OrderedConst {
+			constVar.EvaluateValue(pkg.ConstTable)
+		}
+	}
+}
 
-				if len(valueSpec.Values) == 1 {
-					lastValueExpr = valueSpec.Values[0]
-				} else if len(valueSpec.Values) > 1 {
-					lastValueExpr = nil
-				}
-				ident, ok := lastType.(*ast.Ident)
-				if !ok || IsGolangPrimitiveType(ident.Name) {
-					continue
-				}
-				typeDef, ok := pkg.TypeDefinitions[ident.Name]
-				if !ok {
-					continue
-				}
-
-				//delete it from parsed schemas, and will parse it again
-				if _, ok := parsedSchemas[typeDef]; ok {
-					delete(parsedSchemas, typeDef)
-				}
-
-				if typeDef.Enums == nil {
-					typeDef.Enums = make([]EnumValue, 0)
-				}
-
-				addEnums := func(name string, valueExpr ast.Expr) {
-					enumValue := EnumValue{
-						key:   name,
-						Value: evaluateEnumValue(i, valueExpr),
-					}
-					if valueSpec.Comment != nil && len(valueSpec.Comment.List) > 0 {
-						enumValue.Comment = valueSpec.Comment.List[0].Text
-						enumValue.Comment = strings.TrimLeft(enumValue.Comment, "//")
-						enumValue.Comment = strings.TrimLeft(enumValue.Comment, "/*")
-						enumValue.Comment = strings.TrimRight(enumValue.Comment, "*/")
-						enumValue.Comment = strings.TrimSpace(enumValue.Comment)
-					}
-					typeDef.Enums = append(typeDef.Enums, enumValue)
-				}
-
-				if len(valueSpec.Values) == 0 {
-					for j := 0; j < len(valueSpec.Names); j++ {
-						addEnums(valueSpec.Names[j].Name, lastValueExpr)
-					}
-				} else if len(valueSpec.Values) == len(valueSpec.Names) {
-					for j := 0; j < len(valueSpec.Names); j++ {
-						addEnums(valueSpec.Names[j].Name, valueSpec.Values[j])
-					}
-				}
+func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpecDef]*Schema) {
+	for _, pkg := range pkgDefs.packages {
+		for _, constVar := range pkg.OrderedConst {
+			if constVar.Type == nil {
+				continue
 			}
+			ident, ok := constVar.Type.(*ast.Ident)
+			if !ok || IsGolangPrimitiveType(ident.Name) {
+				continue
+			}
+			typeDef, ok := pkg.TypeDefinitions[ident.Name]
+			if !ok {
+				continue
+			}
+
+			//delete it from parsed schemas, and will parse it again
+			if _, ok := parsedSchemas[typeDef]; ok {
+				delete(parsedSchemas, typeDef)
+			}
+
+			if typeDef.Enums == nil {
+				typeDef.Enums = make([]EnumValue, 0)
+			}
+
+			name := constVar.Name.Name
+			if _, ok := constVar.Value.(ast.Expr); ok {
+				continue
+			}
+
+			enumValue := EnumValue{
+				key:   name,
+				Value: constVar.Value,
+			}
+			if constVar.Comment != nil && len(constVar.Comment.List) > 0 {
+				enumValue.Comment = constVar.Comment.List[0].Text
+				enumValue.Comment = strings.TrimLeft(enumValue.Comment, "//")
+				enumValue.Comment = strings.TrimLeft(enumValue.Comment, "/*")
+				enumValue.Comment = strings.TrimRight(enumValue.Comment, "*/")
+				enumValue.Comment = strings.TrimSpace(enumValue.Comment)
+			}
+			typeDef.Enums = append(typeDef.Enums, enumValue)
 		}
 	}
 }

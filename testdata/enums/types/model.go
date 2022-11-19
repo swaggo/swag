@@ -2,12 +2,19 @@ package types
 
 type Class int
 
+const Base = 1
+
 const (
 	None Class = -1
-	A    Class = (iota + 1 - 1) * 2 / 2 // AAA
-	B                                   /* BBB */
+	A    Class = Base + (iota+1-1)*2/2 - 1 // AAA
+	B                                      /* BBB */
 	C
 	D
+	F = D + 1
+	//G is not enum
+	G = 10
+	//H is not enum
+	H = int(F + 2)
 )
 
 type Mask int
@@ -22,11 +29,11 @@ const (
 type Type string
 
 const (
-	Teacher Type = "teacher" // teacher
-	Student Type = "student" /* student */
-	Other   Type = "Other"   // Other
-	Unknown      = "Unknown"
-	OtherUnknown
+	Teacher      Type = "teacher" // teacher
+	Student      Type = "student" /* student */
+	Other        Type = "Other"   // Other
+	Unknown           = "Unknown"
+	OtherUnknown      = string(Other + Unknown)
 )
 
 type Person struct {
