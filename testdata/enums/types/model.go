@@ -3,8 +3,9 @@ package types
 type Class int
 
 const (
-	A Class = iota + 1 // AAA
-	B                  /* BBB */
+	None Class = -1
+	A    Class = (iota + 1 - 1) * 2 / 2 // AAA
+	B                                   /* BBB */
 	C
 	D
 )

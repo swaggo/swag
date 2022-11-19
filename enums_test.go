@@ -2,7 +2,6 @@ package swag
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -20,6 +19,5 @@ func TestParseGlobalEnums(t *testing.T) {
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
 	assert.NoError(t, err)
-	fmt.Println(string(b))
 	assert.Equal(t, string(expected), string(b))
 }

@@ -289,7 +289,7 @@ func (pkgDefs *PackagesDefinitions) parseConstEnumsFromFile(astFile *ast.File, p
 				addEnums := func(name string, valueExpr ast.Expr) {
 					enumValue := EnumValue{
 						key:   name,
-						Value: evaluateEnumValue(i, "", valueExpr),
+						Value: evaluateEnumValue(i, valueExpr),
 					}
 					if valueSpec.Comment != nil && len(valueSpec.Comment.List) > 0 {
 						enumValue.Comment = valueSpec.Comment.List[0].Text
