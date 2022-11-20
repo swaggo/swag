@@ -14,7 +14,7 @@ type PackageDefinitions struct {
 	// definitions in this package, map key is typeName
 	TypeDefinitions map[string]*TypeSpecDef
 
-	// consts variables in this package, map key is the name
+	// const variables in this package, map key is the name
 	ConstTable map[string]*ConstVariable
 
 	// const variables in order in this package
@@ -55,7 +55,7 @@ func (pkg *PackageDefinitions) AddTypeSpec(name string, typeSpec *TypeSpecDef) *
 	return pkg
 }
 
-// AddConst add a consts variable.
+// AddConst add a const variable.
 func (pkg *PackageDefinitions) AddConst(astFile *ast.File, valueSpec *ast.ValueSpec) *PackageDefinitions {
 	for i := 0; i < len(valueSpec.Names) && i < len(valueSpec.Values); i++ {
 		variable := &ConstVariable{
