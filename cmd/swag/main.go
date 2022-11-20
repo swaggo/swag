@@ -33,6 +33,7 @@ const (
 	overridesFileFlag     = "overridesFile"
 	parseGoListFlag       = "parseGoList"
 	quietFlag             = "quiet"
+	tagsFlag              = "tags"
 )
 
 var initFlags = []cli.Flag{
@@ -128,6 +129,12 @@ var initFlags = []cli.Flag{
 		Value: true,
 		Usage: "Parse dependency via 'go list'",
 	},
+	&cli.StringFlag{
+		Name:    tagsFlag,
+		Aliases: []string{"t"},
+		Value:   "",
+		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -166,6 +173,7 @@ func initAction(ctx *cli.Context) error {
 		InstanceName:        ctx.String(instanceNameFlag),
 		OverridesFile:       ctx.String(overridesFileFlag),
 		ParseGoList:         ctx.Bool(parseGoListFlag),
+		Tags:                ctx.String(tagsFlag),
 		Debugger:            logger,
 	})
 }

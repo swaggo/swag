@@ -3830,3 +3830,82 @@ func TestTryAddDescription(t *testing.T) {
 		})
 	}
 }
+
+func Test_getTagsFromComment(t *testing.T) {
+	type args struct {
+		comment string
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantTags []string
+	}{
+		{
+			name: "no tags comment",
+			args: args{
+				comment: "//@name Student",
+			},
+			wantTags: nil,
+		},
+		{
+			name: "empty comment",
+			args: args{
+				comment: "//",
+			},
+			wantTags: nil,
+		},
+		{
+			name: "tags comment",
+			args: args{
+				comment: "//@Tags tag1,tag2,tag3",
+			},
+			wantTags: []string{"tag1", "tag2", "tag3"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotTags := getTagsFromComment(tt.args.comment); !reflect.DeepEqual(gotTags, tt.wantTags) {
+				t.Errorf("getTagsFromComment() = %v, want %v", gotTags, tt.wantTags)
+			}
+		})
+	}
+}
+
+func TestParser_matchTags(t *testing.T) {
+
+	type args struct {
+		comments []*ast.Comment
+	}
+	tests := []struct {
+		name      string
+		parser    *Parser
+		args      args
+		wantMatch bool
+	}{
+		{
+			name:      "no tags filter",
+			parser:    New(),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags tag1,tag2,tag3"}}},
+			wantMatch: true,
+		},
+		{
+			name:      "with tags filter but no match",
+			parser:    New(SetTags("tag4,tag5,!tag1")),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags tag1,tag2,tag3"}}},
+			wantMatch: false,
+		},
+		{
+			name:      "with tags filter but match",
+			parser:    New(SetTags("tag4,tag5,tag1")),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags tag1,tag2,tag3"}}},
+			wantMatch: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotMatch := tt.parser.matchTags(tt.args.comments); gotMatch != tt.wantMatch {
+				t.Errorf("Parser.matchTags() = %v, want %v", gotMatch, tt.wantMatch)
+			}
+		})
+	}
+}
