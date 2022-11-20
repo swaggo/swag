@@ -912,7 +912,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		}
 	}
 
-	if ref && len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == OBJECT {
+	if ref && (len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == OBJECT || len(schema.Enum) > 0) {
 		return parser.getRefTypeSchema(typeSpecDef, schema), nil
 	}
 
@@ -980,6 +980,25 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	if definition.Description == "" {
 		fillDefinitionDescription(definition, typeSpecDef.File, typeSpecDef)
+	}
+
+	if len(typeSpecDef.Enums) > 0 {
+		var varnames []string
+		var enumComments = make(map[string]string)
+		for _, value := range typeSpecDef.Enums {
+			definition.Enum = append(definition.Enum, value.Value)
+			varnames = append(varnames, value.key)
+			if len(value.Comment) > 0 {
+				enumComments[value.key] = value.Comment
+			}
+		}
+		if definition.Extensions == nil {
+			definition.Extensions = make(spec.Extensions)
+		}
+		definition.Extensions[enumVarNamesExtension] = varnames
+		if len(enumComments) > 0 {
+			definition.Extensions[enumCommentsExtension] = enumComments
+		}
 	}
 
 	sch := Schema{

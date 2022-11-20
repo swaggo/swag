@@ -1,0 +1,104 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "basePath": "/v2",
+    "paths": {
+        "/students": {
+            "post": {
+                "description": "enums",
+                "summary": "enums",
+                "responses": {
+                    "400": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/types.Person"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "types.Class": {
+            "type": "integer",
+            "enum": [
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "x-enum-comments": {
+                "A": "AAA",
+                "B": "BBB"
+            },
+            "x-enum-varnames": [
+                "None",
+                "A",
+                "B",
+                "C",
+                "D",
+                "F"
+            ]
+        },
+        "types.Mask": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                4,
+                8
+            ],
+            "x-enum-comments": {
+                "Mask1": "Mask1",
+                "Mask2": "Mask2",
+                "Mask3": "Mask3",
+                "Mask4": "Mask4"
+            },
+            "x-enum-varnames": [
+                "Mask1",
+                "Mask2",
+                "Mask3",
+                "Mask4"
+            ]
+        },
+        "types.Person": {
+            "type": "object",
+            "properties": {
+                "class": {
+                    "$ref": "#/definitions/types.Class"
+                },
+                "mask": {
+                    "$ref": "#/definitions/types.Mask"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/types.Type"
+                }
+            }
+        },
+        "types.Type": {
+            "type": "string",
+            "enum": [
+                "teacher",
+                "student",
+                "Other"
+            ],
+            "x-enum-comments": {
+                "Other": "Other",
+                "Student": "student",
+                "Teacher": "teacher"
+            },
+            "x-enum-varnames": [
+                "Teacher",
+                "Student",
+                "Other"
+            ]
+        }
+    }
+}
