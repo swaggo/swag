@@ -27,6 +27,7 @@ type PackageDefinitions struct {
 	Path string
 }
 
+// ConstVariableGlobalEvaluator an interface used to evaluate enums across packages
 type ConstVariableGlobalEvaluator interface {
 	EvaluateConstValue(pkg *PackageDefinitions, cv *ConstVariable, recursiveStack map[string]struct{}) (interface{}, ast.Expr)
 	EvaluateConstValueByName(file *ast.File, pkgPath, constVariableName string, recursiveStack map[string]struct{}) (interface{}, ast.Expr)
