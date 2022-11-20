@@ -17,7 +17,7 @@ type PackageDefinitions struct {
 	// consts variables in this package, map key is the name
 	ConstTable map[string]*ConstVariable
 
-	// consts variables in order in this package
+	// const variables in order in this package
 	OrderedConst []*ConstVariable
 
 	// package name
