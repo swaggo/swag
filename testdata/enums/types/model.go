@@ -6,24 +6,26 @@ const Base = 1
 
 const (
 	None Class = -1
-	A    Class = Base + (iota+1-1)*2/2 - 1 // AAA
-	B                                      /* BBB */
+	A    Class = Base + (iota+1-1)*2/2%100 - (1&1 | 1) + (2 ^ 2) // AAA
+	B                                                            /* BBB */
 	C
 	D
 	F = D + 1
 	//G is not enum
-	G = 10
+	G = H + 10
 	//H is not enum
-	H = int(F + 2)
+	H = 10
+	//I is not enum
+	I = int(F + 2)
 )
 
 type Mask int
 
 const (
-	Mask1 Mask = 1 << iota // Mask1
-	Mask2                  /* Mask2 */
-	Mask3                  // Mask3
-	Mask4                  // Mask4
+	Mask1 Mask = 2 << iota >> 1 // Mask1
+	Mask2                       /* Mask2 */
+	Mask3                       // Mask3
+	Mask4                       // Mask4
 )
 
 type Type string
