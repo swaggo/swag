@@ -1286,9 +1286,21 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		}
 	}
 
-	err = ps.ComplementSchema(schema)
-	if err != nil {
-		return nil, nil, err
+	if IsRefSchema(schema) {
+		additionalSchema := *schema
+		err = ps.ComplementSchema(&additionalSchema)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !reflect.DeepEqual(schema, &additionalSchema) {
+			additionalSchema.Ref = spec.Ref{}
+			schema = spec.ComposedSchema(*schema, additionalSchema)
+		}
+	} else {
+		err = ps.ComplementSchema(schema)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	var tagRequired []string
