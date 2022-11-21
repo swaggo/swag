@@ -964,8 +964,13 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		}
 	}
 
-	if ref && (len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == OBJECT || len(schema.Enum) > 0) {
-		return parser.getRefTypeSchema(typeSpecDef, schema), nil
+	if ref {
+		if IsComplexSchema(schema.Schema) {
+			return parser.getRefTypeSchema(typeSpecDef, schema), nil
+		}
+		// if it is a simple schema, just return a copy
+		newSchema := *schema.Schema
+		return &newSchema, nil
 	}
 
 	return schema.Schema, nil
