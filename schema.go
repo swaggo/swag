@@ -135,7 +135,7 @@ func ignoreNameOverride(name string) bool {
 	return len(name) != 0 && name[0] == IgnoreNameOverridePrefix
 }
 
-// IsComplexSchema whether a schema is complex and is supposed to be a ref schema
+// IsComplexSchema whether a schema is complex and should be a ref schema
 func IsComplexSchema(schema *spec.Schema) bool {
 	// a enum type should be complex
 	if len(schema.Enum) > 0 {
@@ -154,11 +154,6 @@ func IsComplexSchema(schema *spec.Schema) bool {
 		}
 	}
 	return false
-}
-
-// IsRefSchema whether a schema is a reference schema.
-func IsRefSchema(schema *spec.Schema) bool {
-	return schema.Ref.Ref.GetURL() != nil
 }
 
 // RefSchema build a reference schema.
