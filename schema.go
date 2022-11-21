@@ -135,6 +135,11 @@ func ignoreNameOverride(name string) bool {
 	return len(name) != 0 && name[0] == IgnoreNameOverridePrefix
 }
 
+// IsRefSchema whether a schema is a reference schema.
+func IsRefSchema(schema *spec.Schema) bool {
+	return schema.Ref.Ref.GetURL() != nil
+}
+
 // RefSchema build a reference schema.
 func RefSchema(refType string) *spec.Schema {
 	return spec.RefSchema("#/definitions/" + refType)

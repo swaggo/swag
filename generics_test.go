@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -70,6 +71,7 @@ func TestParseGenericsNested(t *testing.T) {
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
 	assert.NoError(t, err)
+	os.WriteFile("testdata/generics_nested/expected.json", b, fs.ModePerm)
 	assert.Equal(t, string(expected), string(b))
 }
 
