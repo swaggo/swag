@@ -2506,7 +2506,11 @@ func Test(){
          },
          "test2": {
             "description": "test2",
-            "$ref": "#/definitions/api.Child"
+            "allOf": [
+               {
+                  "$ref": "#/definitions/api.Child"
+               }
+            ]
          }
       }
    }
