@@ -187,12 +187,10 @@
             "type": "object",
             "properties": {
                 "itemOne": {
+                    "description": "ItemsOne is the first thing",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.Post"
-                        },
-                        {
-                            "description": "ItemsOne is the first thing"
                         }
                     ]
                 },
@@ -212,12 +210,10 @@
             "type": "object",
             "properties": {
                 "itemOne": {
+                    "description": "ItemsOne is the first thing",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.Post"
-                        },
-                        {
-                            "description": "ItemsOne is the first thing"
                         }
                     ]
                 },
@@ -234,12 +230,10 @@
             "type": "object",
             "properties": {
                 "itemOne": {
+                    "description": "ItemsOne is the first thing",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.Post"
-                        },
-                        {
-                            "description": "ItemsOne is the first thing"
                         }
                     ]
                 },
@@ -283,12 +277,10 @@
             "type": "object",
             "properties": {
                 "items": {
+                    "description": "Items from the list response",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.Post"
-                        },
-                        {
-                            "description": "Items from the list response"
                         }
                     ]
                 }
@@ -298,12 +290,10 @@
             "type": "object",
             "properties": {
                 "items": {
+                    "description": "Items from the list response",
                     "allOf": [
                         {
                             "$ref": "#/definitions/web.GenericInnerType-array_types_Post"
-                        },
-                        {
-                            "description": "Items from the list response"
                         }
                     ]
                 },
@@ -317,12 +307,10 @@
             "type": "object",
             "properties": {
                 "items": {
+                    "description": "Items from the list response",
                     "allOf": [
                         {
                             "$ref": "#/definitions/web.GenericInnerType-types_Post"
-                        },
-                        {
-                            "description": "Items from the list response"
                         }
                     ]
                 },
@@ -474,12 +462,10 @@
             "type": "object",
             "properties": {
                 "itemOne": {
+                    "description": "ItemsOne is the first thing",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.Post"
-                        },
-                        {
-                            "description": "ItemsOne is the first thing"
                         }
                     ]
                 },
@@ -500,12 +486,10 @@
             "type": "object",
             "properties": {
                 "itemOne": {
+                    "description": "ItemsOne is the first thing",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.Post"
-                        },
-                        {
-                            "description": "ItemsOne is the first thing"
                         }
                     ]
                 },
@@ -526,12 +510,10 @@
             "type": "object",
             "properties": {
                 "itemOne": {
+                    "description": "ItemsOne is the first thing",
                     "allOf": [
                         {
                             "$ref": "#/definitions/types.Post"
-                        },
-                        {
-                            "description": "ItemsOne is the first thing"
                         }
                     ]
                 },
@@ -552,12 +534,10 @@
             "type": "object",
             "properties": {
                 "itemOne": {
+                    "description": "ItemsOne is the first thing",
                     "allOf": [
                         {
                             "$ref": "#/definitions/web.GenericInnerType-array_types_Post"
-                        },
-                        {
-                            "description": "ItemsOne is the first thing"
                         }
                     ]
                 },
@@ -581,12 +561,10 @@
             "type": "object",
             "properties": {
                 "itemOne": {
+                    "description": "ItemsOne is the first thing",
                     "allOf": [
                         {
                             "$ref": "#/definitions/web.GenericInnerType-types_Post"
-                        },
-                        {
-                            "description": "ItemsOne is the first thing"
                         }
                     ]
                 },

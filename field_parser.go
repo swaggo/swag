@@ -10,7 +10,6 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
 )
 
@@ -213,6 +212,16 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		return fmt.Errorf("invalid type for field: %s", ps.field.Names[0])
 	}
 
+	if IsRefSchema(schema) {
+		oldSchema := schema
+		schema = &spec.Schema{}
+		defer func() {
+			if !reflect.ValueOf(*schema).IsZero() {
+				*oldSchema = *(schema.WithAllOf(*oldSchema))
+			}
+		}()
+	}
+
 	if ps.field.Tag == nil {
 		if ps.field.Doc != nil {
 			schema.Description = strings.TrimSpace(ps.field.Doc.Text())
@@ -352,19 +361,6 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	}
 
 	schema.ReadOnly = ps.tag.Get(readOnlyTag) == "true"
-
-	if !reflect.ValueOf(schema.Ref).IsZero() && schema.ReadOnly {
-		schema.AllOf = []spec.Schema{*spec.RefSchema(schema.Ref.String())}
-		schema.Ref = spec.Ref{
-			Ref: jsonreference.Ref{
-				HasFullURL:      false,
-				HasURLPathOnly:  false,
-				HasFragmentOnly: false,
-				HasFileScheme:   false,
-				HasFullFilePath: false,
-			},
-		} // clear out existing ref
-	}
 
 	defaultTagValue := ps.tag.Get(defaultTag)
 	if defaultTagValue != "" {
