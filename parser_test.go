@@ -2610,7 +2610,11 @@ func Test(){
          },
          "test6": {
             "description": "test6",
-            "$ref": "#/definitions/api.MyMapType"
+            "allOf": [
+               {
+                  "$ref": "#/definitions/api.MyMapType"
+               }
+            ]
          },
          "test7": {
             "description": "test7",
