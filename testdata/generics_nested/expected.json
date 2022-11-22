@@ -188,7 +188,11 @@
             "properties": {
                 "itemOne": {
                     "description": "ItemsOne is the first thing",
-                    "$ref": "#/definitions/types.Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    ]
                 },
                 "itemsTwo": {
                     "description": "ItemsTwo is the second thing",
@@ -207,7 +211,11 @@
             "properties": {
                 "itemOne": {
                     "description": "ItemsOne is the first thing",
-                    "$ref": "#/definitions/types.Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    ]
                 },
                 "itemsTwo": {
                     "description": "ItemsTwo is the second thing",
@@ -223,7 +231,11 @@
             "properties": {
                 "itemOne": {
                     "description": "ItemsOne is the first thing",
-                    "$ref": "#/definitions/types.Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    ]
                 },
                 "itemsTwo": {
                     "description": "ItemsTwo is the second thing",
@@ -266,7 +278,11 @@
             "properties": {
                 "items": {
                     "description": "Items from the list response",
-                    "$ref": "#/definitions/types.Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    ]
                 }
             }
         },
@@ -275,7 +291,11 @@
             "properties": {
                 "items": {
                     "description": "Items from the list response",
-                    "$ref": "#/definitions/web.GenericInnerType-array_types_Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/web.GenericInnerType-array_types_Post"
+                        }
+                    ]
                 },
                 "status": {
                     "description": "Status of some other stuff",
@@ -288,7 +308,11 @@
             "properties": {
                 "items": {
                     "description": "Items from the list response",
-                    "$ref": "#/definitions/web.GenericInnerType-types_Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/web.GenericInnerType-types_Post"
+                        }
+                    ]
                 },
                 "status": {
                     "description": "Status of some other stuff",
@@ -439,7 +463,11 @@
             "properties": {
                 "itemOne": {
                     "description": "ItemsOne is the first thing",
-                    "$ref": "#/definitions/types.Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    ]
                 },
                 "itemsTwo": {
                     "description": "ItemsTwo is the second thing",
@@ -459,7 +487,11 @@
             "properties": {
                 "itemOne": {
                     "description": "ItemsOne is the first thing",
-                    "$ref": "#/definitions/types.Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    ]
                 },
                 "itemsTwo": {
                     "description": "ItemsTwo is the second thing",
@@ -479,7 +511,11 @@
             "properties": {
                 "itemOne": {
                     "description": "ItemsOne is the first thing",
-                    "$ref": "#/definitions/types.Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    ]
                 },
                 "itemsTwo": {
                     "description": "ItemsTwo is the second thing",
@@ -499,7 +535,11 @@
             "properties": {
                 "itemOne": {
                     "description": "ItemsOne is the first thing",
-                    "$ref": "#/definitions/web.GenericInnerType-array_types_Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/web.GenericInnerType-array_types_Post"
+                        }
+                    ]
                 },
                 "itemsTwo": {
                     "description": "ItemsTwo is the second thing",
@@ -522,7 +562,11 @@
             "properties": {
                 "itemOne": {
                     "description": "ItemsOne is the first thing",
-                    "$ref": "#/definitions/web.GenericInnerType-types_Post"
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/web.GenericInnerType-types_Post"
+                        }
+                    ]
                 },
                 "itemsTwo": {
                     "description": "ItemsTwo is the second thing",

@@ -156,6 +156,11 @@ func IsComplexSchema(schema *spec.Schema) bool {
 	return false
 }
 
+// IsRefSchema whether a schema is a reference schema.
+func IsRefSchema(schema *spec.Schema) bool {
+	return schema.Ref.Ref.GetURL() != nil
+}
+
 // RefSchema build a reference schema.
 func RefSchema(refType string) *spec.Schema {
 	return spec.RefSchema("#/definitions/" + refType)
