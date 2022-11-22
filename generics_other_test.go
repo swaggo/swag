@@ -32,10 +32,10 @@ func TestParametrizeStruct(t *testing.T) {
 		},
 	}
 
-	tr := pd.parametrizeGenericType(&ast.File{}, tSpec, "", false)
+	tr := pd.parametrizeGenericType(&ast.File{}, tSpec, "")
 	assert.Equal(t, tr, tSpec)
 
-	tr = pd.parametrizeGenericType(&ast.File{}, tSpec, "", true)
+	tr = pd.parametrizeGenericType(&ast.File{}, tSpec, "")
 	assert.Equal(t, tr, tSpec)
 }
 

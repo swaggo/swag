@@ -1,13 +1,15 @@
 package types
 
-type Class int
+import (
+	"github.com/swaggo/swag/testdata/enums/consts"
+)
 
-const Base = 1
+type Class int
 
 const (
 	None Class = -1
-	A    Class = Base + (iota+1-1)*2/2%100 - (1&1 | 1) + (2 ^ 2) // AAA
-	B                                                            /* BBB */
+	A    Class = consts.Base + (iota+1-1)*2/2%100 - (1&1 | 1) + (2 ^ 2) // AAA
+	B                                                                   /* BBB */
 	C
 	D
 	F = D + 1

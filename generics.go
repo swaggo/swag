@@ -26,7 +26,7 @@ func (t *genericTypeSpec) TypeName() string {
 	return t.Name
 }
 
-func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, original *TypeSpecDef, fullGenericForm string, parseDependency bool) *TypeSpecDef {
+func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, original *TypeSpecDef, fullGenericForm string) *TypeSpecDef {
 	if original == nil || original.TypeSpec.TypeParams == nil || len(original.TypeSpec.TypeParams.List) == 0 {
 		return original
 	}
@@ -51,7 +51,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 			arrayDepth++
 		}
 
-		typeDef := pkgDefs.FindTypeSpec(genericParam, file, parseDependency)
+		typeDef := pkgDefs.FindTypeSpec(genericParam, file)
 		if typeDef != nil {
 			genericParam = typeDef.TypeName()
 			if _, ok := pkgDefs.uniqueDefinitions[genericParam]; !ok {
@@ -95,7 +95,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 				NamePos: original.TypeSpec.Name.NamePos,
 				Obj:     original.TypeSpec.Name.Obj,
 			},
-			Type:   pkgDefs.resolveGenericType(original.File, original.TypeSpec.Type, genericParamTypeDefs, parseDependency),
+			Type:   pkgDefs.resolveGenericType(original.File, original.TypeSpec.Type, genericParamTypeDefs),
 			Doc:    original.TypeSpec.Doc,
 			Assign: original.TypeSpec.Assign,
 		},
@@ -159,7 +159,7 @@ func (pkgDefs *PackagesDefinitions) getParametrizedType(genTypeSpec *genericType
 	return &ast.Ident{Name: genTypeSpec.Name}
 }
 
-func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec, parseDependency bool) ast.Expr {
+func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec) ast.Expr {
 	switch astExpr := expr.(type) {
 	case *ast.Ident:
 		if genTypeSpec, ok := genericParamTypeDefs[astExpr.Name]; ok {
@@ -171,18 +171,18 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 		}
 	case *ast.ArrayType:
 		return &ast.ArrayType{
-			Elt:    pkgDefs.resolveGenericType(file, astExpr.Elt, genericParamTypeDefs, parseDependency),
+			Elt:    pkgDefs.resolveGenericType(file, astExpr.Elt, genericParamTypeDefs),
 			Len:    astExpr.Len,
 			Lbrack: astExpr.Lbrack,
 		}
 	case *ast.StarExpr:
 		return &ast.StarExpr{
 			Star: astExpr.Star,
-			X:    pkgDefs.resolveGenericType(file, astExpr.X, genericParamTypeDefs, parseDependency),
+			X:    pkgDefs.resolveGenericType(file, astExpr.X, genericParamTypeDefs),
 		}
 	case *ast.IndexExpr, *ast.IndexListExpr:
 		fullGenericName, _ := getGenericFieldType(file, expr, genericParamTypeDefs)
-		typeDef := pkgDefs.FindTypeSpec(fullGenericName, file, parseDependency)
+		typeDef := pkgDefs.FindTypeSpec(fullGenericName, file)
 		if typeDef != nil {
 			return typeDef.TypeSpec.Type
 		}
@@ -205,7 +205,7 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 				Comment: field.Comment,
 			}
 
-			newField.Type = pkgDefs.resolveGenericType(file, field.Type, genericParamTypeDefs, parseDependency)
+			newField.Type = pkgDefs.resolveGenericType(file, field.Type, genericParamTypeDefs)
 
 			newStructTypeDef.Fields.List = append(newStructTypeDef.Fields.List, newField)
 		}

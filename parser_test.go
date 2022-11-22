@@ -2156,8 +2156,7 @@ func TestParseNested(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/nested"
-	p := New()
-	p.ParseDependency = true
+	p := New(SetParseDependency(true))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
@@ -2172,8 +2171,7 @@ func TestParseDuplicated(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/duplicated"
-	p := New()
-	p.ParseDependency = true
+	p := New(SetParseDependency(true))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
@@ -2182,8 +2180,7 @@ func TestParseDuplicatedOtherMethods(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/duplicated2"
-	p := New()
-	p.ParseDependency = true
+	p := New(SetParseDependency(true))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
@@ -2192,8 +2189,7 @@ func TestParseDuplicatedFunctionScoped(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/duplicated_function_scoped"
-	p := New()
-	p.ParseDependency = true
+	p := New(SetParseDependency(true))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
@@ -2202,8 +2198,7 @@ func TestParseConflictSchemaName(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/conflict_name"
-	p := New()
-	p.ParseDependency = true
+	p := New(SetParseDependency(true))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2215,8 +2210,7 @@ func TestParseConflictSchemaName(t *testing.T) {
 func TestParseExternalModels(t *testing.T) {
 	searchDir := "testdata/external_models/main"
 	mainAPIFile := "main.go"
-	p := New()
-	p.ParseDependency = true
+	p := New(SetParseDependency(true))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2228,9 +2222,7 @@ func TestParseExternalModels(t *testing.T) {
 
 func TestParseGoList(t *testing.T) {
 	mainAPIFile := "main.go"
-	p := New(ParseUsingGoList(true))
-	p.ParseDependency = true
-
+	p := New(ParseUsingGoList(true), SetParseDependency(true))
 	go111moduleEnv := os.Getenv("GO111MODULE")
 
 	cases := []struct {
@@ -2444,8 +2436,7 @@ type ResponseWrapper struct {
       }
    }
 }`
-	parser := New()
-	parser.ParseDependency = true
+	parser := New(SetParseDependency(true))
 
 	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
 	assert.NoError(t, err)
@@ -3080,8 +3071,7 @@ func TestParseOutsideDependencies(t *testing.T) {
 	searchDir := "testdata/pare_outside_dependencies"
 	mainAPIFile := "cmd/main.go"
 
-	p := New()
-	p.ParseDependency = true
+	p := New(SetParseDependency(true))
 	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to parse api: " + err.Error())
 	}

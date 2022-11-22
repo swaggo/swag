@@ -18,6 +18,7 @@ type PackagesDefinitions struct {
 	files             map[*ast.File]*AstFileInfo
 	packages          map[string]*PackageDefinitions
 	uniqueDefinitions map[string]*TypeSpecDef
+	parseDependency   bool
 }
 
 // NewPackagesDefinitions create object PackagesDefinitions.
@@ -59,7 +60,7 @@ func (pkgDefs *PackagesDefinitions) CollectAstFile(packageDir, path string, astF
 
 		dependency.Files[path] = astFile
 	} else {
-		pkgDefs.packages[packageDir] = NewPackageDefinitions(astFile.Name.Name).AddFile(path, astFile)
+		pkgDefs.packages[packageDir] = NewPackageDefinitions(astFile.Name.Name, packageDir).AddFile(path, astFile)
 	}
 
 	pkgDefs.files[astFile] = &AstFileInfo{
@@ -106,7 +107,7 @@ func (pkgDefs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, erro
 		pkgDefs.parseFunctionScopedTypesFromFile(astFile, info.PackagePath, parsedSchemas)
 	}
 	pkgDefs.removeAllNotUniqueTypes()
-	pkgDefs.evaluateConstVariables()
+	pkgDefs.evaluateAllConstVariables()
 	pkgDefs.collectConstEnums(parsedSchemas)
 	return parsedSchemas, nil
 }
@@ -159,14 +160,14 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 					}
 
 					if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
-						pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name).AddTypeSpec(typeSpecDef.Name(), typeSpecDef)
+						pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name, typeSpecDef.PkgPath).AddTypeSpec(typeSpecDef.Name(), typeSpecDef)
 					} else if _, ok = pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[typeSpecDef.Name()]; !ok {
 						pkgDefs.packages[typeSpecDef.PkgPath].AddTypeSpec(typeSpecDef.Name(), typeSpecDef)
 					}
 				}
 			}
 		} else if generalDeclaration.Tok == token.CONST {
-			// collect const
+			// collect consts
 			pkgDefs.collectConstVariables(astFile, packagePath, generalDeclaration)
 		}
 	}
@@ -221,7 +222,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 								}
 
 								if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
-									pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name).AddTypeSpec(fullName, typeSpecDef)
+									pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name, typeSpecDef.PkgPath).AddTypeSpec(fullName, typeSpecDef)
 								} else if _, ok = pkgDefs.packages[typeSpecDef.PkgPath].TypeDefinitions[fullName]; !ok {
 									pkgDefs.packages[typeSpecDef.PkgPath].AddTypeSpec(fullName, typeSpecDef)
 								}
@@ -238,7 +239,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 func (pkgDefs *PackagesDefinitions) collectConstVariables(astFile *ast.File, packagePath string, generalDeclaration *ast.GenDecl) {
 	pkg, ok := pkgDefs.packages[packagePath]
 	if !ok {
-		pkg = NewPackageDefinitions(astFile.Name.Name)
+		pkg = NewPackageDefinitions(astFile.Name.Name, packagePath)
 		pkgDefs.packages[packagePath] = pkg
 	}
 
@@ -254,17 +255,64 @@ func (pkgDefs *PackagesDefinitions) collectConstVariables(astFile *ast.File, pac
 			valueSpec.Type = lastValueSpec.Type
 			valueSpec.Values = lastValueSpec.Values
 		}
-		pkg.AddConst(valueSpec)
+		pkg.AddConst(astFile, valueSpec)
 	}
 }
 
-func (pkgDefs *PackagesDefinitions) evaluateConstVariables() {
-	//TODO evaluate enum cross packages
+func (pkgDefs *PackagesDefinitions) evaluateAllConstVariables() {
 	for _, pkg := range pkgDefs.packages {
 		for _, constVar := range pkg.OrderedConst {
-			constVar.EvaluateValue(pkg.ConstTable)
+			pkgDefs.EvaluateConstValue(pkg, constVar, nil)
 		}
 	}
+}
+
+// EvaluateConstValue evaluate a const variable.
+func (pkgDefs *PackagesDefinitions) EvaluateConstValue(pkg *PackageDefinitions, cv *ConstVariable, recursiveStack map[string]struct{}) (interface{}, ast.Expr) {
+	if expr, ok := cv.Value.(ast.Expr); ok {
+		if recursiveStack == nil {
+			recursiveStack = make(map[string]struct{})
+		}
+		fullConstName := fullTypeName(pkg.Path, cv.Name.Name)
+		if _, ok = recursiveStack[fullConstName]; ok {
+			return nil, nil
+		}
+		recursiveStack[fullConstName] = struct{}{}
+
+		value, evalType := pkg.evaluateConstValue(cv.File, cv.Name.Obj.Data.(int), expr, pkgDefs, recursiveStack)
+		if cv.Type == nil && evalType != nil {
+			cv.Type = evalType
+		}
+		if value != nil {
+			cv.Value = value
+		}
+		return value, cv.Type
+	}
+	return cv.Value, cv.Type
+}
+
+// EvaluateConstValueByName evaluate a const variable by name.
+func (pkgDefs *PackagesDefinitions) EvaluateConstValueByName(file *ast.File, pkgName, constVariableName string, recursiveStack map[string]struct{}) (interface{}, ast.Expr) {
+	matchedPkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports(pkgName, file)
+	for _, pkgPath := range matchedPkgPaths {
+		if pkg, ok := pkgDefs.packages[pkgPath]; ok {
+			if cv, ok := pkg.ConstTable[constVariableName]; ok {
+				return pkgDefs.EvaluateConstValue(pkg, cv, recursiveStack)
+			}
+		}
+	}
+	if pkgDefs.parseDependency {
+		for _, pkgPath := range externalPkgPaths {
+			if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
+				if pkg, ok := pkgDefs.packages[pkgPath]; ok {
+					if cv, ok := pkg.ConstTable[constVariableName]; ok {
+						return pkgDefs.EvaluateConstValue(pkg, cv, recursiveStack)
+					}
+				}
+			}
+		}
+	}
+	return nil, nil
 }
 
 func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpecDef]*Schema) {
@@ -434,7 +482,7 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 	return
 }
 
-func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths, externalPkgPaths []string, name string, parseDependency bool) (typeDef *TypeSpecDef) {
+func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths, externalPkgPaths []string, name string) (typeDef *TypeSpecDef) {
 	for _, pkgPath := range matchedPkgPaths {
 		typeDef = pkgDefs.findTypeSpec(pkgPath, name)
 		if typeDef != nil {
@@ -442,7 +490,7 @@ func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths
 		}
 	}
 
-	if parseDependency {
+	if pkgDefs.parseDependency {
 		for _, pkgPath := range externalPkgPaths {
 			if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
 				typeDef = pkgDefs.findTypeSpec(pkgPath, name)
@@ -460,7 +508,7 @@ func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths
 // @typeName the name of the target type, if it starts with a package name, find its own package path from imports on top of @file
 // @file the ast.file in which @typeName is used
 // @pkgPath the package path of @file.
-func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File, parseDependency bool) *TypeSpecDef {
+func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File) *TypeSpecDef {
 	if IsGolangPrimitiveType(typeName) {
 		return nil
 	}
@@ -477,8 +525,8 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		}
 
 		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports(parts[0], file)
-		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1], parseDependency)
-		return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
+		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
+		return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 	}
 
 	typeDef, ok := pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
@@ -496,7 +544,7 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 	typeDef, ok = pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, name)]
 	if !ok {
 		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports("", file)
-		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name, parseDependency)
+		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name)
 	}
-	return pkgDefs.parametrizeGenericType(file, typeDef, typeName, parseDependency)
+	return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 }

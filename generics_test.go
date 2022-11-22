@@ -110,8 +110,7 @@ func TestParseGenericsPackageAlias(t *testing.T) {
 	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
-	p := New()
-	p.ParseDependency = true
+	p := New(SetParseDependency(true))
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
@@ -133,7 +132,7 @@ func TestParametrizeStruct(t *testing.T) {
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
 				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-			}}, "test.Field[string, []string]", false)
+			}}, "test.Field[string, []string]")
 	assert.NotNil(t, typeSpec)
 	assert.Equal(t, "$test.Field-string-array_string", typeSpec.Name())
 	assert.Equal(t, "test.Field-string-array_string", typeSpec.TypeName())
@@ -146,7 +145,7 @@ func TestParametrizeStruct(t *testing.T) {
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}}},
 				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-			}}, "test.Field[string, string]", false)
+			}}, "test.Field[string, string]")
 	assert.Nil(t, typeSpec)
 
 	// definition contains two type params, but only one is used
@@ -157,7 +156,7 @@ func TestParametrizeStruct(t *testing.T) {
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
 				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-			}}, "test.Field[string]", false)
+			}}, "test.Field[string]")
 	assert.Nil(t, typeSpec)
 
 	// name is not a valid type name
@@ -168,7 +167,7 @@ func TestParametrizeStruct(t *testing.T) {
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
 				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-			}}, "test.Field[string", false)
+			}}, "test.Field[string")
 	assert.Nil(t, typeSpec)
 
 	typeSpec = pd.parametrizeGenericType(
@@ -178,7 +177,7 @@ func TestParametrizeStruct(t *testing.T) {
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
 				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-			}}, "test.Field[string, [string]", false)
+			}}, "test.Field[string, [string]")
 	assert.Nil(t, typeSpec)
 
 	typeSpec = pd.parametrizeGenericType(
@@ -188,7 +187,7 @@ func TestParametrizeStruct(t *testing.T) {
 				Name:       &ast.Ident{Name: "Field"},
 				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}, {Names: []*ast.Ident{{Name: "T2"}}}}},
 				Type:       &ast.StructType{Struct: 100, Fields: &ast.FieldList{Opening: 101, Closing: 102}},
-			}}, "test.Field[string, ]string]", false)
+			}}, "test.Field[string, ]string]")
 	assert.Nil(t, typeSpec)
 }
 
