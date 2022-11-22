@@ -206,6 +206,7 @@ func splitNotWrapped(s string, sep rune) []string {
 	return result
 }
 
+// ComplementSchema complement schema with field properties
 func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	types := ps.p.GetSchemaTypePath(schema, 2)
 	if len(types) == 0 {
@@ -213,15 +214,22 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	}
 
 	if IsRefSchema(schema) {
-		oldSchema := schema
-		schema = &spec.Schema{}
-		defer func() {
-			if !reflect.ValueOf(*schema).IsZero() {
-				*oldSchema = *(schema.WithAllOf(*oldSchema))
-			}
-		}()
+		var newSchema = spec.Schema{}
+		err := ps.complementSchema(&newSchema, types)
+		if err != nil {
+			return err
+		}
+		if !reflect.ValueOf(newSchema).IsZero() {
+			*schema = *(newSchema.WithAllOf(*schema))
+		}
+		return nil
 	}
 
+	return ps.complementSchema(schema, types)
+}
+
+// complementSchema complement schema with field properties
+func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []string) error {
 	if ps.field.Tag == nil {
 		if ps.field.Doc != nil {
 			schema.Description = strings.TrimSpace(ps.field.Doc.Text())
