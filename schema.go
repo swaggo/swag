@@ -135,6 +135,27 @@ func ignoreNameOverride(name string) bool {
 	return len(name) != 0 && name[0] == IgnoreNameOverridePrefix
 }
 
+// IsComplexSchema whether a schema is complex and should be a ref schema
+func IsComplexSchema(schema *spec.Schema) bool {
+	// a enum type should be complex
+	if len(schema.Enum) > 0 {
+		return true
+	}
+
+	// a deep array type is complex, how to determine deep? here more than 2 ,for example: [][]object,[][][]int
+	if len(schema.Type) > 2 {
+		return true
+	}
+
+	//Object included, such as Object or []Object
+	for _, st := range schema.Type {
+		if st == OBJECT {
+			return true
+		}
+	}
+	return false
+}
+
 // IsRefSchema whether a schema is a reference schema.
 func IsRefSchema(schema *spec.Schema) bool {
 	return schema.Ref.Ref.GetURL() != nil

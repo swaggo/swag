@@ -162,7 +162,9 @@ func (g *Gen) Build(config *Config) error {
 
 	g.debug.Printf("Generate swagger docs....")
 
-	p := swag.New(swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
+	p := swag.New(
+		swag.SetParseDependency(config.ParseDependency),
+		swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetDebugger(config.Debugger),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
@@ -174,7 +176,6 @@ func (g *Gen) Build(config *Config) error {
 
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
-	p.ParseDependency = config.ParseDependency
 	p.ParseInternal = config.ParseInternal
 	p.RequiredByDefault = config.RequiredByDefault
 

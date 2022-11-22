@@ -214,6 +214,16 @@ func New(options ...func(*Parser)) *Parser {
 	return parser
 }
 
+// SetParseDependency sets whether to parse the dependent packages.
+func SetParseDependency(parseDependency bool) func(*Parser) {
+	return func(p *Parser) {
+		p.ParseDependency = parseDependency
+		if p.packages != nil {
+			p.packages.parseDependency = parseDependency
+		}
+	}
+}
+
 // SetMarkdownFileDirectory sets the directory to search for markdown files.
 func SetMarkdownFileDirectory(directoryPath string) func(*Parser) {
 	return func(p *Parser) {
@@ -925,7 +935,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return PrimitiveSchema(schemaType), nil
 	}
 
-	typeSpecDef := parser.packages.FindTypeSpec(typeName, file, parser.ParseDependency)
+	typeSpecDef := parser.packages.FindTypeSpec(typeName, file)
 	if typeSpecDef == nil {
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
@@ -964,8 +974,13 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		}
 	}
 
-	if ref && (len(schema.Schema.Type) > 0 && schema.Schema.Type[0] == OBJECT || len(schema.Enum) > 0) {
-		return parser.getRefTypeSchema(typeSpecDef, schema), nil
+	if ref {
+		if IsComplexSchema(schema.Schema) {
+			return parser.getRefTypeSchema(typeSpecDef, schema), nil
+		}
+		// if it is a simple schema, just return a copy
+		newSchema := *schema.Schema
+		return &newSchema, nil
 	}
 
 	return schema.Schema, nil
