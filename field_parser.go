@@ -43,7 +43,7 @@ func newTagBaseFieldParser(p *Parser, field *ast.Field) FieldParser {
 
 func (ps *tagBaseFieldParser) ShouldSkip() bool {
 	// Skip non-exported fields.
-	if !ast.IsExported(ps.field.Names[0].Name) {
+	if ps.field.Names != nil && !ast.IsExported(ps.field.Names[0].Name) {
 		return true
 	}
 
@@ -74,6 +74,10 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 		if name != "" {
 			return name, nil
 		}
+	}
+
+	if ps.field.Names == nil {
+		return "", nil
 	}
 
 	switch ps.p.PropNamingStrategy {

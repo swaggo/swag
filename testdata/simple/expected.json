@@ -215,16 +215,16 @@
               }
             }
           },
-          "404": {
-            "description": "Can not find ID",
-            "schema": {
-              "$ref": "#/definitions/web.APIError"
-            }
-          },
           "403": {
             "description": "cross",
             "schema": {
               "$ref": "#/definitions/cross.Cross"
+            }
+          },
+          "404": {
+            "description": "Can not find ID",
+            "schema": {
+              "$ref": "#/definitions/web.APIError"
             }
           }
         }
@@ -722,12 +722,6 @@
         "Data": {
           "type": "integer"
         },
-        "Err": {
-          "type": "integer"
-        },
-        "Status": {
-          "type": "boolean"
-        },
         "cross": {
           "$ref": "#/definitions/cross.Cross"
         },
@@ -736,6 +730,20 @@
           "items": {
             "$ref": "#/definitions/cross.Cross"
           }
+        },
+        "rev_value_base": {
+          "$ref": "#/definitions/web.RevValueBase"
+        }
+      }
+    },
+    "web.RevValueBase": {
+      "type": "object",
+      "properties": {
+        "Err": {
+          "type": "integer"
+        },
+        "Status": {
+          "type": "boolean"
         }
       }
     },
