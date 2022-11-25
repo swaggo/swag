@@ -447,7 +447,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 		}
 		fields := FieldsByAnySpace(commentLine, 2)
 
-		attribute := strings.ToLower(fields[0])
+		attribute := fields[0]
 		var value string
 		if len(fields) > 1 {
 			value = fields[1]
