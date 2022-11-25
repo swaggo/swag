@@ -1230,14 +1230,25 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 }
 
 func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {
-	if field.Names == nil {
-		if field.Tag != nil {
-			skip, ok := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", "")).Lookup("swaggerignore")
-			if ok && strings.EqualFold(skip, "true") {
-				return nil, nil, nil
-			}
+	if field.Tag != nil {
+		skip, ok := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", "")).Lookup("swaggerignore")
+		if ok && strings.EqualFold(skip, "true") {
+			return nil, nil, nil
 		}
+	}
 
+	ps := parser.fieldParserFactory(parser, field)
+
+	if ps.ShouldSkip() {
+		return nil, nil, nil
+	}
+
+	fieldName, err := ps.FieldName()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if fieldName == "" {
 		typeName, err := getFieldType(file, field.Type)
 		if err != nil {
 			return nil, nil, err
@@ -1260,20 +1271,9 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 
 			return properties, schema.SchemaProps.Required, nil
 		}
-
 		// for alias type of non-struct types ,such as array,map, etc. ignore field tag.
 		return map[string]spec.Schema{typeName: *schema}, nil, nil
-	}
 
-	ps := parser.fieldParserFactory(parser, field)
-
-	if ps.ShouldSkip() {
-		return nil, nil, nil
-	}
-
-	fieldName, err := ps.FieldName()
-	if err != nil {
-		return nil, nil, err
 	}
 
 	schema, err := ps.CustomSchema()
