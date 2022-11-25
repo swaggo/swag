@@ -110,9 +110,13 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		return nil
 	}
 
-	attribute := strings.Fields(commentLine)[0]
-	lineRemainder, lowerAttribute := strings.TrimSpace(commentLine[len(attribute):]), strings.ToLower(attribute)
-
+	fields := FieldsByAnySpace(commentLine, 2)
+	attribute := fields[0]
+	lowerAttribute := strings.ToLower(attribute)
+	var lineRemainder string
+	if len(fields) > 1 {
+		lineRemainder = fields[1]
+	}
 	switch lowerAttribute {
 	case descriptionAttr:
 		operation.ParseDescriptionComment(lineRemainder)
