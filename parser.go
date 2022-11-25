@@ -448,7 +448,10 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 		fields := FieldsByAnySpace(commentLine, 2)
 
 		attribute := strings.ToLower(fields[0])
-		value := fields[1]
+		var value string
+		if len(fields) > 1 {
+			value = fields[1]
+		}
 
 		multilineBlock := false
 		if previousAttribute == attribute {
