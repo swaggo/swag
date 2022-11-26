@@ -145,8 +145,16 @@ func splitComment2(attr, body string) string {
 	if specialTagForSplit[strings.ToLower(attr)] {
 		for i := 0; i < len(body); i++ {
 			if skipEnd, ok := skipChar[body[i]]; ok {
-				if skipLen := strings.IndexByte(body[i+1:], skipEnd); skipLen > 0 {
-					i += skipLen
+				skipStart, n := body[i], 1
+				for i++; i < len(body); i++ {
+					if skipStart != skipEnd && body[i] == skipStart {
+						n++
+					} else if body[i] == skipEnd {
+						n--
+						if n == 0 {
+							break
+						}
+					}
 				}
 			} else if body[i] == ' ' || body[i] == '\t' {
 				j := i

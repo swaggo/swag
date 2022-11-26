@@ -441,8 +441,17 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 	// parsing classic meta data model
 	for line := 0; line < len(comments); line++ {
 		commentLine := comments[line]
-		attribute := strings.Split(commentLine, " ")[0]
-		value := strings.TrimSpace(commentLine[len(attribute):])
+		commentLine = strings.TrimSpace(commentLine)
+		if len(commentLine) == 0 {
+			continue
+		}
+		fields := FieldsByAnySpace(commentLine, 2)
+
+		attribute := fields[0]
+		var value string
+		if len(fields) > 1 {
+			value = fields[1]
+		}
 
 		multilineBlock := false
 		if previousAttribute == attribute {
@@ -732,7 +741,11 @@ func (parser *Parser) ParseProduceComment(commentLine string) error {
 
 func isGeneralAPIComment(comments []string) bool {
 	for _, commentLine := range comments {
-		attribute := strings.ToLower(strings.Split(commentLine, " ")[0])
+		commentLine = strings.TrimSpace(commentLine)
+		if len(commentLine) == 0 {
+			continue
+		}
+		attribute := strings.ToLower(FieldsByAnySpace(commentLine, 2)[0])
 		switch attribute {
 		// The @summary, @router, @success, @failure annotation belongs to Operation
 		case summaryAttr, routerAttr, successAttr, failureAttr, responseAttr:
@@ -1123,7 +1136,10 @@ func extractDeclarationDescription(commentGroups ...*ast.CommentGroup) string {
 
 		for _, comment := range commentGroup.List {
 			commentText := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
-			attribute := strings.Split(commentText, " ")[0]
+			if len(commentText) == 0 {
+				continue
+			}
+			attribute := FieldsByAnySpace(commentText, 2)[0]
 
 			if strings.ToLower(attribute) != descriptionAttr {
 				if !isHandlingDescription {
