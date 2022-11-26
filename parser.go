@@ -211,6 +211,8 @@ func New(options ...func(*Parser)) *Parser {
 		option(parser)
 	}
 
+	parser.packages.debug = parser.debug
+
 	return parser
 }
 
@@ -276,7 +278,6 @@ func SetDebugger(logger Debugger) func(parser *Parser) {
 		if logger != nil {
 			p.debug = logger
 		}
-
 	}
 }
 
@@ -377,7 +378,7 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		return err
 	}
 
-	err = rangeFiles(parser.packages.files, parser.ParseRouterAPIInfo)
+	err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
 	if err != nil {
 		return err
 	}
@@ -982,7 +983,6 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 			if err == ErrRecursiveParseStruct && ref {
 				return parser.getRefTypeSchema(typeSpecDef, schema), nil
 			}
-
 			return nil, err
 		}
 	}
@@ -1536,18 +1536,7 @@ func (parser *Parser) parseFile(packageDir, path string, src interface{}) error 
 		return nil
 	}
 
-	// positions are relative to FileSet
-	astFile, err := goparser.ParseFile(token.NewFileSet(), path, src, goparser.ParseComments)
-	if err != nil {
-		return fmt.Errorf("ParseFile error:%+v", err)
-	}
-
-	err = parser.packages.CollectAstFile(packageDir, path, astFile)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return parser.packages.ParseFile(packageDir, path, src)
 }
 
 func (parser *Parser) checkOperationIDUniqueness() error {

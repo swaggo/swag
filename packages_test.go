@@ -10,20 +10,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPackagesDefinitions_CollectAstFile(t *testing.T) {
+func TestPackagesDefinitions_ParseFile(t *testing.T) {
 	pd := PackagesDefinitions{}
-	assert.NoError(t, pd.CollectAstFile("", "", nil))
+	packageDir := "github.com/swaggo/swag/testdata/simple"
+	assert.NoError(t, pd.ParseFile(packageDir, "testdata/simple/main.go", nil))
+	assert.Equal(t, 1, len(pd.packages))
+	assert.Equal(t, 1, len(pd.files))
+}
+
+func TestPackagesDefinitions_collectAstFile(t *testing.T) {
+	pd := PackagesDefinitions{}
+	fileSet := token.NewFileSet()
+	assert.NoError(t, pd.collectAstFile(fileSet, "", "", nil))
 
 	firstFile := &ast.File{
 		Name: &ast.Ident{Name: "main.go"},
 	}
 
 	packageDir := "github.com/swaggo/swag/testdata/simple"
-	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+firstFile.Name.String(), firstFile))
+	assert.NoError(t, pd.collectAstFile(fileSet, packageDir, "testdata/simple/"+firstFile.Name.String(), firstFile))
 	assert.NotEmpty(t, pd.packages[packageDir])
 
 	absPath, _ := filepath.Abs("testdata/simple/" + firstFile.Name.String())
 	astFileInfo := &AstFileInfo{
+		FileSet:     fileSet,
 		File:        firstFile,
 		Path:        absPath,
 		PackagePath: packageDir,
@@ -31,14 +41,14 @@ func TestPackagesDefinitions_CollectAstFile(t *testing.T) {
 	assert.Equal(t, pd.files[firstFile], astFileInfo)
 
 	// Override
-	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+firstFile.Name.String(), firstFile))
+	assert.NoError(t, pd.collectAstFile(fileSet, packageDir, "testdata/simple/"+firstFile.Name.String(), firstFile))
 	assert.Equal(t, pd.files[firstFile], astFileInfo)
 
 	// Another file
 	secondFile := &ast.File{
 		Name: &ast.Ident{Name: "api.go"},
 	}
-	assert.NoError(t, pd.CollectAstFile(packageDir, "testdata/simple/"+secondFile.Name.String(), secondFile))
+	assert.NoError(t, pd.collectAstFile(fileSet, packageDir, "testdata/simple/"+secondFile.Name.String(), secondFile))
 }
 
 func TestPackagesDefinitions_rangeFiles(t *testing.T) {
@@ -62,7 +72,7 @@ func TestPackagesDefinitions_rangeFiles(t *testing.T) {
 	}
 
 	i, expect := 0, []string{"testdata/simple/api/api.go", "testdata/simple/main.go"}
-	_ = rangeFiles(pd.files, func(filename string, file *ast.File) error {
+	_ = pd.RangeFiles(func(filename string, file *ast.File) error {
 		assert.Equal(t, expect[i], filename)
 		i++
 		return nil
@@ -182,7 +192,8 @@ func TestPackagesDefinitions_FindTypeSpec(t *testing.T) {
 }
 
 func TestPackage_rangeFiles(t *testing.T) {
-	files := map[*ast.File]*AstFileInfo{
+	pd := NewPackagesDefinitions()
+	pd.files = map[*ast.File]*AstFileInfo{
 		{
 			Name: &ast.Ident{Name: "main.go"},
 		}: {
@@ -218,10 +229,10 @@ func TestPackage_rangeFiles(t *testing.T) {
 		sorted = append(sorted, filename)
 		return nil
 	}
-	assert.NoError(t, rangeFiles(files, processor))
+	assert.NoError(t, pd.RangeFiles(processor))
 	assert.Equal(t, []string{"testdata/simple/api/api.go", "testdata/simple/main.go"}, sorted)
 
-	assert.Error(t, rangeFiles(files, func(filename string, file *ast.File) error {
+	assert.Error(t, pd.RangeFiles(func(filename string, file *ast.File) error {
 		return ErrFuncTypeField
 	}))
 

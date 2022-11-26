@@ -2,6 +2,7 @@ package swag
 
 import (
 	"go/ast"
+	"go/token"
 	"strings"
 
 	"github.com/go-openapi/spec"
@@ -80,6 +81,9 @@ func (t *TypeSpecDef) FullPath() string {
 
 // AstFileInfo information of an ast.File.
 type AstFileInfo struct {
+	//FileSet the FileSet object which is used to parse this go source file
+	FileSet *token.FileSet
+
 	// File ast.File
 	File *ast.File
 
