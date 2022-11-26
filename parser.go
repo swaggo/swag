@@ -557,7 +557,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 					break
 				}
 
-				if len(value) < 0 {
+				if len(value) == 0 {
 					return fmt.Errorf("annotation %s need a value", attribute)
 				}
 
