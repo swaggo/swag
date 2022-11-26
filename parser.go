@@ -454,16 +454,11 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			value = fields[1]
 		}
 
-		multilineBlock := false
-		if previousAttribute == attribute {
-			multilineBlock = true
-		}
-
 		switch attr := strings.ToLower(attribute); attr {
 		case versionAttr, titleAttr, tosAttr, licNameAttr, licURLAttr, conNameAttr, conURLAttr, conEmailAttr:
 			setSwaggerInfo(parser.swagger, attr, value)
 		case descriptionAttr:
-			if multilineBlock {
+			if previousAttribute == attribute {
 				parser.swagger.Info.Description += "\n" + value
 
 				continue
@@ -543,14 +538,14 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = value
 		default:
-			prefixExtension := "@x-"
-			// Prefix extension + 1 char + 1 space  + 1 char
-			if len(attribute) > 5 && attribute[:len(prefixExtension)] == prefixExtension {
+			if strings.HasPrefix(attribute, "@x-") {
+				extensionName := attribute[1:]
+
 				extExistsInSecurityDef := false
 				// for each security definition
 				for _, v := range parser.swagger.SecurityDefinitions {
 					// check if extension exists
-					_, extExistsInSecurityDef = v.VendorExtensible.Extensions.GetString(attribute[1:])
+					_, extExistsInSecurityDef = v.VendorExtensible.Extensions.GetString(extensionName)
 					// if it exists in at least one, then we stop iterating
 					if extExistsInSecurityDef {
 						break
@@ -562,16 +557,12 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 					break
 				}
 
-				var valueJSON interface{}
-
-				split := strings.SplitAfter(commentLine, attribute+" ")
-				if len(split) < 2 {
+				if len(value) == 0 {
 					return fmt.Errorf("annotation %s need a value", attribute)
 				}
 
-				extensionName := "x-" + strings.SplitAfter(attribute, prefixExtension)[1]
-
-				err := json.Unmarshal([]byte(split[1]), &valueJSON)
+				var valueJSON interface{}
+				err := json.Unmarshal([]byte(value), &valueJSON)
 				if err != nil {
 					return fmt.Errorf("annotation %s need a valid json value", attribute)
 				}
