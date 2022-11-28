@@ -3650,6 +3650,49 @@ func TestDefineTypeOfExample(t *testing.T) {
 	})
 }
 
+func TestSplitByUnescapedDoubleColon(t *testing.T) {
+	t.Run("No double colon", func(t *testing.T) {
+		t.Parallel()
+
+		example, err := splitByUnescapedDoubleColon("example")
+		assert.NoError(t, err)
+		assert.Len(t, example, 1)
+		assert.Equal(t, example[0], "example")
+
+		example, err = splitByUnescapedDoubleColon("")
+		assert.NoError(t, err)
+		assert.Len(t, example, 1)
+		assert.Equal(t, example[0], "")
+	})
+
+	t.Run("Unescaped double colon", func(t *testing.T) {
+		t.Parallel()
+
+		example, err := splitByUnescapedDoubleColon("key_one:one")
+		assert.NoError(t, err)
+		assert.Len(t, example, 2)
+		assert.Equal(t, example[0], "key_one")
+		assert.Equal(t, example[1], "one")
+
+		example, err = splitByUnescapedDoubleColon("key_one:one:key_two:two")
+		assert.NoError(t, err)
+		assert.Len(t, example, 4)
+		assert.Equal(t, example[0], "key_one")
+		assert.Equal(t, example[1], "one")
+		assert.Equal(t, example[2], "key_two")
+		assert.Equal(t, example[3], "two")
+	})
+
+	t.Run("Escaped double colon", func(t *testing.T) {
+		t.Parallel()
+
+		example, err := splitByUnescapedDoubleColon("key_one\\:one")
+		assert.NoError(t, err)
+		assert.Len(t, example, 1)
+		assert.Equal(t, example[0], "key_one:one")
+	})
+}
+
 type mockFS struct {
 	os.FileInfo
 	FileName    string

@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -1441,7 +1442,11 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 		result := map[string]interface{}{}
 
 		for _, value := range values {
-			mapData := strings.Split(value, ":")
+			mapData, err := splitByUnescapedDoubleColon(value)
+
+			if err != nil {
+				return nil, err
+			}
 
 			if len(mapData) == 2 {
 				v, err := defineTypeOfExample(arrayType, "", mapData[1])
@@ -1588,6 +1593,32 @@ func walkWith(excludes map[string]struct{}, parseVendor bool) func(path string, 
 
 		return nil
 	}
+}
+
+// SplitByUnescapedDoubleColon splits a string on every double colon (:) that is not escaped (\\)
+func splitByUnescapedDoubleColon(value string) ([]string, error) {
+	// Since Golang regexp does not support negative lookaheads, we make two capture groups,
+	// one with what comes before the ":" and another one with everything after. We iterate
+	// on the string until there are no more ":" matches
+	re, _ := regexp.Compile("^([^\\\\]+?):(.*?)$")
+	mapData := make([]string, 0)
+
+	splitString := value
+
+	for {
+		slices := re.FindStringSubmatch(splitString)
+
+		if slices == nil || len(slices) < 2 {
+			break
+		}
+
+		mapData = append(mapData, slices[1])
+		splitString = slices[2]
+	}
+
+	mapData = append(mapData, strings.ReplaceAll(splitString, "\\:", ":"))
+
+	return mapData, nil
 }
 
 // GetSwagger returns *spec.Swagger which is the root document object for the API specification.
