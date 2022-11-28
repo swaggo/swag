@@ -29,6 +29,7 @@ var escapedChars = map[uint8]uint8{
 	'"':  '"',
 }
 
+// EvaluateEscapedChar parse escaped character
 func EvaluateEscapedChar(text string) rune {
 	if len(text) == 1 {
 		return rune(text[0])
@@ -48,6 +49,7 @@ func EvaluateEscapedChar(text string) rune {
 	return 0
 }
 
+// EvaluateEscapedString parse escaped characters in string
 func EvaluateEscapedString(text string) string {
 	if !strings.ContainsRune(text, '\\') {
 		return text
@@ -73,6 +75,7 @@ func EvaluateEscapedString(text string) string {
 	return string(result)
 }
 
+// EvaluateDataConversion evaluate the type a explicit type conversion
 func EvaluateDataConversion(x interface{}, typeName string) interface{} {
 	switch value := x.(type) {
 	case int:
@@ -356,6 +359,7 @@ func EvaluateDataConversion(x interface{}, typeName string) interface{} {
 	return nil
 }
 
+// EvaluateUnary evaluate the type and value of a unary expression
 func EvaluateUnary(x interface{}, operator token.Token, xtype ast.Expr) (interface{}, ast.Expr) {
 	switch operator {
 	case token.SUB:
@@ -398,6 +402,7 @@ func EvaluateUnary(x interface{}, operator token.Token, xtype ast.Expr) (interfa
 	return nil, nil
 }
 
+// EvaluateBinary evaluate the type and value of a binary expression
 func EvaluateBinary(x, y interface{}, operator token.Token, xtype, ytype ast.Expr) (interface{}, ast.Expr) {
 	if operator == token.SHR || operator == token.SHL {
 		var rightOperand uint64
