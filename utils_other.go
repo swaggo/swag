@@ -16,6 +16,7 @@ func AppendUtf8Rune(p []byte, r rune) []byte {
 	return p
 }
 
+// CanIntegerValue a wrapper of reflect.Value
 type CanIntegerValue struct {
 	reflect.Value
 }
