@@ -1441,7 +1441,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 		result := map[string]interface{}{}
 
 		for _, value := range values {
-			mapData := strings.Split(value, ":")
+			mapData := strings.SplitN(value, ":", 2)
 
 			if len(mapData) == 2 {
 				v, err := defineTypeOfExample(arrayType, "", mapData[1])
