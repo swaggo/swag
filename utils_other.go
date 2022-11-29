@@ -3,6 +3,11 @@
 
 package swag
 
+import (
+	"reflect"
+	"unicode/utf8"
+)
+
 // AppendUtf8Rune appends the UTF-8 encoding of r to the end of p and
 // returns the extended buffer. If the rune is out of range,
 // it appends the encoding of RuneError.
