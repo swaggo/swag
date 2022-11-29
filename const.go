@@ -1,13 +1,11 @@
 package swag
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"reflect"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 // ConstVariable a model to record a const variable
@@ -60,9 +58,9 @@ func EvaluateEscapedString(text string) string {
 			i++
 			if text[i] == 'u' {
 				i++
-				n, err := strconv.ParseInt(text[i:i+4], 16, 32)
+				char, err := strconv.ParseInt(text[i:i+4], 16, 32)
 				if err == nil {
-					result = utf8.AppendRune(result, rune(n))
+					result = AppendUtf8Rune(result, rune(char))
 				}
 				i += 3
 			} else if c, ok := escapedChars[text[i]]; ok {
@@ -406,7 +404,7 @@ func EvaluateUnary(x interface{}, operator token.Token, xtype ast.Expr) (interfa
 func EvaluateBinary(x, y interface{}, operator token.Token, xtype, ytype ast.Expr) (interface{}, ast.Expr) {
 	if operator == token.SHR || operator == token.SHL {
 		var rightOperand uint64
-		yValue := reflect.ValueOf(y)
+		yValue := CanIntegerValue{reflect.ValueOf(y)}
 		if yValue.CanUint() {
 			rightOperand = yValue.Uint()
 		} else if yValue.CanInt() {
@@ -469,8 +467,8 @@ func EvaluateBinary(x, y interface{}, operator token.Token, xtype, ytype ast.Exp
 		evalType = ytype
 	}
 
-	xValue := reflect.ValueOf(x)
-	yValue := reflect.ValueOf(y)
+	xValue := CanIntegerValue{reflect.ValueOf(x)}
+	yValue := CanIntegerValue{reflect.ValueOf(y)}
 	if xValue.Kind() == reflect.String && yValue.Kind() == reflect.String {
 		return xValue.String() + yValue.String(), evalType
 	}
@@ -565,276 +563,4 @@ func EvaluateBinary(x, y interface{}, operator token.Token, xtype, ytype ast.Exp
 		}
 	}
 	return targetValue.Interface(), evalType
-
-	switch operator {
-	case token.ADD:
-		switch xValue := x.(type) {
-		case int:
-			switch yValue := y.(type) {
-			case int:
-				return xValue + yValue, evalType
-			case int8:
-				return int8(xValue) + yValue, evalType
-			case int16:
-				return int16(xValue) + yValue, evalType
-			case int32:
-				return int32(xValue) + yValue, evalType
-			case int64:
-				return int64(xValue) + yValue, evalType
-			case uint:
-				return uint(xValue) + yValue, evalType
-			case uint8:
-				return uint8(xValue) + yValue, evalType
-			case uint16:
-				return uint16(xValue) + yValue, evalType
-			case uint32:
-				return uint32(xValue) + yValue, evalType
-			case uint64:
-				return uint64(xValue) + yValue, evalType
-			}
-			return xValue + y.(int), evalType
-		case int8:
-			switch yValue := y.(type) {
-			case int:
-				return xValue + int8(yValue), evalType
-			case int8:
-				return xValue + yValue, evalType
-			}
-			return xValue + y.(int8), evalType
-		case int16:
-			return xValue + y.(int16), evalType
-		case int32:
-			return xValue + y.(int32), evalType
-		case int64:
-			return xValue + y.(int64), evalType
-		case uint:
-			return xValue + y.(uint), evalType
-		case uint8:
-			return xValue + y.(uint8), evalType
-		case uint16:
-			return xValue + y.(uint16), evalType
-		case uint32:
-			return xValue + y.(uint32), evalType
-		case uint64:
-			return xValue + y.(uint64), evalType
-		case string:
-			return xValue + y.(string), evalType
-		}
-	case token.SUB:
-		switch xValue := x.(type) {
-		case int:
-			return xValue - y.(int), evalType
-		case int8:
-			return xValue - y.(int8), evalType
-		case int16:
-			return xValue - y.(int16), evalType
-		case int32:
-			return xValue - y.(int32), evalType
-		case int64:
-			return xValue - y.(int64), evalType
-		case uint:
-			return xValue - y.(uint), evalType
-		case uint8:
-			return xValue - y.(uint8), evalType
-		case uint16:
-			return xValue - y.(uint16), evalType
-		case uint32:
-			return xValue - y.(uint32), evalType
-		case uint64:
-			return xValue - y.(uint64), evalType
-		}
-	case token.MUL:
-		switch xValue := x.(type) {
-		case int:
-			return xValue * y.(int), evalType
-		case int8:
-			return xValue * y.(int8), evalType
-		case int16:
-			return xValue * y.(int16), evalType
-		case int32:
-			return xValue * y.(int32), evalType
-		case int64:
-			return xValue * y.(int64), evalType
-		case uint:
-			return xValue * y.(uint), evalType
-		case uint8:
-			return xValue * y.(uint8), evalType
-		case uint16:
-			return xValue * y.(uint16), evalType
-		case uint32:
-			return xValue * y.(uint32), evalType
-		case uint64:
-			return xValue * y.(uint64), evalType
-		}
-	case token.QUO:
-		switch xValue := x.(type) {
-		case int:
-			return xValue / y.(int), evalType
-		case int8:
-			return xValue / y.(int8), evalType
-		case int16:
-			return xValue / y.(int16), evalType
-		case int32:
-			return xValue / y.(int32), evalType
-		case int64:
-			return xValue / y.(int64), evalType
-		case uint:
-			return xValue / y.(uint), evalType
-		case uint8:
-			return xValue / y.(uint8), evalType
-		case uint16:
-			return xValue / y.(uint16), evalType
-		case uint32:
-			return xValue / y.(uint32), evalType
-		case uint64:
-			return xValue / y.(uint64), evalType
-		}
-	case token.REM:
-		switch xValue := x.(type) {
-		case int:
-			return xValue % y.(int), evalType
-		case int8:
-			return xValue % y.(int8), evalType
-		case int16:
-			return xValue % y.(int16), evalType
-		case int32:
-			return xValue % y.(int32), evalType
-		case int64:
-			return xValue % y.(int64), evalType
-		case uint:
-			return xValue % y.(uint), evalType
-		case uint8:
-			return xValue % y.(uint8), evalType
-		case uint16:
-			return xValue % y.(uint16), evalType
-		case uint32:
-			return xValue % y.(uint32), evalType
-		case uint64:
-			return xValue % y.(uint64), evalType
-		}
-	case token.AND:
-		switch xValue := x.(type) {
-		case int:
-			return xValue & y.(int), evalType
-		case int8:
-			return xValue & y.(int8), evalType
-		case int16:
-			return xValue & y.(int16), evalType
-		case int32:
-			return xValue & y.(int32), evalType
-		case int64:
-			return xValue & y.(int64), evalType
-		case uint:
-			return xValue & y.(uint), evalType
-		case uint8:
-			return xValue & y.(uint8), evalType
-		case uint16:
-			return xValue & y.(uint16), evalType
-		case uint32:
-			return xValue & y.(uint32), evalType
-		case uint64:
-			return xValue & y.(uint64), evalType
-		}
-	case token.OR:
-		switch xValue := x.(type) {
-		case int:
-			return xValue | y.(int), evalType
-		case int8:
-			return xValue | y.(int8), evalType
-		case int16:
-			return xValue | y.(int16), evalType
-		case int32:
-			return xValue | y.(int32), evalType
-		case int64:
-			return xValue | y.(int64), evalType
-		case uint:
-			return xValue | y.(uint), evalType
-		case uint8:
-			return xValue | y.(uint8), evalType
-		case uint16:
-			return xValue | y.(uint16), evalType
-		case uint32:
-			return xValue | y.(uint32), evalType
-		case uint64:
-			return xValue | y.(uint64), evalType
-		}
-	case token.XOR:
-		switch xValue := x.(type) {
-		case int:
-			return xValue ^ y.(int), evalType
-		case int8:
-			return xValue ^ y.(int8), evalType
-		case int16:
-			return xValue ^ y.(int16), evalType
-		case int32:
-			return xValue ^ y.(int32), evalType
-		case int64:
-			return xValue ^ y.(int64), evalType
-		case uint:
-			return xValue ^ y.(uint), evalType
-		case uint8:
-			return xValue ^ y.(uint8), evalType
-		case uint16:
-			return xValue ^ y.(uint16), evalType
-		case uint32:
-			return xValue ^ y.(uint32), evalType
-		case uint64:
-			return xValue ^ y.(uint64), evalType
-		}
-	case token.SHL:
-		rightOperand, err := strconv.ParseUint(fmt.Sprintf("%v", y), 10, 64)
-		if err != nil {
-			panic(err)
-		}
-		switch xValue := x.(type) {
-		case int:
-			return xValue << rightOperand, xtype
-		case int8:
-			return xValue << rightOperand, xtype
-		case int16:
-			return xValue << rightOperand, xtype
-		case int32:
-			return xValue << rightOperand, xtype
-		case int64:
-			return xValue << rightOperand, xtype
-		case uint:
-			return xValue << rightOperand, xtype
-		case uint8:
-			return xValue << rightOperand, xtype
-		case uint16:
-			return xValue << rightOperand, xtype
-		case uint32:
-			return xValue << rightOperand, xtype
-		case uint64:
-			return xValue << rightOperand, xtype
-		}
-	case token.SHR:
-		rightOperand, err := strconv.ParseUint(fmt.Sprintf("%v", y), 10, 64)
-		if err != nil {
-			panic(err)
-		}
-		switch xValue := x.(type) {
-		case int:
-			return xValue >> rightOperand, xtype
-		case int8:
-			return xValue >> rightOperand, xtype
-		case int16:
-			return xValue >> rightOperand, xtype
-		case int32:
-			return xValue >> rightOperand, xtype
-		case int64:
-			return xValue >> rightOperand, xtype
-		case uint:
-			return xValue >> rightOperand, xtype
-		case uint8:
-			return xValue >> rightOperand, xtype
-		case uint16:
-			return xValue >> rightOperand, xtype
-		case uint32:
-			return xValue >> rightOperand, xtype
-		case uint64:
-			return xValue >> rightOperand, xtype
-		}
-	}
-	return nil, nil
 }
