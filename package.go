@@ -3,6 +3,7 @@ package swag
 import (
 	"go/ast"
 	"go/token"
+	"reflect"
 	"strconv"
 )
 
@@ -31,6 +32,7 @@ type PackageDefinitions struct {
 type ConstVariableGlobalEvaluator interface {
 	EvaluateConstValue(pkg *PackageDefinitions, cv *ConstVariable, recursiveStack map[string]struct{}) (interface{}, ast.Expr)
 	EvaluateConstValueByName(file *ast.File, pkgPath, constVariableName string, recursiveStack map[string]struct{}) (interface{}, ast.Expr)
+	FindTypeSpec(typeName string, file *ast.File) *TypeSpecDef
 }
 
 // NewPackageDefinitions new a PackageDefinitions object
@@ -92,68 +94,89 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 	case *ast.BasicLit:
 		switch valueExpr.Kind {
 		case token.INT:
-			x, err := strconv.ParseInt(valueExpr.Value, 10, 64)
-			if err != nil {
-				return nil, nil
+			// hexadecimal
+			if len(valueExpr.Value) > 2 && valueExpr.Value[0] == '0' && valueExpr.Value[1] == 'x' {
+				if x, err := strconv.ParseInt(valueExpr.Value[2:], 16, 64); err == nil {
+					return int(x), nil
+				} else if x, err := strconv.ParseUint(valueExpr.Value[2:], 16, 64); err == nil {
+					return x, nil
+				} else {
+					panic(err)
+				}
 			}
-			return int(x), nil
-		case token.STRING, token.CHAR:
-			return valueExpr.Value[1 : len(valueExpr.Value)-1], nil
+
+			//octet
+			if len(valueExpr.Value) > 1 && valueExpr.Value[0] == '0' {
+				if x, err := strconv.ParseInt(valueExpr.Value[1:], 8, 64); err == nil {
+					return int(x), nil
+				} else if x, err := strconv.ParseUint(valueExpr.Value[1:], 8, 64); err == nil {
+					return x, nil
+				} else {
+					panic(err)
+				}
+			}
+
+			//a basic literal integer is int type in default, or must have an explicit converting type in front
+			if x, err := strconv.ParseInt(valueExpr.Value, 10, 64); err == nil {
+				return int(x), nil
+			} else if x, err := strconv.ParseUint(valueExpr.Value, 10, 64); err == nil {
+				return x, nil
+			} else {
+				panic(err)
+			}
+		case token.STRING:
+			if valueExpr.Value[0] == '`' {
+				return valueExpr.Value[1 : len(valueExpr.Value)-1], nil
+			}
+			return EvaluateEscapedString(valueExpr.Value[1 : len(valueExpr.Value)-1]), nil
+		case token.CHAR:
+			return EvaluateEscapedChar(valueExpr.Value[1 : len(valueExpr.Value)-1]), nil
 		}
 	case *ast.UnaryExpr:
 		x, evalType := pkg.evaluateConstValue(file, iota, valueExpr.X, globalEvaluator, recursiveStack)
 		if x == nil {
-			return nil, nil
+			return x, evalType
 		}
-		switch valueExpr.Op {
-		case token.SUB:
-			return -x.(int), evalType
-		case token.XOR:
-			return ^(x.(int)), evalType
-		}
+		return EvaluateUnary(x, valueExpr.Op, evalType)
 	case *ast.BinaryExpr:
 		x, evalTypex := pkg.evaluateConstValue(file, iota, valueExpr.X, globalEvaluator, recursiveStack)
 		y, evalTypey := pkg.evaluateConstValue(file, iota, valueExpr.Y, globalEvaluator, recursiveStack)
 		if x == nil || y == nil {
 			return nil, nil
 		}
-		evalType := evalTypex
-		if evalType == nil {
-			evalType = evalTypey
-		}
-		switch valueExpr.Op {
-		case token.ADD:
-			if ix, ok := x.(int); ok {
-				return ix + y.(int), evalType
-			} else if sx, ok := x.(string); ok {
-				return sx + y.(string), evalType
-			}
-		case token.SUB:
-			return x.(int) - y.(int), evalType
-		case token.MUL:
-			return x.(int) * y.(int), evalType
-		case token.QUO:
-			return x.(int) / y.(int), evalType
-		case token.REM:
-			return x.(int) % y.(int), evalType
-		case token.AND:
-			return x.(int) & y.(int), evalType
-		case token.OR:
-			return x.(int) | y.(int), evalType
-		case token.XOR:
-			return x.(int) ^ y.(int), evalType
-		case token.SHL:
-			return x.(int) << y.(int), evalType
-		case token.SHR:
-			return x.(int) >> y.(int), evalType
-		}
+		return EvaluateBinary(x, y, valueExpr.Op, evalTypex, evalTypey)
 	case *ast.ParenExpr:
 		return pkg.evaluateConstValue(file, iota, valueExpr.X, globalEvaluator, recursiveStack)
 	case *ast.CallExpr:
 		//data conversion
-		if ident, ok := valueExpr.Fun.(*ast.Ident); ok && len(valueExpr.Args) == 1 && IsGolangPrimitiveType(ident.Name) {
-			arg, _ := pkg.evaluateConstValue(file, iota, valueExpr.Args[0], globalEvaluator, recursiveStack)
-			return arg, nil
+		if len(valueExpr.Args) != 1 {
+			return nil, nil
+		}
+		arg := valueExpr.Args[0]
+		if ident, ok := valueExpr.Fun.(*ast.Ident); ok {
+			name := ident.Name
+			if name == "uintptr" {
+				name = "uint"
+			}
+			if IsGolangPrimitiveType(name) {
+				value, _ := pkg.evaluateConstValue(file, iota, arg, globalEvaluator, recursiveStack)
+				value = EvaluateDataConversion(value, name)
+				return value, nil
+			} else if name == "len" {
+				value, _ := pkg.evaluateConstValue(file, iota, arg, globalEvaluator, recursiveStack)
+				return reflect.ValueOf(value).Len(), nil
+			}
+			typeDef := globalEvaluator.FindTypeSpec(name, file)
+			if typeDef == nil {
+				return nil, nil
+			}
+			return arg, valueExpr.Fun
+		} else if selector, ok := valueExpr.Fun.(*ast.SelectorExpr); ok {
+			typeDef := globalEvaluator.FindTypeSpec(fullTypeName(selector.X.(*ast.Ident).Name, selector.Sel.Name), file)
+			if typeDef == nil {
+				return nil, nil
+			}
+			return arg, typeDef.TypeSpec.Type
 		}
 	}
 	return nil, nil

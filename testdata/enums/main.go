@@ -14,5 +14,4 @@ package main
 
 // @BasePath  /v2
 func main() {
-
 }
