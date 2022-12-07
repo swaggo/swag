@@ -219,3 +219,14 @@ func TestCalledTwicelRegister(t *testing.T) {
 func setup() {
 	swags = nil
 }
+
+func TestGetSwagger(t *testing.T) {
+	setup()
+	instance := &s{}
+	Register(Name, instance)
+	swagger := GetSwagger(Name)
+	assert.Equal(t, instance, swagger)
+
+	swagger = GetSwagger("invalid")
+	assert.Nil(t, swagger)
+}

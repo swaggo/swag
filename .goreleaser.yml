@@ -10,6 +10,8 @@ build:
   ignore:
     - goos: darwin
       goarch: arm64
+  env:
+    - CGO_ENABLED=0
 archives:
   -
     replacements:

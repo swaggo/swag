@@ -130,3 +130,11 @@ type SwagReturn []map[string]string
 func GetPet6MapString() {
 
 }
+
+// @Success 200 {object}  api.GetPet6FunctionScopedResponse.response "ok"
+// @Router /GetPet6FunctionScopedResponse [get]
+func GetPet6FunctionScopedResponse() {
+	type response struct {
+		Name string
+	}
+}

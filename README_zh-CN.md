@@ -47,13 +47,10 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 2. 使用如下命令下载swag：
 
 ```bash
-$ go get -u github.com/swaggo/swag/cmd/swag
-
-# 1.16 及以上版本
 $ go install github.com/swaggo/swag/cmd/swag@latest
 ```
 
-从源码开始构建的话，需要有Go环境（1.15及以上版本）。
+从源码开始构建的话，需要有Go环境（1.16及以上版本）。
 
 或者从github的release页面下载预编译好的二进制文件。
 
@@ -123,6 +120,13 @@ OPTIONS:
 - [echo](http://github.com/swaggo/echo-swagger)
 - [buffalo](https://github.com/swaggo/buffalo-swagger)
 - [net/http](https://github.com/swaggo/http-swagger)
+- [net/http](https://github.com/swaggo/http-swagger)
+- [gorilla/mux](https://github.com/swaggo/http-swagger)
+- [go-chi/chi](https://github.com/swaggo/http-swagger)
+- [flamingo](https://github.com/i-love-flamingo/swagger)
+- [fiber](https://github.com/gofiber/swagger)
+- [atreugo](https://github.com/Nerzal/atreugo-swagger)
+- [hertz](https://github.com/hertz-contrib/swagger)
 
 ## 如何与Gin集成
 

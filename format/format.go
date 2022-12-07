@@ -2,7 +2,6 @@ package format
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -91,7 +90,7 @@ func (f *Format) excludeFile(path string) bool {
 }
 
 func (f *Format) format(path string) error {
-	contents, err := ioutil.ReadFile(path)
+	contents, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -103,7 +102,7 @@ func (f *Format) format(path string) error {
 }
 
 func write(path string, contents []byte) error {
-	f, err := ioutil.TempFile(filepath.Split(path))
+	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path))
 	if err != nil {
 		return err
 	}

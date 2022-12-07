@@ -1,0 +1,323 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/posts-multi/": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/MultiBody-Post-Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Response-Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/MultiResponse-Post-Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts-multis/": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/MultiBody-array_Post-array2_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Response-array_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/MultiResponse-array_Post-array2_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add a new pet to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Body-Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Response-Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/MultiResponse-Post-Post"
+                        }
+                    },
+                    "400": {
+                        "description": "We need ID!!",
+                        "schema": {
+                            "$ref": "#/definitions/web.APIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Can not find ID",
+                        "schema": {
+                            "$ref": "#/definitions/web.APIError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/aliaspkg": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add a new pet to the store",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.AliasPkgGenericResponse-Post"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Body-Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Post"
+                }
+            }
+        },
+        "MultiBody-Post-Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Post"
+                },
+                "meta": {
+                    "$ref": "#/definitions/Post"
+                }
+            }
+        },
+        "MultiBody-array_Post-array2_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Post"
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/Post"
+                        }
+                    }
+                }
+            }
+        },
+        "MultiResponse-Post-Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Post"
+                },
+                "meta": {
+                    "$ref": "#/definitions/Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "MultiResponse-array_Post-array2_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Post"
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/Post"
+                        }
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "Post": {
+            "type": "object",
+            "properties": {
+                "@uri": {
+                    "type": "string"
+                },
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        },
+        "Response-Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "Response-array_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Post"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.APIError": {
+            "description": "API error with information about it",
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Error time",
+                    "type": "string"
+                },
+                "error": {
+                    "description": "Error an Api error",
+                    "type": "string"
+                },
+                "errorCtx": {
+                    "description": "Error `context` tick comment",
+                    "type": "string"
+                },
+                "errorNo": {
+                    "description": "Error `number` tick comment",
+                    "type": "integer"
+                }
+            }
+        },
+        "web.AliasPkgGenericResponse-Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

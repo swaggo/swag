@@ -3,8 +3,6 @@ package swag
 import (
 	"errors"
 	"fmt"
-	"go/ast"
-	"strings"
 
 	"github.com/go-openapi/spec"
 )
@@ -26,12 +24,17 @@ const (
 	STRING = "string"
 	// FUNC represent a function value.
 	FUNC = "func"
+	// ERROR represent a error value.
+	ERROR = "error"
 	// INTERFACE represent a interface value.
 	INTERFACE = "interface{}"
 	// ANY represent a any value.
 	ANY = "any"
 	// NIL represent a empty value.
 	NIL = "nil"
+
+	// IgnoreNameOverridePrefix Prepend to model to avoid renaming based on comment.
+	IgnoreNameOverridePrefix = '$'
 )
 
 // CheckSchemaType checks if typeName is not a name of primitive type.
@@ -61,6 +64,11 @@ func IsPrimitiveType(typeName string) bool {
 	}
 
 	return false
+}
+
+// IsInterfaceLike determines whether the swagger type name is an go named interface type like error type.
+func IsInterfaceLike(typeName string) bool {
+	return typeName == ERROR || typeName == ANY
 }
 
 // IsNumericType determines whether the swagger type name is a numeric type.
@@ -106,8 +114,7 @@ func IsGolangPrimitiveType(typeName string) bool {
 		"float32",
 		"float64",
 		"bool",
-		"string",
-		"any":
+		"string":
 		return true
 	}
 
@@ -124,24 +131,34 @@ func TransToValidCollectionFormat(format string) string {
 	return ""
 }
 
-// TypeDocName get alias from comment '// @name ', otherwise the original type name to display in doc.
-func TypeDocName(pkgName string, spec *ast.TypeSpec) string {
-	if spec != nil {
-		if spec.Comment != nil {
-			for _, comment := range spec.Comment.List {
-				texts := strings.Split(strings.TrimSpace(strings.TrimLeft(comment.Text, "/")), " ")
-				if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
-					return texts[1]
-				}
-			}
-		}
+func ignoreNameOverride(name string) bool {
+	return len(name) != 0 && name[0] == IgnoreNameOverridePrefix
+}
 
-		if spec.Name != nil {
-			return fullTypeName(strings.Split(pkgName, ".")[0], spec.Name.Name)
-		}
+// IsComplexSchema whether a schema is complex and should be a ref schema
+func IsComplexSchema(schema *spec.Schema) bool {
+	// a enum type should be complex
+	if len(schema.Enum) > 0 {
+		return true
 	}
 
-	return pkgName
+	// a deep array type is complex, how to determine deep? here more than 2 ,for example: [][]object,[][][]int
+	if len(schema.Type) > 2 {
+		return true
+	}
+
+	//Object included, such as Object or []Object
+	for _, st := range schema.Type {
+		if st == OBJECT {
+			return true
+		}
+	}
+	return false
+}
+
+// IsRefSchema whether a schema is a reference schema.
+func IsRefSchema(schema *spec.Schema) bool {
+	return schema.Ref.Ref.GetURL() != nil
 }
 
 // RefSchema build a reference schema.

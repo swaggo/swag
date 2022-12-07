@@ -10,7 +10,6 @@ import (
 	"sync"
 	"unicode"
 
-	"github.com/go-openapi/jsonreference"
 	"github.com/go-openapi/spec"
 )
 
@@ -18,6 +17,7 @@ var _ FieldParser = &tagBaseFieldParser{p: nil, field: nil, tag: ""}
 
 const (
 	requiredLabel    = "required"
+	optionalLabel    = "optional"
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
 )
@@ -43,7 +43,7 @@ func newTagBaseFieldParser(p *Parser, field *ast.Field) FieldParser {
 
 func (ps *tagBaseFieldParser) ShouldSkip() bool {
 	// Skip non-exported fields.
-	if !ast.IsExported(ps.field.Names[0].Name) {
+	if ps.field.Names != nil && !ast.IsExported(ps.field.Names[0].Name) {
 		return true
 	}
 
@@ -74,6 +74,10 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 		if name != "" {
 			return name, nil
 		}
+	}
+
+	if ps.field.Names == nil {
+		return "", nil
 	}
 
 	switch ps.p.PropNamingStrategy {
@@ -206,12 +210,30 @@ func splitNotWrapped(s string, sep rune) []string {
 	return result
 }
 
+// ComplementSchema complement schema with field properties
 func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 	types := ps.p.GetSchemaTypePath(schema, 2)
 	if len(types) == 0 {
 		return fmt.Errorf("invalid type for field: %s", ps.field.Names[0])
 	}
 
+	if IsRefSchema(schema) {
+		var newSchema = spec.Schema{}
+		err := ps.complementSchema(&newSchema, types)
+		if err != nil {
+			return err
+		}
+		if !reflect.ValueOf(newSchema).IsZero() {
+			*schema = *(newSchema.WithAllOf(*schema))
+		}
+		return nil
+	}
+
+	return ps.complementSchema(schema, types)
+}
+
+// complementSchema complement schema with field properties
+func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []string) error {
 	if ps.field.Tag == nil {
 		if ps.field.Doc != nil {
 			schema.Description = strings.TrimSpace(ps.field.Doc.Text())
@@ -352,19 +374,6 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 
 	schema.ReadOnly = ps.tag.Get(readOnlyTag) == "true"
 
-	if !reflect.ValueOf(schema.Ref).IsZero() && schema.ReadOnly {
-		schema.AllOf = []spec.Schema{*spec.RefSchema(schema.Ref.String())}
-		schema.Ref = spec.Ref{
-			Ref: jsonreference.Ref{
-				HasFullURL:      false,
-				HasURLPathOnly:  false,
-				HasFragmentOnly: false,
-				HasFileScheme:   false,
-				HasFullFilePath: false,
-			},
-		} // clear out existing ref
-	}
-
 	defaultTagValue := ps.tag.Get(defaultTag)
 	if defaultTagValue != "" {
 		value, err := defineType(field.schemaType, defaultTagValue)
@@ -404,13 +413,13 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			if schema.Items.Schema.Extensions == nil {
 				schema.Items.Schema.Extensions = map[string]interface{}{}
 			}
-			schema.Items.Schema.Extensions["x-enum-varnames"] = field.enumVarNames
+			schema.Items.Schema.Extensions[enumVarNamesExtension] = field.enumVarNames
 		} else {
 			// Add to top level schema
 			if schema.Extensions == nil {
 				schema.Extensions = map[string]interface{}{}
 			}
-			schema.Extensions["x-enum-varnames"] = field.enumVarNames
+			schema.Extensions[enumVarNamesExtension] = field.enumVarNames
 		}
 	}
 
@@ -472,8 +481,11 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	bindingTag := ps.tag.Get(bindingTag)
 	if bindingTag != "" {
 		for _, val := range strings.Split(bindingTag, ",") {
-			if val == requiredLabel {
+			switch val {
+			case requiredLabel:
 				return true, nil
+			case optionalLabel:
+				return false, nil
 			}
 		}
 	}
@@ -481,13 +493,16 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	validateTag := ps.tag.Get(validateTag)
 	if validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
-			if val == requiredLabel {
+			switch val {
+			case requiredLabel:
 				return true, nil
+			case optionalLabel:
+				return false, nil
 			}
 		}
 	}
 
-	return false, nil
+	return ps.p.RequiredByDefault, nil
 }
 
 func parseValidTags(validTag string, sf *structField) {

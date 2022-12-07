@@ -1,0 +1,428 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/movie": {
+            "post": {
+                "description": "Create a new movie production",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Create movie",
+                "parameters": [
+                    {
+                        "description": "Movie Create-Payload",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateMovie"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/api.CreateMovie"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts": {
+            "get": {
+                "description": "Get All of the Posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List Posts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "next_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "prev_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "rows",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/web.PostResponse"
+                        }
+                    },
+                    "201": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/web.PostResponses"
+                        }
+                    },
+                    "202": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/web.StringResponse"
+                        }
+                    },
+                    "203": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/api.NestedResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.CreateMovie": {
+            "type": "object",
+            "properties": {
+                "audience": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "audienceNames": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "cameraPeople": {
+                    "$ref": "#/definitions/types.Field-array_api_Person"
+                },
+                "detail1": {
+                    "$ref": "#/definitions/types.Field-types_Field-api_Person"
+                },
+                "detail2": {
+                    "$ref": "#/definitions/types.Field-types_Field-string"
+                },
+                "directors": {
+                    "$ref": "#/definitions/types.Field-array_api_Person"
+                },
+                "mainActor": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "producer": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "supportingCast": {
+                    "$ref": "#/definitions/types.Field-array_api_Person"
+                }
+            }
+        },
+        "api.NestedResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "items2": {
+                    "type": "integer"
+                },
+                "post": {
+                    "$ref": "#/definitions/types.Field-array_types_Post"
+                }
+            }
+        },
+        "api.Person": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Field-api_Person": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "$ref": "#/definitions/api.Person"
+                },
+                "value2": {
+                    "$ref": "#/definitions/api.Person"
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/api.Person"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "types.Field-array_api_Person": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "value2": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/api.Person"
+                        }
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/api.Person"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "types.Field-array_types_Post": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "value2": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/types.Post"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "types.Field-string": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "string"
+                },
+                "value2": {
+                    "type": "string"
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "type": "string"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "types.Field-types_Field-api_Person": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "value2": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Field-api_Person"
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/types.Field-api_Person"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "types.Field-types_Field-string": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "$ref": "#/definitions/types.Field-string"
+                },
+                "value2": {
+                    "$ref": "#/definitions/types.Field-string"
+                },
+                "value3": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Field-string"
+                    }
+                },
+                "value4": {
+                    "type": "object",
+                    "properties": {
+                        "subValue1": {
+                            "$ref": "#/definitions/types.Field-string"
+                        },
+                        "subValue2": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "types.Post": {
+            "type": "object",
+            "properties": {
+                "@uri": {
+                    "$ref": "#/definitions/types.Field-string"
+                },
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        },
+        "web.PostResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "items2": {
+                    "$ref": "#/definitions/types.Post"
+                }
+            }
+        },
+        "web.PostResponses": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "items2": {
+                    "$ref": "#/definitions/types.Post"
+                }
+            }
+        },
+        "web.StringResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "items2": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}
