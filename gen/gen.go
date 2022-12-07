@@ -72,7 +72,7 @@ type Config struct {
 	// excludes dirs and files in SearchDir,comma separated
 	Excludes string
 
-	// outputs only those operations with "x-public: true" extension
+	// outputs only specific extension
 	ParseExtension string
 
 	// OutputDir represents the output directory for all the generated files

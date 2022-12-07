@@ -3878,3 +3878,51 @@ func TestParser_matchTags(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_parseExtension(t *testing.T) {
+
+	src, err := os.ReadFile("testdata/parseExtension/parseExtension.go")
+	assert.NoError(t, err)
+
+	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		parser        *Parser
+		expectedPaths map[string]bool
+	}{
+		{
+			name:          "when no flag is set, everything is exported",
+			parser:        New(),
+			expectedPaths: map[string]bool{"/without-extension": true, "/with-another-extension": true, "/with-correct-extension": true},
+		},
+		{
+			name:          "when nonexistent flag is set, nothing is exported",
+			parser:        New(SetParseExtension("nonexistent-extension-filter")),
+			expectedPaths: map[string]bool{"/without-extension": false, "/with-another-extension": false, "/with-correct-extension": false},
+		},
+		{
+			name:          "when correct flag is set, only that Path is exported",
+			parser:        New(SetParseExtension("google-backend")),
+			expectedPaths: map[string]bool{"/without-extension": false, "/with-another-extension": false, "/with-correct-extension": true},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err = tt.parser.ParseRouterAPIInfo("", f)
+			assert.NoError(t, err)
+			for p, isExpected := range tt.expectedPaths {
+				_, ok := tt.parser.swagger.Paths.Paths[p]
+				assert.Equal(t, isExpected, ok)
+			}
+
+			for p := range tt.parser.swagger.Paths.Paths {
+				_, isExpected := tt.expectedPaths[p]
+				assert.Equal(t, isExpected, true)
+			}
+		})
+
+	}
+}

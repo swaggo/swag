@@ -137,7 +137,7 @@ type Parser struct {
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
 
-	// tells parser to include operations with "x-public: true" extension
+	// tells parser to include only specific extension
 	parseExtension string
 
 	// debugging output goes here
