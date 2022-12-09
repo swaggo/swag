@@ -312,6 +312,74 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseResponseWithLocalStruct(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 struct Test`
+	operation := NewOperation(nil)
+	FileName := "swag"
+	PackageName := "github.com/swagger/" + FileName
+
+	// Add test type with field to see the difference
+	definition := &TypeSpecDef{
+		PkgPath: PackageName,
+		File: &ast.File{
+			Name: &ast.Ident{
+				Name: FileName,
+			},
+		},
+		TypeSpec: &ast.TypeSpec{
+			Name: &ast.Ident{
+				Name: "TypeName",
+			},
+			Type: &ast.StructType{
+				Fields: &ast.FieldList{
+					List: []*ast.Field{
+						{
+							Names: []*ast.Ident{ast.NewIdent("FieldName")},
+							Type:  ast.NewIdent("string"),
+						},
+					},
+				},
+			},
+		},
+	}
+	file := &ast.File{Name: ast.NewIdent(FileName), Package: token.NoPos}
+
+	operation.parser.packages.files = map[*ast.File]*AstFileInfo{
+		file: {
+			PackagePath: PackageName,
+		},
+	}
+	packageDef := NewPackageDefinitions(FileName, PackageName)
+	packageDef.TypeDefinitions["Test"] = definition
+	operation.parser.packages.packages = map[string]*PackageDefinitions{
+		PackageName: packageDef,
+	}
+
+	err := operation.ParseComment(comment, file)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(operation, "", "    ")
+
+	expected := `{
+		"responses": {
+			"200": {
+				"description": "OK",
+				"schema": {
+					"type": "object",
+					"properties": {
+						"fieldName": {
+							"type": "string"
+						}
+					}
+				}
+			}
+		}
+	}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseResponseCommentWithNestedPrimitiveType(t *testing.T) {
 	t.Parallel()
 
@@ -2265,45 +2333,45 @@ func TestParseObjectSchema(t *testing.T) {
 
 	operation := NewOperation(nil)
 
-	schema, err := operation.parseObjectSchema("interface{}", nil)
+	schema, err := operation.parseObjectSchema("interface{}", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, PrimitiveSchema(OBJECT))
 
-	schema, err = operation.parseObjectSchema("any", nil)
+	schema, err = operation.parseObjectSchema("any", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, PrimitiveSchema(OBJECT))
 
-	schema, err = operation.parseObjectSchema("int", nil)
+	schema, err = operation.parseObjectSchema("int", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, PrimitiveSchema(INTEGER))
 
-	schema, err = operation.parseObjectSchema("[]string", nil)
+	schema, err = operation.parseObjectSchema("[]string", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.ArrayProperty(PrimitiveSchema(STRING)))
 
-	schema, err = operation.parseObjectSchema("[]int", nil)
+	schema, err = operation.parseObjectSchema("[]int", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.ArrayProperty(PrimitiveSchema(INTEGER)))
 
-	_, err = operation.parseObjectSchema("[]bleah", nil)
+	_, err = operation.parseObjectSchema("[]bleah", nil, true)
 	assert.Error(t, err)
 
-	schema, err = operation.parseObjectSchema("map[]string", nil)
+	schema, err = operation.parseObjectSchema("map[]string", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.MapProperty(PrimitiveSchema(STRING)))
 
-	schema, err = operation.parseObjectSchema("map[]int", nil)
+	schema, err = operation.parseObjectSchema("map[]int", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.MapProperty(PrimitiveSchema(INTEGER)))
 
-	schema, err = operation.parseObjectSchema("map[]interface{}", nil)
+	schema, err = operation.parseObjectSchema("map[]interface{}", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, spec.MapProperty(nil))
 
-	_, err = operation.parseObjectSchema("map[string", nil)
+	_, err = operation.parseObjectSchema("map[string", nil, true)
 	assert.Error(t, err)
 
-	_, err = operation.parseObjectSchema("map[]bleah", nil)
+	_, err = operation.parseObjectSchema("map[]bleah", nil, true)
 	assert.Error(t, err)
 
 	operation.parser = New()
@@ -2323,11 +2391,11 @@ func TestParseObjectSchema(t *testing.T) {
 			},
 		},
 	}
-	_, err = operation.parseObjectSchema("model.User", nil)
+	_, err = operation.parseObjectSchema("model.User", nil, true)
 	assert.NoError(t, err)
 
 	operation.parser = nil
-	schema, err = operation.parseObjectSchema("user.Model", nil)
+	schema, err = operation.parseObjectSchema("user.Model", nil, true)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, RefSchema("user.Model"))
 }
