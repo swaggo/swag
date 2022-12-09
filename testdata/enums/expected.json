@@ -19,14 +19,66 @@
     "paths": {
         "/students": {
             "post": {
-                "description": "enums",
-                "summary": "enums",
+                "description": "test enums in response models",
+                "summary": "test enums in response models",
                 "responses": {
                     "400": {
                         "description": "ok",
                         "schema": {
                             "$ref": "#/definitions/types.Person"
                         }
+                    }
+                }
+            }
+        },
+        "/students/{typeinpath}/": {
+            "get": {
+                "description": "test enums in response request",
+                "summary": "test enums in response request",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "teacher",
+                                "student",
+                                "Other"
+                            ],
+                            "type": "string"
+                        },
+                        "description": "type",
+                        "name": "typeinquery",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
+                        "type": "string",
+                        "description": "type",
+                        "name": "typeinheader",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
+                        "type": "string",
+                        "description": "type",
+                        "name": "typeinpath",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
                     }
                 }
             }
