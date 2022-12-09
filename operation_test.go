@@ -315,7 +315,7 @@ func TestParseResponseCommentWithObjectType(t *testing.T) {
 func TestParseResponseWithLocalStruct(t *testing.T) {
 	t.Parallel()
 
-	comment := `@Success 200 struct Test`
+	comment := `@Success 200 local Test`
 	operation := NewOperation(nil)
 	FileName := "swag"
 	PackageName := "github.com/swagger/" + FileName

@@ -32,6 +32,8 @@ const (
 	ANY = "any"
 	// NIL represent a empty value.
 	NIL = "nil"
+	// LOCAL represent a local object value.
+	LOCAL = "local"
 
 	// IgnoreNameOverridePrefix Prepend to model to avoid renaming based on comment.
 	IgnoreNameOverridePrefix = '$'

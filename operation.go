@@ -968,7 +968,7 @@ func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refTyp
 		}
 
 		return spec.ArrayProperty(schema), nil
-	case "struct":
+	case LOCAL:
 		return operation.parseObjectSchema(refType, astFile, false)
 	default:
 		return PrimitiveSchema(schemaType), nil
