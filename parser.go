@@ -838,12 +838,29 @@ func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
 	return true
 }
 
+func (parser *Parser) matchExtension(comments []*ast.Comment) (match bool) {
+	if len(parser.parseExtension) != 0 {
+		for _, comment := range comments {
+			commentLine := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
+			fields := FieldsByAnySpace(commentLine, 2)
+			lowerAttribute := strings.ToLower(fields[0])
+
+			if lowerAttribute == fmt.Sprintf("@x-%s", strings.ToLower(parser.parseExtension)) {
+				return true
+			}
+		}
+		return false
+	}
+	return true
+}
+
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) error {
 	for _, astDescription := range astFile.Decls {
 		astDeclaration, ok := astDescription.(*ast.FuncDecl)
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-			if parser.matchTags(astDeclaration.Doc.List) {
+			if parser.matchTags(astDeclaration.Doc.List) &&
+				parser.matchExtension(astDeclaration.Doc.List) {
 				// for per 'function' comment, create a new 'Operation' object
 				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
 				for _, comment := range astDeclaration.Doc.List {
@@ -894,14 +911,6 @@ func processRouterOperation(parser *Parser, operation *Operation) error {
 		pathItem, ok = parser.swagger.Paths.Paths[routeProperties.Path]
 		if !ok {
 			pathItem = spec.PathItem{}
-		}
-
-		// enable filtering of public endpoints
-		if len(parser.parseExtension) > 0 {
-			if val, ok := operation.Extensions[fmt.Sprintf("x-%s", parser.parseExtension)]; !ok || val == false {
-				parser.debug.Printf("skipping operation %s %s as it's not matching extension %s\n", routeProperties.HTTPMethod, routeProperties.Path, parser.parseExtension)
-				continue
-			}
 		}
 
 		op := refRouteMethodOp(&pathItem, routeProperties.HTTPMethod)
