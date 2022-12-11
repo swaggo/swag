@@ -3895,17 +3895,17 @@ func TestParser_parseExtension(t *testing.T) {
 		{
 			name:          "when no flag is set, everything is exported",
 			parser:        New(),
-			expectedPaths: map[string]bool{"/without-extension": true, "/with-another-extension": true, "/with-correct-extension": true},
+			expectedPaths: map[string]bool{"/without-extension": true, "/with-another-extension": true, "/with-correct-extension": true, "/with-empty-comment-line": true},
 		},
 		{
 			name:          "when nonexistent flag is set, nothing is exported",
 			parser:        New(SetParseExtension("nonexistent-extension-filter")),
-			expectedPaths: map[string]bool{"/without-extension": false, "/with-another-extension": false, "/with-correct-extension": false},
+			expectedPaths: map[string]bool{"/without-extension": false, "/with-another-extension": false, "/with-correct-extension": false, "/with-empty-comment-line": false},
 		},
 		{
 			name:          "when correct flag is set, only that Path is exported",
 			parser:        New(SetParseExtension("google-backend")),
-			expectedPaths: map[string]bool{"/without-extension": false, "/with-another-extension": false, "/with-correct-extension": true},
+			expectedPaths: map[string]bool{"/without-extension": false, "/with-another-extension": false, "/with-correct-extension": true, "/with-empty-comment-line": false},
 		},
 	}
 
