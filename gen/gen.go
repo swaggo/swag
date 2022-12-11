@@ -72,6 +72,9 @@ type Config struct {
 	// excludes dirs and files in SearchDir,comma separated
 	Excludes string
 
+	// outputs only specific extension
+	ParseExtension string
+
 	// OutputDir represents the output directory for all the generated files
 	OutputDir string
 
@@ -167,6 +170,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetDebugger(config.Debugger),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
+		swag.SetParseExtension(config.ParseExtension),
 		swag.SetCodeExamplesDirectory(config.CodeExampleFilesDir),
 		swag.SetStrict(config.Strict),
 		swag.SetOverrides(overrides),

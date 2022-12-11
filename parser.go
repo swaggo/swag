@@ -137,6 +137,9 @@ type Parser struct {
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
 
+	// tells parser to include only specific extension
+	parseExtension string
+
 	// debugging output goes here
 	debug Debugger
 
@@ -262,6 +265,13 @@ func SetTags(include string) func(*Parser) {
 				p.tags[f] = struct{}{}
 			}
 		}
+	}
+}
+
+// SetParseExtension parses only those operations which match given extension
+func SetParseExtension(parseExtension string) func(*Parser) {
+	return func(p *Parser) {
+		p.parseExtension = parseExtension
 	}
 }
 
@@ -828,12 +838,29 @@ func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
 	return true
 }
 
+func matchExtension(extensionToMatch string, comments []*ast.Comment) (match bool) {
+	if len(extensionToMatch) != 0 {
+		for _, comment := range comments {
+			commentLine := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
+			fields := FieldsByAnySpace(commentLine, 2)
+			lowerAttribute := strings.ToLower(fields[0])
+
+			if lowerAttribute == fmt.Sprintf("@x-%s", strings.ToLower(extensionToMatch)) {
+				return true
+			}
+		}
+		return false
+	}
+	return true
+}
+
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) error {
 	for _, astDescription := range astFile.Decls {
 		astDeclaration, ok := astDescription.(*ast.FuncDecl)
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-			if parser.matchTags(astDeclaration.Doc.List) {
+			if parser.matchTags(astDeclaration.Doc.List) &&
+				matchExtension(parser.parseExtension, astDeclaration.Doc.List) {
 				// for per 'function' comment, create a new 'Operation' object
 				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
 				for _, comment := range astDeclaration.Doc.List {

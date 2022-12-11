@@ -34,6 +34,7 @@ const (
 	parseGoListFlag       = "parseGoList"
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
+	parseExtensionFlag    = "parseExtension"
 )
 
 var initFlags = []cli.Flag{
@@ -130,6 +131,11 @@ var initFlags = []cli.Flag{
 		Usage: "Parse dependency via 'go list'",
 	},
 	&cli.StringFlag{
+		Name:  parseExtensionFlag,
+		Value: "",
+		Usage: "Parse only those operations that match given extension",
+	},
+	&cli.StringFlag{
 		Name:    tagsFlag,
 		Aliases: []string{"t"},
 		Value:   "",
@@ -158,6 +164,7 @@ func initAction(ctx *cli.Context) error {
 	return gen.New().Build(&gen.Config{
 		SearchDir:           ctx.String(searchDirFlag),
 		Excludes:            ctx.String(excludeFlag),
+		ParseExtension:      ctx.String(parseExtensionFlag),
 		MainAPIFile:         ctx.String(generalInfoFlag),
 		PropNamingStrategy:  strategy,
 		OutputDir:           ctx.String(outputFlag),
