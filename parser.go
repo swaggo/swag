@@ -546,7 +546,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			parser.swagger.SecurityDefinitions[value] = scheme
 
 		case "@query.collection.format":
-			parser.collectionFormatInQuery = value
+			parser.collectionFormatInQuery = TransToValidCollectionFormat(value)
 		default:
 			if strings.HasPrefix(attribute, "@x-") {
 				extensionName := attribute[1:]
