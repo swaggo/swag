@@ -3732,10 +3732,10 @@ func TestTryAddDescription(t *testing.T) {
 		{
 			name: "added description",
 			lines: []string{
-				"@securitydefinitions.apikey test",
-				"@in header",
-				"@name x-api-key",
-				"@description some description",
+				"\t@securitydefinitions.apikey test",
+				"\t@in header",
+				"\t@name x-api-key",
+				"\t@description some description",
 			},
 			want: &spec.SecurityScheme{
 				SecuritySchemeProps: spec.SecuritySchemeProps{
@@ -3749,9 +3749,9 @@ func TestTryAddDescription(t *testing.T) {
 		{
 			name: "no description",
 			lines: []string{
-				"@securitydefinitions.oauth2.application swagger",
-				"@tokenurl https://example.com/oauth/token",
-				"@not-description some description",
+				" @securitydefinitions.oauth2.application swagger",
+				" @tokenurl https://example.com/oauth/token",
+				" @not-description some description",
 			},
 			want: &spec.SecurityScheme{
 				SecuritySchemeProps: spec.SecuritySchemeProps{

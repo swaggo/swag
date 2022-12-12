@@ -631,7 +631,7 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 
 	var search []string
 
-	attribute := strings.ToLower(strings.Split(lines[*index], " ")[0])
+	attribute := strings.ToLower(FieldsByAnySpace(lines[*index], 2)[0])
 	switch attribute {
 	case secBasicAttr:
 		return spec.BasicAuth(), nil
@@ -652,14 +652,23 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 	extensions, description := make(map[string]interface{}), ""
 
 	for ; *index < len(lines); *index++ {
-		v := lines[*index]
+		v := strings.TrimSpace(lines[*index])
+		if len(v) == 0 {
+			continue
+		}
 
-		securityAttr := strings.ToLower(strings.Split(v, " ")[0])
+		fields := FieldsByAnySpace(v, 2)
+		securityAttr := strings.ToLower(fields[0])
+		var value string
+		if len(fields) > 1 {
+			value = fields[1]
+		}
+
 		for _, findterm := range search {
 			if securityAttr == findterm {
-				attrMap[securityAttr] = strings.TrimSpace(v[len(securityAttr):])
+				attrMap[securityAttr] = value
 
-				continue
+				break
 			}
 		}
 
@@ -674,12 +683,12 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 
 		if strings.HasPrefix(securityAttr, "@x-") {
 			// Add the custom attribute without the @
-			extensions[securityAttr[1:]] = strings.TrimSpace(v[len(securityAttr):])
+			extensions[securityAttr[1:]] = value
 		}
 
 		// Not mandatory field
 		if securityAttr == descriptionAttr {
-			description = strings.TrimSpace(v[len(securityAttr):])
+			description = value
 		}
 
 		// next securityDefinitions
