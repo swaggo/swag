@@ -130,6 +130,26 @@
                     }
                 }
             }
+        },
+        "/posts-self-nested-struct/": {
+            "get": {
+                "description": "Get All of the Posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List Posts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericNodeThree-string"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -578,6 +598,23 @@
                 "status": {
                     "description": "Status of the things",
                     "type": "string"
+                }
+            }
+        },
+        "web.GenericNodeThree-string": {
+            "type": "object",
+            "properties": {
+                "current": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "next": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.GenericNodeThree-string"
+                    }
                 }
             }
         }

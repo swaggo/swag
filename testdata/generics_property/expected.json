@@ -184,15 +184,7 @@
                     }
                 },
                 "value4": {
-                    "type": "object",
-                    "properties": {
-                        "subValue1": {
-                            "$ref": "#/definitions/api.Person"
-                        },
-                        "subValue2": {
-                            "type": "string"
-                        }
-                    }
+                    "$ref": "#/definitions/types.SubField1-api_Person-string"
                 }
             }
         },
@@ -221,15 +213,7 @@
                     }
                 },
                 "value4": {
-                    "type": "object",
-                    "properties": {
-                        "subValue1": {
-                            "$ref": "#/definitions/api.Person"
-                        },
-                        "subValue2": {
-                            "type": "string"
-                        }
-                    }
+                    "$ref": "#/definitions/types.SubField1-api_Person-string"
                 }
             }
         },
@@ -258,15 +242,7 @@
                     }
                 },
                 "value4": {
-                    "type": "object",
-                    "properties": {
-                        "subValue1": {
-                            "$ref": "#/definitions/types.Post"
-                        },
-                        "subValue2": {
-                            "type": "string"
-                        }
-                    }
+                    "$ref": "#/definitions/types.SubField1-types_Post-string"
                 }
             }
         },
@@ -286,15 +262,7 @@
                     }
                 },
                 "value4": {
-                    "type": "object",
-                    "properties": {
-                        "subValue1": {
-                            "type": "string"
-                        },
-                        "subValue2": {
-                            "type": "string"
-                        }
-                    }
+                    "$ref": "#/definitions/types.SubField1-string-string"
                 }
             }
         },
@@ -314,15 +282,7 @@
                     }
                 },
                 "value4": {
-                    "type": "object",
-                    "properties": {
-                        "subValue1": {
-                            "$ref": "#/definitions/types.Field-api_Person"
-                        },
-                        "subValue2": {
-                            "type": "string"
-                        }
-                    }
+                    "$ref": "#/definitions/types.SubField1-types_Field-api_Person-string"
                 }
             }
         },
@@ -342,15 +302,7 @@
                     }
                 },
                 "value4": {
-                    "type": "object",
-                    "properties": {
-                        "subValue1": {
-                            "$ref": "#/definitions/types.Field-string"
-                        },
-                        "subValue2": {
-                            "type": "string"
-                        }
-                    }
+                    "$ref": "#/definitions/types.SubField1-types_Field-string-string"
                 }
             }
         },
@@ -382,6 +334,61 @@
                     "description": "Post name",
                     "type": "string",
                     "example": "poti"
+                }
+            }
+        },
+        "types.SubField1-api_Person-string": {
+            "type": "object",
+            "properties": {
+                "subValue1": {
+                    "$ref": "#/definitions/api.Person"
+                },
+                "subValue2": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.SubField1-string-string": {
+            "type": "object",
+            "properties": {
+                "subValue1": {
+                    "type": "string"
+                },
+                "subValue2": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.SubField1-types_Field-api_Person-string": {
+            "type": "object",
+            "properties": {
+                "subValue1": {
+                    "$ref": "#/definitions/types.Field-api_Person"
+                },
+                "subValue2": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.SubField1-types_Field-string-string": {
+            "type": "object",
+            "properties": {
+                "subValue1": {
+                    "$ref": "#/definitions/types.Field-string"
+                },
+                "subValue2": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.SubField1-types_Post-string": {
+            "type": "object",
+            "properties": {
+                "subValue1": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "subValue2": {
+                    "type": "string"
                 }
             }
         },

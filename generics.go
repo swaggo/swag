@@ -95,12 +95,13 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 				NamePos: original.TypeSpec.Name.NamePos,
 				Obj:     original.TypeSpec.Name.Obj,
 			},
-			Type:   pkgDefs.resolveGenericType(original.File, original.TypeSpec.Type, genericParamTypeDefs),
 			Doc:    original.TypeSpec.Doc,
 			Assign: original.TypeSpec.Assign,
 		},
 	}
 	pkgDefs.uniqueDefinitions[name] = parametrizedTypeSpec
+
+	parametrizedTypeSpec.TypeSpec.Type = pkgDefs.resolveGenericType(original.File, original.TypeSpec.Type, genericParamTypeDefs)
 
 	return parametrizedTypeSpec
 }
@@ -184,7 +185,7 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 		fullGenericName, _ := getGenericFieldType(file, expr, genericParamTypeDefs)
 		typeDef := pkgDefs.FindTypeSpec(fullGenericName, file)
 		if typeDef != nil {
-			return typeDef.TypeSpec.Type
+			return typeDef.TypeSpec.Name
 		}
 	case *ast.StructType:
 		newStructTypeDef := &ast.StructType{

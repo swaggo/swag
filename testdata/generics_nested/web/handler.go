@@ -62,3 +62,8 @@ type APIError struct {
 	ErrorCtx  string    // Error `context` tick comment
 	CreatedAt time.Time // Error time
 }
+
+type GenericNodeThree[T any] struct {
+	CurrentData []T                    `json:"current"`
+	Next        []*GenericNodeThree[T] `json:"next"`
+}
