@@ -843,10 +843,12 @@ func matchExtension(extensionToMatch string, comments []*ast.Comment) (match boo
 		for _, comment := range comments {
 			commentLine := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
 			fields := FieldsByAnySpace(commentLine, 2)
-			lowerAttribute := strings.ToLower(fields[0])
+			if len(fields) > 0 {
+				lowerAttribute := strings.ToLower(fields[0])
 
-			if lowerAttribute == fmt.Sprintf("@x-%s", strings.ToLower(extensionToMatch)) {
-				return true
+				if lowerAttribute == fmt.Sprintf("@x-%s", strings.ToLower(extensionToMatch)) {
+					return true
+				}
 			}
 		}
 		return false
