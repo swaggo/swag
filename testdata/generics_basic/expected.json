@@ -101,26 +101,6 @@
                 }
             }
         },
-        "/posts-nest-struct/": {
-            "post": {
-                "description": "get string by ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "summary": "Add new pets to the store",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/api.GenericNodeThree-string"
-                        }
-                    }
-                }
-            }
-        },
         "/posts/": {
             "post": {
                 "description": "get string by ID",
@@ -202,23 +182,6 @@
         }
     },
     "definitions": {
-        "api.GenericNodeThree-string": {
-            "type": "object",
-            "properties": {
-                "current": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "next": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/api.GenericNodeThree-string"
-                    }
-                }
-            }
-        },
         "api.Response-api_StringStruct-types_Field-int": {
             "type": "object",
             "properties": {

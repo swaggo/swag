@@ -38,3 +38,13 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 func GetPostArray(w http.ResponseWriter, r *http.Request) {
 	_ = web.GenericNestedResponse[types.Post]{}
 }
+
+// @Summary List Posts
+// @Description Get All of the Posts
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} web.GenericNodeThree[string]
+// @Router /posts-self-nested-struct/ [get]
+func GetPostSelfNestStruct(w http.ResponseWriter, r *http.Request) {
+
+}
