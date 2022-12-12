@@ -668,7 +668,7 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 		}
 
 		if isExists {
-			scopes[securityAttr[len(scopeAttrPrefix):]] = value
+			scopes[securityAttr[len(scopeAttrPrefix):]] = v[len(securityAttr):]
 		}
 
 		if strings.HasPrefix(securityAttr, "@x-") {
