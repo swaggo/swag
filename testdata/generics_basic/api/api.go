@@ -18,6 +18,11 @@ type StringStruct struct {
 	Data string
 }
 
+type GenericNodeThree[T any] struct {
+	CurrentData []T                    `json:"current"`
+	Next        []*GenericNodeThree[T] `json:"next"`
+}
+
 // @Summary Add a new pet to the store
 // @Description get string by ID
 // @Accept  json
@@ -65,4 +70,14 @@ func GetPostMulti(w http.ResponseWriter, r *http.Request) {
 func GetPostArray(w http.ResponseWriter, r *http.Request) {
 	//write your code
 	_ = web.GenericResponse[types.Post]{}
+}
+
+// @Summary Add new pets to the store
+// @Description get string by ID
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} GenericNodeThree[string]
+// @Router /posts-nest-struct/ [post]
+func GetPostNestStruct(w http.ResponseWriter, r *http.Request) {
+
 }
