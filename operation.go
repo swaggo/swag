@@ -276,11 +276,20 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 	switch paramType {
 	case "path", "header":
-		break
+		switch objectType {
+		case ARRAY:
+			if !IsPrimitiveType(refType) {
+				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
+			}
+		case OBJECT:
+			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
+		}
 	case "query", "formData":
 		switch objectType {
 		case ARRAY:
-			break
+			if !IsPrimitiveType(refType) && !(refType == "file" && paramType == "formData") {
+				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
+			}
 		case PRIMITIVE:
 			break
 		case OBJECT:
