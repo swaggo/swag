@@ -2273,6 +2273,10 @@ func TestParseObjectSchema(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, schema, PrimitiveSchema(OBJECT))
 
+	schema, err = operation.parseObjectSchema("any{data=string}", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, PrimitiveSchema(OBJECT).SetProperty("data", *PrimitiveSchema("string")))
+
 	schema, err = operation.parseObjectSchema("int", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, PrimitiveSchema(INTEGER))
