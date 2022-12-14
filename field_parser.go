@@ -20,6 +20,7 @@ const (
 	optionalLabel    = "optional"
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
+	ignoreTags       = "uri"
 )
 
 type tagBaseFieldParser struct {
@@ -51,8 +52,7 @@ func (ps *tagBaseFieldParser) ShouldSkip() bool {
 		return false
 	}
 
-	ignoreTag := ps.tag.Get(swaggerIgnoreTag)
-	if strings.EqualFold(ignoreTag, "true") {
+	if isIgnore(ps.tag) {
 		return true
 	}
 
@@ -60,6 +60,24 @@ func (ps *tagBaseFieldParser) ShouldSkip() bool {
 	name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
 	if name == "-" {
 		return true
+	}
+
+	return false
+}
+
+var ignoreTagArray = strings.Split(ignoreTags, ",")
+
+func isIgnore(tag reflect.StructTag) bool {
+	ignoreTag, ok := tag.Lookup(swaggerIgnoreTag)
+	if ok && strings.EqualFold(ignoreTag, "true") {
+		return true
+	}
+
+	for _, v := range ignoreTagArray {
+		_, ok = tag.Lookup(v)
+		if ok {
+			return ok
+		}
 	}
 
 	return false
