@@ -68,16 +68,16 @@ func (ps *tagBaseFieldParser) ShouldSkip() bool {
 func (ps *tagBaseFieldParser) FieldName() (string, error) {
 	var name string
 
-	// use "form" tag over json tag
-	name = strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0])
-	if name != "" {
-		return name, nil
-	}
-
 	if ps.field.Tag != nil {
 		// json:"tag,hoge"
 		name = strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
 
+		if name != "" {
+			return name, nil
+		}
+
+		// use "form" tag over json tag
+		name = strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0])
 		if name != "" {
 			return name, nil
 		}
