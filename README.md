@@ -316,6 +316,28 @@ Exclude folder：
 swag fmt -d ./ --exclude ./internal
 ```
 
+When using `swag fmt`, you need to ensure that you have a doc comment for the function to ensure correct formatting.
+This is due to `swag fmt` indenting swag comments with tabs, which is only allowed *after* a standard doc comment.
+
+For example, use
+
+```go
+// ListAccounts lists all existing accounts
+//
+//  @Summary      List accounts
+//  @Description  get accounts
+//  @Tags         accounts
+//  @Accept       json
+//  @Produce      json
+//  @Param        q    query     string  false  "name search by q"  Format(email)
+//  @Success      200  {array}   model.Account
+//  @Failure      400  {object}  httputil.HTTPError
+//  @Failure      404  {object}  httputil.HTTPError
+//  @Failure      500  {object}  httputil.HTTPError
+//  @Router       /accounts [get]
+func (c *Controller) ListAccounts(ctx *gin.Context) {
+```
+
 ## Implementation Status
 
 [Swagger 2.0 document](https://swagger.io/docs/specification/2-0/basic-structure/)
@@ -545,20 +567,20 @@ type Account struct {
 
 ### Function scoped struct declaration
 
-You can declare your request response structs inside a function body. 
+You can declare your request response structs inside a function body.
 You must have to follow the naming convention `<package-name>.<function-name>.<struct-name> `.
 
 ```go
 package main
 
-// @Param request body main.MyHandler.request true "query params" 
+// @Param request body main.MyHandler.request true "query params"
 // @Success 200 {object} main.MyHandler.response
 // @Router /test [post]
 func MyHandler() {
 	type request struct {
 		RequestField string
 	}
-	
+
 	type response struct {
 		ResponseField string
 	}
