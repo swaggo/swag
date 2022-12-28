@@ -70,10 +70,14 @@ const (
 type ParseFlag int
 
 const (
-	ParseNone       ParseFlag = 0x00
-	ParseOperations           = 0x01
-	ParseModels               = 0x02
-	ParseAll                  = ParseOperations | ParseModels
+	// ParseNone parse nothing
+	ParseNone ParseFlag = 0x00
+	// ParseOperations parse operations
+	ParseOperations = 0x01
+	// ParseModels parse models
+	ParseModels = 0x02
+	// ParseAll parse operations and models
+	ParseAll = ParseOperations | ParseModels
 )
 
 var (
