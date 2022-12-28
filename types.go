@@ -92,4 +92,7 @@ type AstFileInfo struct {
 
 	// PackagePath package import path of the ast.File
 	PackagePath string
+
+	// ParseFlag determine what to parse
+	ParseFlag ParseFlag
 }
