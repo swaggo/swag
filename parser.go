@@ -66,6 +66,7 @@ const (
 	scopeAttrPrefix         = "@scope."
 )
 
+// ParseFlag determine what to parse
 type ParseFlag int
 
 const (
