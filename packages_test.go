@@ -37,6 +37,7 @@ func TestPackagesDefinitions_collectAstFile(t *testing.T) {
 		File:        firstFile,
 		Path:        absPath,
 		PackagePath: packageDir,
+		ParseFlag:   ParseAll,
 	}
 	assert.Equal(t, pd.files[firstFile], astFileInfo)
 
