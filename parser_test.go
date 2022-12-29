@@ -815,7 +815,7 @@ func Fun()  {
 }`
 
 		p := New()
-		_ = p.packages.ParseFile("api", "api/api.go", src)
+		_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 
 		_, err := p.packages.ParseTypes()
 		assert.NoError(t, err)
@@ -2373,7 +2373,7 @@ func Test(){
 }`
 
 	p := New()
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	_, err := p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2433,9 +2433,9 @@ type ResponseWrapper struct {
 }`
 	parser := New(SetParseDependency(true))
 
-	_ = parser.packages.ParseFile("api", "api/api.go", src)
+	_ = parser.packages.ParseFile("api", "api/api.go", src, ParseAll)
 
-	_ = parser.packages.ParseFile("rest", "rest/rest.go", restsrc)
+	_ = parser.packages.ParseFile("rest", "rest/rest.go", restsrc, ParseAll)
 
 	_, err := parser.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2498,7 +2498,7 @@ func Test(){
    }
 }`
 	p := New()
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	_, err := p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -2626,7 +2626,7 @@ func Test(){
    }
 }`
 	p := New()
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 
 	_, err := p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -2649,12 +2649,12 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
-	assert.EqualError(t, err, "ParseComment error in file  :unknown accept type can't be accepted")
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.Error(t, err)
 }
 
 func TestParser_ParseRouterApiGet(t *testing.T) {
@@ -2667,11 +2667,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2692,11 +2692,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2717,11 +2717,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
 	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
 
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2742,11 +2742,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2767,11 +2767,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2792,12 +2792,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
-	assert.NoError(t, err)
 	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
 
-	err = p.ParseRouterAPIInfo("", f)
-
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 	ps := p.swagger.Paths.Paths
 
@@ -2817,11 +2816,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2843,11 +2842,11 @@ package test
 func Test(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2881,11 +2880,11 @@ func Test2(){
 func Test3(){
 }
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New()
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 
 	ps := p.swagger.Paths.Paths
@@ -2946,15 +2945,18 @@ func FunctionTwo(w http.ResponseWriter, r *http.Request) {
 }
 
 `
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	p := New(SetStrict(true))
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
-	p := New(SetStrict(true))
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.EqualError(t, err, "route GET /api/endpoint is declared multiple times")
 
 	p = New()
-	err = p.ParseRouterAPIInfo("", f)
+	err = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
 	assert.NoError(t, err)
 }
 
@@ -3127,7 +3129,7 @@ func Fun()  {
 }`
 
 	p := New()
-	err := p.packages.ParseFile("api", "api/api.go", src)
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 
 	_, err = p.packages.ParseTypes()
@@ -3182,7 +3184,7 @@ func Fun()  {
 }`
 
 	p := New()
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 
 	_, err := p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -3218,7 +3220,7 @@ func Fun()  {
 `
 
 	p := New()
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	_, err := p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -3260,7 +3262,7 @@ func Fun()  {
 }
 `
 	p := New()
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	_, err := p.packages.ParseTypes()
 	assert.NoError(t, err)
 
@@ -3344,7 +3346,7 @@ func Fun()  {
 }`
 
 	p := New()
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 
 	_, err := p.packages.ParseTypes()
 	assert.NoError(t, err)
@@ -3373,7 +3375,7 @@ func Fun()  {
 	pkgs.packages = nil
 	pkgs.files = nil
 
-	_ = pkgs.ParseFile("api", "api/api.go", src)
+	_ = pkgs.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NotNil(t, pkgs.packages)
 	assert.NotNil(t, pkgs.files)
 }
@@ -3391,7 +3393,7 @@ func Fun()  {
 `
 
 	p := New()
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.Equal(t, 1, len(p.packages.files))
 	var path string
 	var file *ast.File
@@ -3402,7 +3404,7 @@ func Fun()  {
 	assert.NotNil(t, p.packages.files[file])
 
 	// if we collect the same again nothing should happen
-	_ = p.packages.ParseFile("api", "api/api.go", src)
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.Equal(t, 1, len(p.packages.files))
 	assert.Equal(t, file, p.packages.packages["api"].Files[path])
 	assert.NotNil(t, p.packages.files[file])
@@ -3534,7 +3536,7 @@ func Fun()  {
 }
 `
 	p := New()
-	err := p.packages.ParseFile("api", "api/api.go", src)
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
 	assert.NoError(t, err)
 	_, _ = p.packages.ParseTypes()
 	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
@@ -3880,11 +3882,13 @@ func TestParser_matchTags(t *testing.T) {
 }
 
 func TestParser_parseExtension(t *testing.T) {
-
-	src, err := os.ReadFile("testdata/parseExtension/parseExtension.go")
+	packagePath := "testdata/parseExtension"
+	filePath := packagePath + "/parseExtension.go"
+	src, err := os.ReadFile(filePath)
 	assert.NoError(t, err)
 
-	f, err := goparser.ParseFile(token.NewFileSet(), "", src, goparser.ParseComments)
+	fileSet := token.NewFileSet()
+	f, err := goparser.ParseFile(fileSet, "", src, goparser.ParseComments)
 	assert.NoError(t, err)
 
 	tests := []struct {
@@ -3911,7 +3915,13 @@ func TestParser_parseExtension(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err = tt.parser.ParseRouterAPIInfo("", f)
+			err = tt.parser.ParseRouterAPIInfo(&AstFileInfo{
+				FileSet:     fileSet,
+				File:        f,
+				Path:        filePath,
+				PackagePath: packagePath,
+				ParseFlag:   ParseAll,
+			})
 			assert.NoError(t, err)
 			for p, isExpected := range tt.expectedPaths {
 				_, ok := tt.parser.swagger.Paths.Paths[p]
