@@ -1,0 +1,142 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/use-struct-and-generics-with-multi-level-nesting": {
+            "get": {
+                "description": "Test one of the edge cases found in generics",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Test Generics with multi level nesting",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.TestResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "web.DataPoint-float64": {
+            "type": "object",
+            "properties": {
+                "timestamp": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "web.DataPoint-int64": {
+            "type": "object",
+            "properties": {
+                "timestamp": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "web.Entity-float64": {
+            "type": "object",
+            "properties": {
+                "line_with_fix_type": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.DataPoint-float64"
+                    }
+                },
+                "line_with_generic_type": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.DataPoint-float64"
+                    }
+                },
+                "multiple_lines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.NamedLineData-float64"
+                    }
+                }
+            }
+        },
+        "web.Entity-int64": {
+            "type": "object",
+            "properties": {
+                "line_with_fix_type": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.DataPoint-float64"
+                    }
+                },
+                "line_with_generic_type": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.DataPoint-int64"
+                    }
+                },
+                "multiple_lines": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.NamedLineData-int64"
+                    }
+                }
+            }
+        },
+        "web.NamedLineData-float64": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.DataPoint-float64"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.NamedLineData-int64": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/web.DataPoint-int64"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.TestResponse": {
+            "type": "object",
+            "properties": {
+                "field_1": {
+                    "$ref": "#/definitions/web.Entity-int64"
+                },
+                "field_2": {
+                    "$ref": "#/definitions/web.Entity-float64"
+                }
+            }
+        }
+    }
+}

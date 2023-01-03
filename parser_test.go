@@ -3694,28 +3694,28 @@ func TestParser_Skip(t *testing.T) {
 func TestGetFieldType(t *testing.T) {
 	t.Parallel()
 
-	field, err := getFieldType(&ast.File{}, &ast.Ident{Name: "User"})
+	field, err := getFieldType(&ast.File{}, &ast.Ident{Name: "User"}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "User", field)
 
-	_, err = getFieldType(&ast.File{}, &ast.FuncType{})
+	_, err = getFieldType(&ast.File{}, &ast.FuncType{}, nil)
 	assert.Error(t, err)
 
-	field, err = getFieldType(&ast.File{}, &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}})
+	field, err = getFieldType(&ast.File{}, &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "models.User", field)
 
-	_, err = getFieldType(&ast.File{}, &ast.SelectorExpr{X: &ast.FuncType{}, Sel: &ast.Ident{Name: "User"}})
+	_, err = getFieldType(&ast.File{}, &ast.SelectorExpr{X: &ast.FuncType{}, Sel: &ast.Ident{Name: "User"}}, nil)
 	assert.Error(t, err)
 
-	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.Ident{Name: "User"}})
+	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.Ident{Name: "User"}}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "User", field)
 
-	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.FuncType{}})
+	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.FuncType{}}, nil)
 	assert.Error(t, err)
 
-	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}})
+	field, err = getFieldType(&ast.File{}, &ast.StarExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "models"}, Sel: &ast.Ident{Name: "User"}}}, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "models.User", field)
 }

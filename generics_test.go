@@ -74,6 +74,21 @@ func TestParseGenericsNested(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseGenericsMultiLevelNesting(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/generics_multi_level_nesting"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	p := New()
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParseGenericsProperty(t *testing.T) {
 	t.Parallel()
 
@@ -228,6 +243,7 @@ func TestGetGenericFieldType(t *testing.T) {
 			X:       &ast.Ident{Name: "types", Obj: &ast.Object{Decl: &ast.TypeSpec{Name: &ast.Ident{Name: "Field"}}}},
 			Indices: []ast.Expr{&ast.Ident{Name: "string"}},
 		},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "test.Field[string]", field)
@@ -238,6 +254,7 @@ func TestGetGenericFieldType(t *testing.T) {
 			X:       &ast.Ident{Name: "types", Obj: &ast.Object{Decl: &ast.TypeSpec{Name: &ast.Ident{Name: "Field"}}}},
 			Indices: []ast.Expr{&ast.Ident{Name: "string"}},
 		},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "Field[string]", field)
@@ -248,6 +265,7 @@ func TestGetGenericFieldType(t *testing.T) {
 			X:       &ast.Ident{Name: "types", Obj: &ast.Object{Decl: &ast.TypeSpec{Name: &ast.Ident{Name: "Field"}}}},
 			Indices: []ast.Expr{&ast.Ident{Name: "string"}, &ast.Ident{Name: "int"}},
 		},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "test.Field[string,int]", field)
@@ -258,6 +276,7 @@ func TestGetGenericFieldType(t *testing.T) {
 			X:       &ast.Ident{Name: "types", Obj: &ast.Object{Decl: &ast.TypeSpec{Name: &ast.Ident{Name: "Field"}}}},
 			Indices: []ast.Expr{&ast.Ident{Name: "string"}, &ast.ArrayType{Elt: &ast.Ident{Name: "int"}}},
 		},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "test.Field[string,[]int]", field)
@@ -268,6 +287,7 @@ func TestGetGenericFieldType(t *testing.T) {
 			X:       &ast.BadExpr{},
 			Indices: []ast.Expr{&ast.Ident{Name: "string"}, &ast.Ident{Name: "int"}},
 		},
+		nil,
 	)
 	assert.Error(t, err)
 
@@ -277,12 +297,14 @@ func TestGetGenericFieldType(t *testing.T) {
 			X:       &ast.Ident{Name: "types", Obj: &ast.Object{Decl: &ast.TypeSpec{Name: &ast.Ident{Name: "Field"}}}},
 			Indices: []ast.Expr{&ast.Ident{Name: "string"}, &ast.ArrayType{Elt: &ast.BadExpr{}}},
 		},
+		nil,
 	)
 	assert.Error(t, err)
 
 	field, err = getFieldType(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.IndexExpr{X: &ast.Ident{Name: "Field"}, Index: &ast.Ident{Name: "string"}},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "test.Field[string]", field)
@@ -290,24 +312,28 @@ func TestGetGenericFieldType(t *testing.T) {
 	field, err = getFieldType(
 		&ast.File{Name: nil},
 		&ast.IndexExpr{X: &ast.Ident{Name: "Field"}, Index: &ast.Ident{Name: "string"}},
+		nil,
 	)
 	assert.Error(t, err)
 
 	field, err = getFieldType(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.IndexExpr{X: &ast.BadExpr{}, Index: &ast.Ident{Name: "string"}},
+		nil,
 	)
 	assert.Error(t, err)
 
 	field, err = getFieldType(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.IndexExpr{X: &ast.Ident{Name: "Field"}, Index: &ast.BadExpr{}},
+		nil,
 	)
 	assert.Error(t, err)
 
 	field, err = getFieldType(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.IndexExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "field"}, Sel: &ast.Ident{Name: "Name"}}, Index: &ast.Ident{Name: "string"}},
+		nil,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, "field.Name[string]", field)
