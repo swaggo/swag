@@ -1029,7 +1029,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 			if err == ErrRecursiveParseStruct && ref {
 				return parser.getRefTypeSchema(typeSpecDef, schema), nil
 			}
-			return nil, err
+			return nil, fmt.Errorf("%s: %w", typeName, err)
 		}
 	}
 
@@ -1262,7 +1262,7 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 	for _, field := range fields.List {
 		fieldProps, requiredFromAnon, err := parser.parseStructField(file, field)
 		if err != nil {
-			if err == ErrFuncTypeField || err == ErrSkippedField {
+			if errors.Is(err, ErrFuncTypeField) || errors.Is(err, ErrSkippedField) {
 				continue
 			}
 
@@ -1313,12 +1313,12 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	if fieldName == "" {
 		typeName, err := getFieldType(file, field.Type, nil)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
 		}
 
 		schema, err := parser.getTypeSchema(typeName, file, false)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
 		}
 
 		if len(schema.Type) > 0 && schema.Type[0] == OBJECT {
@@ -1340,7 +1340,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 
 	schema, err := ps.CustomSchema()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
 	}
 
 	if schema == nil {
@@ -1354,20 +1354,20 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		}
 
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
 		}
 	}
 
 	err = ps.ComplementSchema(schema)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
 	}
 
 	var tagRequired []string
 
 	required, err := ps.IsRequired()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
 	}
 
 	if required {
