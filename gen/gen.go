@@ -222,6 +222,7 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 	}
 
 	packageName := filepath.Base(absOutputDir)
+	packageName = strings.ReplaceAll(packageName, "-", "_")
 
 	docs, err := os.Create(docFileName)
 	if err != nil {
