@@ -35,6 +35,7 @@ const (
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
+	packageName           = "packageName"
 )
 
 var initFlags = []cli.Flag{
@@ -141,6 +142,11 @@ var initFlags = []cli.Flag{
 		Value:   "",
 		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
 	},
+	&cli.StringFlag{
+		Name:  packageName,
+		Value: "",
+		Usage: "A package name of docs.go, using output directory name by default (check `--output` option)",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -181,6 +187,7 @@ func initAction(ctx *cli.Context) error {
 		OverridesFile:       ctx.String(overridesFileFlag),
 		ParseGoList:         ctx.Bool(parseGoListFlag),
 		Tags:                ctx.String(tagsFlag),
+		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
 	})
 }

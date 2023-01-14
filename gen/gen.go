@@ -126,6 +126,9 @@ type Config struct {
 
 	// include only tags mentioned when searching, comma separated
 	Tags string
+
+	// PackageName defines package name of generated `docs.go`
+	PackageName string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -221,8 +224,13 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	packageName := filepath.Base(absOutputDir)
-	packageName = strings.ReplaceAll(packageName, "-", "_")
+	var packageName string
+	if len(config.PackageName) > 0 {
+		packageName = config.PackageName
+	} else {
+		packageName = filepath.Base(absOutputDir)
+		packageName = strings.ReplaceAll(packageName, "-", "_")
+	}
 
 	docs, err := os.Create(docFileName)
 	if err != nil {
