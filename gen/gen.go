@@ -235,7 +235,7 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	g.debug.Printf("create docs.go at  %+v", docFileName)
+	g.debug.Printf("create docs.go at %+v", docFileName)
 
 	return nil
 }
@@ -259,7 +259,7 @@ func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	g.debug.Printf("create swagger.json at  %+v", jsonFileName)
+	g.debug.Printf("create swagger.json at %+v", jsonFileName)
 
 	return nil
 }
@@ -288,7 +288,7 @@ func (g *Gen) writeYAMLSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	g.debug.Printf("create swagger.yaml at  %+v", yamlFileName)
+	g.debug.Printf("create swagger.yaml at %+v", yamlFileName)
 
 	return nil
 }

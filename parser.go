@@ -66,6 +66,20 @@ const (
 	scopeAttrPrefix         = "@scope."
 )
 
+// ParseFlag determine what to parse
+type ParseFlag int
+
+const (
+	// ParseNone parse nothing
+	ParseNone ParseFlag = 0x00
+	// ParseOperations parse operations
+	ParseOperations = 0x01
+	// ParseModels parse models
+	ParseModels = 0x02
+	// ParseAll parse operations and models
+	ParseAll = ParseOperations | ParseModels
+)
+
 var (
 	// ErrRecursiveParseStruct recursively parsing struct.
 	ErrRecursiveParseStruct = errors.New("recursively parsing struct")
@@ -866,8 +880,11 @@ func matchExtension(extensionToMatch string, comments []*ast.Comment) (match boo
 }
 
 // ParseRouterAPIInfo parses router api info for given astFile.
-func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) error {
-	for _, astDescription := range astFile.Decls {
+func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
+	for _, astDescription := range fileInfo.File.Decls {
+		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
+			continue
+		}
 		astDeclaration, ok := astDescription.(*ast.FuncDecl)
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 			if parser.matchTags(astDeclaration.Doc.List) &&
@@ -875,9 +892,9 @@ func (parser *Parser) ParseRouterAPIInfo(fileName string, astFile *ast.File) err
 				// for per 'function' comment, create a new 'Operation' object
 				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
 				for _, comment := range astDeclaration.Doc.List {
-					err := operation.ParseComment(comment.Text, astFile)
+					err := operation.ParseComment(comment.Text, fileInfo.File)
 					if err != nil {
-						return fmt.Errorf("ParseComment error in file %s :%+v", fileName, err)
+						return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
 					}
 				}
 				err := processRouterOperation(parser, operation)
@@ -1294,7 +1311,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	}
 
 	if fieldName == "" {
-		typeName, err := getFieldType(file, field.Type)
+		typeName, err := getFieldType(file, field.Type, nil)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1327,7 +1344,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	}
 
 	if schema == nil {
-		typeName, err := getFieldType(file, field.Type)
+		typeName, err := getFieldType(file, field.Type, nil)
 		if err == nil {
 			// named type
 			schema, err = parser.getTypeSchema(typeName, file, true)
@@ -1360,26 +1377,26 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil
 }
 
-func getFieldType(file *ast.File, field ast.Expr) (string, error) {
+func getFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec) (string, error) {
 	switch fieldType := field.(type) {
 	case *ast.Ident:
 		return fieldType.Name, nil
 	case *ast.SelectorExpr:
-		packageName, err := getFieldType(file, fieldType.X)
+		packageName, err := getFieldType(file, fieldType.X, genericParamTypeDefs)
 		if err != nil {
 			return "", err
 		}
 
 		return fullTypeName(packageName, fieldType.Sel.Name), nil
 	case *ast.StarExpr:
-		fullName, err := getFieldType(file, fieldType.X)
+		fullName, err := getFieldType(file, fieldType.X, genericParamTypeDefs)
 		if err != nil {
 			return "", err
 		}
 
 		return fullName, nil
 	default:
-		return getGenericFieldType(file, field, nil)
+		return getGenericFieldType(file, field, genericParamTypeDefs)
 	}
 }
 
@@ -1518,7 +1535,7 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 			return err
 		}
 
-		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil)
+		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil, ParseAll)
 	})
 }
 
@@ -1546,7 +1563,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 		}
 
 		path := filepath.Join(srcDir, f.Name())
-		if err := parser.parseFile(pkg.Name, path, nil); err != nil {
+		if err := parser.parseFile(pkg.Name, path, nil, ParseModels); err != nil {
 			return err
 		}
 	}
@@ -1560,12 +1577,12 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg) error {
 	return nil
 }
 
-func (parser *Parser) parseFile(packageDir, path string, src interface{}) error {
+func (parser *Parser) parseFile(packageDir, path string, src interface{}, flag ParseFlag) error {
 	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
 		return nil
 	}
 
-	return parser.packages.ParseFile(packageDir, path, src)
+	return parser.packages.ParseFile(packageDir, path, src, flag)
 }
 
 func (parser *Parser) checkOperationIDUniqueness() error {

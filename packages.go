@@ -33,18 +33,18 @@ func NewPackagesDefinitions() *PackagesDefinitions {
 }
 
 // ParseFile parse a source file.
-func (pkgDefs *PackagesDefinitions) ParseFile(packageDir, path string, src interface{}) error {
+func (pkgDefs *PackagesDefinitions) ParseFile(packageDir, path string, src interface{}, flag ParseFlag) error {
 	// positions are relative to FileSet
 	fileSet := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fileSet, path, src, goparser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("failed to parse file %s, error:%+v", path, err)
 	}
-	return pkgDefs.collectAstFile(fileSet, packageDir, path, astFile)
+	return pkgDefs.collectAstFile(fileSet, packageDir, path, astFile, flag)
 }
 
 // collectAstFile collect ast.file.
-func (pkgDefs *PackagesDefinitions) collectAstFile(fileSet *token.FileSet, packageDir, path string, astFile *ast.File) error {
+func (pkgDefs *PackagesDefinitions) collectAstFile(fileSet *token.FileSet, packageDir, path string, astFile *ast.File, flag ParseFlag) error {
 	if pkgDefs.files == nil {
 		pkgDefs.files = make(map[*ast.File]*AstFileInfo)
 	}
@@ -81,13 +81,14 @@ func (pkgDefs *PackagesDefinitions) collectAstFile(fileSet *token.FileSet, packa
 		File:        astFile,
 		Path:        path,
 		PackagePath: packageDir,
+		ParseFlag:   flag,
 	}
 
 	return nil
 }
 
 // RangeFiles for range the collection of ast.File in alphabetic order.
-func (pkgDefs *PackagesDefinitions) RangeFiles(handle func(filename string, file *ast.File) error) error {
+func (pkgDefs *PackagesDefinitions) RangeFiles(handle func(info *AstFileInfo) error) error {
 	sortedFiles := make([]*AstFileInfo, 0, len(pkgDefs.files))
 	for _, info := range pkgDefs.files {
 		// ignore package path prefix with 'vendor' or $GOROOT,
@@ -103,7 +104,7 @@ func (pkgDefs *PackagesDefinitions) RangeFiles(handle func(filename string, file
 	})
 
 	for _, info := range sortedFiles {
-		err := handle(info.Path, info.File)
+		err := handle(info)
 		if err != nil {
 			return err
 		}
@@ -372,9 +373,9 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 			}
 			if constVar.Comment != nil && len(constVar.Comment.List) > 0 {
 				enumValue.Comment = constVar.Comment.List[0].Text
-				enumValue.Comment = strings.TrimLeft(enumValue.Comment, "//")
-				enumValue.Comment = strings.TrimLeft(enumValue.Comment, "/*")
-				enumValue.Comment = strings.TrimRight(enumValue.Comment, "*/")
+				enumValue.Comment = strings.TrimPrefix(enumValue.Comment, "//")
+				enumValue.Comment = strings.TrimPrefix(enumValue.Comment, "/*")
+				enumValue.Comment = strings.TrimSuffix(enumValue.Comment, "*/")
 				enumValue.Comment = strings.TrimSpace(enumValue.Comment)
 			}
 			typeDef.Enums = append(typeDef.Enums, enumValue)

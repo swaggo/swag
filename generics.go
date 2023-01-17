@@ -239,7 +239,7 @@ func getExtendedGenericFieldType(file *ast.File, field ast.Expr, genericParamTyp
 		}
 		return tSpec.TypeName(), nil
 	default:
-		return getFieldType(file, field)
+		return getFieldType(file, field, genericParamTypeDefs)
 	}
 }
 
@@ -288,7 +288,7 @@ func getGenericFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs ma
 		if file.Name == nil {
 			return "", errors.New("file name is nil")
 		}
-		packageName, _ = getFieldType(file, file.Name)
+		packageName, _ = getFieldType(file, file.Name, genericParamTypeDefs)
 	}
 
 	return strings.TrimLeft(fmt.Sprintf("%s.%s", packageName, fullName), "."), nil
