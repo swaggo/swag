@@ -52,7 +52,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 
 2. Download swag by using:
 ```sh
-$ go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/swaggo/swag/cmd/swag@latest
 ```
 To build from source you need [Go](https://golang.org/dl/) (1.16 or newer).
 
@@ -60,7 +60,7 @@ Or download a pre-compiled binary from the [release page](https://github.com/swa
 
 3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
 ```sh
-$ swag init
+swag init
 ```
 
   Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
@@ -77,7 +77,7 @@ $ swag init
 ## swag cli
 
 ```sh
-$ swag init -h
+swag init -h
 NAME:
    swag init - Create docs.go
 
@@ -294,7 +294,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 ```
 
 ```console
-$ swag init
+swag init
 ```
 
 4. Run your app, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
