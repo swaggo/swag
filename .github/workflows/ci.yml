@@ -48,3 +48,7 @@ jobs:
       - name: coverage
         working-directory: ./src/github.com/${{ github.repository }}
         run: bash <(curl -s https://codecov.io/bash)
+      - name: fossa
+        uses: fossas/fossa-action@v1
+        with:
+          api-key: ${{secrets.FOSSA}}
