@@ -62,6 +62,8 @@ const (
 	secPasswordAttr         = "@securitydefinitions.oauth2.password"
 	secAccessCodeAttr       = "@securitydefinitions.oauth2.accesscode"
 	tosAttr                 = "@termsofservice"
+	extDocsDescAttr         = "@externaldocs.description"
+	extDocsURLAttr          = "@externaldocs.url"
 	xCodeSamplesAttr        = "@x-codesamples"
 	scopeAttrPrefix         = "@scope."
 )
@@ -462,6 +464,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 
 func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 	previousAttribute := ""
+	parser.swagger.ExternalDocs = new(spec.ExternalDocumentation)
 
 	// parsing classic meta data model
 	for line := 0; line < len(comments); line++ {
@@ -561,6 +564,16 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = TransToValidCollectionFormat(value)
+
+		case extDocsDescAttr, extDocsURLAttr:
+			ed := parser.swagger.ExternalDocs
+			switch attr {
+			case extDocsDescAttr:
+				ed.Description = value
+			case extDocsURLAttr:
+				ed.URL = value
+			}
+
 		default:
 			if strings.HasPrefix(attribute, "@x-") {
 				extensionName := attribute[1:]
