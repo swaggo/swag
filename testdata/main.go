@@ -46,6 +46,9 @@ package main
 // @scope.admin Grants read and write access to administrative information
 // @x-tokenname id_token
 
+// @externalDocs.description OpenAPI
+// @externalDocs.url https://swagger.io/resources/open-api
+
 // @x-google-endpoints [{"name":"name.endpoints.environment.cloud.goog","allowCors":true}]
 // @x-google-marks "marks values"
 // @x-logo {"url":"https://redocly.github.io/redoc/petstore-logo.png", "altText": "Petstore logo", "backgroundColor": "#FFFFFF"}

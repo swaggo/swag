@@ -464,7 +464,9 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 
 func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 	previousAttribute := ""
-	parser.swagger.ExternalDocs = new(spec.ExternalDocumentation)
+	if parser.swagger.ExternalDocs == nil {
+		parser.swagger.ExternalDocs = new(spec.ExternalDocumentation)
+	}
 
 	// parsing classic meta data model
 	for line := 0; line < len(comments); line++ {
@@ -565,14 +567,10 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = TransToValidCollectionFormat(value)
 
-		case extDocsDescAttr, extDocsURLAttr:
-			ed := parser.swagger.ExternalDocs
-			switch attr {
-			case extDocsDescAttr:
-				ed.Description = value
-			case extDocsURLAttr:
-				ed.URL = value
-			}
+		case extDocsDescAttr:
+			parser.swagger.ExternalDocs.Description = value
+		case extDocsURLAttr:
+			parser.swagger.ExternalDocs.URL = value
 
 		default:
 			if strings.HasPrefix(attribute, "@x-") {

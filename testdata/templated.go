@@ -36,6 +36,9 @@ package main
 // @authorizationurl https://example.com/oauth/authorize
 // @scope.admin Grants read and write access to administrative information
 
+// @externalDocs.description OpenAPI
+// @externalDocs.url https://swagger.io/resources/open-api
+
 // @x-google-endpoints [{"name":"name.endpoints.environment.cloud.goog","allowCors":true}]
 // @x-google-marks "marks values"
 

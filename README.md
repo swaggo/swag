@@ -165,6 +165,9 @@ import "github.com/swaggo/files" // swagger embed files
 // @BasePath  /api/v1
 
 // @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	r := gin.Default()
 
@@ -386,6 +389,8 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 | produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     | // @produce json |
 | query.collection.format | The default collection(array) param format in query,enums:csv,multi,pipes,tsv,ssv. If not set, csv is the default.| // @query.collection.format multi
 | schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
+| externalDocs.description | Description of the external document. | // @externalDocs.description OpenAPI |
+| externalDocs.url         | URL of the external document. | // @externalDocs.url https://swagger.io/resources/open-api/ |
 | x-name      | The extension key, must be start by x- and take only json value | // @x-example-key {"key": "value"} |
 
 ### Using markdown descriptions

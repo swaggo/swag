@@ -253,6 +253,10 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             }
         }
     },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api"
+    },
     "x-google-endpoints": [
         {
             "allowCors": true,
@@ -337,6 +341,10 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
                 "write": " Grants write access"
             }
         }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api"
     },
     "x-google-endpoints": [
         {
