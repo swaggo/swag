@@ -894,6 +894,11 @@ func parseCombinedObjectSchema(parser *Parser, refType string, astFile *ast.File
 		return schema, nil
 	}
 
+	if schema.Ref.GetURL() == nil && len(schema.Type) > 0 && schema.Type[0] == OBJECT && len(schema.Properties) == 0 && schema.AdditionalProperties == nil {
+		schema.Properties = props
+		return schema, nil
+	}
+
 	return spec.ComposedSchema(*schema, spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type:       []string{OBJECT},
