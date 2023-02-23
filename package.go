@@ -94,6 +94,17 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 	case *ast.BasicLit:
 		switch valueExpr.Kind {
 		case token.INT:
+			// binary
+			if len(valueExpr.Value) > 2 && valueExpr.Value[0] == '0' && (valueExpr.Value[1] == 'b' || valueExpr.Value[1] == 'B') {
+				if x, err := strconv.ParseInt(valueExpr.Value[2:], 2, 64); err == nil {
+					return int(x), nil
+				} else if x, err := strconv.ParseUint(valueExpr.Value[2:], 2, 64); err == nil {
+					return x, nil
+				} else {
+					panic(err)
+				}
+			}
+
 			// hexadecimal
 			if len(valueExpr.Value) > 2 && valueExpr.Value[0] == '0' && valueExpr.Value[1] == 'x' {
 				if x, err := strconv.ParseInt(valueExpr.Value[2:], 16, 64); err == nil {
