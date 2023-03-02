@@ -146,7 +146,7 @@ var initFlags = []cli.Flag{
 		Name:    collectionFormatFlag,
 		Aliases: []string{"cf"},
 		Value:   "csv",
-		Usage:   "Set default collection format, csv by default",
+		Usage:   "Set default collection format",
 	},
 }
 
