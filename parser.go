@@ -1115,6 +1115,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	definition, err := parser.parseTypeExpr(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
 	if err != nil {
+		parser.debug.Printf("Error parsing type definition '%s': %s", typeName, err)
 		return nil, err
 	}
 
