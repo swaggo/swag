@@ -145,8 +145,8 @@ var initFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:    templateDelimsFlag,
 		Aliases: []string{"td"},
-		Value:   "{{,}}",
-		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: [[,]]",
+		Value:   "",
+		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
 	},
 }
 
@@ -159,14 +159,17 @@ func initAction(ctx *cli.Context) error {
 		return fmt.Errorf("not supported %s propertyStrategy", strategy)
 	}
 
-	delims := strings.Split(ctx.String(templateDelimsFlag), ",")
-	if len(delims) != 2 {
-		return fmt.Errorf("exactly two template delimeters must be provided, comma separated")
-	} else if delims[0] == delims[1] {
-		return fmt.Errorf("template delimiters must be different")
-	}
+	leftDelim, rightDelim := "{{", "}}"
 
-	leftDelim, rightDelim := strings.TrimSpace(delims[0]), strings.TrimSpace(delims[1])
+	if ctx.IsSet(templateDelimsFlag) {
+		delims := strings.Split(ctx.String(templateDelimsFlag), ",")
+		if len(delims) != 2 {
+			return fmt.Errorf("exactly two template delimeters must be provided, comma separated")
+		} else if delims[0] == delims[1] {
+			return fmt.Errorf("template delimiters must be different")
+		}
+		leftDelim, rightDelim = strings.TrimSpace(delims[0]), strings.TrimSpace(delims[1])
+	}
 
 	outputTypes := strings.Split(ctx.String(outputTypesFlag), ",")
 	if len(outputTypes) == 0 {
