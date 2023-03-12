@@ -3086,9 +3086,10 @@ func TestParseStructParamCommentByQueryType(t *testing.T) {
 package main
 
 type Student struct {
-	Name string
-	Age int
+	Name string 
+	AgeField int ` + "`query:\"age_field\"`" + `
 	Teachers []string
+
 	SkipField map[string]string
 }
 
@@ -3109,7 +3110,7 @@ func Fun()  {
                 "parameters": [
                     {
                         "type": "integer",
-                        "name": "age",
+                        "name": "age_field",
                         "in": "query"
                     },
                     {

@@ -373,6 +373,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 const (
 	jsonTag             = "json"
+	queryTag            = "query"
 	bindingTag          = "binding"
 	defaultTag          = "default"
 	enumsTag            = "enums"

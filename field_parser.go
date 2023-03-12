@@ -70,7 +70,10 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 	if ps.field.Tag != nil {
 		// json:"tag,hoge"
 		name = strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
-
+		if name != "" {
+			return name, nil
+		}
+		name = strings.TrimSpace(strings.Split(ps.tag.Get(queryTag), ",")[0])
 		if name != "" {
 			return name, nil
 		}
