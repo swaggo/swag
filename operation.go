@@ -372,6 +372,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 }
 
 const (
+	formTag             = "form"
 	jsonTag             = "json"
 	bindingTag          = "binding"
 	defaultTag          = "default"
