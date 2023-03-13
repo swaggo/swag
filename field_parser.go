@@ -71,13 +71,12 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 	if ps.field.Tag != nil {
 		// json:"tag,hoge"
 		name = strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
-
 		if name != "" {
 			return name, nil
 		}
 
 		// use "form" tag over json tag
-		name = strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0])
+		name = ps.FormName()
 		if name != "" {
 			return name, nil
 		}
@@ -95,6 +94,13 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 	default:
 		return toLowerCamelCase(ps.field.Names[0].Name), nil
 	}
+}
+
+func (ps *tagBaseFieldParser) FormName() string {
+	if ps.field.Tag != nil {
+		return strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0])
+	}
+	return ""
 }
 
 func toSnakeCase(in string) string {
