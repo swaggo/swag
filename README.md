@@ -470,6 +470,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 - integer (int, uint, uint32, uint64)
 - number (float32)
 - boolean (bool)
+- file (param data type when uploading)
 - user defined struct
 
 ## Security
