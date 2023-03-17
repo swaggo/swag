@@ -574,8 +574,19 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 	typeDef, ok = pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, name)]
 	if !ok {
 		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports("", file)
-		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name)
+
+		if len(pkgPaths) == 0 {
+			pkgDefinition := pkgDefs.packages["pkg/"+parts[0]]
+			if pkgDefinition == nil {
+				return pkgDefs.findTypeSpec("", parts[1])
+			}
+
+			typeDef = pkgDefinition.TypeDefinitions[parts[0]]
+		} else {
+			typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name)
+		}
 	}
+
 	return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 }
 

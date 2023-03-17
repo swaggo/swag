@@ -444,25 +444,28 @@ func getPkgName(searchDir string) (string, error) {
 
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path.
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
+	fileSet := token.NewFileSet()
 	filePath := mainAPIFile
 
 	if !strings.Contains(mainAPIFile, "main.go") {
 		filePath = mainAPIFile + "/main.go"
 	}
 
-	fileTree, err := goparser.ParseFile(token.NewFileSet(), filePath, nil, goparser.ParseComments)
+	fileTree, err := goparser.ParseFile(fileSet, filePath, nil, goparser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("cannot parse source files %s: %s", filePath, err)
 	}
 
 	parser.swagger.Swagger = "2.0"
+	// securityMap := map[string]*spec.SecurityScheme{}
 
-	for _, comment := range fileTree.Comments {
-		comments := strings.Split(comment.Text(), "\n")
-		if !isGeneralAPIComment(comments) {
+	for i := range fileTree.Comments {
+		comment := fileTree.Comments[i]
+		if !isGeneralAPIComment(comment.Text()) {
 			continue
 		}
 
+		comments := strings.Split(comment.Text(), "\n")
 		err = parseGeneralAPIInfo(parser, comments)
 		if err != nil {
 			return err
@@ -800,19 +803,20 @@ func (parser *Parser) ParseProduceComment(commentLine string) error {
 	return parseMimeTypeList(commentLine, &parser.swagger.Produces, "%v produce type can't be accepted")
 }
 
-func isGeneralAPIComment(comments []string) bool {
-	for _, commentLine := range comments {
-		commentLine = strings.TrimSpace(commentLine)
-		if len(commentLine) == 0 {
-			continue
-		}
-		attribute := strings.ToLower(FieldsByAnySpace(commentLine, 2)[0])
-		switch attribute {
-		// The @summary, @router, @success, @failure annotation belongs to Operation
-		case summaryAttr, routerAttr, successAttr, failureAttr, responseAttr:
-			return false
-		}
+func isGeneralAPIComment(comment string) bool {
+	// for _, commentLine := range comments {
+	commentLine := strings.TrimSpace(comment)
+	if len(commentLine) == 0 {
+		return false
 	}
+
+	attribute := strings.ToLower(FieldsByAnySpace(commentLine, 2)[0])
+	switch attribute {
+	// The @summary, @router, @success, @failure annotation belongs to Operation
+	case summaryAttr, routerAttr, successAttr, failureAttr, responseAttr:
+		return false
+	}
+	// }
 
 	return true
 }
