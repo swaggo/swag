@@ -371,7 +371,7 @@ func TestParser_ParseGeneralApiInfoExtensions(t *testing.T) {
 	t.Run("Test invalid extension value", func(t *testing.T) {
 		t.Parallel()
 
-		expected := "annotation @x-google-endpoints need a valid json value"
+		expected := "annotation @x-google-endpoints need a valid json value. error: invalid character ':' after array element"
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
 
