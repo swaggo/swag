@@ -35,6 +35,7 @@ const (
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
+	openAPIVersionFlag    = "v3.1"
 )
 
 var initFlags = []cli.Flag{
@@ -141,6 +142,11 @@ var initFlags = []cli.Flag{
 		Value:   "",
 		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
 	},
+	&cli.BoolFlag{
+		Name:  openAPIVersionFlag,
+		Value: false,
+		Usage: "Generate OpenAPI V3.1 spec",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -182,6 +188,7 @@ func initAction(ctx *cli.Context) error {
 		ParseGoList:         ctx.Bool(parseGoListFlag),
 		Tags:                ctx.String(tagsFlag),
 		Debugger:            logger,
+		OpenAPIVersion:      ctx.Bool(openAPIVersionFlag),
 	})
 }
 

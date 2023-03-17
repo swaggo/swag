@@ -129,6 +129,9 @@ type Config struct {
 
 	// include only tags mentioned when searching, comma separated
 	Tags string
+
+	// if true, OpenAPI V3.1 spec will be generated
+	OpenAPIVersion bool
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -179,6 +182,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetOverrides(overrides),
 		swag.ParseUsingGoList(config.ParseGoList),
 		swag.SetTags(config.Tags),
+		swag.SetOpenAPIVersion(config.OpenAPIVersion),
 	)
 
 	p.PropNamingStrategy = config.PropNamingStrategy

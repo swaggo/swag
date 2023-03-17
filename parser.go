@@ -22,6 +22,7 @@ import (
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
+	openapi "github.com/sv-tools/openapi/spec"
 )
 
 const (
@@ -112,6 +113,9 @@ type Parser struct {
 	// swagger represents the root document object for the API specification
 	swagger *spec.Swagger
 
+	// openAPI represents the v3.1 root document object for the API specification
+	openAPI *openapi.OpenAPI
+
 	// packages store entities of APIs, definitions, file, package path etc.  and their relations
 	packages *PackagesDefinitions
 
@@ -171,6 +175,9 @@ type Parser struct {
 
 	// tags to filter the APIs after
 	tags map[string]struct{}
+
+	// use new openAPI version
+	openAPIVersion bool
 }
 
 // FieldParserFactory create FieldParser.
@@ -216,6 +223,17 @@ func New(options ...func(*Parser)) *Parser {
 			VendorExtensible: spec.VendorExtensible{
 				Extensions: nil,
 			},
+		},
+		openAPI: &openapi.OpenAPI{
+			Info:         openapi.NewInfo(),
+			OpenAPI:      "V3.1",
+			Components:   openapi.NewComponents(),
+			ExternalDocs: openapi.NewExternalDocs(),
+			Paths:        openapi.NewPaths(),
+			WebHooks:     map[string]*openapi.RefOrSpec[openapi.Extendable[openapi.PathItem]]{},
+			Security:     []openapi.SecurityRequirement{},
+			Tags:         []*openapi.Extendable[openapi.Tag]{},
+			Servers:      []*openapi.Extendable[openapi.Server]{},
 		},
 		packages:           NewPackagesDefinitions(),
 		debug:              log.New(os.Stdout, "", log.LstdFlags),
@@ -328,6 +346,13 @@ func SetOverrides(overrides map[string]string) func(parser *Parser) {
 func ParseUsingGoList(enabled bool) func(parser *Parser) {
 	return func(p *Parser) {
 		p.parseGoList = enabled
+	}
+}
+
+// SetOpenAPIVersion parses only those operations which match given extension
+func SetOpenAPIVersion(openAPIVersion bool) func(*Parser) {
+	return func(p *Parser) {
+		p.openAPIVersion = openAPIVersion
 	}
 }
 
@@ -470,10 +495,19 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 		}
 
 		comments := strings.Split(comment.Text(), "\n")
+
+		if parser.openAPIVersion {
+			err = parser.parseGeneralAPIInfoV3(comments)
+			if err != nil {
+				return err
+			}
+		}
+
 		err = parseGeneralAPIInfo(parser, comments)
 		if err != nil {
 			return err
 		}
+
 	}
 
 	return nil
