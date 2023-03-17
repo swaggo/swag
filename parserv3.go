@@ -100,12 +100,19 @@ func (parser *Parser) parseGeneralAPIInfoV3(comments []string) error {
 
 			tag.Spec.ExternalDocs.Spec.Description = value
 		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr:
-			scheme, err := parseSecAttributes(attribute, comments, &line)
+			key, scheme, err := parseSecAttributesV3(attribute, comments, &line)
 			if err != nil {
 				return err
 			}
 
-			parser.swagger.SecurityDefinitions[value] = scheme
+			schemeSpec := openapi.NewSecuritySchemeSpec()
+			schemeSpec.Spec.Spec = scheme
+
+			if parser.openAPI.Components.Spec.SecuritySchemes == nil {
+				parser.openAPI.Components.Spec.SecuritySchemes = make(map[string]*openapi.RefOrSpec[openapi.Extendable[openapi.SecurityScheme]])
+			}
+
+			parser.openAPI.Components.Spec.SecuritySchemes[key] = schemeSpec
 
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = TransToValidCollectionFormat(value)
@@ -222,7 +229,7 @@ func setOpenAPIInfo(openAPI *openapi.OpenAPI, attribute, value string) {
 	}
 }
 
-func parseSecAttributesV3(context string, lines []string, index *int) (*openapi.SecurityScheme, error) {
+func parseSecAttributesV3(context string, lines []string, index *int) (string, *openapi.SecurityScheme, error) {
 	const (
 		in               = "@in"
 		name             = "@name"
@@ -240,7 +247,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (*openapi.
 			Type:   "http",
 			Scheme: "basic",
 		}
-		return &scheme, nil
+		return "basic", &scheme, nil
 	case secAPIKeyAttr:
 		search = []string{in, name}
 	case secApplicationAttr, secPasswordAttr:
@@ -280,7 +287,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (*openapi.
 
 		isExists, err := isExistsScope(securityAttr)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 
 		if isExists {
@@ -307,32 +314,38 @@ func parseSecAttributesV3(context string, lines []string, index *int) (*openapi.
 	}
 
 	if len(attrMap) != len(search) {
-		return nil, fmt.Errorf("%s is %v required", context, search)
+		return "", nil, fmt.Errorf("%s is %v required", context, search)
 	}
 
 	scheme := &openapi.SecurityScheme{}
+	key := ""
 
 	switch attribute {
 	case secAPIKeyAttr:
+		key = "apiKey"
 		scheme.Type = "apiKey"
 		scheme.In = attrMap[in]
 		scheme.Name = attrMap[name]
 	case secApplicationAttr:
+		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.Flows = openapi.NewOAuthFlows()
 		scheme.Flows.Spec.ClientCredentials = openapi.NewOAuthFlow()
 		scheme.Flows.Spec.ClientCredentials.Spec.TokenURL = attrMap[tokenURL]
 	case secImplicitAttr:
+		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.Flows = openapi.NewOAuthFlows()
 		scheme.Flows.Spec.Implicit = openapi.NewOAuthFlow()
 		scheme.Flows.Spec.Implicit.Spec.AuthorizationURL = attrMap[authorizationURL]
 	case secPasswordAttr:
+		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.Flows = openapi.NewOAuthFlows()
 		scheme.Flows.Spec.Password = openapi.NewOAuthFlow()
 		scheme.Flows.Spec.Password.Spec.TokenURL = attrMap[tokenURL]
 	case secAccessCodeAttr:
+		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.Flows = openapi.NewOAuthFlows()
 		scheme.Flows.Spec.AuthorizationCode = openapi.NewOAuthFlow()
@@ -352,5 +365,5 @@ func parseSecAttributesV3(context string, lines []string, index *int) (*openapi.
 	// 	scheme.AddScope(scope, scopeDescription)
 	// }
 
-	return scheme, nil
+	return key, scheme, nil
 }
