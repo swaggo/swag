@@ -41,6 +41,7 @@ func GetStringByInt(w http.ResponseWriter, r *http.Request) {
 // @Security OAuth2Implicit[read, admin]
 // @Security OAuth2AccessCode[read]
 // @Security OAuth2Password[admin]
+// @Security OAuth2Implicit[read, write] || Firebase
 // @Router /testapi/get-struct-array-by-string/{some_id} [get]
 func GetStructArrayByString(w http.ResponseWriter, r *http.Request) {
 	//write your code
@@ -128,4 +129,12 @@ type SwagReturn []map[string]string
 // @Router /GetPet6MapString [get]
 func GetPet6MapString() {
 
+}
+
+// @Success 200 {object}  api.GetPet6FunctionScopedResponse.response "ok"
+// @Router /GetPet6FunctionScopedResponse [get]
+func GetPet6FunctionScopedResponse() {
+	type response struct {
+		Name string
+	}
 }

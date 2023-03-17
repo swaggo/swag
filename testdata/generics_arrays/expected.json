@@ -1,0 +1,289 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/posts": {
+            "get": {
+                "description": "Get All of the Posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "List Posts",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListBody-types_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponse-types_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponseMulti-types_Post-types_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts-multi": {
+            "get": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListBodyMulti-types_Post-types_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponse-types_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponseMulti-types_Post-types_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts-multis": {
+            "get": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListBodyMulti-types_Post-array_types_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponse-array_types_Post"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericListResponseMulti-types_Post-array_types_Post"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "types.Post": {
+            "type": "object",
+            "properties": {
+                "@uri": {
+                    "type": "string"
+                },
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        },
+        "web.GenericListBody-types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                }
+            }
+        },
+        "web.GenericListBodyMulti-types_Post-array_types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    }
+                }
+            }
+        },
+        "web.GenericListBodyMulti-types_Post-types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                }
+            }
+        },
+        "web.GenericListResponse-array_types_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericListResponse-types_Post": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "description": "Items from the list response",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "status": {
+                    "description": "Status of some other stuff",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericListResponseMulti-types_Post-array_types_Post": {
+            "type": "object",
+            "properties": {
+                "itemsOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericListResponseMulti-types_Post-types_Post": {
+            "type": "object",
+            "properties": {
+                "itemsOne": {
+                    "description": "ItemsOne is the first thing",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "itemsTwo": {
+                    "description": "ItemsTwo is the second thing",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "status": {
+                    "description": "Status of the things",
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

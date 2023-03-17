@@ -63,9 +63,9 @@ deps:
 	$(GOGET) golang.org/x/tools/go/loader
 
 .PHONY: devel-deps
-devel-deps: 
+devel-deps:
 	GO111MODULE=off $(GOGET) -v -u \
-		golang.org/x/lint/golint 
+		golang.org/x/lint/golint
 
 .PHONY: lint
 lint: devel-deps

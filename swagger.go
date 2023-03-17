@@ -23,6 +23,7 @@ type Swagger interface {
 func Register(name string, swagger Swagger) {
 	swaggerMu.Lock()
 	defer swaggerMu.Unlock()
+
 	if swagger == nil {
 		panic("swagger is nil")
 	}
@@ -34,7 +35,17 @@ func Register(name string, swagger Swagger) {
 	if _, ok := swags[name]; ok {
 		panic("Register called twice for swag: " + name)
 	}
+
 	swags[name] = swagger
+}
+
+// GetSwagger returns the swagger instance for given name.
+// If not found, returns nil.
+func GetSwagger(name string) Swagger {
+	swaggerMu.RLock()
+	defer swaggerMu.RUnlock()
+
+	return swags[name]
 }
 
 // ReadDoc reads swagger document. An optional name parameter can be passed to read a specific document.

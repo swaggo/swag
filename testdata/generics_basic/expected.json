@@ -1,0 +1,465 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server Petstore server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:4000",
+    "basePath": "/api",
+    "paths": {
+        "/posts-multi/": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericBodyMulti-types_Post-types_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Post"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Hello"
+                        }
+                    },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field-string"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponseMulti-types_Post-types_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts-multis/": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add new pets to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericBodyMulti-array_types_Post-array2_types_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-array_types_Post"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-array_types_Hello"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponseMulti-array_types_Post-array2_types_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/": {
+            "post": {
+                "description": "get string by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Add a new pet to the store",
+                "parameters": [
+                    {
+                        "description": "Some ID",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericBody-types_Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Post"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Hello"
+                        }
+                    },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field-string"
+                        }
+                    },
+                    "203": {
+                        "description": "Non-Authoritative Information",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponse-types_Field-int"
+                        }
+                    },
+                    "204": {
+                        "description": "No Content",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response-string-types_Field-int"
+                        }
+                    },
+                    "205": {
+                        "description": "Reset Content",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response-api_StringStruct-types_Field-int"
+                        }
+                    },
+                    "222": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/web.GenericResponseMulti-types_Post-types_Post"
+                        }
+                    },
+                    "400": {
+                        "description": "We need ID!!",
+                        "schema": {
+                            "$ref": "#/definitions/web.APIError"
+                        }
+                    },
+                    "404": {
+                        "description": "Can not find ID",
+                        "schema": {
+                            "$ref": "#/definitions/web.APIError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.Response-api_StringStruct-types_Field-int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.StringStruct"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Response-string-types_Field-int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.StringStruct": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Field-int": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "types.Field-string": {
+            "type": "object",
+            "properties": {
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Hello": {
+            "type": "object",
+            "properties": {
+                "myNewArrayField": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "myNewField": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "myStringField1": {
+                    "type": "string"
+                },
+                "myStringField2": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.Post": {
+            "type": "object",
+            "properties": {
+                "@uri": {
+                    "type": "string"
+                },
+                "data": {
+                    "description": "Post data",
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "description": "Post tag",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "id": {
+                    "type": "integer",
+                    "format": "int64",
+                    "example": 1
+                },
+                "name": {
+                    "description": "Post name",
+                    "type": "string",
+                    "example": "poti"
+                }
+            }
+        },
+        "web.APIError": {
+            "description": "API error with information about it",
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "description": "Error time",
+                    "type": "string"
+                },
+                "error": {
+                    "description": "Error an Api error",
+                    "type": "string"
+                },
+                "errorCtx": {
+                    "description": "Error `context` tick comment",
+                    "type": "string"
+                },
+                "errorNo": {
+                    "description": "Error `number` tick comment",
+                    "type": "integer"
+                }
+            }
+        },
+        "web.GenericBody-types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Post"
+                }
+            }
+        },
+        "web.GenericBodyMulti-array_types_Post-array2_types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    }
+                }
+            }
+        },
+        "web.GenericBodyMulti-types_Post-types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Post"
+                }
+            }
+        },
+        "web.GenericResponse-array_types_Hello": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Hello"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-array_types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Field-int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Field-string": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Field-string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Hello": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Hello"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponse-types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponseMulti-array_types_Post-array2_types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "meta": {
+                    "type": "array",
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/types.Post"
+                        }
+                    }
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "web.GenericResponseMulti-types_Post-types_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

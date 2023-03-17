@@ -1,0 +1,168 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server.",
+        "title": "Swagger Example API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "basePath": "/v2",
+    "paths": {
+        "/students": {
+            "post": {
+                "description": "test enums in response models",
+                "summary": "test enums in response models",
+                "responses": {
+                    "400": {
+                        "description": "ok",
+                        "schema": {
+                            "$ref": "#/definitions/types.Person"
+                        }
+                    }
+                }
+            }
+        },
+        "/students/{typeinpath}/": {
+            "get": {
+                "description": "test enums in response request",
+                "summary": "test enums in response request",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "teacher",
+                                "student",
+                                "Other"
+                            ],
+                            "type": "string"
+                        },
+                        "description": "type",
+                        "name": "typeinquery",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
+                        "type": "string",
+                        "description": "type",
+                        "name": "typeinheader",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
+                        "type": "string",
+                        "description": "type",
+                        "name": "typeinpath",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "types.Class": {
+            "type": "integer",
+            "enum": [
+                -1,
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "x-enum-comments": {
+                "A": "AAA",
+                "B": "BBB"
+            },
+            "x-enum-varnames": [
+                "None",
+                "A",
+                "B",
+                "C",
+                "D",
+                "F"
+            ]
+        },
+        "types.Mask": {
+            "type": "integer",
+            "enum": [
+                1,
+                2,
+                4,
+                8
+            ],
+            "x-enum-comments": {
+                "Mask1": "Mask1",
+                "Mask2": "Mask2",
+                "Mask3": "Mask3",
+                "Mask4": "Mask4"
+            },
+            "x-enum-varnames": [
+                "Mask1",
+                "Mask2",
+                "Mask3",
+                "Mask4"
+            ]
+        },
+        "types.Person": {
+            "type": "object",
+            "properties": {
+                "class": {
+                    "$ref": "#/definitions/types.Class"
+                },
+                "mask": {
+                    "$ref": "#/definitions/types.Mask"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/types.Type"
+                }
+            }
+        },
+        "types.Type": {
+            "type": "string",
+            "enum": [
+                "teacher",
+                "student",
+                "Other"
+            ],
+            "x-enum-comments": {
+                "Other": "Other",
+                "Student": "student",
+                "Teacher": "teacher"
+            },
+            "x-enum-varnames": [
+                "Teacher",
+                "Student",
+                "Other"
+            ]
+        }
+    }
+}

@@ -1,0 +1,5 @@
+package invalid
+
+func Foo() {
+
+}

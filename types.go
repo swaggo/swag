@@ -2,6 +2,8 @@ package swag
 
 import (
 	"go/ast"
+	"go/token"
+	"strings"
 
 	"github.com/go-openapi/spec"
 )
@@ -21,8 +23,13 @@ type TypeSpecDef struct {
 	// the TypeSpec of this type definition
 	TypeSpec *ast.TypeSpec
 
+	Enums []EnumValue
+
 	// path of package starting from under ${GOPATH}/src or from module path in go.mod
-	PkgPath string
+	PkgPath    string
+	ParentSpec ast.Decl
+
+	NotUnique bool
 }
 
 // Name the name of the typeSpec.
@@ -34,18 +41,49 @@ func (t *TypeSpecDef) Name() string {
 	return ""
 }
 
-// FullName full name of the typeSpec.
-func (t *TypeSpecDef) FullName() string {
-	return fullTypeName(t.File.Name.Name, t.TypeSpec.Name.Name)
+// TypeName the type name of the typeSpec.
+func (t *TypeSpecDef) TypeName() string {
+	if ignoreNameOverride(t.TypeSpec.Name.Name) {
+		return t.TypeSpec.Name.Name[1:]
+	} else if t.TypeSpec.Comment != nil {
+		// get alias from comment '// @name '
+		for _, comment := range t.TypeSpec.Comment.List {
+			texts := strings.Split(strings.TrimSpace(strings.TrimLeft(comment.Text, "/")), " ")
+			if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
+				return texts[1]
+			}
+		}
+	}
+
+	var names []string
+	if t.NotUnique {
+		pkgPath := strings.Map(func(r rune) rune {
+			if r == '\\' || r == '/' || r == '.' {
+				return '_'
+			}
+			return r
+		}, t.PkgPath)
+		names = append(names, pkgPath)
+	} else {
+		names = append(names, t.File.Name.Name)
+	}
+	if parentFun, ok := (t.ParentSpec).(*ast.FuncDecl); ok && parentFun != nil {
+		names = append(names, parentFun.Name.Name)
+	}
+	names = append(names, t.TypeSpec.Name.Name)
+	return fullTypeName(names...)
 }
 
-// FullPath of the typeSpec.
+// FullPath return the full path of the typeSpec.
 func (t *TypeSpecDef) FullPath() string {
 	return t.PkgPath + "." + t.Name()
 }
 
 // AstFileInfo information of an ast.File.
 type AstFileInfo struct {
+	//FileSet the FileSet object which is used to parse this go source file
+	FileSet *token.FileSet
+
 	// File ast.File
 	File *ast.File
 
@@ -54,16 +92,7 @@ type AstFileInfo struct {
 
 	// PackagePath package import path of the ast.File
 	PackagePath string
-}
 
-// PackageDefinitions files and definition in a package.
-type PackageDefinitions struct {
-	// files in this package, map key is file's relative path starting package path
-	Files map[string]*ast.File
-
-	// definitions in this package, map key is typeName
-	TypeDefinitions map[string]*TypeSpecDef
-
-	// package name
-	Name string
+	// ParseFlag determine what to parse
+	ParseFlag ParseFlag
 }

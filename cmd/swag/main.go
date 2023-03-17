@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/Nerzal/swag"
 	"github.com/Nerzal/swag/format"
@@ -13,23 +15,34 @@ import (
 )
 
 const (
-	searchDirFlag        = "dir"
-	excludeFlag          = "exclude"
-	generalInfoFlag      = "generalInfo"
-	propertyStrategyFlag = "propertyStrategy"
-	outputFlag           = "output"
-	parseVendorFlag      = "parseVendor"
-	parseDependencyFlag  = "parseDependency"
-	markdownFilesFlag    = "markdownFiles"
-	codeExampleFilesFlag = "codeExampleFiles"
-	parseInternalFlag    = "parseInternal"
-	generatedTimeFlag    = "generatedTime"
-	parseDepthFlag       = "parseDepth"
-	instanceNameFlag     = "instanceName"
-	overridesFileFlag    = "overridesFile"
+	searchDirFlag         = "dir"
+	excludeFlag           = "exclude"
+	generalInfoFlag       = "generalInfo"
+	propertyStrategyFlag  = "propertyStrategy"
+	outputFlag            = "output"
+	outputTypesFlag       = "outputTypes"
+	parseVendorFlag       = "parseVendor"
+	parseDependencyFlag   = "parseDependency"
+	markdownFilesFlag     = "markdownFiles"
+	codeExampleFilesFlag  = "codeExampleFiles"
+	parseInternalFlag     = "parseInternal"
+	generatedTimeFlag     = "generatedTime"
+	requiredByDefaultFlag = "requiredByDefault"
+	parseDepthFlag        = "parseDepth"
+	instanceNameFlag      = "instanceName"
+	overridesFileFlag     = "overridesFile"
+	parseGoListFlag       = "parseGoList"
+	quietFlag             = "quiet"
+	tagsFlag              = "tags"
+	parseExtensionFlag    = "parseExtension"
 )
 
 var initFlags = []cli.Flag{
+	&cli.BoolFlag{
+		Name:    quietFlag,
+		Aliases: []string{"q"},
+		Usage:   "Make the logger quiet.",
+	},
 	&cli.StringFlag{
 		Name:    generalInfoFlag,
 		Aliases: []string{"g"},
@@ -56,7 +69,13 @@ var initFlags = []cli.Flag{
 		Name:    outputFlag,
 		Aliases: []string{"o"},
 		Value:   "./docs",
-		Usage:   "Output directory for all the generated files(swagger.json, swagger.yaml and doc.go)",
+		Usage:   "Output directory for all the generated files(swagger.json, swagger.yaml and docs.go)",
+	},
+	&cli.StringFlag{
+		Name:    outputTypesFlag,
+		Aliases: []string{"ot"},
+		Value:   "go,json,yaml",
+		Usage:   "Output types of generated files (docs.go, swagger.json, swagger.yaml) like go,json,yaml",
 	},
 	&cli.BoolFlag{
 		Name:  parseVendorFlag,
@@ -92,6 +111,10 @@ var initFlags = []cli.Flag{
 		Value: 100,
 		Usage: "Dependency parse depth",
 	},
+	&cli.BoolFlag{
+		Name:  requiredByDefaultFlag,
+		Usage: "Set validation required for all fields by default",
+	},
 	&cli.StringFlag{
 		Name:  instanceNameFlag,
 		Value: "",
@@ -102,10 +125,26 @@ var initFlags = []cli.Flag{
 		Value: gen.DefaultOverridesFile,
 		Usage: "File to read global type overrides from.",
 	},
+	&cli.BoolFlag{
+		Name:  parseGoListFlag,
+		Value: true,
+		Usage: "Parse dependency via 'go list'",
+	},
+	&cli.StringFlag{
+		Name:  parseExtensionFlag,
+		Value: "",
+		Usage: "Parse only those operations that match given extension",
+	},
+	&cli.StringFlag{
+		Name:    tagsFlag,
+		Aliases: []string{"t"},
+		Value:   "",
+		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
+	},
 }
 
-func initAction(c *cli.Context) error {
-	strategy := c.String(propertyStrategyFlag)
+func initAction(ctx *cli.Context) error {
+	strategy := ctx.String(propertyStrategyFlag)
 
 	switch strategy {
 	case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
@@ -113,21 +152,36 @@ func initAction(c *cli.Context) error {
 		return fmt.Errorf("not supported %s propertyStrategy", strategy)
 	}
 
+	outputTypes := strings.Split(ctx.String(outputTypesFlag), ",")
+	if len(outputTypes) == 0 {
+		return fmt.Errorf("no output types specified")
+	}
+	logger := log.New(os.Stdout, "", log.LstdFlags)
+	if ctx.Bool(quietFlag) {
+		logger = log.New(io.Discard, "", log.LstdFlags)
+	}
+
 	return gen.New().Build(&gen.Config{
-		SearchDir:           c.String(searchDirFlag),
-		Excludes:            c.String(excludeFlag),
-		MainAPIFile:         c.String(generalInfoFlag),
+		SearchDir:           ctx.String(searchDirFlag),
+		Excludes:            ctx.String(excludeFlag),
+		ParseExtension:      ctx.String(parseExtensionFlag),
+		MainAPIFile:         ctx.String(generalInfoFlag),
 		PropNamingStrategy:  strategy,
-		OutputDir:           c.String(outputFlag),
-		ParseVendor:         c.Bool(parseVendorFlag),
-		ParseDependency:     c.Bool(parseDependencyFlag),
-		MarkdownFilesDir:    c.String(markdownFilesFlag),
-		ParseInternal:       c.Bool(parseInternalFlag),
-		GeneratedTime:       c.Bool(generatedTimeFlag),
-		CodeExampleFilesDir: c.String(codeExampleFilesFlag),
-		ParseDepth:          c.Int(parseDepthFlag),
-		InstanceName:        c.String(instanceNameFlag),
-		OverridesFile:       c.String(overridesFileFlag),
+		OutputDir:           ctx.String(outputFlag),
+		OutputTypes:         outputTypes,
+		ParseVendor:         ctx.Bool(parseVendorFlag),
+		ParseDependency:     ctx.Bool(parseDependencyFlag),
+		MarkdownFilesDir:    ctx.String(markdownFilesFlag),
+		ParseInternal:       ctx.Bool(parseInternalFlag),
+		GeneratedTime:       ctx.Bool(generatedTimeFlag),
+		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
+		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
+		ParseDepth:          ctx.Int(parseDepthFlag),
+		InstanceName:        ctx.String(instanceNameFlag),
+		OverridesFile:       ctx.String(overridesFileFlag),
+		ParseGoList:         ctx.Bool(parseGoListFlag),
+		Tags:                ctx.String(tagsFlag),
+		Debugger:            logger,
 	})
 }
 
@@ -179,8 +233,8 @@ func main() {
 			},
 		},
 	}
-	err := app.Run(os.Args)
-	if err != nil {
+
+	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
 }

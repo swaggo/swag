@@ -101,6 +101,18 @@
         }
       }
     },
+    "/GetPet6FunctionScopedResponse": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/api.GetPet6FunctionScopedResponse.response"
+            }
+          }
+        }
+      }
+    },
     "/GetPet6MapString": {
       "get": {
         "responses": {
@@ -203,16 +215,16 @@
               }
             }
           },
-          "404": {
-            "description": "Can not find ID",
-            "schema": {
-              "$ref": "#/definitions/web.APIError"
-            }
-          },
           "403": {
             "description": "cross",
             "schema": {
               "$ref": "#/definitions/cross.Cross"
+            }
+          },
+          "404": {
+            "description": "Can not find ID",
+            "schema": {
+              "$ref": "#/definitions/web.APIError"
             }
           }
         }
@@ -299,6 +311,13 @@
             "OAuth2Password": [
               "admin"
             ]
+          },
+          {
+            "Firebase": [],
+            "OAuth2Implicit": [
+              "read",
+              "write"
+            ]
           }
         ],
         "description": "get struct array by ID",
@@ -382,6 +401,14 @@
     }
   },
   "definitions": {
+    "api.GetPet6FunctionScopedResponse.response": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "type": "string"
+        }
+      }
+    },
     "cross.Cross": {
       "type": "object",
       "properties": {
@@ -511,6 +538,30 @@
             ]
           }
         },
+        "food_brands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-some-extension": true
+        },
+        "food_types": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "enum": [
+              0,
+              1,
+              2
+            ],
+            "x-enum-varnames": [
+              "Wet",
+              "Dry",
+              "Raw"
+            ]
+          },
+          "x-some-extension": true
+        },
         "id": {
           "type": "integer",
           "format": "int64",
@@ -564,6 +615,20 @@
           "minimum": 1,
           "multipleOf": 0.01,
           "example": 3.25
+        },
+        "single_enum_varname": {
+          "type": "integer",
+          "enum": [
+            1,
+            2,
+            3
+          ],
+          "x-enum-varnames": [
+            "one",
+            "two",
+            "three"
+          ],
+          "x-some-extension": true
         },
         "status": {
           "type": "string",
@@ -657,12 +722,6 @@
         "Data": {
           "type": "integer"
         },
-        "Err": {
-          "type": "integer"
-        },
-        "Status": {
-          "type": "boolean"
-        },
         "cross": {
           "$ref": "#/definitions/cross.Cross"
         },
@@ -671,6 +730,20 @@
           "items": {
             "$ref": "#/definitions/cross.Cross"
           }
+        },
+        "rev_value_base": {
+          "$ref": "#/definitions/web.RevValueBase"
+        }
+      }
+    },
+    "web.RevValueBase": {
+      "type": "object",
+      "properties": {
+        "Err": {
+          "type": "integer"
+        },
+        "Status": {
+          "type": "boolean"
         }
       }
     },

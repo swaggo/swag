@@ -1,0 +1,26 @@
+package api
+
+import "github.com/swaggo/swag/testdata/enums/types"
+
+//	 post students
+//
+//		@Summary      test enums in response models
+//		@Description  test enums in response models
+//		@Failure      400   {object}  types.Person  "ok"
+//		@Router       /students [post]
+func API() {
+	_ = types.Person{}
+}
+
+//	 get students
+//
+//		@Summary      test enums in response request
+//		@Description  test enums in response request
+//		@Param 		  typeinquery query []types.Type true "type"
+//		@Param 		  typeinheader header types.Type true "type"
+//		@Param 		  typeinpath path types.Type true "type"
+//		@Success      200   "ok"
+//		@Router       /students/{typeinpath}/ [get]
+func API2() {
+	_ = types.Person{}
+}
