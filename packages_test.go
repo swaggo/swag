@@ -12,7 +12,7 @@ import (
 
 func TestPackagesDefinitions_ParseFile(t *testing.T) {
 	pd := PackagesDefinitions{}
-	packageDir := "github.com/swaggo/swag/testdata/simple"
+	packageDir := "github.com/Nerzal/swag/testdata/simple"
 	assert.NoError(t, pd.ParseFile(packageDir, "testdata/simple/main.go", nil, ParseAll))
 	assert.Equal(t, 1, len(pd.packages))
 	assert.Equal(t, 1, len(pd.files))

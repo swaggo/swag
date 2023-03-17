@@ -377,38 +377,41 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 			t.ResolveInternal = true
 			t.MaxDepth = parseDepth
 
-		pkgName, err := getPkgName(absMainAPIFilePath)
-		if err != nil {
-			return errors.Wrap(err, "could not parse dependencies")
-		}
-
-		if err := t.Resolve(pkgName); err != nil {
-			return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not resolve dependencies")
-		}
-
-		for i := 0; i < len(t.Root.Deps); i++ {
-			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
+			pkgName, err := getPkgName(absMainAPIFilePath)
+			if err != nil {
 				return errors.Wrap(err, "could not parse dependencies")
 			}
+
+			if err := t.Resolve(pkgName); err != nil {
+				return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not resolve dependencies")
+			}
+
+			for i := 0; i < len(t.Root.Deps); i++ {
+				if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
+					return errors.Wrap(err, "could not parse dependencies")
+				}
+			}
 		}
+
+		err = parser.ParseGeneralAPIInfo(absMainAPIFilePath)
+		if err != nil {
+			return err
+		}
+
+		parser.parsedSchemas, err = parser.packages.ParseTypes()
+		if err != nil {
+			return err
+		}
+
+		err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
+		if err != nil {
+			return err
+		}
+
+		return parser.checkOperationIDUniqueness()
 	}
 
-	err = parser.ParseGeneralAPIInfo(absMainAPIFilePath)
-	if err != nil {
-		return err
-	}
-
-	parser.parsedSchemas, err = parser.packages.ParseTypes()
-	if err != nil {
-		return err
-	}
-
-	err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
-	if err != nil {
-		return err
-	}
-
-	return parser.checkOperationIDUniqueness()
+	return nil
 }
 
 func getPkgName(searchDir string) (string, error) {
@@ -1032,7 +1035,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 
 	typeSpecDef := parser.packages.FindTypeSpec(typeName, file)
 	if typeSpecDef == nil {
-		parser.packages.FindTypeSpec(typeName, file, parser.ParseDependency) // uncomment for debugging
+		parser.packages.FindTypeSpec(typeName, file) // uncomment for debugging
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 

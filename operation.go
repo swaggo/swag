@@ -6,7 +6,6 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -112,7 +111,6 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	if len(commentLine) == 0 {
 		return nil
 	}
-
 
 	fields := FieldsByAnySpace(commentLine, 2)
 	attribute := fields[0]

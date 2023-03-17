@@ -579,8 +579,6 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 	return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 }
 
-}
-
 func isAliasPkgName(file *ast.File, pkgName string) bool {
 	if file == nil && file.Imports == nil {
 		return false
@@ -593,3 +591,4 @@ func isAliasPkgName(file *ast.File, pkgName string) bool {
 	}
 
 	return false
+}
