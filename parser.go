@@ -451,9 +451,9 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 	filePath := mainAPIFile
 
-	if !strings.Contains(mainAPIFile, ".go") {
-		filePath = mainAPIFile + "/main.go"
-	}
+	// if !strings.Contains(mainAPIFile, ".go") {
+	// 	filePath = mainAPIFile + "/main.go"
+	// }
 
 	fileTree, err := goparser.ParseFile(fileSet, filePath, nil, goparser.ParseComments)
 	if err != nil {
