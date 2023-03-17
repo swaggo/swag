@@ -314,26 +314,43 @@ func parseSecAttributesV3(context string, lines []string, index *int) (*openapi.
 
 	switch attribute {
 	case secAPIKeyAttr:
-		scheme = openapi.APIKeyAuth(attrMap[name], attrMap[in])
+		scheme.Type = "apiKey"
+		scheme.In = attrMap[in]
+		scheme.Name = attrMap[name]
 	case secApplicationAttr:
-		scheme = openapi.OAuth2Application(attrMap[tokenURL])
+		scheme.Type = "oauth2"
+		scheme.Flows = openapi.NewOAuthFlows()
+		scheme.Flows.Spec.ClientCredentials = openapi.NewOAuthFlow()
+		scheme.Flows.Spec.ClientCredentials.Spec.TokenURL = attrMap[tokenURL]
 	case secImplicitAttr:
-		scheme = openapi.OAuth2Implicit(attrMap[authorizationURL])
+		scheme.Type = "oauth2"
+		scheme.Flows = openapi.NewOAuthFlows()
+		scheme.Flows.Spec.Implicit = openapi.NewOAuthFlow()
+		scheme.Flows.Spec.Implicit.Spec.AuthorizationURL = attrMap[authorizationURL]
 	case secPasswordAttr:
-		scheme = openapi.OAuth2Password(attrMap[tokenURL])
+		scheme.Type = "oauth2"
+		scheme.Flows = openapi.NewOAuthFlows()
+		scheme.Flows.Spec.Password = openapi.NewOAuthFlow()
+		scheme.Flows.Spec.Password.Spec.TokenURL = attrMap[tokenURL]
 	case secAccessCodeAttr:
-		scheme = openapi.OAuth2AccessToken(attrMap[authorizationURL], attrMap[tokenURL])
+		scheme.Type = "oauth2"
+		scheme.Flows = openapi.NewOAuthFlows()
+		scheme.Flows.Spec.AuthorizationCode = openapi.NewOAuthFlow()
+		scheme.Flows.Spec.AuthorizationCode.Spec.AuthorizationURL = attrMap[authorizationURL]
+		scheme.Flows.Spec.AuthorizationCode.Spec.TokenURL = attrMap[tokenURL]
 	}
 
 	scheme.Description = description
 
-	for extKey, extValue := range extensions {
-		scheme.AddExtension(extKey, extValue)
-	}
+	// TODO handle extensions
+	// for extKey, extValue := range extensions {
+	// 	scheme.AddExtension(extKey, extValue)
+	// }
 
-	for scope, scopeDescription := range scopes {
-		scheme.AddScope(scope, scopeDescription)
-	}
+	// TODO handle scopes
+	// for scope, scopeDescription := range scopes {
+	// 	scheme.AddScope(scope, scopeDescription)
+	// }
 
 	return scheme, nil
 }
