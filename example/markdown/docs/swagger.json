@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "# General API documentation\n\n**Warning** this api is not production ready. Use at your own risk.\n\nIn order to re-generate the documentation you need to run\n\n`swago init --md .`",
+        "description": "# General API documentation\n\n**Warning** this api is not production ready. Use at your own risk.\n\nIn order to re-generate the documentation you need to run\n\n`swag init --md .`\n",
         "title": "Swagger Example API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
@@ -35,7 +35,10 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/api.UsersCollection"
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/definitions/api.User"
+                                }
                             }
                         }
                     }
@@ -59,7 +62,6 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/api.User"
                         }
                     }
@@ -103,7 +105,6 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/api.User"
                         }
                     }
@@ -200,23 +201,6 @@
                 },
                 "password": {
                     "type": "string"
-                }
-            }
-        },
-        "api.UsersCollection": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "email": {
-                        "type": "string"
-                    },
-                    "id": {
-                        "type": "integer"
-                    },
-                    "password": {
-                        "type": "string"
-                    }
                 }
             }
         }

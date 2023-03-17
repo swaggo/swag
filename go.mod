@@ -4,11 +4,10 @@ go 1.20
 
 require (
 	github.com/KyleBanks/depth v1.2.1
-	github.com/agiledragon/gomonkey/v2 v2.9.0
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/spec v0.20.8
 	github.com/json-iterator/go v1.1.12
-	github.com/otiai10/copy v1.9.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/tools v0.6.0

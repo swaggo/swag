@@ -1071,7 +1071,7 @@ func TestParseEmptyResponseOnlyCode(t *testing.T) {
 	expected := `{
     "responses": {
         "200": {
-            "description": ""
+            "description": "OK"
         }
     }
 }`
@@ -1091,10 +1091,10 @@ func TestParseEmptyResponseOnlyCodes(t *testing.T) {
 	expected := `{
     "responses": {
         "200": {
-            "description": ""
+            "description": "OK"
         },
         "201": {
-            "description": ""
+            "description": "Created"
         },
         "default": {
             "description": ""
@@ -1821,6 +1821,115 @@ func TestParseParamCommentByDefault(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentByExampleInt(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "Some ID" Example(10)`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "example": 10,
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByExampleString(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query string true "Some ID" Example(True feelings)`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "string",
+        "example": "True feelings",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByExampleUnsupportedType(t *testing.T) {
+	t.Parallel()
+	var param spec.Parameter
+
+	setExample(&param, "something", "random value")
+	assert.Equal(t, param.Example, nil)
+
+	setExample(&param, STRING, "string value")
+	assert.Equal(t, param.Example, "string value")
+
+	setExample(&param, INTEGER, "10")
+	assert.Equal(t, param.Example, 10)
+
+	setExample(&param, NUMBER, "10")
+	assert.Equal(t, param.Example, float64(10))
+}
+
+func TestParseParamCommentBySchemaExampleString(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id body string true "Some ID" SchemaExample(True feelings)`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "body",
+        "required": true,
+        "schema": {
+            "type": "string",
+            "example": "True feelings"
+        }
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentBySchemaExampleUnsupportedType(t *testing.T) {
+	t.Parallel()
+	var param spec.Parameter
+
+	setSchemaExample(&param, "something", "random value")
+	assert.Nil(t, param.Schema)
+
+	setSchemaExample(&param, STRING, "string value")
+	assert.Nil(t, param.Schema)
+
+	param.Schema = &spec.Schema{}
+	setSchemaExample(&param, STRING, "string value")
+	assert.Equal(t, "string value", param.Schema.Example)
+
+	setSchemaExample(&param, INTEGER, "10")
+	assert.Equal(t, 10, param.Schema.Example)
+
+	setSchemaExample(&param, NUMBER, "10")
+	assert.Equal(t, float64(10), param.Schema.Example)
+
+	setSchemaExample(&param, STRING, "string \\r\\nvalue")
+	assert.Equal(t, "string \r\nvalue", param.Schema.Example)
+}
+
 func TestParseParamArrayWithEnums(t *testing.T) {
 	t.Parallel()
 
@@ -1855,7 +1964,7 @@ func TestParseAndExtractionParamAttribute(t *testing.T) {
 
 	op := NewOperation(nil)
 	numberParam := spec.Parameter{}
-	err := op.parseAndExtractionParamAttribute(
+	err := op.parseParamAttribute(
 		" default(1) maximum(100) minimum(0) format(csv)",
 		"",
 		NUMBER,
@@ -1867,14 +1976,14 @@ func TestParseAndExtractionParamAttribute(t *testing.T) {
 	assert.Equal(t, "csv", numberParam.SimpleSchema.Format)
 	assert.Equal(t, float64(1), numberParam.Default)
 
-	err = op.parseAndExtractionParamAttribute(" minlength(1)", "", NUMBER, nil)
+	err = op.parseParamAttribute(" minlength(1)", "", NUMBER, nil)
 	assert.Error(t, err)
 
-	err = op.parseAndExtractionParamAttribute(" maxlength(1)", "", NUMBER, nil)
+	err = op.parseParamAttribute(" maxlength(1)", "", NUMBER, nil)
 	assert.Error(t, err)
 
 	stringParam := spec.Parameter{}
-	err = op.parseAndExtractionParamAttribute(
+	err = op.parseParamAttribute(
 		" default(test) maxlength(100) minlength(0) format(csv)",
 		"",
 		STRING,
@@ -1884,21 +1993,21 @@ func TestParseAndExtractionParamAttribute(t *testing.T) {
 	assert.Equal(t, int64(0), *stringParam.MinLength)
 	assert.Equal(t, int64(100), *stringParam.MaxLength)
 	assert.Equal(t, "csv", stringParam.SimpleSchema.Format)
-	err = op.parseAndExtractionParamAttribute(" minimum(0)", "", STRING, nil)
+	err = op.parseParamAttribute(" minimum(0)", "", STRING, nil)
 	assert.Error(t, err)
 
-	err = op.parseAndExtractionParamAttribute(" maximum(0)", "", STRING, nil)
+	err = op.parseParamAttribute(" maximum(0)", "", STRING, nil)
 	assert.Error(t, err)
 
 	arrayParram := spec.Parameter{}
-	err = op.parseAndExtractionParamAttribute(" collectionFormat(tsv)", ARRAY, STRING, &arrayParram)
+	err = op.parseParamAttribute(" collectionFormat(tsv)", ARRAY, STRING, &arrayParram)
 	assert.Equal(t, "tsv", arrayParram.CollectionFormat)
 	assert.NoError(t, err)
 
-	err = op.parseAndExtractionParamAttribute(" collectionFormat(tsv)", STRING, STRING, nil)
+	err = op.parseParamAttribute(" collectionFormat(tsv)", STRING, STRING, nil)
 	assert.Error(t, err)
 
-	err = op.parseAndExtractionParamAttribute(" default(0)", "", ARRAY, nil)
+	err = op.parseParamAttribute(" default(0)", "", ARRAY, nil)
 	assert.NoError(t, err)
 }
 
@@ -1971,6 +2080,39 @@ func TestParseSecurityComment(t *testing.T) {
 	assert.Equal(t, operation.Security, []map[string][]string{
 		{
 			"OAuth2Implicit": {"read", "write"},
+		},
+	})
+}
+
+func TestParseSecurityCommentSimple(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Security ApiKeyAuth`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Equal(t, operation.Security, []map[string][]string{
+		{
+			"ApiKeyAuth": {},
+		},
+	})
+}
+
+func TestParseSecurityCommentOr(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Security OAuth2Implicit[read, write] || Firebase[]`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Equal(t, operation.Security, []map[string][]string{
+		{
+			"OAuth2Implicit": {"read", "write"},
+			"Firebase":       {""},
 		},
 	})
 }
@@ -2126,6 +2268,14 @@ func TestParseObjectSchema(t *testing.T) {
 	schema, err := operation.parseObjectSchema("interface{}", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, schema, PrimitiveSchema(OBJECT))
+
+	schema, err = operation.parseObjectSchema("any", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, PrimitiveSchema(OBJECT))
+
+	schema, err = operation.parseObjectSchema("any{data=string}", nil)
+	assert.NoError(t, err)
+	assert.Equal(t, schema, PrimitiveSchema(OBJECT).SetProperty("data", *PrimitiveSchema("string")))
 
 	schema, err = operation.parseObjectSchema("int", nil)
 	assert.NoError(t, err)
