@@ -359,56 +359,60 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 
 	// Use 'go list' command instead of depth.Resolve()
 	if parser.ParseDependency {
-		if parser.parseGoList {
-			pkgs, err := listPackages(context.Background(), filepath.Dir(absMainAPIFilePath), nil, "-deps")
-			if err != nil {
-				return fmt.Errorf("pkg %s cannot find all dependencies, %s", filepath.Dir(absMainAPIFilePath), err)
-			}
+		parser.parseDeps(absMainAPIFilePath, parseDepth)
+	}
 
-			length := len(pkgs)
-			for i := 0; i < length; i++ {
-				err := parser.getAllGoFileInfoFromDepsByList(pkgs[i])
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			var t depth.Tree
-			t.ResolveInternal = true
-			t.MaxDepth = parseDepth
+	err = parser.ParseGeneralAPIInfo(absMainAPIFilePath)
+	if err != nil {
+		return err
+	}
 
-			pkgName, err := getPkgName(absMainAPIFilePath)
+	parser.parsedSchemas, err = parser.packages.ParseTypes()
+	if err != nil {
+		return err
+	}
+
+	err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
+	if err != nil {
+		return err
+	}
+
+	return parser.checkOperationIDUniqueness()
+}
+
+func (parser *Parser) parseDeps(absMainAPIFilePath string, parseDepth int) error {
+	if parser.parseGoList {
+		pkgs, err := listPackages(context.Background(), filepath.Dir(absMainAPIFilePath), nil, "-deps")
+		if err != nil {
+			return fmt.Errorf("pkg %s cannot find all dependencies, %s", filepath.Dir(absMainAPIFilePath), err)
+		}
+
+		length := len(pkgs)
+		for i := 0; i < length; i++ {
+			err := parser.getAllGoFileInfoFromDepsByList(pkgs[i])
 			if err != nil {
+				return err
+			}
+		}
+	} else {
+		var t depth.Tree
+		t.ResolveInternal = true
+		t.MaxDepth = parseDepth
+
+		pkgName, err := getPkgName(absMainAPIFilePath)
+		if err != nil {
+			return errors.Wrap(err, "could not parse dependencies")
+		}
+
+		if err := t.Resolve(pkgName); err != nil {
+			return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not resolve dependencies")
+		}
+
+		for i := 0; i < len(t.Root.Deps); i++ {
+			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
 				return errors.Wrap(err, "could not parse dependencies")
 			}
-
-			if err := t.Resolve(pkgName); err != nil {
-				return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not resolve dependencies")
-			}
-
-			for i := 0; i < len(t.Root.Deps); i++ {
-				if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
-					return errors.Wrap(err, "could not parse dependencies")
-				}
-			}
 		}
-
-		err = parser.ParseGeneralAPIInfo(absMainAPIFilePath)
-		if err != nil {
-			return err
-		}
-
-		parser.parsedSchemas, err = parser.packages.ParseTypes()
-		if err != nil {
-			return err
-		}
-
-		err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
-		if err != nil {
-			return err
-		}
-
-		return parser.checkOperationIDUniqueness()
 	}
 
 	return nil
