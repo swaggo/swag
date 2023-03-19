@@ -332,6 +332,7 @@ func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr) (*
 	case *ast.MapType:
 	case *ast.FuncType:
 	case *ast.IndexExpr:
+	case *ast.IndexListExpr:
 		name, err := getExtendedGenericFieldType(file, expr, nil)
 		if err == nil {
 			if schema, err := parser.getTypeSchema(name, file, false); err == nil {
