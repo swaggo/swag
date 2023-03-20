@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-openapi/spec"
 	"github.com/pkg/errors"
 	openapi "github.com/sv-tools/openapi/spec"
 )
@@ -33,7 +32,7 @@ func (parser *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			setOpenAPIInfo(parser.openAPI, attr, value)
 		case descriptionAttr:
 			if previousAttribute == attribute {
-				parser.swagger.Info.Description += "\n" + value
+				parser.openAPI.Info.Spec.Description += "\n" + value
 
 				continue
 			}
@@ -119,14 +118,15 @@ func (parser *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			parser.collectionFormatInQuery = TransToValidCollectionFormat(value)
 
 		case extDocsDescAttr, extDocsURLAttr:
-			if parser.swagger.ExternalDocs == nil {
-				parser.swagger.ExternalDocs = new(spec.ExternalDocumentation)
+			if parser.openAPI.ExternalDocs == nil {
+				parser.openAPI.ExternalDocs = openapi.NewExternalDocs()
 			}
+
 			switch attr {
 			case extDocsDescAttr:
-				parser.swagger.ExternalDocs.Description = value
+				parser.openAPI.ExternalDocs.Spec.Description = value
 			case extDocsURLAttr:
-				parser.swagger.ExternalDocs.URL = value
+				parser.openAPI.ExternalDocs.Spec.Description = value
 			}
 
 		case "@x-taggroups":
@@ -140,7 +140,7 @@ func (parser *Parser) parseGeneralAPIInfoV3(comments []string) error {
 				return fmt.Errorf("annotation %s need a valid json value. error: %s", originalAttribute, err.Error())
 			}
 
-			parser.swagger.Extensions[originalAttribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
+			parser.openAPI.Info.Extensions[originalAttribute[1:]] = valueJSON
 		default:
 			if strings.HasPrefix(attribute, "@x-") {
 				err := parser.parseExtensionsV3(value, attribute)
@@ -158,22 +158,23 @@ func (parser *Parser) parseGeneralAPIInfoV3(comments []string) error {
 
 func (p *Parser) parseExtensionsV3(value, attribute string) error {
 	extensionName := attribute[1:]
-	// for each security definition
-	for _, v := range p.swagger.SecurityDefinitions {
-		// check if extension exists
-		_, extExistsInSecurityDef := v.VendorExtensible.Extensions.GetString(extensionName)
-		// if it exists in at least one, then we stop iterating
-		if extExistsInSecurityDef {
-			return nil
-		}
-	}
+
+	// // for each security definition
+	// for _, v := range p.openAPI.Components.Spec.SecuritySchemes{
+	// 	// check if extension exists
+	// 	_, extExistsInSecurityDef := v.VendorExtensible.Extensions.GetString(extensionName)
+	// 	// if it exists in at least one, then we stop iterating
+	// 	if extExistsInSecurityDef {
+	// 		return nil
+	// 	}
+	// }
 
 	if len(value) == 0 {
 		return fmt.Errorf("annotation %s need a value", attribute)
 	}
 
-	if p.swagger.Extensions == nil {
-		p.swagger.Extensions = make(map[string]interface{})
+	if p.openAPI.Info.Extensions == nil {
+		p.openAPI.Info.Extensions = map[string]any{}
 	}
 
 	var valueJSON interface{}
@@ -183,11 +184,11 @@ func (p *Parser) parseExtensionsV3(value, attribute string) error {
 	}
 
 	if strings.Contains(extensionName, "logo") {
-		p.swagger.Info.Extensions.Add(extensionName, valueJSON)
+		p.openAPI.Info.Extensions[extensionName] = valueJSON
 		return nil
 	}
 
-	p.swagger.Extensions[attribute[1:]] = valueJSON
+	p.openAPI.Info.Extensions[attribute[1:]] = valueJSON
 
 	return nil
 }
@@ -255,7 +256,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	case secAPIKeyAttr:
 		search = []string{in, name}
 	case secApplicationAttr, secPasswordAttr:
-		search = []string{tokenURL}
+		search = []string{tokenURL, in, name}
 	case secImplicitAttr:
 		search = []string{authorizationURL}
 	case secAccessCodeAttr:
@@ -333,6 +334,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	case secApplicationAttr:
 		key = "oauth2"
 		scheme.Type = "oauth2"
+		scheme.In = attrMap[in]
 		scheme.Flows = openapi.NewOAuthFlows()
 		scheme.Flows.Spec.ClientCredentials = openapi.NewOAuthFlow()
 		scheme.Flows.Spec.ClientCredentials.Spec.TokenURL = attrMap[tokenURL]
