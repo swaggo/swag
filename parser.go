@@ -179,6 +179,7 @@ type FieldParserFactory func(ps *Parser, field *ast.Field) FieldParser
 type FieldParser interface {
 	ShouldSkip() bool
 	FieldName() (string, error)
+	FormName() string
 	CustomSchema() (*spec.Schema, error)
 	ComplementSchema(schema *spec.Schema) error
 	IsRequired() (bool, error)
@@ -1387,6 +1388,13 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 
 	if required {
 		tagRequired = append(tagRequired, fieldName)
+	}
+
+	if formName := ps.FormName(); len(formName) > 0 {
+		if schema.Extensions == nil {
+			schema.Extensions = make(spec.Extensions)
+		}
+		schema.Extensions[formTag] = formName
 	}
 
 	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil
