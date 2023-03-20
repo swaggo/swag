@@ -750,13 +750,14 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 
 		fields := FieldsByAnySpace(v, 2)
 		securityAttr := strings.ToLower(fields[0])
+
 		var value string
 		if len(fields) > 1 {
 			value = fields[1]
 		}
 
-		for _, findterm := range search {
-			if securityAttr == findterm {
+		for _, findTerm := range search {
+			if securityAttr == findTerm {
 				attrMap[securityAttr] = value
 
 				break

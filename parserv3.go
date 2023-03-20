@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-openapi/spec"
+	"github.com/pkg/errors"
 	openapi "github.com/sv-tools/openapi/spec"
 )
 
@@ -142,48 +143,51 @@ func (parser *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			parser.swagger.Extensions[originalAttribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
 		default:
 			if strings.HasPrefix(attribute, "@x-") {
-				extensionName := attribute[1:]
-
-				extExistsInSecurityDef := false
-				// for each security definition
-				for _, v := range parser.swagger.SecurityDefinitions {
-					// check if extension exists
-					_, extExistsInSecurityDef = v.VendorExtensible.Extensions.GetString(extensionName)
-					// if it exists in at least one, then we stop iterating
-					if extExistsInSecurityDef {
-						break
-					}
-				}
-
-				// if it is present on security def, don't add it again
-				if extExistsInSecurityDef {
-					break
-				}
-
-				if len(value) == 0 {
-					return fmt.Errorf("annotation %s need a value", attribute)
-				}
-
-				var valueJSON interface{}
-				err := json.Unmarshal([]byte(value), &valueJSON)
+				err := parser.parseExtensionsV3(value, attribute)
 				if err != nil {
-					return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
-				}
-
-				if strings.Contains(extensionName, "logo") {
-					parser.swagger.Info.Extensions.Add(extensionName, valueJSON)
-				} else {
-					if parser.swagger.Extensions == nil {
-						parser.swagger.Extensions = make(map[string]interface{})
-					}
-
-					parser.swagger.Extensions[attribute[1:]] = valueJSON
+					return errors.Wrap(err, "could not parse extension comment")
 				}
 			}
 		}
 
 		previousAttribute = attribute
 	}
+
+	return nil
+}
+
+func (p *Parser) parseExtensionsV3(value, attribute string) error {
+	extensionName := attribute[1:]
+	// for each security definition
+	for _, v := range p.swagger.SecurityDefinitions {
+		// check if extension exists
+		_, extExistsInSecurityDef := v.VendorExtensible.Extensions.GetString(extensionName)
+		// if it exists in at least one, then we stop iterating
+		if extExistsInSecurityDef {
+			return nil
+		}
+	}
+
+	if len(value) == 0 {
+		return fmt.Errorf("annotation %s need a value", attribute)
+	}
+
+	if p.swagger.Extensions == nil {
+		p.swagger.Extensions = make(map[string]interface{})
+	}
+
+	var valueJSON interface{}
+	err := json.Unmarshal([]byte(value), &valueJSON)
+	if err != nil {
+		return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
+	}
+
+	if strings.Contains(extensionName, "logo") {
+		p.swagger.Info.Extensions.Add(extensionName, valueJSON)
+		return nil
+	}
+
+	p.swagger.Extensions[attribute[1:]] = valueJSON
 
 	return nil
 }
@@ -277,8 +281,8 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 			value = fields[1]
 		}
 
-		for _, findterm := range search {
-			if securityAttr == findterm {
+		for _, findTerm := range search {
+			if securityAttr == findTerm {
 				attrMap[securityAttr] = value
 
 				break
@@ -338,12 +342,23 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		scheme.Flows = openapi.NewOAuthFlows()
 		scheme.Flows.Spec.Implicit = openapi.NewOAuthFlow()
 		scheme.Flows.Spec.Implicit.Spec.AuthorizationURL = attrMap[authorizationURL]
+
+		scheme.Flows.Spec.Password.Spec.Scopes = make(map[string]string)
+		for k, v := range scopes {
+			scheme.Flows.Spec.Password.Spec.Scopes[k] = v
+		}
 	case secPasswordAttr:
 		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.Flows = openapi.NewOAuthFlows()
 		scheme.Flows.Spec.Password = openapi.NewOAuthFlow()
 		scheme.Flows.Spec.Password.Spec.TokenURL = attrMap[tokenURL]
+
+		scheme.Flows.Spec.Password.Spec.Scopes = make(map[string]string)
+		for k, v := range scopes {
+			scheme.Flows.Spec.Password.Spec.Scopes[k] = v
+		}
+
 	case secAccessCodeAttr:
 		key = "oauth2"
 		scheme.Type = "oauth2"
@@ -355,15 +370,13 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 
 	scheme.Description = description
 
-	// TODO handle extensions
-	// for extKey, extValue := range extensions {
-	// 	scheme.AddExtension(extKey, extValue)
-	// }
+	if scheme.Flows.Extensions == nil && len(extensions) > 0 {
+		scheme.Flows.Extensions = make(map[string]interface{})
+	}
 
-	// TODO handle scopes
-	// for scope, scopeDescription := range scopes {
-	// 	scheme.AddScope(scope, scopeDescription)
-	// }
+	for k, v := range extensions {
+		scheme.Flows.Extensions[k] = v
+	}
 
 	return key, scheme, nil
 }
