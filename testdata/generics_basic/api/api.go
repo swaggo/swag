@@ -18,6 +18,8 @@ type StringStruct struct {
 	Data string
 }
 
+type Foo = web.GenericResponseMulti[types.Post, types.Post]
+
 // @Summary Add a new pet to the store
 // @Description get string by ID
 // @Accept  json
@@ -46,6 +48,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} web.GenericResponse[types.Post]
 // @Success 201 {object} web.GenericResponse[types.Hello]
 // @Success 202 {object} web.GenericResponse[types.Field[string]]
+// @Success 203 {object} Foo
 // @Success 222 {object} web.GenericResponseMulti[types.Post, types.Post]
 // @Router /posts-multi/ [post]
 func GetPostMulti(w http.ResponseWriter, r *http.Request) {
