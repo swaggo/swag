@@ -3,6 +3,8 @@ package swag
 import (
 	"encoding/json"
 	"fmt"
+	"go/ast"
+	"net/http"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -381,4 +383,89 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	}
 
 	return key, scheme, nil
+}
+
+// ParseRouterAPIInfo parses router api info for given astFile.
+func (parser *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
+	for _, astDescription := range fileInfo.File.Decls {
+		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
+			continue
+		}
+
+		astDeclaration, ok := astDescription.(*ast.FuncDecl)
+		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
+			if parser.matchTags(astDeclaration.Doc.List) &&
+				matchExtension(parser.parseExtension, astDeclaration.Doc.List) {
+				// for per 'function' comment, create a new 'Operation' object
+				operation := NewOperationV3(parser, SetCodeExampleFilesDirectoryV3(parser.codeExampleFilesDir))
+
+				for _, comment := range astDeclaration.Doc.List {
+					err := operation.ParseCommentV3(comment.Text, fileInfo.File)
+					if err != nil {
+						return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
+					}
+				}
+				err := processRouterOperationV3(parser, operation)
+				if err != nil {
+					return err
+				}
+
+			}
+		}
+	}
+
+	return nil
+}
+
+func processRouterOperationV3(p *Parser, o *OperationV3) error {
+	for _, routeProperties := range o.RouterProperties {
+		var (
+			pathItem *openapi.RefOrSpec[openapi.Extendable[openapi.PathItem]]
+			ok       bool
+		)
+
+		pathItem, ok = p.openAPI.Paths.Spec.Paths[routeProperties.Path]
+		if !ok {
+			pathItem = &openapi.RefOrSpec[openapi.Extendable[openapi.PathItem]]{}
+		}
+
+		op := refRouteMethodOpV3(pathItem.Spec.Spec, routeProperties.HTTPMethod)
+
+		// check if we already have an operation for this path and method
+		if *op != nil {
+			err := fmt.Errorf("route %s %s is declared multiple times", routeProperties.HTTPMethod, routeProperties.Path)
+			if p.Strict {
+				return err
+			}
+
+			p.debug.Printf("warning: %s\n", err)
+		}
+
+		*op = &o.Operation
+
+		p.openAPI.Paths.Spec.Paths[routeProperties.Path] = pathItem
+	}
+
+	return nil
+}
+
+func refRouteMethodOpV3(item *openapi.PathItem, method string) **openapi.Operation {
+	switch method {
+	case http.MethodGet:
+		return &item.Get.Spec
+	case http.MethodPost:
+		return &item.Post.Spec
+	case http.MethodDelete:
+		return &item.Delete.Spec
+	case http.MethodPut:
+		return &item.Put.Spec
+	case http.MethodPatch:
+		return &item.Patch.Spec
+	case http.MethodHead:
+		return &item.Head.Spec
+	case http.MethodOptions:
+		return &item.Options.Spec
+	default:
+		return nil
+	}
 }
