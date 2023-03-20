@@ -49,6 +49,12 @@
                             "$ref": "#/definitions/web.GenericResponse-types_Field-string"
                         }
                     },
+                    "203": {
+                        "description": "Non-Authoritative Information",
+                        "schema": {
+                            "$ref": "#/definitions/api.Foo"
+                        }
+                    },
                     "222": {
                         "description": "",
                         "schema": {
@@ -182,6 +188,20 @@
         }
     },
     "definitions": {
+        "api.Foo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "api.Response-api_StringStruct-types_Field-int": {
             "type": "object",
             "properties": {
