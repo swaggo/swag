@@ -159,6 +159,12 @@
                             "$ref": "#/definitions/api.Response-api_StringStruct-types_Field-int"
                         }
                     },
+                    "206": {
+                        "description": "Partial Content",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response2-string-types_Field-int-string"
+                        }
+                    },
                     "222": {
                         "description": "",
                         "schema": {
@@ -197,6 +203,20 @@
             }
         },
         "api.Response-string-types_Field-int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Response2-string-types_Field-int-string": {
             "type": "object",
             "properties": {
                 "data": {

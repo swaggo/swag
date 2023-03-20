@@ -14,6 +14,13 @@ type Response[T any, X any] struct {
 	Status string
 }
 
+type Response2[T, X any, Y any] struct {
+	Data T
+	Meta X
+
+	Status Y
+}
+
 type StringStruct struct {
 	Data string
 }
@@ -29,6 +36,7 @@ type StringStruct struct {
 // @Success 203 {object} web.GenericResponse[types.Field[int]]
 // @Success 204 {object} Response[string, types.Field[int]]
 // @Success 205 {object} Response[StringStruct, types.Field[int]]
+// @Success 206 {object} Response2[string, types.Field[int],string]
 // @Success 222 {object} web.GenericResponseMulti[types.Post, types.Post]
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
