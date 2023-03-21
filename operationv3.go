@@ -6,7 +6,6 @@ import (
 	"go/ast"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/sv-tools/openapi/spec"
 )
 
@@ -81,7 +80,7 @@ func (o *OperationV3) ParseCommentV3(comment string, astFile *ast.File) error {
 	case headerAttr:
 		// return o.ParseResponseHeaderComment(lineRemainder, astFile)
 	case routerAttr:
-		// return o.ParseRouterComment(lineRemainder)
+		return o.ParseRouterComment(lineRemainder)
 	case securityAttr:
 		// return o.ParseSecurityComment(lineRemainder)
 	case deprecatedAttr:
@@ -124,7 +123,8 @@ func (o *OperationV3) ParseMetadata(attribute, lowerAttribute, lineRemainder str
 		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
 		// o.Extensions[attribute[1:]] = valueJSON
 		// TODO: vendor extensions must be placed under the http method. not sure how to get that at this place
-		return errors.New("not implemented yet")
+		// return errors.New("not implemented yet")
+		return nil
 	}
 
 	return nil
@@ -140,15 +140,17 @@ func (o *OperationV3) ParseTagsComment(commentLine string) {
 // ParseAcceptComment parses comment for given `accept` comment string.
 func (o *OperationV3) ParseAcceptComment(commentLine string) error {
 	const errMessage = "could not parse accept comment"
-	// return parseMimeTypeList(commentLine, &o.RequestBody.Spec.Spec.Content, )
-	result, err := parseMimeTypeListV3(commentLine, "%v accept type can't be accepted")
-	if err != nil {
-		return errors.Wrap(err, errMessage)
-	}
 
-	for _, value := range result {
-		o.RequestBody.Spec.Spec.Content[value] = spec.NewMediaType()
-	}
+	// TODO this must be moved into another comment
+	// return parseMimeTypeList(commentLine, &o.RequestBody.Spec.Spec.Content, )
+	// result, err := parseMimeTypeListV3(commentLine, "%v accept type can't be accepted")
+	// if err != nil {
+	// 	return errors.Wrap(err, errMessage)
+	// }
+
+	// for _, value := range result {
+	// 	o.RequestBody.Spec.Spec.Content[value] = spec.NewMediaType()
+	// }
 
 	return nil
 }
@@ -407,4 +409,25 @@ func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType stri
 	// 	return PrimitiveSchema(schemaType), nil
 	// }
 	return nil, nil
+}
+
+// ParseRouterComment parses comment for given `router` comment string.
+func (o *OperationV3) ParseRouterComment(commentLine string) error {
+	matches := routerPattern.FindStringSubmatch(commentLine)
+	if len(matches) != 3 {
+		return fmt.Errorf("can not parse router comment \"%s\"", commentLine)
+	}
+
+	signature := RouteProperties{
+		Path:       matches[1],
+		HTTPMethod: strings.ToUpper(matches[2]),
+	}
+
+	if _, ok := allMethod[signature.HTTPMethod]; !ok {
+		return fmt.Errorf("invalid method: %s", signature.HTTPMethod)
+	}
+
+	o.RouterProperties = append(o.RouterProperties, signature)
+
+	return nil
 }

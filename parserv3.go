@@ -388,28 +388,29 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 	for _, astDescription := range fileInfo.File.Decls {
-		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
+		// if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
+		// 	continue
+		// }
+
+		astDeclaration, ok := astDescription.(*ast.FuncDecl)
+		if !ok || astDeclaration.Doc == nil || astDeclaration.Doc.List == nil {
 			continue
 		}
 
-		astDeclaration, ok := astDescription.(*ast.FuncDecl)
-		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-			if parser.matchTags(astDeclaration.Doc.List) &&
-				matchExtension(parser.parseExtension, astDeclaration.Doc.List) {
-				// for per 'function' comment, create a new 'Operation' object
-				operation := NewOperationV3(parser, SetCodeExampleFilesDirectoryV3(parser.codeExampleFilesDir))
+		if parser.matchTags(astDeclaration.Doc.List) &&
+			matchExtension(parser.parseExtension, astDeclaration.Doc.List) {
+			// for per 'function' comment, create a new 'Operation' object
+			operation := NewOperationV3(parser, SetCodeExampleFilesDirectoryV3(parser.codeExampleFilesDir))
 
-				for _, comment := range astDeclaration.Doc.List {
-					err := operation.ParseCommentV3(comment.Text, fileInfo.File)
-					if err != nil {
-						return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
-					}
-				}
-				err := processRouterOperationV3(parser, operation)
+			for _, comment := range astDeclaration.Doc.List {
+				err := operation.ParseCommentV3(comment.Text, fileInfo.File)
 				if err != nil {
-					return err
+					return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
 				}
-
+			}
+			err := processRouterOperationV3(parser, operation)
+			if err != nil {
+				return err
 			}
 		}
 	}
@@ -426,7 +427,11 @@ func processRouterOperationV3(p *Parser, o *OperationV3) error {
 
 		pathItem, ok = p.openAPI.Paths.Spec.Paths[routeProperties.Path]
 		if !ok {
-			pathItem = &openapi.RefOrSpec[openapi.Extendable[openapi.PathItem]]{}
+			pathItem = &openapi.RefOrSpec[openapi.Extendable[openapi.PathItem]]{
+				Spec: &openapi.Extendable[openapi.PathItem]{
+					Spec: &openapi.PathItem{},
+				},
+			}
 		}
 
 		op := refRouteMethodOpV3(pathItem.Spec.Spec, routeProperties.HTTPMethod)
@@ -452,18 +457,39 @@ func processRouterOperationV3(p *Parser, o *OperationV3) error {
 func refRouteMethodOpV3(item *openapi.PathItem, method string) **openapi.Operation {
 	switch method {
 	case http.MethodGet:
+		if item.Get == nil {
+			item.Get = &openapi.Extendable[openapi.Operation]{}
+		}
 		return &item.Get.Spec
 	case http.MethodPost:
+		if item.Post == nil {
+			item.Post = &openapi.Extendable[openapi.Operation]{}
+		}
 		return &item.Post.Spec
 	case http.MethodDelete:
+		if item.Delete == nil {
+			item.Delete = &openapi.Extendable[openapi.Operation]{}
+		}
 		return &item.Delete.Spec
 	case http.MethodPut:
+		if item.Put == nil {
+			item.Put = &openapi.Extendable[openapi.Operation]{}
+		}
 		return &item.Put.Spec
 	case http.MethodPatch:
+		if item.Patch == nil {
+			item.Patch = &openapi.Extendable[openapi.Operation]{}
+		}
 		return &item.Patch.Spec
 	case http.MethodHead:
+		if item.Head == nil {
+			item.Head = &openapi.Extendable[openapi.Operation]{}
+		}
 		return &item.Head.Spec
 	case http.MethodOptions:
+		if item.Options == nil {
+			item.Options = &openapi.Extendable[openapi.Operation]{}
+		}
 		return &item.Options.Spec
 	default:
 		return nil

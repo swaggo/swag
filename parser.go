@@ -397,9 +397,16 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		return err
 	}
 
-	err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
-	if err != nil {
-		return err
+	if parser.openAPIVersion {
+		err = parser.packages.RangeFiles(parser.ParseRouterAPIInfoV3)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
+		if err != nil {
+			return err
+		}
 	}
 
 	return parser.checkOperationIDUniqueness()
@@ -476,17 +483,12 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 	fileSet := token.NewFileSet()
 	filePath := mainAPIFile
 
-	// if !strings.Contains(mainAPIFile, ".go") {
-	// 	filePath = mainAPIFile + "/main.go"
-	// }
-
 	fileTree, err := goparser.ParseFile(fileSet, filePath, nil, goparser.ParseComments)
 	if err != nil {
 		return fmt.Errorf("cannot parse source files %s: %s", filePath, err)
 	}
 
 	parser.swagger.Swagger = "2.0"
-	// securityMap := map[string]*spec.SecurityScheme{}
 
 	for i := range fileTree.Comments {
 		comment := fileTree.Comments[i]
@@ -930,6 +932,7 @@ func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
 				if _, has := parser.tags["!"+tag]; has {
 					return false
 				}
+
 				if _, has := parser.tags[tag]; has {
 					match = true // keep iterating as it may contain a tag that is excluded
 				}
@@ -937,25 +940,28 @@ func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
 		}
 		return
 	}
+
 	return true
 }
 
 func matchExtension(extensionToMatch string, comments []*ast.Comment) (match bool) {
-	if len(extensionToMatch) != 0 {
-		for _, comment := range comments {
-			commentLine := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
-			fields := FieldsByAnySpace(commentLine, 2)
-			if len(fields) > 0 {
-				lowerAttribute := strings.ToLower(fields[0])
+	if len(extensionToMatch) == 0 {
+		return true
+	}
 
-				if lowerAttribute == fmt.Sprintf("@x-%s", strings.ToLower(extensionToMatch)) {
-					return true
-				}
+	for _, comment := range comments {
+		commentLine := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
+		fields := FieldsByAnySpace(commentLine, 2)
+		if len(fields) > 0 {
+			lowerAttribute := strings.ToLower(fields[0])
+
+			if lowerAttribute == fmt.Sprintf("@x-%s", strings.ToLower(extensionToMatch)) {
+				return true
 			}
 		}
-		return false
 	}
-	return true
+
+	return false
 }
 
 // ParseRouterAPIInfo parses router api info for given astFile.
@@ -964,6 +970,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
 			continue
 		}
+
 		astDeclaration, ok := astDescription.(*ast.FuncDecl)
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 			if parser.matchTags(astDeclaration.Doc.List) &&
