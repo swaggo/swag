@@ -62,6 +62,8 @@ const (
 	secPasswordAttr         = "@securitydefinitions.oauth2.password"
 	secAccessCodeAttr       = "@securitydefinitions.oauth2.accesscode"
 	tosAttr                 = "@termsofservice"
+	extDocsDescAttr         = "@externaldocs.description"
+	extDocsURLAttr          = "@externaldocs.url"
 	xCodeSamplesAttr        = "@x-codesamples"
 	scopeAttrPrefix         = "@scope."
 )
@@ -177,6 +179,7 @@ type FieldParserFactory func(ps *Parser, field *ast.Field) FieldParser
 type FieldParser interface {
 	ShouldSkip() bool
 	FieldName() (string, error)
+	FormName() string
 	CustomSchema() (*spec.Schema, error)
 	ComplementSchema(schema *spec.Schema) error
 	IsRequired() (bool, error)
@@ -318,6 +321,13 @@ func SetOverrides(overrides map[string]string) func(parser *Parser) {
 		for k, v := range overrides {
 			p.Overrides[k] = v
 		}
+	}
+}
+
+// SetCollectionFormat set default collection format
+func SetCollectionFormat(collectionFormat string) func(*Parser) {
+	return func(p *Parser) {
+		p.collectionFormatInQuery = collectionFormat
 	}
 }
 
@@ -561,6 +571,18 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = TransToValidCollectionFormat(value)
+
+		case extDocsDescAttr, extDocsURLAttr:
+			if parser.swagger.ExternalDocs == nil {
+				parser.swagger.ExternalDocs = new(spec.ExternalDocumentation)
+			}
+			switch attr {
+			case extDocsDescAttr:
+				parser.swagger.ExternalDocs.Description = value
+			case extDocsURLAttr:
+				parser.swagger.ExternalDocs.URL = value
+			}
+
 		default:
 			if strings.HasPrefix(attribute, "@x-") {
 				extensionName := attribute[1:]
@@ -1101,6 +1123,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	definition, err := parser.parseTypeExpr(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
 	if err != nil {
+		parser.debug.Printf("Error parsing type definition '%s': %s", typeName, err)
 		return nil, err
 	}
 
@@ -1372,6 +1395,13 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 
 	if required {
 		tagRequired = append(tagRequired, fieldName)
+	}
+
+	if formName := ps.FormName(); len(formName) > 0 {
+		if schema.Extensions == nil {
+			schema.Extensions = make(spec.Extensions)
+		}
+		schema.Extensions[formTag] = formName
 	}
 
 	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil

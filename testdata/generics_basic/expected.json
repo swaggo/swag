@@ -49,6 +49,12 @@
                             "$ref": "#/definitions/web.GenericResponse-types_Field-string"
                         }
                     },
+                    "203": {
+                        "description": "Non-Authoritative Information",
+                        "schema": {
+                            "$ref": "#/definitions/api.Foo"
+                        }
+                    },
                     "222": {
                         "description": "",
                         "schema": {
@@ -159,6 +165,12 @@
                             "$ref": "#/definitions/api.Response-api_StringStruct-types_Field-int"
                         }
                     },
+                    "206": {
+                        "description": "Partial Content",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response2-string-types_Field-int-string"
+                        }
+                    },
                     "222": {
                         "description": "",
                         "schema": {
@@ -182,6 +194,20 @@
         }
     },
     "definitions": {
+        "api.Foo": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "api.Response-api_StringStruct-types_Field-int": {
             "type": "object",
             "properties": {
@@ -197,6 +223,20 @@
             }
         },
         "api.Response-string-types_Field-int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Response2-string-types_Field-int-string": {
             "type": "object",
             "properties": {
                 "data": {

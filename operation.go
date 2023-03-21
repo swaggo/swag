@@ -310,14 +310,21 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					continue
 				}
 
+				var formName = name
+				if item.Schema.Extensions != nil {
+					if nameVal, ok := item.Schema.Extensions[formTag]; ok {
+						formName = nameVal.(string)
+					}
+				}
+
 				switch {
 				case prop.Type[0] == ARRAY && prop.Items.Schema != nil &&
 					len(prop.Items.Schema.Type) > 0 && IsSimplePrimitiveType(prop.Items.Schema.Type[0]):
 
-					param = createParameter(paramType, prop.Description, name, prop.Type[0], prop.Items.Schema.Type[0], findInSlice(schema.Required, name), enums, operation.parser.collectionFormatInQuery)
+					param = createParameter(paramType, prop.Description, formName, prop.Type[0], prop.Items.Schema.Type[0], findInSlice(schema.Required, name), enums, operation.parser.collectionFormatInQuery)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
-					param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, name), enums, operation.parser.collectionFormatInQuery)
+					param = createParameter(paramType, prop.Description, formName, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, name), enums, operation.parser.collectionFormatInQuery)
 				default:
 					operation.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 
@@ -372,6 +379,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 }
 
 const (
+	formTag             = "form"
 	jsonTag             = "json"
 	bindingTag          = "binding"
 	defaultTag          = "default"
@@ -891,6 +899,11 @@ func parseCombinedObjectSchema(parser *Parser, refType string, astFile *ast.File
 	}
 
 	if len(props) == 0 {
+		return schema, nil
+	}
+
+	if schema.Ref.GetURL() == nil && len(schema.Type) > 0 && schema.Type[0] == OBJECT && len(schema.Properties) == 0 && schema.AdditionalProperties == nil {
+		schema.Properties = props
 		return schema, nil
 	}
 

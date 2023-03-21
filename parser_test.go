@@ -253,6 +253,10 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             }
         }
     },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api"
+    },
     "x-google-endpoints": [
         {
             "allowCors": true,
@@ -337,6 +341,10 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
                 "write": " Grants write access"
             }
         }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api"
     },
     "x-google-endpoints": [
         {
@@ -3934,5 +3942,36 @@ func TestParser_parseExtension(t *testing.T) {
 			}
 		})
 
+	}
+}
+
+func TestParser_collectionFormat(t *testing.T) {
+	tests := []struct {
+		name   string
+		parser *Parser
+		format string
+	}{
+		{
+			name:   "no collectionFormat",
+			parser: New(),
+			format: "",
+		},
+		{
+			name:   "multi collectionFormat",
+			parser: New(SetCollectionFormat("multi")),
+			format: "multi",
+		},
+		{
+			name:   "ssv collectionFormat",
+			parser: New(SetCollectionFormat("ssv")),
+			format: "ssv",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.parser.collectionFormatInQuery != tt.format {
+				t.Errorf("Parser.collectionFormatInQuery = %s, want %s", tt.parser.collectionFormatInQuery, tt.format)
+			}
+		})
 	}
 }

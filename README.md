@@ -52,7 +52,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 
 2. Download swag by using:
 ```sh
-$ go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/swaggo/swag/cmd/swag@latest
 ```
 To build from source you need [Go](https://golang.org/dl/) (1.16 or newer).
 
@@ -60,7 +60,7 @@ Or download a pre-compiled binary from the [release page](https://github.com/swa
 
 3. Run `swag init` in the project's root folder which contains the `main.go` file. This will parse your comments and generate the required files (`docs` folder and `docs/docs.go`).
 ```sh
-$ swag init
+swag init
 ```
 
   Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
@@ -77,7 +77,7 @@ $ swag init
 ## swag cli
 
 ```sh
-$ swag init -h
+swag init -h
 NAME:
    swag init - Create docs.go
 
@@ -104,6 +104,7 @@ OPTIONS:
    --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
    --parseGoList                          Parse dependency via 'go list' (default: true)
    --tags value, -t value                 A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded
+   --collectionFormat value, --cf value   Set default collection format (default: "csv")
    --help, -h                             show help (default: false)
 ```
 
@@ -165,6 +166,9 @@ import "github.com/swaggo/files" // swagger embed files
 // @BasePath  /api/v1
 
 // @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
 	r := gin.Default()
 
@@ -294,7 +298,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 ```
 
 ```console
-$ swag init
+swag init
 ```
 
 4. Run your app, and browse to http://localhost:8080/swagger/index.html. You will see Swagger 2.0 Api documents as shown below:
@@ -386,6 +390,8 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 | produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     | // @produce json |
 | query.collection.format | The default collection(array) param format in query,enums:csv,multi,pipes,tsv,ssv. If not set, csv is the default.| // @query.collection.format multi
 | schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
+| externalDocs.description | Description of the external document. | // @externalDocs.description OpenAPI |
+| externalDocs.url         | URL of the external document. | // @externalDocs.url https://swagger.io/resources/open-api/ |
 | x-name      | The extension key, must be start by x- and take only json value | // @x-example-key {"key": "value"} |
 
 ### Using markdown descriptions
@@ -465,6 +471,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 - integer (int, uint, uint32, uint64)
 - number (float32)
 - boolean (bool)
+- file (param data type when uploading)
 - user defined struct
 
 ## Security

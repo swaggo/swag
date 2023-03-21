@@ -47,7 +47,7 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 2. 使用如下命令下载swag：
 
 ```bash
-$ go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/swaggo/swag/cmd/swag@latest
 ```
 
 从源码开始构建的话，需要有Go环境（1.16及以上版本）。
@@ -158,6 +158,9 @@ import "github.com/swaggo/files" // swagger embed files
 // @BasePath  /api/v1
 
 // @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
     r := gin.Default()
 
@@ -356,6 +359,8 @@ swag fmt -d ./ --exclude ./internal
 | produce                 | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime类型)”中所述。                                  | // @produce json |
 | query.collection.format | 请求URI query里数组参数的默认格式：csv，multi，pipes，tsv，ssv。 如果未设置，则默认为csv。 | // @query.collection.format multi                               |
 | schemes                 | 用空格分隔的请求的传输协议。                                                                    | // @schemes http https                                          |
+| externalDocs.description | Description of the external document. | // @externalDocs.description OpenAPI |
+| externalDocs.url         | URL of the external document. | // @externalDocs.url https://swagger.io/resources/open-api/ |
 | x-name                  | 扩展的键必须以x-开头，并且只能使用json值                                                        | // @x-example-key {"key": "value"}                              |
 
 ### 使用Markdown描述
