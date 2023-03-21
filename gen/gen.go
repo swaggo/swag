@@ -127,6 +127,9 @@ type Config struct {
 	// include only tags mentioned when searching, comma separated
 	Tags string
 
+	// PackageName defines package name of generated `docs.go`
+	PackageName string
+
 	// CollectionFormat set default collection format
 	CollectionFormat string
 }
@@ -225,7 +228,13 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	packageName := filepath.Base(absOutputDir)
+	var packageName string
+	if len(config.PackageName) > 0 {
+		packageName = config.PackageName
+	} else {
+		packageName = filepath.Base(absOutputDir)
+		packageName = strings.ReplaceAll(packageName, "-", "_")
+	}
 
 	docs, err := os.Create(docFileName)
 	if err != nil {
