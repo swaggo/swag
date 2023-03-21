@@ -11,6 +11,11 @@ import (
 	"github.com/sv-tools/openapi/spec"
 )
 
+// GetOpenAPI returns *spec.OpenAPI which is the root document object for the API specification.
+func (parser *Parser) GetOpenAPI() *spec.OpenAPI {
+	return parser.openAPI
+}
+
 func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 	previousAttribute := ""
 
@@ -388,9 +393,9 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 	for _, astDescription := range fileInfo.File.Decls {
-		// if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
-		// 	continue
-		// }
+		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
+			continue
+		}
 
 		astDeclaration, ok := astDescription.(*ast.FuncDecl)
 		if !ok || astDeclaration.Doc == nil || astDeclaration.Doc.List == nil {

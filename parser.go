@@ -226,7 +226,7 @@ func New(options ...func(*Parser)) *Parser {
 		},
 		openAPI: &openapi.OpenAPI{
 			Info:         openapi.NewInfo(),
-			OpenAPI:      "V3.1",
+			OpenAPI:      "3.1.0",
 			Components:   openapi.NewComponents(),
 			ExternalDocs: openapi.NewExternalDocs(),
 			Paths:        openapi.NewPaths(),
