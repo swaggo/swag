@@ -148,7 +148,7 @@ var initFlags = []cli.Flag{
 		Value: "",
 		Usage: "A package name of docs.go, using output directory name by default (check `--output` option)",
 	},
-  	&cli.StringFlag{
+	&cli.StringFlag{
 		Name:    collectionFormatFlag,
 		Aliases: []string{"cf"},
 		Value:   "csv",
