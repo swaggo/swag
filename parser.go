@@ -324,6 +324,13 @@ func SetOverrides(overrides map[string]string) func(parser *Parser) {
 	}
 }
 
+// SetCollectionFormat set default collection format
+func SetCollectionFormat(collectionFormat string) func(*Parser) {
+	return func(p *Parser) {
+		p.collectionFormatInQuery = collectionFormat
+	}
+}
+
 // ParseUsingGoList sets whether swag use go list to parse dependency
 func ParseUsingGoList(enabled bool) func(parser *Parser) {
 	return func(p *Parser) {

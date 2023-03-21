@@ -35,6 +35,7 @@ const (
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
+	collectionFormatFlag  = "collectionFormat"
 )
 
 var initFlags = []cli.Flag{
@@ -141,6 +142,12 @@ var initFlags = []cli.Flag{
 		Value:   "",
 		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
 	},
+	&cli.StringFlag{
+		Name:    collectionFormatFlag,
+		Aliases: []string{"cf"},
+		Value:   "csv",
+		Usage:   "Set default collection format",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -159,6 +166,11 @@ func initAction(ctx *cli.Context) error {
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 	if ctx.Bool(quietFlag) {
 		logger = log.New(io.Discard, "", log.LstdFlags)
+	}
+
+	collectionFormat := swag.TransToValidCollectionFormat(ctx.String(collectionFormatFlag))
+	if collectionFormat == "" {
+		return fmt.Errorf("not supported %s collectionFormat", ctx.String(collectionFormat))
 	}
 
 	return gen.New().Build(&gen.Config{
@@ -182,6 +194,7 @@ func initAction(ctx *cli.Context) error {
 		ParseGoList:         ctx.Bool(parseGoListFlag),
 		Tags:                ctx.String(tagsFlag),
 		Debugger:            logger,
+		CollectionFormat:    collectionFormat,
 	})
 }
 
