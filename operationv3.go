@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"strconv"
 	"strings"
 
 	"github.com/sv-tools/openapi/spec"
@@ -242,7 +243,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 	required := requiredText == "true" || requiredText == requiredLabel
 	description := matches[5]
 
-	param := createParameter(paramType, description, name, objectType, refType, required, enums, o.parser.collectionFormatInQuery)
+	param := createParameterV3(paramType, description, name, objectType, refType, required, enums, o.parser.collectionFormatInQuery)
 
 	switch paramType {
 	case "path", "header":
@@ -263,7 +264,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 		case PRIMITIVE:
 			break
 		case OBJECT:
-			schema, err := o.parser.getTypeSchema(refType, astFile, false)
+			schema, err := o.parser.getTypeSchemaV3(refType, astFile, false)
 			if err != nil {
 				return err
 			}
@@ -272,71 +273,70 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 				return nil
 			}
 
-			items := schema.Properties.ToOrderedSchemaItems()
-
-			for _, item := range items {
-				name, prop := item.Name, item.Schema
+			for name, item := range schema.Properties {
+				prop := item.Spec
 				if len(prop.Type) == 0 {
 					continue
 				}
 
 				switch {
-				case prop.Type[0] == ARRAY && prop.Items.Schema != nil &&
-					len(prop.Items.Schema.Type) > 0 && IsSimplePrimitiveType(prop.Items.Schema.Type[0]):
+				case prop.Type[0] == ARRAY &&
+					prop.Items.Schema != nil &&
+					len(prop.Items.Schema.Spec.Type) > 0 &&
+					IsSimplePrimitiveType(prop.Items.Schema.Spec.Type[0]):
 
-					param = createParameter(paramType, prop.Description, name, prop.Type[0], prop.Items.Schema.Type[0], findInSlice(schema.Required, name), enums, o.parser.collectionFormatInQuery)
+					param = createParameterV3(paramType, prop.Description, name, prop.Type[0], prop.Items.Schema.Spec.Type[0], findInSlice(schema.Required, name), enums, o.parser.collectionFormatInQuery)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
-					param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, name), enums, o.parser.collectionFormatInQuery)
+					param = createParameterV3(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, name), enums, o.parser.collectionFormatInQuery)
 				default:
 					o.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 
 					continue
 				}
 
-				param.Nullable = prop.Nullable
-				param.Format = prop.Format
-				param.Default = prop.Default
-				param.Example = prop.Example
-				param.Extensions = prop.Extensions
-				param.CommonValidations.Maximum = prop.Maximum
-				param.CommonValidations.Minimum = prop.Minimum
-				param.CommonValidations.ExclusiveMaximum = prop.ExclusiveMaximum
-				param.CommonValidations.ExclusiveMinimum = prop.ExclusiveMinimum
-				param.CommonValidations.MaxLength = prop.MaxLength
-				param.CommonValidations.MinLength = prop.MinLength
-				param.CommonValidations.Pattern = prop.Pattern
-				param.CommonValidations.MaxItems = prop.MaxItems
-				param.CommonValidations.MinItems = prop.MinItems
-				param.CommonValidations.UniqueItems = prop.UniqueItems
-				param.CommonValidations.MultipleOf = prop.MultipleOf
-				param.CommonValidations.Enum = prop.Enum
-				// o.Operation.Parameters = append(o.Operation.Parameters, param)
+				param.Schema.Spec = prop
+
+				listItem := &spec.RefOrSpec[spec.Extendable[spec.Parameter]]{
+					Spec: &spec.Extendable[spec.Parameter]{
+						Spec: &param,
+					},
+				}
+
+				o.Operation.Parameters = append(o.Operation.Parameters, listItem)
 			}
 
 			return nil
 		}
 	case "body":
 		if objectType == PRIMITIVE {
-			param.Schema = PrimitiveSchema(refType)
+			param.Schema = &spec.RefOrSpec[spec.Schema]{
+				Spec: PrimitiveSchemaV3(refType),
+			}
 		} else {
-			// schema, err := o.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
-			// if err != nil {
-			// 	return err
-			// }
+			schema, err := o.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
+			if err != nil {
+				return err
+			}
 
-			// param.Schema = schema
+			param.Schema = &spec.RefOrSpec[spec.Schema]{
+				Spec: schema,
+			}
 		}
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
 
-	// err := o.parseParamAttribute(commentLine, objectType, refType, &param)
-	// if err != nil {
-	// 	return err
-	// }
+	err := o.parseParamAttribute(commentLine, objectType, refType, &param)
+	if err != nil {
+		return err
+	}
 
-	// o.Operation.Parameters = append(o.Operation.Parameters, param)
+	item := spec.NewRefOrSpec(nil, &spec.Extendable[spec.Parameter]{
+		Spec: &param,
+	})
+
+	o.Operation.Parameters = append(o.Operation.Parameters, item)
 
 	return nil
 }
@@ -344,70 +344,186 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 func (o *OperationV3) parseParamAttribute(comment, objectType, schemaType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
 
-	// for attrKey, re := range regexAttributes {
-	// 	attr, err := findAttr(re, comment)
-	// 	if err != nil {
-	// 		continue
-	// 	}
+	for attrKey, re := range regexAttributes {
+		attr, err := findAttr(re, comment)
+		if err != nil {
+			continue
+		}
 
-	// 	switch attrKey {
-	// 	case enumsTag:
-	// 		err = setEnumParam(param, attr, objectType, schemaType)
-	// 	case minimumTag, maximumTag:
-	// 		err = setNumberParam(param, attrKey, schemaType, attr, comment)
-	// 	case defaultTag:
-	// 		err = setDefault(param, schemaType, attr)
-	// 	case minLengthTag, maxLengthTag:
-	// 		err = setStringParam(param, attrKey, schemaType, attr, comment)
-	// 	case formatTag:
-	// 		param.Format = attr
-	// 	case exampleTag:
-	// 		err = setExample(param, schemaType, attr)
-	// 	case schemaExampleTag:
-	// 		err = setSchemaExample(param, schemaType, attr)
-	// 	case extensionsTag:
-	// 		param.Extensions = setExtensionParam(attr)
-	// 	case collectionFormatTag:
-	// 		err = setCollectionFormatParam(param, attrKey, objectType, attr, comment)
-	// 	}
+		switch attrKey {
+		case enumsTag:
+			err = setEnumParamV3(param, attr, objectType, schemaType)
+		case minimumTag, maximumTag:
+			err = setNumberParamV3(param, attrKey, schemaType, attr, comment)
+		case defaultTag:
+			err = setDefaultV3(param, schemaType, attr)
+		case minLengthTag, maxLengthTag:
+			err = setStringParamV3(param, attrKey, schemaType, attr, comment)
+		case formatTag:
+			param.Schema.Spec.Format = attr
+		case exampleTag:
+			err = setExampleV3(param, schemaType, attr)
+		case schemaExampleTag:
+			err = setSchemaExampleV3(param, schemaType, attr)
+		case extensionsTag:
+			param.Schema.Spec.Extensions = setExtensionParam(attr)
+		case collectionFormatTag:
+			err = setCollectionFormatParamV3(param, attrKey, objectType, attr, comment)
+		}
 
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
+func setCollectionFormatParamV3(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
+	if schemaType == ARRAY {
+		// param.Schema.Spec.JsonSchema.
+		// param.Schema.Spec.CollectionFormat = TransToValidCollectionFormat(attr)
+		// TODO ich hab kein plan bruder
+		return nil
+	}
+
+	return fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
+}
+
+func setSchemaExampleV3(param *spec.Parameter, schemaType string, value string) error {
+	val, err := defineType(schemaType, value)
+	if err != nil {
+		return nil // Don't set a example value if it's not valid
+	}
+	// skip schema
+	if param.Schema == nil {
+		return nil
+	}
+
+	switch v := val.(type) {
+	case string:
+		//  replaces \r \n \t in example string values.
+		param.Schema.Spec.Example = strings.NewReplacer(`\r`, "\r", `\n`, "\n", `\t`, "\t").Replace(v)
+	default:
+		param.Schema.Spec.Example = val
+	}
+
+	return nil
+}
+
+func setExampleV3(param *spec.Parameter, schemaType string, value string) error {
+	val, err := defineType(schemaType, value)
+	if err != nil {
+		return nil // Don't set a example value if it's not valid
+	}
+
+	param.Example = val
+
+	return nil
+}
+
+func setStringParamV3(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
+	if schemaType != STRING {
+		return fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
+	}
+
+	n, err := strconv.Atoi(attr)
+	if err != nil {
+		return fmt.Errorf("%s is allow only a number got=%s", name, attr)
+	}
+
+	switch name {
+	case minLengthTag:
+		param.Schema.Spec.MinLength = &n
+	case maxLengthTag:
+		param.Schema.Spec.MaxLength = &n
+	}
+
+	return nil
+}
+
+func setDefaultV3(param *spec.Parameter, schemaType string, value string) error {
+	val, err := defineType(schemaType, value)
+	if err != nil {
+		return nil // Don't set a default value if it's not valid
+	}
+
+	param.Schema.Spec.Default = val
+
+	return nil
+}
+
+func setEnumParamV3(param *spec.Parameter, attr, objectType, schemaType string) error {
+	for _, e := range strings.Split(attr, ",") {
+		e = strings.TrimSpace(e)
+
+		value, err := defineType(schemaType, e)
+		if err != nil {
+			return err
+		}
+
+		switch objectType {
+		case ARRAY:
+			param.Schema.Spec.Items.Schema.Spec.Enum = append(param.Schema.Spec.Items.Schema.Spec.Enum, value)
+		default:
+			param.Schema.Spec.Enum = append(param.Schema.Spec.Enum, value)
+		}
+	}
+
+	return nil
+}
+
+func setNumberParamV3(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
+	switch schemaType {
+	case INTEGER, NUMBER:
+		n, err := strconv.Atoi(attr)
+		if err != nil {
+			return fmt.Errorf("maximum is allow only a number. comment=%s got=%s", commentLine, attr)
+		}
+
+		switch name {
+		case minimumTag:
+			param.Schema.Spec.Minimum = &n
+		case maximumTag:
+			param.Schema.Spec.Maximum = &n
+		}
+
+		return nil
+	default:
+		return fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
+	}
+}
+
 func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
-	// if strings.HasSuffix(refType, ",") && strings.Contains(refType, "[") {
-	// 	// regexp may have broken generic syntax. find closing bracket and add it back
-	// 	allMatchesLenOffset := strings.Index(commentLine, refType) + len(refType)
-	// 	lostPartEndIdx := strings.Index(commentLine[allMatchesLenOffset:], "]")
-	// 	if lostPartEndIdx >= 0 {
-	// 		refType += commentLine[allMatchesLenOffset : allMatchesLenOffset+lostPartEndIdx+1]
-	// 	}
-	// }
+	if strings.HasSuffix(refType, ",") && strings.Contains(refType, "[") {
+		// regexp may have broken generic syntax. find closing bracket and add it back
+		allMatchesLenOffset := strings.Index(commentLine, refType) + len(refType)
+		lostPartEndIdx := strings.Index(commentLine[allMatchesLenOffset:], "]")
+		if lostPartEndIdx >= 0 {
+			refType += commentLine[allMatchesLenOffset : allMatchesLenOffset+lostPartEndIdx+1]
+		}
+	}
 
-	// switch schemaType {
-	// case OBJECT:
-	// 	if !strings.HasPrefix(refType, "[]") {
-	// 		return o.parseObjectSchema(refType, astFile)
-	// 	}
+	switch schemaType {
+	case OBJECT:
+		if !strings.HasPrefix(refType, "[]") {
+			return o.parseObjectSchema(refType, astFile)
+		}
 
-	// 	refType = refType[2:]
+		refType = refType[2:]
 
-	// 	fallthrough
-	// case ARRAY:
-	// 	schema, err := o.parseObjectSchema(refType, astFile)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+		fallthrough
+	case ARRAY:
+		// schema, err := o.parseObjectSchema(refType, astFile)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
-	// 	return spec.ArrayProperty(schema), nil
-	// default:
-	// 	return PrimitiveSchema(schemaType), nil
-	// }
+		// return spec.ArrayProperty(schema), nil
+	default:
+		return PrimitiveSchemaV3(schemaType), nil
+	}
+
 	return nil, nil
 }
 
@@ -430,4 +546,104 @@ func (o *OperationV3) ParseRouterComment(commentLine string) error {
 	o.RouterProperties = append(o.RouterProperties, signature)
 
 	return nil
+}
+
+// createParameter returns swagger spec.Parameter for given  paramType, description, paramName, schemaType, required.
+func createParameterV3(in, description, paramName, objectType, schemaType string, required bool, enums []interface{}, collectionFormat string) spec.Parameter {
+	// //five possible parameter types. 	query, path, body, header, form
+	result := spec.Parameter{
+		Description: description,
+		Required:    required,
+		Name:        paramName,
+		In:          in,
+		Schema:      spec.NewRefOrSpec(nil, &spec.Schema{}),
+	}
+
+	if in == "body" {
+		return result
+	}
+
+	switch objectType {
+	case ARRAY:
+		// result.Schema.Spec.Type = objectType
+		// result.Schema.Spec.CollectionFormat = collectionFormat
+		// result.Schema.Spec.Items = spec.NewBoolOrSchema(true, spec.NewRefOrSpec(nil, spec *spec.T))
+
+		// &spec.Items{
+		// 	CommonValidations: spec.CommonValidations{
+		// 		Enum: enums,
+		// 	},
+		// 	SimpleSchema: spec.SimpleSchema{
+		// 		Type: schemaType,
+		// 	},
+		// }
+	case PRIMITIVE, OBJECT:
+		result.Schema.Spec.Type = spec.NewSingleOrArray(schemaType)
+		result.Schema.Spec.Enum = enums
+	}
+
+	return result
+}
+
+func (o *OperationV3) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+	return parseObjectSchemaV3(o.parser, refType, astFile)
+}
+
+func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*spec.Schema, error) {
+	switch {
+	case refType == NIL:
+		return nil, nil
+	case refType == INTERFACE:
+		return PrimitiveSchemaV3(OBJECT), nil
+	case refType == ANY:
+		return PrimitiveSchemaV3(OBJECT), nil
+	case IsGolangPrimitiveType(refType):
+		refType = TransToValidSchemeType(refType)
+
+		return PrimitiveSchemaV3(refType), nil
+	case IsPrimitiveType(refType):
+		return PrimitiveSchemaV3(refType), nil
+	case strings.HasPrefix(refType, "[]"):
+		// schema, err := parseObjectSchema(parser, refType[2:], astFile)
+		// if err != nil {
+		// 	return nil, err
+		// }
+
+		// return spec.ArrayProperty(schema), nil
+	case strings.HasPrefix(refType, "map["):
+		// // ignore key type
+		// idx := strings.Index(refType, "]")
+		// if idx < 0 {
+		// 	return nil, fmt.Errorf("invalid type: %s", refType)
+		// }
+
+		// refType = refType[idx+1:]
+		// if refType == INTERFACE || refType == ANY {
+		// 	return spec.MapProperty(nil), nil
+		// }
+
+		// schema, err := parseObjectSchema(parser, refType, astFile)
+		// if err != nil {
+		// 	return nil, err
+		// }
+
+		// return spec.MapProperty(schema), nil
+	case strings.Contains(refType, "{"):
+		// return parseCombinedObjectSchema(parser, refType, astFile)
+	default:
+		if parser != nil { // checking refType has existing in 'TypeDefinitions'
+			schema, err := parser.getTypeSchemaV3(refType, astFile, true)
+			if err != nil {
+				return nil, err
+			}
+
+			return schema, nil
+		}
+
+		// return spec.NewRef("#/definitions/" + refType), nil
+
+		// return RefSchema(refType), nil
+	}
+
+	return nil, nil
 }
