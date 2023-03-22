@@ -192,6 +192,12 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 			Len:    astExpr.Len,
 			Lbrack: astExpr.Lbrack,
 		}
+	case *ast.MapType:
+		return &ast.MapType{
+			Map:   astExpr.Map,
+			Key:   pkgDefs.resolveGenericType(file, astExpr.Key, genericParamTypeDefs),
+			Value: pkgDefs.resolveGenericType(file, astExpr.Value, genericParamTypeDefs),
+		}
 	case *ast.StarExpr:
 		return &ast.StarExpr{
 			Star: astExpr.Star,

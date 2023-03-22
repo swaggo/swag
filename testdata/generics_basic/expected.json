@@ -277,6 +277,18 @@
         "types.Hello": {
             "type": "object",
             "properties": {
+                "arrayField": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "mapField": {
+                    "$ref": "#/definitions/types.MapField-string-float64"
+                },
+                "mapFieldNestedStruct": {
+                    "$ref": "#/definitions/types.MapFieldNestedStruct-string"
+                },
                 "myNewArrayField": {
                     "type": "array",
                     "items": {
@@ -296,6 +308,41 @@
                     "type": "string"
                 },
                 "myStringField2": {
+                    "type": "string"
+                },
+                "originArrayField": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "originMapField": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    }
+                }
+            }
+        },
+        "types.MapField-string-float64": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "number"
+            }
+        },
+        "types.MapFieldNestedStruct-string": {
+            "type": "object",
+            "additionalProperties": {
+                "$ref": "#/definitions/types.MapFieldValue"
+            }
+        },
+        "types.MapFieldValue": {
+            "type": "object",
+            "properties": {
+                "f": {
+                    "type": "number"
+                },
+                "s": {
                     "type": "string"
                 }
             }
