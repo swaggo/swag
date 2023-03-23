@@ -36,6 +36,8 @@ const (
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
 	openAPIVersionFlag    = "v3.1"
+	packageName           = "packageName"
+	collectionFormatFlag  = "collectionFormat"
 )
 
 var initFlags = []cli.Flag{
@@ -146,6 +148,16 @@ var initFlags = []cli.Flag{
 		Name:  openAPIVersionFlag,
 		Value: false,
 		Usage: "Generate OpenAPI V3.1 spec",
+	&cli.StringFlag{
+		Name:  packageName,
+		Value: "",
+		Usage: "A package name of docs.go, using output directory name by default (check `--output` option)",
+	},
+	&cli.StringFlag{
+		Name:    collectionFormatFlag,
+		Aliases: []string{"cf"},
+		Value:   "csv",
+		Usage:   "Set default collection format",
 	},
 }
 
@@ -165,6 +177,11 @@ func initAction(ctx *cli.Context) error {
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 	if ctx.Bool(quietFlag) {
 		logger = log.New(io.Discard, "", log.LstdFlags)
+	}
+
+	collectionFormat := swag.TransToValidCollectionFormat(ctx.String(collectionFormatFlag))
+	if collectionFormat == "" {
+		return fmt.Errorf("not supported %s collectionFormat", ctx.String(collectionFormat))
 	}
 
 	return gen.New().Build(&gen.Config{
@@ -187,8 +204,10 @@ func initAction(ctx *cli.Context) error {
 		OverridesFile:       ctx.String(overridesFileFlag),
 		ParseGoList:         ctx.Bool(parseGoListFlag),
 		Tags:                ctx.String(tagsFlag),
+		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
 		OpenAPIVersion:      ctx.Bool(openAPIVersionFlag),
+		CollectionFormat:    collectionFormat,
 	})
 }
 

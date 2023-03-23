@@ -105,6 +105,7 @@ OPTIONS:
    --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
    --parseGoList                          Parse dependency via 'go list' (default: true)
    --tags value, -t value                 A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded
+   --collectionFormat value, --cf value   Set default collection format (default: "csv")
    --help, -h                             show help (default: false)
 ```
 
