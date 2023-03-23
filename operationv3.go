@@ -79,7 +79,7 @@ func (o *OperationV3) ParseCommentV3(comment string, astFile *ast.File) error {
 	case successAttr, failureAttr, responseAttr:
 		// return o.ParseResponseComment(lineRemainder, astFile)
 	case headerAttr:
-		// return o.ParseResponseHeaderComment(lineRemainder, astFile)
+		return o.ParseResponseHeaderComment(lineRemainder, astFile)
 	case routerAttr:
 		return o.ParseRouterComment(lineRemainder)
 	case securityAttr:
@@ -646,4 +646,69 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 	}
 
 	return nil, nil
+}
+
+// ParseResponseHeaderComment parses comment for given `response header` comment string.
+func (o *OperationV3) ParseResponseHeaderComment(commentLine string, _ *ast.File) error {
+	matches := responsePattern.FindStringSubmatch(commentLine)
+	if len(matches) != 5 {
+		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+	}
+
+	header := newHeaderSpecV3(strings.Trim(matches[2], "{}"), strings.Trim(matches[4], "\""))
+
+	headerKey := strings.TrimSpace(matches[3])
+
+	if strings.EqualFold(matches[1], "all") {
+		if o.Responses.Spec.Default != nil {
+			o.Responses.Spec.Default.Spec.Spec.Headers[headerKey] = header
+		}
+
+		if o.Responses.Spec.Response != nil {
+			for _, v := range o.Responses.Spec.Response {
+				v.Spec.Spec.Headers[headerKey] = header
+
+			}
+			// for code, response := range o.Responses.StatusCodeResponses {
+			// 	response.Headers[headerKey] = header
+			// 	o.Responses.StatusCodeResponses[code] = response
+			// }
+		}
+
+		return nil
+	}
+
+	for _, codeStr := range strings.Split(matches[1], ",") {
+		if strings.EqualFold(codeStr, defaultTag) {
+			if o.Responses.Spec.Default != nil {
+				o.Responses.Spec.Default.Spec.Spec.Headers[headerKey] = header
+			}
+
+			continue
+		}
+
+		_, err := strconv.Atoi(codeStr)
+		if err != nil {
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+		}
+
+		if o.Responses.Spec.Response != nil {
+			response, responseExist := o.Responses.Spec.Response[codeStr]
+			if responseExist {
+				response.Spec.Spec.Headers[headerKey] = header
+				o.Responses.Spec.Response[codeStr] = response
+			}
+		}
+	}
+
+	return nil
+}
+
+func newHeaderSpecV3(schemaType, description string) *spec.RefOrSpec[spec.Extendable[spec.Header]] {
+	result := spec.NewHeaderSpec()
+	result.Spec.Spec.Schema = spec.NewSchemaSpec()
+	result.Spec.Spec.Schema.Spec.Type = spec.NewSingleOrArray(schemaType)
+	result.Spec.Spec.Schema.Spec.Description = description
+
+	return result
 }
