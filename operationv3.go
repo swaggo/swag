@@ -21,9 +21,12 @@ type OperationV3 struct {
 
 // NewOperationV3 returns a new instance of OperationV3.
 func NewOperationV3(parser *Parser, options ...func(*OperationV3)) *OperationV3 {
+	op := *spec.NewOperation().Spec
+	op.Responses = spec.NewResponses()
+
 	operation := &OperationV3{
 		parser:    parser,
-		Operation: *spec.NewOperation().Spec,
+		Operation: op,
 	}
 
 	for _, option := range options {
@@ -565,7 +568,8 @@ func createParameterV3(in, description, paramName, objectType, schemaType string
 
 	switch objectType {
 	case ARRAY:
-		// result.Schema.Spec.Type = objectType
+		// TODO implement array return
+		result.Schema.Spec.Type = spec.NewSingleOrArray(schemaType)
 		// result.Schema.Spec.CollectionFormat = collectionFormat
 		// result.Schema.Spec.Items = spec.NewBoolOrSchema(true, spec.NewRefOrSpec(nil, spec *spec.T))
 
@@ -692,7 +696,8 @@ func (o *OperationV3) ParseResponseHeaderComment(commentLine string, _ *ast.File
 			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 		}
 
-		if o.Responses.Spec.Response != nil {
+		// TODO check condition
+		if o.Responses != nil && o.Responses.Spec != nil && o.Responses.Spec.Response != nil {
 			response, responseExist := o.Responses.Spec.Response[codeStr]
 			if responseExist {
 				response.Spec.Spec.Headers[headerKey] = header
