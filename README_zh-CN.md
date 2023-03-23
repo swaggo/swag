@@ -17,16 +17,26 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 
 ## 目录
 
-- [快速开始](#快速开始)
-- [支持的Web框架](#支持的web框架)
-- [如何与Gin集成](#如何与gin集成)
-- [格式化说明](#格式化说明)
-- [开发现状](#开发现状)
-- [声明式注释格式](#声明式注释格式)
-    - [通用API信息](#通用api信息)
-    - [API操作](#api操作)
-    - [安全性](#安全性)
-- [样例](#样例)
+- [swag](#swag)
+  - [目录](#目录)
+  - [快速开始](#快速开始)
+  - [swag cli](#swag-cli)
+  - [支持的Web框架](#支持的web框架)
+  - [如何与Gin集成](#如何与gin集成)
+  - [格式化说明](#格式化说明)
+  - [开发现状](#开发现状)
+  - [声明式注释格式](#声明式注释格式)
+  - [通用API信息](#通用api信息)
+    - [使用Markdown描述](#使用markdown描述)
+  - [API操作](#api操作)
+  - [Mime类型](#mime类型)
+  - [参数类型](#参数类型)
+  - [数据类型](#数据类型)
+  - [安全性](#安全性)
+  - [属性](#属性)
+    - [当前可用的](#当前可用的)
+    - [进一步的](#进一步的)
+  - [样例](#样例)
     - [多行的描述](#多行的描述)
     - [用户自定义的具有数组类型的结构](#用户自定义的具有数组类型的结构)
     - [响应对象中的模型组合](#响应对象中的模型组合)
@@ -34,12 +44,16 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
     - [使用多路径参数](#使用多路径参数)
     - [结构体的示例值](#结构体的示例值)
     - [结构体描述](#结构体描述)
-    - [使用`swaggertype`标签更改字段类型](#使用`swaggertype`标签更改字段类型)
+    - [使用`swaggertype`标签更改字段类型](#使用swaggertype标签更改字段类型)
     - [使用`swaggerignore`标签排除字段](#使用swaggerignore标签排除字段)
     - [将扩展信息添加到结构字段](#将扩展信息添加到结构字段)
     - [对展示的模型重命名](#对展示的模型重命名)
     - [如何使用安全性注释](#如何使用安全性注释)
-- [项目相关](#项目相关)
+  - [项目相关](#项目相关)
+  - [贡献者](#贡献者)
+  - [支持者](#支持者)
+  - [赞助商](#赞助商)
+  - [License](#license)
 
 ## 快速开始
 
@@ -47,13 +61,10 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 2. 使用如下命令下载swag：
 
 ```bash
-$ go get -u github.com/swaggo/swag/cmd/swag
-
-# 1.16 及以上版本
-$ go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/swaggo/swag/cmd/swag@latest
 ```
 
-从源码开始构建的话，需要有Go环境（1.14及以上版本）。
+从源码开始构建的话，需要有Go环境（1.16及以上版本）。
 
 或者从github的release页面下载预编译好的二进制文件。
 
@@ -63,7 +74,7 @@ $ go install github.com/swaggo/swag/cmd/swag@latest
 swag init
 ```
 
-确保导入了生成的`docs/docs.go`文件，这样特定的配置文件才会被初始化。如果通用API指数没有写在`main.go`中，可以使用`-g`标识符来告知swag。
+确保导入了生成的`docs/docs.go`文件，这样特定的配置文件才会被初始化。如果通用API注释没有写在`main.go`中，可以使用`-g`标识符来告知swag。
 
 ```bash
 swag init -g http/api.go
@@ -123,6 +134,13 @@ OPTIONS:
 - [echo](http://github.com/swaggo/echo-swagger)
 - [buffalo](https://github.com/swaggo/buffalo-swagger)
 - [net/http](https://github.com/swaggo/http-swagger)
+- [net/http](https://github.com/swaggo/http-swagger)
+- [gorilla/mux](https://github.com/swaggo/http-swagger)
+- [go-chi/chi](https://github.com/swaggo/http-swagger)
+- [flamingo](https://github.com/i-love-flamingo/swagger)
+- [fiber](https://github.com/gofiber/swagger)
+- [atreugo](https://github.com/Nerzal/atreugo-swagger)
+- [hertz](https://github.com/hertz-contrib/swagger)
 
 ## 如何与Gin集成
 
@@ -154,6 +172,9 @@ import "github.com/swaggo/files" // swagger embed files
 // @BasePath  /api/v1
 
 // @securityDefinitions.basic  BasicAuth
+
+// @externalDocs.description  OpenAPI
+// @externalDocs.url          https://swagger.io/resources/open-api/
 func main() {
     r := gin.Default()
 
@@ -348,10 +369,12 @@ swag fmt -d ./ --exclude ./internal
 | license.url             | 用于API的许可证的URL。 必须采用网址格式。                                                       | // @license.url http://www.apache.org/licenses/LICENSE-2.0.html |
 | host                    | 运行API的主机（主机名或IP地址）。                                                               | // @host localhost:8080                                         |
 | BasePath                | 运行API的基本路径。                                                                             | // @BasePath /api/v1                                            |
-| accept                  | API 可以使用的 MIME 类型列表。 请注意，Accept 仅影响具有请求正文的操作，例如 POST、PUT 和 PATCH。 值必须如“[Mime类型](#mime-types)”中所述。                                  | // @accept json |
-| produce                 | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  | // @produce json |
+| accept                  | API 可以使用的 MIME 类型列表。 请注意，Accept 仅影响具有请求正文的操作，例如 POST、PUT 和 PATCH。 值必须如“[Mime类型](#mime类型)”中所述。                                  | // @accept json |
+| produce                 | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime类型)”中所述。                                  | // @produce json |
 | query.collection.format | 请求URI query里数组参数的默认格式：csv，multi，pipes，tsv，ssv。 如果未设置，则默认为csv。 | // @query.collection.format multi                               |
 | schemes                 | 用空格分隔的请求的传输协议。                                                                    | // @schemes http https                                          |
+| externalDocs.description | Description of the external document. | // @externalDocs.description OpenAPI |
+| externalDocs.url         | URL of the external document. | // @externalDocs.url https://swagger.io/resources/open-api/ |
 | x-name                  | 扩展的键必须以x-开头，并且只能使用json值                                                        | // @x-example-key {"key": "value"}                              |
 
 ### 使用Markdown描述
@@ -377,8 +400,8 @@ Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/c
 | id                   | 用于标识操作的唯一字符串。在所有API操作中必须唯一。                                                     |
 | tags                 | 每个API操作的标签列表，以逗号分隔。                                                                     |
 | summary              | 该操作的简短摘要。                                                                                      |
-| accept               | API 可以使用的 MIME 类型列表。 请注意，Accept 仅影响具有请求正文的操作，例如 POST、PUT 和 PATCH。 值必须如“[Mime类型](#mime-types)”中所述。                                  |
-| produce              | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime-types)”中所述。                                  |
+| accept               | API 可以使用的 MIME 类型列表。 请注意，Accept 仅影响具有请求正文的操作，例如 POST、PUT 和 PATCH。 值必须如“[Mime类型](#mime类型)”中所述。                                  |
+| produce              | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime类型)”中所述。                                  |
 | param                | 用空格分隔的参数。`param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)` |
 | security             | 每个API操作的[安全性](#安全性)。                                                                      |
 | success              | 以空格分隔的成功响应。`return code`,`{param type}`,`data type`,`comment`                                |
