@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Nerzal/swag"
-	"github.com/Nerzal/swag/format"
-	"github.com/Nerzal/swag/gen"
+	"github.com/swaggo/swag"
+	"github.com/swaggo/swag/format"
+	"github.com/swaggo/swag/gen"
 
 	"github.com/urfave/cli/v2"
 )

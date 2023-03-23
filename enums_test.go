@@ -14,7 +14,7 @@ func TestParseGlobalEnums(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	require.NoError(t, err)
 
-	const constsPath = "github.com/Nerzal/swag/testdata/enums/consts"
+	const constsPath = "github.com/swaggo/swag/testdata/enums/consts"
 	table := p.packages.packages[constsPath].ConstTable
 	require.NotNil(t, table, "const table must not be nil")
 

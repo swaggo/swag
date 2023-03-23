@@ -3,7 +3,7 @@ package composition
 import (
 	"net/http"
 
-	"github.com/Nerzal/swag/testdata/composition/api"
+	"github.com/swaggo/swag/testdata/composition/api"
 )
 
 // @title Swagger Example API

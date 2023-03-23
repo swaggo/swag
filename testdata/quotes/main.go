@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/Nerzal/swag"
-	"github.com/Nerzal/swag/testdata/quotes/api"
-	_ "github.com/Nerzal/swag/testdata/quotes/docs"
+	"github.com/swaggo/swag"
+	"github.com/swaggo/swag/testdata/quotes/api"
+	_ "github.com/swaggo/swag/testdata/quotes/docs"
 )
 
 func ReadDoc() string {

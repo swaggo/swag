@@ -1,7 +1,7 @@
 package api
 
 import (
-	_ "github.com/Nerzal/swag/testdata/conflict_name/model2"
+	_ "github.com/swaggo/swag/testdata/conflict_name/model2"
 	"net/http"
 )
 
