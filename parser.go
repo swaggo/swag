@@ -222,7 +222,7 @@ func New(options ...func(*Parser)) *Parser {
 				SecurityDefinitions: make(map[string]*spec.SecurityScheme),
 			},
 			VendorExtensible: spec.VendorExtensible{
-				Extensions: nil,
+				Extensions: make(spec.Extensions),
 			},
 		},
 		openAPI: &openapi.OpenAPI{
