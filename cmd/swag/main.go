@@ -148,6 +148,7 @@ var initFlags = []cli.Flag{
 		Name:  openAPIVersionFlag,
 		Value: false,
 		Usage: "Generate OpenAPI V3.1 spec",
+	},
 	&cli.StringFlag{
 		Name:  packageName,
 		Value: "",
