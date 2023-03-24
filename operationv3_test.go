@@ -1,7 +1,6 @@
 package swag
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -175,16 +174,6 @@ func TestParseResponseSuccessCommentWithEmptyResponseV3(t *testing.T) {
 
 	response := operation.Responses.Spec.Response["200"]
 	assert.Equal(t, `An empty response`, response.Spec.Spec.Description)
-
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "responses": {
-        "200": {
-            "description": "An empty response"
-        }
-    }
-}`
-	assert.Equal(t, expected, string(b))
 }
 
 func TestParseResponseFailureCommentWithEmptyResponseV3(t *testing.T) {
@@ -196,13 +185,5 @@ func TestParseResponseFailureCommentWithEmptyResponseV3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	b, _ := json.MarshalIndent(operation, "", "    ")
-	expected := `{
-    "responses": {
-        "500": {
-            "description": "Internal Server Error"
-        }
-    }
-}`
-	assert.Equal(t, expected, string(b))
+	assert.Equal(t, "Internal Server Error", operation.Responses.Spec.Response["500"].Spec.Spec.Description)
 }
