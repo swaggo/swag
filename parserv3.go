@@ -525,7 +525,7 @@ func (p *Parser) getTypeSchemaV3(typeName string, file *ast.File, ref bool) (*sp
 			return nil, err
 		}
 
-		return spec.NewRefOrSpec(nil, schema), nil
+		return schema, nil
 
 	}
 
@@ -560,9 +560,8 @@ func (p *Parser) getTypeSchemaV3(typeName string, file *ast.File, ref bool) (*sp
 		separator := strings.LastIndex(override, ".")
 		if separator == -1 {
 			// treat as a swaggertype tag
-			// parts := strings.Split(override, ",")
-			// TODO
-			// return BuildCustomSchema(parts)
+			parts := strings.Split(override, ",")
+			return BuildCustomSchemaV3(parts)
 		}
 
 		typeSpecDef = p.packages.findTypeSpec(override[0:separator], override[separator+1:])

@@ -9,11 +9,7 @@ import (
 // PrimitiveSchemaV3 build a primitive schema.
 func PrimitiveSchemaV3(refType string) *spec.RefOrSpec[spec.Schema] {
 	result := spec.NewSchemaSpec()
-	result.Spec.JsonSchema = spec.JsonSchema{
-		JsonSchemaCore: spec.JsonSchemaCore{
-			Type: spec.SingleOrArray[string]{refType},
-		},
-	}
+	result.Spec.Type = spec.SingleOrArray[string]{refType}
 
 	return result
 }

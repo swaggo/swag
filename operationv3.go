@@ -321,9 +321,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 				return err
 			}
 
-			param.Schema = &spec.RefOrSpec[spec.Schema]{
-				Spec: schema,
-			}
+			param.Schema = schema
 		}
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
@@ -496,7 +494,7 @@ func setNumberParamV3(param *spec.Parameter, name, schemaType, attr, commentLine
 	}
 }
 
-func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType string, astFile *ast.File) (*spec.Schema, error) {
+func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType string, astFile *ast.File) (*spec.RefOrSpec[spec.Schema], error) {
 	if strings.HasSuffix(refType, ",") && strings.Contains(refType, "[") {
 		// regexp may have broken generic syntax. find closing bracket and add it back
 		allMatchesLenOffset := strings.Index(commentLine, refType) + len(refType)
@@ -516,14 +514,18 @@ func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType stri
 
 		fallthrough
 	case ARRAY:
-		// schema, err := o.parseObjectSchema(refType, astFile)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		schema, err := o.parseObjectSchema(refType, astFile)
+		if err != nil {
+			return nil, err
+		}
 
-		// return spec.ArrayProperty(schema), nil
+		result := spec.NewSchemaSpec()
+		result.Spec.Type = spec.NewSingleOrArray("array")
+		result.Spec.Items = spec.NewBoolOrSchema(true, schema) //TODO: allowed?
+		return result, nil
+
 	default:
-		return PrimitiveSchemaV3(schemaType).Spec, nil
+		return PrimitiveSchemaV3(schemaType), nil
 	}
 
 	return nil, nil
@@ -588,31 +590,35 @@ func createParameterV3(in, description, paramName, objectType, schemaType string
 	return result
 }
 
-func (o *OperationV3) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
+func (o *OperationV3) parseObjectSchema(refType string, astFile *ast.File) (*spec.RefOrSpec[spec.Schema], error) {
 	return parseObjectSchemaV3(o.parser, refType, astFile)
 }
 
-func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*spec.Schema, error) {
+func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*spec.RefOrSpec[spec.Schema], error) {
 	switch {
 	case refType == NIL:
 		return nil, nil
 	case refType == INTERFACE:
-		return PrimitiveSchemaV3(OBJECT).Spec, nil
+		return PrimitiveSchemaV3(OBJECT), nil
 	case refType == ANY:
-		return PrimitiveSchemaV3(OBJECT).Spec, nil
+		return PrimitiveSchemaV3(OBJECT), nil
 	case IsGolangPrimitiveType(refType):
 		refType = TransToValidSchemeType(refType)
 
-		return PrimitiveSchemaV3(refType).Spec, nil
+		return PrimitiveSchemaV3(refType), nil
 	case IsPrimitiveType(refType):
-		return PrimitiveSchemaV3(refType).Spec, nil
+		return PrimitiveSchemaV3(refType), nil
 	case strings.HasPrefix(refType, "[]"):
-		// schema, err := parseObjectSchema(parser, refType[2:], astFile)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		schema, err := parseObjectSchemaV3(parser, refType[2:], astFile)
+		if err != nil {
+			return nil, err
+		}
 
-		// return spec.ArrayProperty(schema), nil
+		result := spec.NewSchemaSpec()
+		result.Spec.Type = spec.NewSingleOrArray("array")
+		result.Spec.Items = spec.NewBoolOrSchema(true, schema)
+
+		return result, nil
 	case strings.HasPrefix(refType, "map["):
 		// // ignore key type
 		// idx := strings.Index(refType, "]")
@@ -640,12 +646,10 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 				return nil, err
 			}
 
-			return schema.Spec, nil
+			return schema, nil
 		}
 
-		// return spec.NewRef("#/definitions/" + refType), nil
-
-		// return RefSchema(refType), nil
+		return spec.NewSchemaRef(spec.NewRef("#/components/" + refType)), nil
 	}
 
 	return nil, nil
@@ -769,9 +773,9 @@ func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File
 }
 
 // setResponseSchema sets response schema for given response.
-func setResponseSchema(response *spec.Response, mimeType string, schema *spec.Schema) {
+func setResponseSchema(response *spec.Response, mimeType string, schema *spec.RefOrSpec[spec.Schema]) {
 	mediaType := spec.NewMediaType()
-	mediaType.Spec.Schema = spec.NewRefOrSpec(nil, schema)
+	mediaType.Spec.Schema = schema
 
 	response.Content[mimeType] = mediaType
 }
