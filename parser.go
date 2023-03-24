@@ -122,8 +122,14 @@ type Parser struct {
 	// parsedSchemas store schemas which have been parsed from ast.TypeSpec
 	parsedSchemas map[*TypeSpecDef]*Schema
 
+	// parsedSchemasV3 store schemas which have been parsed from ast.TypeSpec
+	parsedSchemasV3 map[*TypeSpecDef]*SchemaV3
+
 	// outputSchemas store schemas which will be export to swagger
 	outputSchemas map[*TypeSpecDef]*Schema
+
+	// outputSchemas store schemas which will be export to swagger
+	outputSchemasV3 map[*TypeSpecDef]*SchemaV3
 
 	// PropNamingStrategy naming strategy
 	PropNamingStrategy string
@@ -166,6 +172,9 @@ type Parser struct {
 
 	// fieldParserFactory create FieldParser
 	fieldParserFactory FieldParserFactory
+
+	// fieldParserFactoryV3 create FieldParser
+	fieldParserFactoryV3 FieldParserFactoryV3
 
 	// Overrides allows global replacements of types. A blank replacement will be skipped.
 	Overrides map[string]string
@@ -236,14 +245,17 @@ func New(options ...func(*Parser)) *Parser {
 			Tags:         []*openapi.Extendable[openapi.Tag]{},
 			Servers:      []*openapi.Extendable[openapi.Server]{},
 		},
-		packages:           NewPackagesDefinitions(),
-		debug:              log.New(os.Stdout, "", log.LstdFlags),
-		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
-		outputSchemas:      make(map[*TypeSpecDef]*Schema),
-		excludes:           make(map[string]struct{}),
-		tags:               make(map[string]struct{}),
-		fieldParserFactory: newTagBaseFieldParser,
-		Overrides:          make(map[string]string),
+		packages:             NewPackagesDefinitions(),
+		debug:                log.New(os.Stdout, "", log.LstdFlags),
+		parsedSchemas:        make(map[*TypeSpecDef]*Schema),
+		parsedSchemasV3:      make(map[*TypeSpecDef]*SchemaV3),
+		outputSchemas:        make(map[*TypeSpecDef]*Schema),
+		outputSchemasV3:      make(map[*TypeSpecDef]*SchemaV3),
+		excludes:             make(map[string]struct{}),
+		tags:                 make(map[string]struct{}),
+		fieldParserFactory:   newTagBaseFieldParser,
+		fieldParserFactoryV3: newTagBaseFieldParserV3,
+		Overrides:            make(map[string]string),
 	}
 
 	for _, option := range options {

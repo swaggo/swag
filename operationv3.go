@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -80,7 +81,7 @@ func (o *OperationV3) ParseCommentV3(comment string, astFile *ast.File) error {
 	case paramAttr:
 		return o.ParseParamComment(lineRemainder, astFile)
 	case successAttr, failureAttr, responseAttr:
-		// return o.ParseResponseComment(lineRemainder, astFile)
+		return o.ParseResponseComment(lineRemainder, astFile)
 	case headerAttr:
 		return o.ParseResponseHeaderComment(lineRemainder, astFile)
 	case routerAttr:
@@ -272,11 +273,11 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 				return err
 			}
 
-			if len(schema.Properties) == 0 {
+			if len(schema.Spec.Properties) == 0 {
 				return nil
 			}
 
-			for name, item := range schema.Properties {
+			for name, item := range schema.Spec.Properties {
 				prop := item.Spec
 				if len(prop.Type) == 0 {
 					continue
@@ -288,10 +289,10 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 					len(prop.Items.Schema.Spec.Type) > 0 &&
 					IsSimplePrimitiveType(prop.Items.Schema.Spec.Type[0]):
 
-					param = createParameterV3(paramType, prop.Description, name, prop.Type[0], prop.Items.Schema.Spec.Type[0], findInSlice(schema.Required, name), enums, o.parser.collectionFormatInQuery)
+					param = createParameterV3(paramType, prop.Description, name, prop.Type[0], prop.Items.Schema.Spec.Type[0], findInSlice(schema.Spec.Required, name), enums, o.parser.collectionFormatInQuery)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
-					param = createParameterV3(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, name), enums, o.parser.collectionFormatInQuery)
+					param = createParameterV3(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Spec.Required, name), enums, o.parser.collectionFormatInQuery)
 				default:
 					o.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 
@@ -313,9 +314,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 		}
 	case "body":
 		if objectType == PRIMITIVE {
-			param.Schema = &spec.RefOrSpec[spec.Schema]{
-				Spec: PrimitiveSchemaV3(refType),
-			}
+			param.Schema = PrimitiveSchemaV3(refType)
 		} else {
 			schema, err := o.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
 			if err != nil {
@@ -524,7 +523,7 @@ func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType stri
 
 		// return spec.ArrayProperty(schema), nil
 	default:
-		return PrimitiveSchemaV3(schemaType), nil
+		return PrimitiveSchemaV3(schemaType).Spec, nil
 	}
 
 	return nil, nil
@@ -598,15 +597,15 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 	case refType == NIL:
 		return nil, nil
 	case refType == INTERFACE:
-		return PrimitiveSchemaV3(OBJECT), nil
+		return PrimitiveSchemaV3(OBJECT).Spec, nil
 	case refType == ANY:
-		return PrimitiveSchemaV3(OBJECT), nil
+		return PrimitiveSchemaV3(OBJECT).Spec, nil
 	case IsGolangPrimitiveType(refType):
 		refType = TransToValidSchemeType(refType)
 
-		return PrimitiveSchemaV3(refType), nil
+		return PrimitiveSchemaV3(refType).Spec, nil
 	case IsPrimitiveType(refType):
-		return PrimitiveSchemaV3(refType), nil
+		return PrimitiveSchemaV3(refType).Spec, nil
 	case strings.HasPrefix(refType, "[]"):
 		// schema, err := parseObjectSchema(parser, refType[2:], astFile)
 		// if err != nil {
@@ -641,7 +640,7 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 				return nil, err
 			}
 
-			return schema, nil
+			return schema.Spec, nil
 		}
 
 		// return spec.NewRef("#/definitions/" + refType), nil
@@ -716,4 +715,144 @@ func newHeaderSpecV3(schemaType, description string) *spec.RefOrSpec[spec.Extend
 	result.Spec.Spec.Schema.Spec.Description = description
 
 	return result
+}
+
+// ParseResponseComment parses comment for given `response` comment string.
+func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File) error {
+	matches := responsePattern.FindStringSubmatch(commentLine)
+	if len(matches) != 5 {
+		err := o.ParseEmptyResponseComment(commentLine)
+		if err != nil {
+			return o.ParseEmptyResponseOnly(commentLine)
+		}
+
+		return err
+	}
+
+	description := strings.Trim(matches[4], "\"")
+
+	schema, err := o.parseAPIObjectSchema(commentLine, strings.Trim(matches[2], "{}"), strings.TrimSpace(matches[3]), astFile)
+	if err != nil {
+		return err
+	}
+
+	for _, codeStr := range strings.Split(matches[1], ",") {
+		if strings.EqualFold(codeStr, defaultTag) {
+			response := o.DefaultResponse()
+			response.Description = description
+
+			mimeType := "application/json" // TODO: set correct mimeType
+			setResponseSchema(response, mimeType, schema)
+
+			continue
+		}
+
+		code, err := strconv.Atoi(codeStr)
+		if err != nil {
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+		}
+
+		if description == "" {
+			description = http.StatusText(code)
+		}
+
+		response := o.DefaultResponse()
+		response.Description = description
+
+		mimeType := "application/json" // TODO: set correct mimeType
+		setResponseSchema(response, mimeType, schema)
+
+		o.AddResponse(codeStr, spec.NewRefOrSpec(nil, spec.NewExtendable(response)))
+	}
+
+	return nil
+}
+
+// setResponseSchema sets response schema for given response.
+func setResponseSchema(response *spec.Response, mimeType string, schema *spec.Schema) {
+	mediaType := spec.NewMediaType()
+	mediaType.Spec.Schema = spec.NewRefOrSpec(nil, schema)
+
+	response.Content[mimeType] = mediaType
+}
+
+// ParseEmptyResponseComment parse only comment out status code and description,eg: @Success 200 "it's ok".
+func (o *OperationV3) ParseEmptyResponseComment(commentLine string) error {
+	matches := emptyResponsePattern.FindStringSubmatch(commentLine)
+	if len(matches) != 3 {
+		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+	}
+
+	description := strings.Trim(matches[2], "\"")
+
+	for _, codeStr := range strings.Split(matches[1], ",") {
+		if strings.EqualFold(codeStr, defaultTag) {
+			response := o.DefaultResponse()
+			response.Description = description
+
+			continue
+		}
+
+		_, err := strconv.Atoi(codeStr)
+		if err != nil {
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+		}
+
+		o.AddResponse(codeStr, newResponseWithDescription(description))
+	}
+
+	return nil
+}
+
+// DefaultResponse return the default response member pointer.
+func (o *OperationV3) DefaultResponse() *spec.Response {
+	if o.Responses.Spec.Default == nil {
+		o.Responses.Spec.Default = spec.NewResponseSpec()
+		o.Responses.Spec.Default.Spec.Spec.Headers = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Header]])
+	}
+
+	if o.Responses.Spec.Default.Spec.Spec.Content == nil {
+		o.Responses.Spec.Default.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType])
+	}
+
+	return o.Responses.Spec.Default.Spec.Spec
+}
+
+// AddResponse add a response for a code.
+func (o *OperationV3) AddResponse(code string, response *spec.RefOrSpec[spec.Extendable[spec.Response]]) {
+	if response.Spec.Spec.Headers == nil {
+		response.Spec.Spec.Headers = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Header]])
+	}
+
+	if o.Responses.Spec.Response == nil {
+		o.Responses.Spec.Response = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Response]])
+	}
+
+	o.Responses.Spec.Response[code] = response
+}
+
+// ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200.
+func (o *OperationV3) ParseEmptyResponseOnly(commentLine string) error {
+	for _, codeStr := range strings.Split(commentLine, ",") {
+		if strings.EqualFold(codeStr, defaultTag) {
+			_ = o.DefaultResponse()
+
+			continue
+		}
+
+		code, err := strconv.Atoi(codeStr)
+		if err != nil {
+			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+		}
+
+		o.AddResponse(codeStr, newResponseWithDescription(http.StatusText(code)))
+	}
+
+	return nil
+}
+
+func newResponseWithDescription(description string) *spec.RefOrSpec[spec.Extendable[spec.Response]] {
+	response := spec.NewResponseSpec()
+	response.Spec.Spec.Description = description
+	return response
 }

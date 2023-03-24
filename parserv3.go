@@ -4,12 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"go/token"
 	"net/http"
+	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sv-tools/openapi/spec"
 )
+
+// FieldParserFactory create FieldParser.
+type FieldParserFactoryV3 func(ps *Parser, field *ast.Field) FieldParserV3
+
+// FieldParser parse struct field.
+type FieldParserV3 interface {
+	ShouldSkip() bool
+	FieldName() (string, error)
+	FormName() string
+	CustomSchema() (*spec.RefOrSpec[spec.Schema], error)
+	ComplementSchema(schema *spec.RefOrSpec[spec.Schema]) error
+	IsRequired() (bool, error)
+}
 
 // GetOpenAPI returns *spec.OpenAPI which is the root document object for the API specification.
 func (parser *Parser) GetOpenAPI() *spec.OpenAPI {
@@ -501,14 +517,20 @@ func refRouteMethodOpV3(item *spec.PathItem, method string) **spec.Operation {
 	}
 }
 
-func (p *Parser) getTypeSchemaV3(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
+func (p *Parser) getTypeSchemaV3(typeName string, file *ast.File, ref bool) (*spec.RefOrSpec[spec.Schema], error) {
 	if override, ok := p.Overrides[typeName]; ok {
 		p.debug.Printf("Override detected for %s: using %s instead", typeName, override)
-		return parseObjectSchemaV3(p, override, file)
+		schema, err := parseObjectSchemaV3(p, override, file)
+		if err != nil {
+			return nil, err
+		}
+
+		return spec.NewRefOrSpec(nil, schema), nil
+
 	}
 
 	if IsInterfaceLike(typeName) {
-		return &spec.Schema{}, nil
+		return spec.NewSchemaSpec(), nil
 	}
 
 	if IsGolangPrimitiveType(typeName) {
@@ -546,30 +568,379 @@ func (p *Parser) getTypeSchemaV3(typeName string, file *ast.File, ref bool) (*sp
 		typeSpecDef = p.packages.findTypeSpec(override[0:separator], override[separator+1:])
 	}
 
-	// schema, ok := p.parsedSchemas[typeSpecDef]
-	// if !ok {
-	// 	var err error
+	schema, ok := p.parsedSchemasV3[typeSpecDef]
+	if !ok {
+		var err error
 
-	// 	schema, err = p.ParseDefinition(typeSpecDef)
-	// 	if err != nil {
-	// 		if err == ErrRecursiveParseStruct && ref {
-	// 			// TODO
-	// 			// return p.getRefTypeSchema(typeSpecDef, schema), nil
-	// 		}
-	// 		return nil, err
-	// 	}
-	// }
-
-	if ref {
-		// if IsComplexSchema(schema.Schema) {
-		// 	// TODO
-		// 	// return p.getRefTypeSchema(typeSpecDef, schema), nil
-		// }
-		// // if it is a simple schema, just return a copy
-		// newSchema := *schema.Schema
-		// return &newSchema, nil
+		schema, err = p.ParseDefinitionV3(typeSpecDef)
+		if err != nil {
+			if err == ErrRecursiveParseStruct && ref {
+				return p.getRefTypeSchemaV3(typeSpecDef, schema), nil
+			}
+			return nil, err
+		}
 	}
 
-	// return schema.Schema, nil
-	return nil, nil
+	if ref {
+		if IsComplexSchemaV3(schema) {
+			return p.getRefTypeSchemaV3(typeSpecDef, schema), nil
+		}
+
+		// if it is a simple schema, just return a copy
+		newSchema := *schema.Schema
+		return spec.NewRefOrSpec(nil, &newSchema), nil
+	}
+
+	return spec.NewRefOrSpec(nil, schema.Schema), nil
+}
+
+// ParseDefinitionV3 parses given type spec that corresponds to the type under
+// given name and package, and populates swagger schema definitions registry
+// with a schema for the given type
+func (p *Parser) ParseDefinitionV3(typeSpecDef *TypeSpecDef) (*SchemaV3, error) {
+	typeName := typeSpecDef.TypeName()
+	schema, found := p.parsedSchemasV3[typeSpecDef]
+	if found {
+		p.debug.Printf("Skipping '%s', already parsed.", typeName)
+
+		return schema, nil
+	}
+
+	if p.isInStructStack(typeSpecDef) {
+		p.debug.Printf("Skipping '%s', recursion detected.", typeName)
+
+		return &SchemaV3{
+				Name:    typeName,
+				PkgPath: typeSpecDef.PkgPath,
+				Schema:  PrimitiveSchemaV3(OBJECT).Spec,
+			},
+			ErrRecursiveParseStruct
+	}
+
+	p.structStack = append(p.structStack, typeSpecDef)
+
+	p.debug.Printf("Generating %s", typeName)
+
+	definition, err := p.parseTypeExprV3(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
+	if err != nil {
+		p.debug.Printf("Error parsing type definition '%s': %s", typeName, err)
+		return nil, err
+	}
+
+	if definition.Description == "" {
+		fillDefinitionDescriptionV3(definition, typeSpecDef.File, typeSpecDef)
+	}
+
+	if len(typeSpecDef.Enums) > 0 {
+		var varNames []string
+		var enumComments = make(map[string]string)
+		for _, value := range typeSpecDef.Enums {
+			definition.Enum = append(definition.Enum, value.Value)
+			varNames = append(varNames, value.key)
+			if len(value.Comment) > 0 {
+				enumComments[value.key] = value.Comment
+			}
+		}
+
+		if definition.Extensions == nil {
+			definition.Extensions = make(map[string]any)
+		}
+
+		definition.Extensions[enumVarNamesExtension] = varNames
+		if len(enumComments) > 0 {
+			definition.Extensions[enumCommentsExtension] = enumComments
+		}
+	}
+
+	sch := SchemaV3{
+		Name:    typeName,
+		PkgPath: typeSpecDef.PkgPath,
+		Schema:  definition,
+	}
+	p.parsedSchemasV3[typeSpecDef] = &sch
+
+	// update an empty schema as a result of recursion
+	s2, found := p.outputSchemasV3[typeSpecDef]
+	if found {
+		p.openAPI.Components.Spec.Schemas[s2.Name] = spec.NewRefOrSpec(nil, definition)
+	}
+
+	return &sch, nil
+}
+
+// fillDefinitionDescription additionally fills fields in definition (spec.Schema)
+// TODO: If .go file contains many types, it may work for a long time
+func fillDefinitionDescriptionV3(definition *spec.Schema, file *ast.File, typeSpecDef *TypeSpecDef) {
+	for _, astDeclaration := range file.Decls {
+		generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
+		if !ok || generalDeclaration.Tok != token.TYPE {
+			continue
+		}
+
+		for _, astSpec := range generalDeclaration.Specs {
+			typeSpec, ok := astSpec.(*ast.TypeSpec)
+			if !ok || typeSpec != typeSpecDef.TypeSpec {
+				continue
+			}
+
+			definition.Description =
+				extractDeclarationDescription(typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
+		}
+	}
+}
+
+// parseTypeExprV3 parses given type expression that corresponds to the type under
+// given name and package, and returns swagger schema for it.
+func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*spec.Schema, error) {
+	switch expr := typeExpr.(type) {
+	// type Foo interface{}
+	case *ast.InterfaceType:
+		return &spec.Schema{}, nil
+
+	// type Foo struct {...}
+	case *ast.StructType:
+		return p.parseStructV3(file, expr.Fields)
+
+	// type Foo Baz
+	case *ast.Ident:
+		// return p.getTypeSchemaV3(expr.Name, file, ref)
+		// TODO fix
+	// type Foo *Baz
+	case *ast.StarExpr:
+		return p.parseTypeExprV3(file, expr.X, ref)
+
+	// type Foo pkg.Bar
+	case *ast.SelectorExpr:
+		// if xIdent, ok := expr.X.(*ast.Ident); ok {
+		// 	return p.getTypeSchemaV3(fullTypeName(xIdent.Name, expr.Sel.Name), file, ref)
+		// }
+		// TODO fix
+	// type Foo []Baz
+	case *ast.ArrayType:
+		// TODO
+		// itemSchema, err := p.parseTypeExpr(file, expr.Elt, true)
+		// if err != nil {
+		// 	return nil, err
+		// }
+
+		// return spec.ArrayProperty(itemSchema), nil
+	// type Foo map[string]Bar
+	case *ast.MapType:
+		// TODO
+		// if _, ok := expr.Value.(*ast.InterfaceType); ok {
+		// 	return spec.MapProperty(nil), nil
+		// }
+		// schema, err := p.parseTypeExpr(file, expr.Value, true)
+		// if err != nil {
+		// 	return nil, err
+		// }
+
+		// return spec.MapProperty(schema), nil
+
+	case *ast.FuncType:
+		return nil, ErrFuncTypeField
+		// ...
+	}
+
+	return p.parseGenericTypeExprV3(file, typeExpr)
+}
+
+func (p *Parser) parseStructV3(file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
+	required, properties := make([]string, 0), make(map[string]*spec.RefOrSpec[spec.Schema])
+
+	for _, field := range fields.List {
+		fieldProps, requiredFromAnon, err := p.parseStructFieldV3(file, field)
+		if err != nil {
+			if err == ErrFuncTypeField || err == ErrSkippedField {
+				continue
+			}
+
+			return nil, err
+		}
+
+		if len(fieldProps) == 0 {
+			continue
+		}
+
+		required = append(required, requiredFromAnon...)
+
+		for k, v := range fieldProps {
+			properties[k] = v
+		}
+	}
+
+	sort.Strings(required)
+
+	result := spec.NewSchemaSpec()
+	result.Spec.Type = spec.NewSingleOrArray(OBJECT)
+	result.Spec.Properties = properties
+	result.Spec.Required = required
+
+	return result.Spec, nil
+}
+
+func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[string]*spec.RefOrSpec[spec.Schema], []string, error) {
+	if field.Tag != nil {
+		skip, ok := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", "")).Lookup("swaggerignore")
+		if ok && strings.EqualFold(skip, "true") {
+			return nil, nil, nil
+		}
+	}
+
+	ps := p.fieldParserFactoryV3(p, field)
+
+	if ps.ShouldSkip() {
+		return nil, nil, nil
+	}
+
+	fieldName, err := ps.FieldName()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if fieldName == "" {
+		typeName, err := getFieldType(file, field.Type, nil)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		schema, err := p.getTypeSchemaV3(typeName, file, false)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if len(schema.Spec.Type) > 0 && schema.Spec.Type[0] == OBJECT {
+			if len(schema.Spec.Properties) == 0 {
+				return nil, nil, nil
+			}
+
+			properties := make(map[string]*spec.RefOrSpec[spec.Schema])
+			for k, v := range schema.Spec.Properties {
+				properties[k] = v
+			}
+
+			return properties, schema.Spec.Required, nil
+		}
+		// for alias type of non-struct types ,such as array,map, etc. ignore field tag.
+		return map[string]*spec.RefOrSpec[spec.Schema]{
+			typeName: schema,
+		}, nil, nil
+
+	}
+
+	schema, err := ps.CustomSchema()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if schema == nil {
+		typeName, err := getFieldType(file, field.Type, nil)
+		if err == nil {
+			// named type
+			schema, err = p.getTypeSchemaV3(typeName, file, true)
+			if err != nil {
+				return nil, nil, err
+			}
+
+		} else {
+			// unnamed type
+			parsedSchema, err := p.parseTypeExprV3(file, field.Type, false)
+			if err != nil {
+				return nil, nil, err
+			}
+
+			schema = spec.NewSchemaSpec()
+			schema.Spec = parsedSchema
+		}
+	}
+
+	err = ps.ComplementSchema(schema)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var tagRequired []string
+
+	required, err := ps.IsRequired()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if required {
+		tagRequired = append(tagRequired, fieldName)
+	}
+
+	if formName := ps.FormName(); len(formName) > 0 {
+		if schema.Spec.Extensions == nil {
+			schema.Spec.Extensions = make(map[string]any)
+		}
+		schema.Spec.Extensions[formTag] = formName
+	}
+
+	return map[string]*spec.RefOrSpec[spec.Schema]{fieldName: schema}, tagRequired, nil
+}
+
+func (p *Parser) getRefTypeSchemaV3(typeSpecDef *TypeSpecDef, schema *SchemaV3) *spec.RefOrSpec[spec.Schema] {
+	_, ok := p.outputSchemasV3[typeSpecDef]
+	if !ok {
+		if p.openAPI.Components.Spec.Schemas == nil {
+			p.openAPI.Components.Spec.Schemas = make(map[string]*spec.RefOrSpec[spec.Schema])
+		}
+
+		p.openAPI.Components.Spec.Schemas[schema.Name] = spec.NewSchemaSpec()
+
+		if schema.Schema != nil {
+			p.openAPI.Components.Spec.Schemas[schema.Name] = spec.NewRefOrSpec(nil, schema.Schema)
+		}
+
+		p.outputSchemasV3[typeSpecDef] = schema
+	}
+
+	refSchema := RefSchemaV3(schema.Name)
+
+	return refSchema
+}
+
+// GetSchemaTypePath get path of schema type.
+func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], depth int) []string {
+	if schema == nil || depth == 0 {
+		return nil
+	}
+
+	name := schema.Ref.Ref
+	if name != "" {
+		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
+			name = name[pos+1:]
+			if schema, ok := parser.openAPI.Components.Spec.Schemas[name]; ok {
+				return parser.GetSchemaTypePathV3(schema, depth)
+			}
+		}
+
+		return nil
+	}
+
+	// TODO
+	// if len(schema.Type) > 0 {
+	// 	switch schema.Type[0] {
+	// 	case ARRAY:
+	// 		depth--
+
+	// 		s := []string{schema.Type[0]}
+
+	// 		return append(s, parser.GetSchemaTypePathV3(schema.Items.Schema.Spec, depth)...)
+	// 	case OBJECT:
+	// 		if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
+	// 			// for map
+	// 			depth--
+
+	// 			s := []string{schema.Type[0]}
+
+	// 			return append(s, parser.GetSchemaTypePathV3(schema.AdditionalProperties.Schema.Spec, depth)...)
+	// 		}
+	// 	}
+
+	// 	return []string{schema.Type[0]}
+	// }
+
+	return []string{ANY}
 }
