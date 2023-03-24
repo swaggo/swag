@@ -45,7 +45,7 @@ func SetCodeExampleFilesDirectoryV3(directoryPath string) func(*OperationV3) {
 }
 
 // ParseComment parses comment for given comment string and returns error if error occurs.
-func (o *OperationV3) ParseCommentV3(comment string, astFile *ast.File) error {
+func (o *OperationV3) ParseComment(comment string, astFile *ast.File) error {
 	commentLine := strings.TrimSpace(strings.TrimLeft(comment, "/"))
 	if len(commentLine) == 0 {
 		return nil

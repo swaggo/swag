@@ -424,7 +424,7 @@ func (parser *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 			operation := NewOperationV3(parser, SetCodeExampleFilesDirectoryV3(parser.codeExampleFilesDir))
 
 			for _, comment := range astDeclaration.Doc.List {
-				err := operation.ParseCommentV3(comment.Text, fileInfo.File)
+				err := operation.ParseComment(comment.Text, fileInfo.File)
 				if err != nil {
 					return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
 				}
