@@ -1430,22 +1430,39 @@ func getFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs map[strin
 	}
 }
 
+func (parser *Parser) getUnderlyingSchema(schema *spec.Schema) *spec.Schema {
+	if schema == nil {
+		return nil
+	}
+
+	if url := schema.Ref.GetURL(); url != nil {
+		if pos := strings.LastIndexByte(url.Fragment, '/'); pos >= 0 {
+			name := url.Fragment[pos+1:]
+			if schema, ok := parser.swagger.Definitions[name]; ok {
+				return &schema
+			}
+		}
+	}
+
+	if len(schema.AllOf) > 0 {
+		merged := &spec.Schema{}
+		MergeSchema(merged, schema)
+		for _, s := range schema.AllOf {
+			MergeSchema(merged, parser.getUnderlyingSchema(&s))
+		}
+		return merged
+	}
+	return nil
+}
+
 // GetSchemaTypePath get path of schema type.
 func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string {
 	if schema == nil || depth == 0 {
 		return nil
 	}
 
-	name := schema.Ref.String()
-	if name != "" {
-		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
-			name = name[pos+1:]
-			if schema, ok := parser.swagger.Definitions[name]; ok {
-				return parser.GetSchemaTypePath(&schema, depth)
-			}
-		}
-
-		return nil
+	if underlying := parser.getUnderlyingSchema(schema); underlying != nil {
+		return parser.GetSchemaTypePath(underlying, depth)
 	}
 
 	if len(schema.Type) > 0 {

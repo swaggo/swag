@@ -3,7 +3,6 @@ package swag
 import (
 	"errors"
 	"fmt"
-
 	"github.com/go-openapi/spec"
 )
 
@@ -214,4 +213,81 @@ func BuildCustomSchema(types []string) (*spec.Schema, error) {
 
 		return PrimitiveSchema(types[0]), nil
 	}
+}
+
+// MergeSchema merge schemas
+func MergeSchema(dst *spec.Schema, src *spec.Schema) *spec.Schema {
+	if len(src.Type) > 0 {
+		dst.Type = src.Type
+	}
+	if len(src.Properties) > 0 {
+		dst.Properties = src.Properties
+	}
+	if src.Items != nil {
+		dst.Items = src.Items
+	}
+	if src.AdditionalProperties != nil {
+		dst.AdditionalProperties = src.AdditionalProperties
+	}
+	if len(src.Description) > 0 {
+		dst.Description = src.Description
+	}
+	if src.Nullable {
+		dst.Nullable = src.Nullable
+	}
+	if len(src.Format) > 0 {
+		dst.Format = src.Format
+	}
+	if src.Default != nil {
+		dst.Default = src.Default
+	}
+	if src.Example != nil {
+		dst.Example = src.Example
+	}
+	if len(src.Extensions) > 0 {
+		dst.Extensions = src.Extensions
+	}
+	if src.Maximum != nil {
+		dst.Maximum = src.Maximum
+	}
+	if src.Minimum != nil {
+		dst.Minimum = src.Minimum
+	}
+	if src.ExclusiveMaximum {
+		dst.ExclusiveMaximum = src.ExclusiveMaximum
+	}
+	if src.ExclusiveMinimum {
+		dst.ExclusiveMinimum = src.ExclusiveMinimum
+	}
+	if src.MaxLength != nil {
+		dst.MaxLength = src.MaxLength
+	}
+	if src.MinLength != nil {
+		dst.MinLength = src.MinLength
+	}
+	if len(src.Pattern) > 0 {
+		dst.Pattern = src.Pattern
+	}
+	if src.MaxItems != nil {
+		dst.MaxItems = src.MaxItems
+	}
+	if src.MinItems != nil {
+		dst.MinItems = src.MinItems
+	}
+	if src.UniqueItems {
+		dst.UniqueItems = src.UniqueItems
+	}
+	if src.MultipleOf != nil {
+		dst.MultipleOf = src.MultipleOf
+	}
+	if len(src.Enum) > 0 {
+		dst.Enum = src.Enum
+	}
+	if len(src.Extensions) > 0 {
+		dst.Extensions = src.Extensions
+	}
+	if len(src.ExtraProps) > 0 {
+		dst.ExtraProps = src.ExtraProps
+	}
+	return dst
 }

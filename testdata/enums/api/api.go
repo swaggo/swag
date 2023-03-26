@@ -24,3 +24,14 @@ func API() {
 func API2() {
 	_ = types.Person{}
 }
+
+//	 post students
+//
+//		@Summary      test enums fields in formdata request
+//		@Description  test enums fields in formdata request
+//		@Param 		  stdeunt formData types.Person true "type"
+//		@Success      200   "ok"
+//		@Router       /students2 [get]
+func API3() {
+	_ = types.Person{}
+}

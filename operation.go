@@ -305,9 +305,12 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			items := schema.Properties.ToOrderedSchemaItems()
 
 			for _, item := range items {
-				name, prop := item.Name, item.Schema
+				name, prop := item.Name, &item.Schema
 				if len(prop.Type) == 0 {
-					continue
+					prop = operation.parser.getUnderlyingSchema(prop)
+					if len(prop.Type) == 0 {
+						continue
+					}
 				}
 
 				var formName = name
