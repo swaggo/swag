@@ -616,7 +616,7 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 
 		result := spec.NewSchemaSpec()
 		result.Spec.Type = spec.NewSingleOrArray("array")
-		result.Spec.Items = spec.NewBoolOrSchema(true, schema)
+		result.Spec.Items = spec.NewBoolOrSchema(false, schema)
 
 		return result, nil
 	case strings.HasPrefix(refType, "map["):
@@ -638,7 +638,7 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 
 		// return spec.MapProperty(schema), nil
 	case strings.Contains(refType, "{"):
-		// return parseCombinedObjectSchema(parser, refType, astFile)
+		return parseCombinedObjectSchemaV3(parser, refType, astFile)
 	default:
 		if parser != nil { // checking refType has existing in 'TypeDefinitions'
 			schema, err := parser.getTypeSchemaV3(refType, astFile, true)
@@ -859,4 +859,68 @@ func newResponseWithDescription(description string) *spec.RefOrSpec[spec.Extenda
 	response := spec.NewResponseSpec()
 	response.Spec.Spec.Description = description
 	return response
+}
+
+func parseCombinedObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*spec.RefOrSpec[spec.Schema], error) {
+	matches := combinedPattern.FindStringSubmatch(refType)
+	if len(matches) != 3 {
+		return nil, fmt.Errorf("invalid type: %s", refType)
+	}
+
+	schema, err := parseObjectSchemaV3(parser, matches[1], astFile)
+	if err != nil {
+		return nil, err
+	}
+
+	fields, props := parseFields(matches[2]), map[string]*spec.RefOrSpec[spec.Schema]{}
+
+	for _, field := range fields {
+		keyVal := strings.SplitN(field, "=", 2)
+		if len(keyVal) != 2 {
+			continue
+		}
+
+		schema, err := parseObjectSchemaV3(parser, keyVal[1], astFile)
+		if err != nil {
+			return nil, err
+		}
+
+		props[keyVal[0]] = schema
+	}
+
+	if len(props) == 0 {
+		return schema, nil
+	}
+
+	if schema.Ref == nil &&
+		len(schema.Spec.Type) > 0 &&
+		schema.Spec.Type[0] == OBJECT &&
+		len(schema.Spec.Properties) == 0 &&
+		schema.Spec.AdditionalProperties == nil {
+		schema.Spec.Properties = props
+		return schema, nil
+	}
+
+	schemaRefPath := strings.Replace(schema.Ref.Ref, "#/components/", "", 1)
+	schemaSpec := parser.openAPI.Components.Spec.Schemas[schemaRefPath]
+	schemaSpec.Spec.JsonSchemaComposition.AllOf = make([]*spec.RefOrSpec[spec.Schema], len(props))
+
+	i := 0
+	for name, prop := range props {
+		wrapperSpec := spec.NewSchemaSpec()
+		wrapperSpec.Spec = &spec.Schema{}
+		wrapperSpec.Spec.Type = spec.NewSingleOrArray(OBJECT)
+		wrapperSpec.Spec.Properties = map[string]*spec.RefOrSpec[spec.Schema]{
+			name: prop,
+		}
+
+		parser.openAPI.Components.Spec.Schemas[name] = wrapperSpec
+
+		ref := spec.NewRefOrSpec[spec.Schema](spec.NewRef("#/components/"+name), nil)
+
+		schemaSpec.Spec.JsonSchemaComposition.AllOf[i] = ref
+		i++
+	}
+
+	return schemaSpec, nil
 }

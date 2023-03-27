@@ -187,3 +187,42 @@ func TestParseResponseFailureCommentWithEmptyResponseV3(t *testing.T) {
 
 	assert.Equal(t, "Internal Server Error", operation.Responses.Spec.Response["500"].Spec.Spec.Description)
 }
+
+func TestParseResponseCommentWithObjectTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {object} model.OrderRow "Error message, if code != 200`
+	parser := New()
+	operation := NewOperationV3(parser)
+	operation.parser.addTestType("model.OrderRow")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
+
+	assert.Equal(t, "#/components/model.OrderRow", response.Spec.Spec.Content["application/json"].Spec.Schema.Ref.Ref)
+}
+
+func TestParseResponseCommentWithNestedPrimitiveTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {object} model.CommonHeader{data=string,data2=int} "Error message, if code != 200`
+	operation := NewOperationV3(New())
+
+	operation.parser.addTestType("model.CommonHeader")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
+	require.NotNil(t, response.Spec.Spec.Content["application/json"].Spec.Schema)
+
+	allOf := operation.Responses.Spec.Default.Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf
+	require.NotNil(t, allOf)
+	assert.Equal(t, 2, len(allOf))
+	assert.Equal(t, "#/components/data", allOf[0].Ref.Ref)
+	assert.Equal(t, "#/components/data2", allOf[1].Ref.Ref)
+}

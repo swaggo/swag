@@ -1776,4 +1776,10 @@ func (parser *Parser) addTestType(typename string) {
 		Name:    typename,
 		Schema:  PrimitiveSchema(OBJECT),
 	}
+
+	parser.parsedSchemasV3[typeDef] = &SchemaV3{
+		PkgPath: "",
+		Name:    typename,
+		Schema:  PrimitiveSchemaV3(OBJECT).Spec,
+	}
 }
