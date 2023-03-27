@@ -1131,6 +1131,15 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		fillDefinitionDescription(definition, typeSpecDef.File, typeSpecDef)
 	}
 
+	definition.ExtraProps = map[string]interface{}{
+		"x-pkg": map[string]string{
+			"package":   typeSpecDef.PkgPath,
+			"name":      typeSpecDef.Name(),
+			"type-name": typeSpecDef.TypeName(),
+			"full-path": typeSpecDef.FullPath(),
+		},
+	}
+
 	if len(typeSpecDef.Enums) > 0 {
 		var varnames []string
 		var enumComments = make(map[string]string)
