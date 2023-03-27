@@ -244,3 +244,85 @@ func TestParseResponseCommentWithNestedPrimitiveArrayTypeV3(t *testing.T) {
 	assert.NotNil(t, operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"])
 	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"string"}), operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Spec.Items.Schema.Spec.Type)
 }
+
+func TestParseResponseCommentWithNestedObjectTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {object} model.CommonHeader{data=model.Payload,data2=model.Payload2} "Error message, if code != 200`
+	operation := NewOperationV3(New())
+	operation.parser.addTestType("model.CommonHeader")
+	operation.parser.addTestType("model.Payload")
+	operation.parser.addTestType("model.Payload2")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
+	assert.Equal(t, 2, len(response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf))
+	assert.Equal(t, 5, len(operation.parser.openAPI.Components.Spec.Schemas))
+
+	assert.Equal(t, "#/components/model.Payload", operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Ref.Ref)
+	assert.Equal(t, "#/components/model.Payload2", operation.parser.openAPI.Components.Spec.Schemas["data2"].Spec.Properties["data2"].Ref.Ref)
+}
+
+func TestParseResponseCommentWithNestedArrayObjectTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {object} model.CommonHeader{data=[]model.Payload,data2=[]model.Payload2} "Error message, if code != 200`
+	operation := NewOperationV3(New())
+
+	operation.parser.addTestType("model.CommonHeader")
+	operation.parser.addTestType("model.Payload")
+	operation.parser.addTestType("model.Payload2")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
+
+	allOf := response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf
+	assert.Equal(t, 2, len(allOf))
+
+	assert.Equal(t, "#/components/model.Payload", operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Spec.Items.Schema.Ref.Ref)
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"array"}), operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Spec.Type)
+
+	assert.Equal(t, "#/components/model.Payload2", operation.parser.openAPI.Components.Spec.Schemas["data2"].Spec.Properties["data2"].Spec.Items.Schema.Ref.Ref)
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"array"}), operation.parser.openAPI.Components.Spec.Schemas["data2"].Spec.Properties["data2"].Spec.Type)
+}
+
+func TestParseResponseCommentWithNestedFieldsV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {object} model.CommonHeader{data1=int,data2=[]int,data3=model.Payload,data4=[]model.Payload} "Error message, if code != 200`
+	operation := NewOperationV3(New())
+
+	operation.parser.addTestType("model.CommonHeader")
+	operation.parser.addTestType("model.Payload")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
+
+	allOf := response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf
+	assert.Equal(t, 4, len(allOf))
+
+	schemas := operation.parser.openAPI.Components.Spec.Schemas
+
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"integer"}), schemas["data1"].Spec.Properties["data1"].Spec.Type)
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"object"}), schemas["data1"].Spec.Type)
+
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"array"}), schemas["data2"].Spec.Properties["data2"].Spec.Type)
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"integer"}), schemas["data2"].Spec.Properties["data2"].Spec.Items.Schema.Spec.Type)
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"object"}), schemas["data2"].Spec.Type)
+
+	assert.Equal(t, "#/components/model.Payload", schemas["data3"].Spec.Properties["data3"].Ref.Ref)
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"object"}), schemas["data3"].Spec.Type)
+
+	assert.Equal(t, "#/components/model.Payload", schemas["data4"].Spec.Properties["data4"].Spec.Items.Schema.Ref.Ref)
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"array"}), schemas["data4"].Spec.Properties["data4"].Spec.Type)
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"object"}), schemas["data4"].Spec.Type)
+}
