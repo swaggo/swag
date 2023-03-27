@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/sv-tools/openapi/spec"
 )
 
 func TestParseEmptyCommentV3(t *testing.T) {
@@ -225,4 +226,21 @@ func TestParseResponseCommentWithNestedPrimitiveTypeV3(t *testing.T) {
 	assert.Equal(t, 2, len(allOf))
 	assert.Equal(t, "#/components/data", allOf[0].Ref.Ref)
 	assert.Equal(t, "#/components/data2", allOf[1].Ref.Ref)
+}
+
+func TestParseResponseCommentWithNestedPrimitiveArrayTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {object} model.CommonHeader{data=[]string,data2=[]int} "Error message, if code != 200`
+	operation := NewOperationV3(New())
+
+	operation.parser.addTestType("model.CommonHeader")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
+	assert.NotNil(t, operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"])
+	assert.Equal(t, spec.SingleOrArray[string](spec.SingleOrArray[string]{"string"}), operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Spec.Items.Schema.Spec.Type)
 }
