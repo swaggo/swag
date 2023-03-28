@@ -745,10 +745,9 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 		return result, nil
 	// type Foo map[string]Bar
 	case *ast.MapType:
-		// TODO
 		if _, ok := expr.Value.(*ast.InterfaceType); ok {
 			result := &spec.Schema{}
-			result.AdditionalProperties.Schema = spec.NewSchemaSpec()
+			result.AdditionalProperties = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
 			result.Type = spec.NewSingleOrArray(OBJECT)
 
 			return result, nil
@@ -760,7 +759,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 		}
 
 		result := &spec.Schema{}
-		result.AdditionalProperties.Schema = spec.NewRefOrSpec(nil, schema)
+		result.AdditionalProperties = spec.NewBoolOrSchema(false, spec.NewRefOrSpec(nil, schema))
 		result.Type = spec.NewSingleOrArray(OBJECT)
 
 		return result, nil

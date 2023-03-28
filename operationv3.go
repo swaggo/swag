@@ -521,7 +521,7 @@ func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType stri
 
 		result := spec.NewSchemaSpec()
 		result.Spec.Type = spec.NewSingleOrArray("array")
-		result.Spec.Items = spec.NewBoolOrSchema(true, schema) //TODO: allowed?
+		result.Spec.Items = spec.NewBoolOrSchema(false, schema) //TODO: allowed?
 		return result, nil
 
 	default:
@@ -620,23 +620,33 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 
 		return result, nil
 	case strings.HasPrefix(refType, "map["):
-		// // ignore key type
-		// idx := strings.Index(refType, "]")
-		// if idx < 0 {
-		// 	return nil, fmt.Errorf("invalid type: %s", refType)
-		// }
+		// ignore key type
+		idx := strings.Index(refType, "]")
+		if idx < 0 {
+			return nil, fmt.Errorf("invalid type: %s", refType)
+		}
 
-		// refType = refType[idx+1:]
-		// if refType == INTERFACE || refType == ANY {
-		// 	return spec.MapProperty(nil), nil
-		// }
+		refType = refType[idx+1:]
+		if refType == INTERFACE || refType == ANY {
+			schema := &spec.Schema{}
+			schema.AdditionalProperties = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
+			schema.Type = spec.NewSingleOrArray(OBJECT)
+			refOrSpec := spec.NewRefOrSpec(nil, schema)
+			return refOrSpec, nil
+		}
 
-		// schema, err := parseObjectSchema(parser, refType, astFile)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		schema, err := parseObjectSchemaV3(parser, refType, astFile)
+		if err != nil {
+			return nil, err
+		}
 
-		// return spec.MapProperty(schema), nil
+		result := &spec.Schema{}
+		result.AdditionalProperties = spec.NewBoolOrSchema(false, schema)
+		result.Type = spec.NewSingleOrArray(OBJECT)
+		refOrSpec := spec.NewSchemaSpec()
+		refOrSpec.Spec = result
+
+		return refOrSpec, nil
 	case strings.Contains(refType, "{"):
 		return parseCombinedObjectSchemaV3(parser, refType, astFile)
 	default:
