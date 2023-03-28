@@ -691,6 +691,8 @@ func fillDefinitionDescriptionV3(definition *spec.Schema, file *ast.File, typeSp
 // parseTypeExprV3 parses given type expression that corresponds to the type under
 // given name and package, and returns swagger schema for it.
 func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*spec.Schema, error) {
+	const errMessage = "parse type expression v3"
+
 	switch expr := typeExpr.(type) {
 	// type Foo interface{}
 	case *ast.InterfaceType:
@@ -702,40 +704,66 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 
 	// type Foo Baz
 	case *ast.Ident:
-		// return p.getTypeSchemaV3(expr.Name, file, ref)
-		// TODO fix
+		result, err := p.getTypeSchemaV3(expr.Name, file, ref)
+		if err != nil {
+			return nil, errors.Wrap(err, errMessage)
+		}
+
+		return result.Spec, nil
 	// type Foo *Baz
 	case *ast.StarExpr:
 		return p.parseTypeExprV3(file, expr.X, ref)
 
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
-		// if xIdent, ok := expr.X.(*ast.Ident); ok {
-		// 	return p.getTypeSchemaV3(fullTypeName(xIdent.Name, expr.Sel.Name), file, ref)
-		// }
-		// TODO fix
+		if xIdent, ok := expr.X.(*ast.Ident); ok {
+			result, err := p.getTypeSchemaV3(fullTypeName(xIdent.Name, expr.Sel.Name), file, ref)
+			if err != nil {
+				return nil, errors.Wrap(err, errMessage)
+			}
+
+			return result.Spec, nil
+		}
 	// type Foo []Baz
 	case *ast.ArrayType:
-		// TODO
-		// itemSchema, err := p.parseTypeExpr(file, expr.Elt, true)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		itemSchema, err := p.parseTypeExprV3(file, expr.Elt, true)
+		if err != nil {
+			return nil, err
+		}
 
-		// return spec.ArrayProperty(itemSchema), nil
+		if itemSchema == nil {
+			schema := &spec.Schema{}
+			schema.Type = spec.NewSingleOrArray(ARRAY)
+
+			return schema, nil
+		}
+
+		result := &spec.Schema{}
+		refOrSpec := spec.NewRefOrSpec(nil, itemSchema)
+		result.Items = spec.NewBoolOrSchema(false, refOrSpec)
+
+		return result, nil
 	// type Foo map[string]Bar
 	case *ast.MapType:
 		// TODO
-		// if _, ok := expr.Value.(*ast.InterfaceType); ok {
-		// 	return spec.MapProperty(nil), nil
-		// }
-		// schema, err := p.parseTypeExpr(file, expr.Value, true)
-		// if err != nil {
-		// 	return nil, err
-		// }
+		if _, ok := expr.Value.(*ast.InterfaceType); ok {
+			result := &spec.Schema{}
+			result.AdditionalProperties.Schema = spec.NewSchemaSpec()
+			result.Type = spec.NewSingleOrArray(OBJECT)
 
-		// return spec.MapProperty(schema), nil
+			return result, nil
+		}
 
+		schema, err := p.parseTypeExprV3(file, expr.Value, true)
+		if err != nil {
+			return nil, err
+		}
+
+		result := &spec.Schema{}
+		result.AdditionalProperties.Schema = spec.NewRefOrSpec(nil, schema)
+		result.Type = spec.NewSingleOrArray(OBJECT)
+
+		return result, nil
 	case *ast.FuncType:
 		return nil, ErrFuncTypeField
 		// ...
