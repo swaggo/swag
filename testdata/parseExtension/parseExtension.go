@@ -12,5 +12,4 @@ func Fun2() {}
 func Fun3() {}
 
 // @Router /with-empty-comment-line [get]
-//
 func FunEmptyCommentLine() {}
