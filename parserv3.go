@@ -90,7 +90,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 		case produceAttr:
 			println("produce is deprecated, as there is no such field on top level in spec V3.1")
 		case "@schemes":
-			println("@basepath is deprecated use servers instead")
+			println("@schemes is deprecated use servers instead")
 		case "@tag.name":
 			tag := &spec.Extendable[spec.Tag]{
 				Spec: &spec.Tag{
