@@ -1,7 +1,6 @@
 package swag
 
 import (
-	"encoding/json"
 	goparser "go/parser"
 	"go/token"
 	"testing"
@@ -583,27 +582,341 @@ func TestParseResponseCommentWithHeaderV3(t *testing.T) {
 	err = operation.ParseComment(`@Header 200 {string} Token "qwerty"`, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
 
-	b, err := json.MarshalIndent(operation, "", "    ")
-	assert.NoError(t, err)
+	response := operation.Responses.Spec.Response["200"]
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
 
-	expected := `{
-    "responses": {
-        "200": {
-            "description": "it's ok",
-            "headers": {
-                "Token": {
-                    "type": "string",
-                    "description": "qwerty"
-                }
-            }
-        }
-    }
-}`
-	assert.Equal(t, expected, string(b))
+	assert.Equal(t, "it's ok", response.Spec.Spec.Description)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token"].Spec.Spec.Schema.Spec.Type)
 
 	err = operation.ParseComment(`@Header 200 "Mallformed"`, nil)
-	assert.Error(t, err, "ParseComment should not fail")
+	assert.Error(t, err, "ParseComment should fail")
 
 	err = operation.ParseComment(`@Header 200,asdsd {string} Token "qwerty"`, nil)
+	assert.Error(t, err, "ParseComment should fail")
+}
+
+func TestParseResponseCommentWithHeaderForCodesV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(nil)
+
+	comment := `@Success 200,201,default "it's ok"`
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	comment = `@Header 200,201,default {string} Token "qwerty"`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	comment = `@Header all {string} Token2 "qwerty"`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "it's ok", response.Spec.Spec.Description)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token"].Spec.Spec.Schema.Spec.Type)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token2"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token2"].Spec.Spec.Schema.Spec.Type)
+
+	response = operation.Responses.Spec.Response["201"]
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "it's ok", response.Spec.Spec.Description)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token"].Spec.Spec.Schema.Spec.Type)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token2"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token2"].Spec.Spec.Schema.Spec.Type)
+
+	response = operation.Responses.Spec.Default
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "it's ok", response.Spec.Spec.Description)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token"].Spec.Spec.Schema.Spec.Type)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token2"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token2"].Spec.Spec.Schema.Spec.Type)
+
+	comment = `@Header 200 "Mallformed"`
+	err = operation.ParseComment(comment, nil)
 	assert.Error(t, err, "ParseComment should not fail")
+}
+
+func TestParseResponseCommentWithHeaderOnlyAllV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(nil)
+
+	comment := `@Success 200,201,default "it's ok"`
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	comment = `@Header all {string} Token "qwerty"`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "it's ok", response.Spec.Spec.Description)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token"].Spec.Spec.Schema.Spec.Type)
+
+	response = operation.Responses.Spec.Response["201"]
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "it's ok", response.Spec.Spec.Description)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token"].Spec.Spec.Schema.Spec.Type)
+
+	response = operation.Responses.Spec.Default
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "it's ok", response.Spec.Spec.Description)
+
+	assert.Equal(t, "qwerty", response.Spec.Spec.Headers["Token"].Spec.Spec.Description)
+	assert.Equal(t, typeString, response.Spec.Spec.Headers["Token"].Spec.Spec.Schema.Spec.Type)
+
+	comment = `@Header 200 "Mallformed"`
+	err = operation.ParseComment(comment, nil)
+	assert.Error(t, err, "ParseComment should not fail")
+}
+
+func TestParseEmptyResponseOnlyCodeV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(nil)
+	err := operation.ParseComment(`@Success 200`, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "OK", response.Spec.Spec.Description)
+}
+
+func TestParseEmptyResponseOnlyCodesV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200,201,default`
+	operation := NewOperationV3(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err, "ParseComment should not fail")
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "OK", response.Spec.Spec.Description)
+
+	response = operation.Responses.Spec.Response["201"]
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "Created", response.Spec.Spec.Description)
+
+	response = operation.Responses.Spec.Default
+	assert.NotNil(t, response)
+	assert.NotNil(t, response.Spec)
+
+	assert.Equal(t, "", response.Spec.Spec.Description)
+}
+
+func TestParseResponseCommentParamMissingV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(nil)
+
+	paramLenErrComment := `@Success notIntCode`
+	paramLenErr := operation.ParseComment(paramLenErrComment, nil)
+	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode"`)
+
+	paramLenErrComment = `@Success notIntCode {string} string "it ok"`
+	paramLenErr = operation.ParseComment(paramLenErrComment, nil)
+	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode {string} string "it ok""`)
+
+	paramLenErrComment = `@Success notIntCode "it ok"`
+	paramLenErr = operation.ParseComment(paramLenErrComment, nil)
+	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode "it ok""`)
+}
+
+func TestOperation_ParseParamCommentV3(t *testing.T) {
+	t.Parallel()
+
+	t.Run("integer", func(t *testing.T) {
+		t.Parallel()
+		for _, paramType := range []string{"header", "path", "query", "formData"} {
+			t.Run(paramType, func(t *testing.T) {
+				o := NewOperationV3(New())
+				err := o.ParseComment(`@Param some_id `+paramType+` int true "Some ID"`, nil)
+
+				assert.NoError(t, err)
+
+				expected := &spec.RefOrSpec[spec.Extendable[spec.Parameter]]{
+					Spec: &spec.Extendable[spec.Parameter]{
+						Spec: &spec.Parameter{
+							Name:        "some_id",
+							Description: "Some ID",
+							In:          paramType,
+							Required:    true,
+							Schema: &spec.RefOrSpec[spec.Schema]{
+								Spec: &spec.Schema{
+									JsonSchema: spec.JsonSchema{
+										JsonSchemaCore: spec.JsonSchemaCore{
+											Type: typeInteger,
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+
+				expectedArray := []*spec.RefOrSpec[spec.Extendable[spec.Parameter]]{expected}
+				assert.Equal(t, o.Parameters, expectedArray)
+			})
+		}
+	})
+
+	t.Run("string", func(t *testing.T) {
+		t.Parallel()
+		for _, paramType := range []string{"header", "path", "query", "formData"} {
+			t.Run(paramType, func(t *testing.T) {
+				o := NewOperationV3(New())
+				err := o.ParseComment(`@Param some_string `+paramType+` string true "Some String"`, nil)
+
+				assert.NoError(t, err)
+				expected := &spec.RefOrSpec[spec.Extendable[spec.Parameter]]{
+					Spec: &spec.Extendable[spec.Parameter]{
+						Spec: &spec.Parameter{
+							Description: "Some String",
+							Name:        "some_string",
+							In:          paramType,
+							Required:    true,
+							Schema: &spec.RefOrSpec[spec.Schema]{
+								Spec: &spec.Schema{
+									JsonSchema: spec.JsonSchema{
+										JsonSchemaCore: spec.JsonSchemaCore{
+											Type: typeString,
+										},
+									},
+								},
+							},
+						},
+					},
+				}
+
+				expectedArray := []*spec.RefOrSpec[spec.Extendable[spec.Parameter]]{expected}
+				assert.Equal(t, o.Parameters, expectedArray)
+			})
+		}
+	})
+
+	t.Run("object", func(t *testing.T) {
+		t.Parallel()
+		for _, paramType := range []string{"header", "path", "query", "formData"} {
+			t.Run(paramType, func(t *testing.T) {
+				assert.Error(t,
+					NewOperationV3(New()).
+						ParseComment(`@Param some_object `+paramType+` main.Object true "Some Object"`,
+							nil))
+			})
+		}
+	})
+
+}
+
+// Test ParseParamComment Query Params
+func TestParseParamCommentBodyArrayV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param names body []string true "Users List"`
+	o := NewOperationV3(New())
+	err := o.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	expected := &spec.RefOrSpec[spec.Extendable[spec.Parameter]]{
+		Spec: &spec.Extendable[spec.Parameter]{
+			Spec: &spec.Parameter{
+				Name:        "names",
+				Description: "Users List",
+				In:          "body",
+				Required:    true,
+				Schema: &spec.RefOrSpec[spec.Schema]{
+					Spec: &spec.Schema{
+						JsonSchema: spec.JsonSchema{
+							JsonSchemaCore: spec.JsonSchemaCore{
+								Type: typeArray,
+							},
+							JsonSchemaTypeArray: spec.JsonSchemaTypeArray{
+								Items: &spec.BoolOrSchema{
+									Schema: &spec.RefOrSpec[spec.Schema]{
+										Spec: &spec.Schema{
+											JsonSchema: spec.JsonSchema{
+												JsonSchemaCore: spec.JsonSchemaCore{
+													Type: typeString,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	expectedArray := []*spec.RefOrSpec[spec.Extendable[spec.Parameter]]{expected}
+	assert.Equal(t, o.Parameters, expectedArray)
+
+}
+
+// Test ParseParamComment Params
+func TestParseParamCommentArrayV3(t *testing.T) {
+	paramTypes := []string{"header", "path", "query"}
+
+	for _, paramType := range paramTypes {
+		t.Run(paramType, func(t *testing.T) {
+			operation := NewOperationV3(New())
+			err := operation.ParseComment(`@Param names `+paramType+` []string true "Users List"`, nil)
+			assert.NoError(t, err)
+
+			parameters := operation.Operation.Parameters
+			assert.NotNil(t, parameters)
+
+			parameterSpec := parameters[0].Spec.Spec
+			assert.NotNil(t, parameterSpec)
+			assert.Equal(t, "Users List", parameterSpec.Description)
+			assert.Equal(t, "names", parameterSpec.Name)
+			assert.Equal(t, typeArray, parameterSpec.Schema.Spec.Type)
+			assert.Equal(t, true, parameterSpec.Required)
+			assert.Equal(t, paramType, parameterSpec.In)
+			assert.Equal(t, typeString, parameterSpec.Schema.Spec.Items.Schema.Spec.Type)
+
+			err = operation.ParseComment(`@Param names `+paramType+` []model.User true "Users List"`, nil)
+			assert.Error(t, err)
+		})
+	}
 }

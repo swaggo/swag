@@ -569,19 +569,10 @@ func createParameterV3(in, description, paramName, objectType, schemaType string
 
 	switch objectType {
 	case ARRAY:
-		// TODO implement array return
-		result.Schema.Spec.Type = spec.NewSingleOrArray(schemaType)
-		// result.Schema.Spec.CollectionFormat = collectionFormat
-		// result.Schema.Spec.Items = spec.NewBoolOrSchema(true, spec.NewRefOrSpec(nil, spec *spec.T))
-
-		// &spec.Items{
-		// 	CommonValidations: spec.CommonValidations{
-		// 		Enum: enums,
-		// 	},
-		// 	SimpleSchema: spec.SimpleSchema{
-		// 		Type: schemaType,
-		// 	},
-		// }
+		result.Schema.Spec.Type = spec.NewSingleOrArray(objectType)
+		result.Schema.Spec.Items = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
+		result.Schema.Spec.Items.Schema.Spec.Type = spec.NewSingleOrArray(schemaType)
+		result.Schema.Spec.Enum = enums
 	case PRIMITIVE, OBJECT:
 		result.Schema.Spec.Type = spec.NewSingleOrArray(schemaType)
 		result.Schema.Spec.Enum = enums
@@ -724,9 +715,9 @@ func (o *OperationV3) ParseResponseHeaderComment(commentLine string, _ *ast.File
 
 func newHeaderSpecV3(schemaType, description string) *spec.RefOrSpec[spec.Extendable[spec.Header]] {
 	result := spec.NewHeaderSpec()
+	result.Spec.Spec.Description = description
 	result.Spec.Spec.Schema = spec.NewSchemaSpec()
 	result.Spec.Spec.Schema.Spec.Type = spec.NewSingleOrArray(schemaType)
-	result.Spec.Spec.Schema.Spec.Description = description
 
 	return result
 }
