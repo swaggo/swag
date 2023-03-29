@@ -93,3 +93,49 @@ func BuildCustomSchemaV3(types []string) (*spec.RefOrSpec[spec.Schema], error) {
 		return PrimitiveSchemaV3(types[0]), nil
 	}
 }
+
+// TransToValidCollectionFormatV3 determine valid collection format.
+func TransToValidCollectionFormatV3(format, in string) string {
+	switch in {
+	case "query":
+		switch format {
+		case "form", "space", "pipe", "deepObject":
+			return format
+		case "ssv":
+			return "space"
+		case "pipes":
+			return "pipe"
+		case "multi":
+			return "form"
+		default:
+			return ""
+		}
+	case "path":
+		switch format {
+		case "matrix", "label", "simple":
+			return format
+		case "csv":
+			return "simple"
+		case "ssv":
+			return "matrix"
+		default:
+			return ""
+		}
+	case "header":
+		switch format {
+		case "form", "simple":
+			return format
+		case "csv":
+			return "simple"
+		default:
+			return ""
+		}
+	case "cookie":
+		switch format {
+		case "form":
+			return format
+		}
+	}
+
+	return ""
+}

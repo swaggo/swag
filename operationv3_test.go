@@ -14,6 +14,7 @@ var typeObject = spec.SingleOrArray[string](spec.SingleOrArray[string]{OBJECT})
 var typeArray = spec.SingleOrArray[string](spec.SingleOrArray[string]{ARRAY})
 var typeInteger = spec.SingleOrArray[string](spec.SingleOrArray[string]{INTEGER})
 var typeString = spec.SingleOrArray[string](spec.SingleOrArray[string]{STRING})
+var typeFile = spec.SingleOrArray[string](spec.SingleOrArray[string]{"file"})
 
 func TestParseEmptyCommentV3(t *testing.T) {
 	t.Parallel()
@@ -893,7 +894,6 @@ func TestParseParamCommentBodyArrayV3(t *testing.T) {
 
 }
 
-// Test ParseParamComment Params
 func TestParseParamCommentArrayV3(t *testing.T) {
 	paramTypes := []string{"header", "path", "query"}
 
@@ -919,4 +919,284 @@ func TestParseParamCommentArrayV3(t *testing.T) {
 			assert.Error(t, err)
 		})
 	}
+}
+
+func TestParseParamCommentDefaultValueV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(`@Param names query string true "Users List" default(test)`, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Users List", parameterSpec.Description)
+	assert.Equal(t, "names", parameterSpec.Name)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, true, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, "test", parameterSpec.Schema.Spec.Default)
+}
+
+func TestParseParamCommentQueryArrayFormatV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param names query []string true "Users List" collectionFormat(multi)`
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Users List", parameterSpec.Description)
+	assert.Equal(t, "names", parameterSpec.Name)
+	assert.Equal(t, typeArray, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, true, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Items.Schema.Spec.Type)
+	assert.Equal(t, "form", parameterSpec.Style)
+
+}
+
+func TestParseParamCommentByIDV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param unsafe_id[lte] query int true "Unsafe query param"`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Unsafe query param", parameterSpec.Description)
+	assert.Equal(t, "unsafe_id[lte]", parameterSpec.Name)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, true, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+}
+
+func TestParseParamCommentByQueryTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "Some ID"`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, true, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+}
+
+func TestParseParamCommentByBodyTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id body model.OrderRow true "Some ID"`
+	operation := NewOperationV3(New())
+
+	operation.parser.addTestType("model.OrderRow")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.Equal(t, true, parameterSpec.Required)
+	assert.Equal(t, "body", parameterSpec.In)
+	assert.Equal(t, "#/components/model.OrderRow", parameterSpec.Schema.Ref.Ref)
+}
+
+func TestParseParamCommentByBodyTextPlainV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param text body string true "Text to process"`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Text to process", parameterSpec.Description)
+	assert.Equal(t, "text", parameterSpec.Name)
+	assert.Equal(t, true, parameterSpec.Required)
+	assert.Equal(t, "body", parameterSpec.In)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+}
+
+func TestParseParamCommentByBodyTypeWithDeepNestedFieldsV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param body body model.CommonHeader{data=string,data2=int} true "test deep"`
+	operation := NewOperationV3(New())
+
+	operation.parser.addTestType("model.CommonHeader")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Len(t, operation.Parameters, 1)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "test deep", parameterSpec.Description)
+	assert.Equal(t, "body", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "body", parameterSpec.In)
+
+	assert.Equal(t, 2, len(parameterSpec.Schema.Spec.AllOf))
+	assert.Equal(t, 3, len(operation.parser.openAPI.Components.Spec.Schemas))
+}
+
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id body []int true "Some ID"`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "body", parameterSpec.In)
+	assert.Equal(t, typeArray, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Items.Schema.Spec.Type)
+}
+
+func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFieldsV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param body body []model.CommonHeader{data=string,data2=int} true "test deep"`
+	operation := NewOperationV3(New())
+	operation.parser.addTestType("model.CommonHeader")
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Len(t, operation.Parameters, 1)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "test deep", parameterSpec.Description)
+	assert.Equal(t, "body", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "body", parameterSpec.In)
+	assert.Equal(t, typeArray, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, 2, len(parameterSpec.Schema.Spec.Items.Schema.Spec.AllOf))
+}
+
+func TestParseParamCommentByBodyTypeErrV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id body model.OrderRow true "Some ID"`
+	operation := NewOperationV3(New())
+	operation.parser.addTestType("model.notexist")
+
+	err := operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+}
+
+func TestParseParamCommentByFormDataTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param file formData file true "this is a test file"`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Len(t, operation.Parameters, 1)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "this is a test file", parameterSpec.Description)
+	assert.Equal(t, "file", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "formData", parameterSpec.In)
+	assert.Equal(t, typeFile, parameterSpec.Schema.Spec.Type)
+}
+
+func TestParseParamCommentByFormDataTypeUint64V3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param file formData uint64 true "this is a test file"`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Len(t, operation.Parameters, 1)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "this is a test file", parameterSpec.Description)
+	assert.Equal(t, "file", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "formData", parameterSpec.In)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
+}
+
+func TestParseParamCommentByNotSupportedTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id not_supported int true "Some ID"`
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(comment, nil)
+
+	assert.Error(t, err)
+}
+
+func TestParseParamCommentNotMatchV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id body mock true`
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(comment, nil)
+
+	assert.Error(t, err)
 }

@@ -381,9 +381,7 @@ func (o *OperationV3) parseParamAttribute(comment, objectType, schemaType string
 
 func setCollectionFormatParamV3(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
 	if schemaType == ARRAY {
-		// param.Schema.Spec.JsonSchema.
-		// param.Schema.Spec.CollectionFormat = TransToValidCollectionFormat(attr)
-		// TODO ich hab kein plan bruder
+		param.Style = TransToValidCollectionFormatV3(attr, param.In)
 		return nil
 	}
 
