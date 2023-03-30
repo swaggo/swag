@@ -281,9 +281,9 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	case secApplicationAttr, secPasswordAttr:
 		search = []string{tokenURL, in, name}
 	case secImplicitAttr:
-		search = []string{authorizationURL}
+		search = []string{authorizationURL, in}
 	case secAccessCodeAttr:
-		search = []string{tokenURL, authorizationURL}
+		search = []string{tokenURL, authorizationURL, in}
 	}
 
 	// For the first line we get the attributes in the context parameter, so we skip to the next one
@@ -366,6 +366,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		}
 	case secImplicitAttr:
 		scheme.Type = "oauth2"
+		scheme.In = attrMap[in]
 		scheme.Flows = spec.NewOAuthFlows()
 		scheme.Flows.Spec.Implicit = spec.NewOAuthFlow()
 		scheme.Flows.Spec.Implicit.Spec.AuthorizationURL = attrMap[authorizationURL]
@@ -375,6 +376,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		}
 	case secPasswordAttr:
 		scheme.Type = "oauth2"
+		scheme.In = attrMap[in]
 		scheme.Flows = spec.NewOAuthFlows()
 		scheme.Flows.Spec.Password = spec.NewOAuthFlow()
 		scheme.Flows.Spec.Password.Spec.TokenURL = attrMap[tokenURL]
@@ -386,6 +388,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 
 	case secAccessCodeAttr:
 		scheme.Type = "oauth2"
+		scheme.In = attrMap[in]
 		scheme.Flows = spec.NewOAuthFlows()
 		scheme.Flows.Spec.AuthorizationCode = spec.NewOAuthFlow()
 		scheme.Flows.Spec.AuthorizationCode.Spec.AuthorizationURL = attrMap[authorizationURL]

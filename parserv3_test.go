@@ -134,4 +134,31 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	assert.Equal(t, "https://swagger.io/resources/open-api", p.openAPI.ExternalDocs.Spec.URL)
 
 	assert.Equal(t, 6, len(p.openAPI.Components.Spec.SecuritySchemes))
+
+	security := p.openAPI.Components.Spec.SecuritySchemes
+	assert.Equal(t, "basic", security["basic"].Spec.Spec.Scheme)
+	assert.Equal(t, "http", security["basic"].Spec.Spec.Type)
+
+	assert.Equal(t, "apiKey", security["ApiKeyAuth"].Spec.Spec.Type)
+	assert.Equal(t, "Authorization", security["ApiKeyAuth"].Spec.Spec.Name)
+	assert.Equal(t, "header", security["ApiKeyAuth"].Spec.Spec.In)
+	assert.Equal(t, "some description", security["ApiKeyAuth"].Spec.Spec.Description)
+
+	assert.Equal(t, "oauth2", security["OAuth2Application"].Spec.Spec.Type)
+	assert.Equal(t, "header", security["OAuth2Application"].Spec.Spec.In)
+	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2Application"].Spec.Spec.Flows.Spec.ClientCredentials.Spec.TokenURL)
+	assert.Equal(t, 2, len(security["OAuth2Application"].Spec.Spec.Flows.Spec.ClientCredentials.Spec.Scopes))
+
+	assert.Equal(t, "oauth2", security["OAuth2Implicit"].Spec.Spec.Type)
+	assert.Equal(t, "header", security["OAuth2Implicit"].Spec.Spec.In)
+	assert.Equal(t, "https://example.com/oauth/authorize", security["OAuth2Implicit"].Spec.Spec.Flows.Spec.Implicit.Spec.AuthorizationURL)
+	assert.Equal(t, "some_audience.google.com", security["OAuth2Implicit"].Spec.Spec.Flows.Extensions["x-google-audiences"])
+
+	assert.Equal(t, "oauth2", security["OAuth2Password"].Spec.Spec.Type)
+	assert.Equal(t, "header", security["OAuth2Password"].Spec.Spec.In)
+	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2Password"].Spec.Spec.Flows.Spec.Password.Spec.TokenURL)
+
+	assert.Equal(t, "oauth2", security["OAuth2AccessCode"].Spec.Spec.Type)
+	assert.Equal(t, "header", security["OAuth2AccessCode"].Spec.Spec.In)
+	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2AccessCode"].Spec.Spec.Flows.Spec.AuthorizationCode.Spec.TokenURL)
 }
