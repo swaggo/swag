@@ -92,7 +92,7 @@ func (o *OperationV3) ParseComment(comment string, astFile *ast.File) error {
 		return o.ParseSecurityComment(lineRemainder)
 	case deprecatedAttr:
 		o.Deprecated = true
-	case xCodeSamplesAttr:
+	case xCodeSamplesAttr, xCodeSamplesAttrOriginal:
 		return o.ParseCodeSample(attribute, commentLine, lineRemainder)
 	default:
 		return o.ParseMetadata(attribute, lowerAttribute, lineRemainder)
@@ -120,7 +120,7 @@ func (o *OperationV3) ParseMetadata(attribute, lowerAttribute, lineRemainder str
 			return fmt.Errorf("annotation %s need a value", attribute)
 		}
 
-		var valueJSON interface{}
+		var valueJSON any
 
 		err := json.Unmarshal([]byte(lineRemainder), &valueJSON)
 		if err != nil {
@@ -232,13 +232,16 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 
 	var enums []interface{}
 	if !IsPrimitiveType(refType) {
-		schema, _ := o.parser.getTypeSchema(refType, astFile, false)
-		if schema != nil && len(schema.Type) == 1 && schema.Enum != nil {
+		schema, _ := o.parser.getTypeSchemaV3(refType, astFile, false)
+		if schema != nil && schema.Spec != nil && schema.Spec.Enum != nil {
+			// schema.Spec.Type != ARRAY
+			fmt.Println(schema.Spec.Type)
+
 			if objectType == OBJECT {
 				objectType = PRIMITIVE
 			}
-			refType = TransToValidSchemeType(schema.Type[0])
-			enums = schema.Enum
+			refType = TransToValidSchemeType(schema.Spec.Type[0])
+			enums = schema.Spec.Enum
 		}
 	}
 
@@ -961,7 +964,7 @@ func (o *OperationV3) ParseCodeSample(attribute, _, lineRemainder string) error 
 			return err
 		}
 
-		var valueJSON interface{}
+		var valueJSON CodeSamples
 
 		if isJSON {
 			err = json.Unmarshal(data, &valueJSON)

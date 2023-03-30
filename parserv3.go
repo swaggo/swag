@@ -149,7 +149,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			case extDocsDescAttr:
 				p.openAPI.ExternalDocs.Spec.Description = value
 			case extDocsURLAttr:
-				p.openAPI.ExternalDocs.Spec.Description = value
+				p.openAPI.ExternalDocs.Spec.URL = value
 			}
 
 		case "@x-taggroups":
@@ -346,34 +346,34 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	}
 
 	scheme := &spec.SecurityScheme{}
-	key := ""
+	key := getSecurityDefinitionKey(lines)
 
 	switch attribute {
 	case secAPIKeyAttr:
-		key = "apiKey"
 		scheme.Type = "apiKey"
 		scheme.In = attrMap[in]
 		scheme.Name = attrMap[name]
 	case secApplicationAttr:
-		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.In = attrMap[in]
 		scheme.Flows = spec.NewOAuthFlows()
 		scheme.Flows.Spec.ClientCredentials = spec.NewOAuthFlow()
 		scheme.Flows.Spec.ClientCredentials.Spec.TokenURL = attrMap[tokenURL]
+
+		scheme.Flows.Spec.ClientCredentials.Spec.Scopes = make(map[string]string)
+		for k, v := range scopes {
+			scheme.Flows.Spec.ClientCredentials.Spec.Scopes[k] = v
+		}
 	case secImplicitAttr:
-		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.Flows = spec.NewOAuthFlows()
 		scheme.Flows.Spec.Implicit = spec.NewOAuthFlow()
 		scheme.Flows.Spec.Implicit.Spec.AuthorizationURL = attrMap[authorizationURL]
-
-		scheme.Flows.Spec.Password.Spec.Scopes = make(map[string]string)
+		scheme.Flows.Spec.Implicit.Spec.Scopes = make(map[string]string)
 		for k, v := range scopes {
-			scheme.Flows.Spec.Password.Spec.Scopes[k] = v
+			scheme.Flows.Spec.Implicit.Spec.Scopes[k] = v
 		}
 	case secPasswordAttr:
-		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.Flows = spec.NewOAuthFlows()
 		scheme.Flows.Spec.Password = spec.NewOAuthFlow()
@@ -385,7 +385,6 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		}
 
 	case secAccessCodeAttr:
-		key = "oauth2"
 		scheme.Type = "oauth2"
 		scheme.Flows = spec.NewOAuthFlows()
 		scheme.Flows.Spec.AuthorizationCode = spec.NewOAuthFlow()
@@ -395,7 +394,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 
 	scheme.Description = description
 
-	if scheme.Flows.Extensions == nil && len(extensions) > 0 {
+	if scheme.Flows != nil && scheme.Flows.Extensions == nil && len(extensions) > 0 {
 		scheme.Flows.Extensions = make(map[string]interface{})
 	}
 
@@ -404,6 +403,17 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	}
 
 	return key, scheme, nil
+}
+
+func getSecurityDefinitionKey(lines []string) string {
+	for _, line := range lines {
+		if strings.HasPrefix(strings.ToLower(line), "@securitydefinitions") {
+			splittedLine := strings.Split(line, " ")
+			return splittedLine[len(splittedLine)-1]
+		}
+	}
+
+	return ""
 }
 
 // ParseRouterAPIInfo parses router api info for given astFile.
@@ -734,6 +744,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 		if itemSchema == nil {
 			schema := &spec.Schema{}
 			schema.Type = spec.NewSingleOrArray(ARRAY)
+			schema.Items = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
 
 			return schema, nil
 		}
@@ -933,7 +944,11 @@ func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], d
 		return nil
 	}
 
-	name := schema.Ref.Ref
+	name := ""
+	if schema.Ref != nil {
+		name = schema.Ref.Ref
+	}
+
 	if name != "" {
 		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
 			name = name[pos+1:]
@@ -945,28 +960,29 @@ func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], d
 		return nil
 	}
 
-	// TODO
-	// if len(schema.Type) > 0 {
-	// 	switch schema.Type[0] {
-	// 	case ARRAY:
-	// 		depth--
+	if schema.Spec != nil && len(schema.Spec.Type) > 0 {
+		switch schema.Spec.Type[0] {
+		case ARRAY:
+			depth--
 
-	// 		s := []string{schema.Type[0]}
+			s := []string{schema.Spec.Type[0]}
 
-	// 		return append(s, parser.GetSchemaTypePathV3(schema.Items.Schema.Spec, depth)...)
-	// 	case OBJECT:
-	// 		if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
-	// 			// for map
-	// 			depth--
+			return append(s, parser.GetSchemaTypePathV3(schema.Spec.Items.Schema, depth)...)
+		case OBJECT:
+			if schema.Spec.AdditionalProperties != nil && schema.Spec.AdditionalProperties.Schema != nil {
+				// for map
+				depth--
 
-	// 			s := []string{schema.Type[0]}
+				s := []string{schema.Spec.Type[0]}
 
-	// 			return append(s, parser.GetSchemaTypePathV3(schema.AdditionalProperties.Schema.Spec, depth)...)
-	// 		}
-	// 	}
+				return append(s, parser.GetSchemaTypePathV3(schema.Spec.AdditionalProperties.Schema, depth)...)
+			}
+		}
 
-	// 	return []string{schema.Type[0]}
-	// }
+		return []string{schema.Spec.Type[0]}
+	} else {
+		println("yep, check me")
+	}
 
 	return []string{ANY}
 }
