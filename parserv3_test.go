@@ -162,3 +162,170 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	assert.Equal(t, "header", security["OAuth2AccessCode"].Spec.Spec.In)
 	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2AccessCode"].Spec.Spec.Flows.Spec.AuthorizationCode.Spec.TokenURL)
 }
+
+func TestParser_ParseGeneralApiInfoExtensionsV3(t *testing.T) {
+	// should return an error because extension value is not a valid json
+	t.Run("Test invalid extension value", func(t *testing.T) {
+		t.Parallel()
+
+		expected := "could not parse extension comment: annotation @x-google-endpoints need a valid json value. error: invalid character ':' after array element"
+		gopath := os.Getenv("GOPATH")
+		assert.NotNil(t, gopath)
+
+		p := New(SetOpenAPIVersion(true))
+
+		err := p.ParseGeneralAPIInfo("testdata/v3/extensionsFail1.go")
+		if assert.Error(t, err) {
+			assert.Equal(t, expected, err.Error())
+		}
+	})
+
+	// should return an error because extension don't have a value
+	t.Run("Test missing extension value", func(t *testing.T) {
+		t.Parallel()
+
+		expected := "could not parse extension comment: annotation @x-google-endpoints need a value"
+		gopath := os.Getenv("GOPATH")
+		assert.NotNil(t, gopath)
+
+		p := New(SetOpenAPIVersion(true))
+
+		err := p.ParseGeneralAPIInfo("testdata/v3/extensionsFail2.go")
+		if assert.Error(t, err) {
+			assert.Equal(t, expected, err.Error())
+		}
+	})
+}
+
+func TestParserParseGeneralApiInfoWithOpsInSameFileV3(t *testing.T) {
+	t.Parallel()
+
+	gopath := os.Getenv("GOPATH")
+	assert.NotNil(t, gopath)
+
+	p := New(SetOpenAPIVersion(true))
+
+	err := p.ParseGeneralAPIInfo("testdata/single_file_api/main.go")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "This is a sample server Petstore server.\nIt has a lot of beautiful features.", p.openAPI.Info.Spec.Description)
+	assert.Equal(t, "Swagger Example API", p.openAPI.Info.Spec.Title)
+	assert.Equal(t, "http://swagger.io/terms/", p.openAPI.Info.Spec.TermsOfService)
+}
+
+func TestParserParseGeneralAPIInfoMarkdownV3(t *testing.T) {
+	t.Parallel()
+
+	p := New(SetMarkdownFileDirectory("testdata"), SetOpenAPIVersion(true))
+	mainAPIFile := "testdata/markdown.go"
+	err := p.ParseGeneralAPIInfo(mainAPIFile)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "users", p.openAPI.Tags[0].Spec.Name)
+	assert.Equal(t, "Users Tag Markdown Description", p.openAPI.Tags[0].Spec.Description)
+
+	p = New(SetOpenAPIVersion(true))
+
+	err = p.ParseGeneralAPIInfo(mainAPIFile)
+	assert.Error(t, err)
+}
+
+func TestParserParseGeneralApiInfoFailedV3(t *testing.T) {
+	t.Parallel()
+
+	gopath := os.Getenv("GOPATH")
+	assert.NotNil(t, gopath)
+	p := New(SetOpenAPIVersion(true))
+	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
+}
+
+func TestParserParseGeneralAPIInfoCollectionFormatV3(t *testing.T) {
+	t.Parallel()
+
+	parser := New(SetOpenAPIVersion(true))
+	assert.NoError(t, parser.parseGeneralAPIInfoV3([]string{
+		"@query.collection.format csv",
+	}))
+	assert.Equal(t, parser.collectionFormatInQuery, "csv")
+
+	assert.NoError(t, parser.parseGeneralAPIInfoV3([]string{
+		"@query.collection.format tsv",
+	}))
+	assert.Equal(t, parser.collectionFormatInQuery, "tsv")
+}
+
+func TestParserParseGeneralAPITagGroupsV3(t *testing.T) {
+	t.Parallel()
+
+	parser := New(SetOpenAPIVersion(true))
+	assert.NoError(t, parser.parseGeneralAPIInfoV3([]string{
+		"@x-tagGroups [{\"name\":\"General\",\"tags\":[\"lanes\",\"video-recommendations\"]}]",
+	}))
+
+	expected := []interface{}{map[string]interface{}{"name": "General", "tags": []interface{}{"lanes", "video-recommendations"}}}
+	assert.Equal(t, expected, parser.openAPI.Info.Extensions["x-tagGroups"])
+}
+
+func TestParserParseGeneralAPITagDocsV3(t *testing.T) {
+	t.Parallel()
+
+	parser := New(SetOpenAPIVersion(true))
+	assert.Error(t, parser.parseGeneralAPIInfoV3([]string{
+		"@tag.name Test",
+		"@tag.docs.description Best example documentation"}))
+
+	parser = New(SetOpenAPIVersion(true))
+	err := parser.parseGeneralAPIInfoV3([]string{
+		"@tag.name test",
+		"@tag.description A test Tag",
+		"@tag.docs.url https://example.com",
+		"@tag.docs.description Best example documentation"})
+	assert.NoError(t, err)
+
+	assert.Equal(t, "test", parser.openAPI.Tags[0].Spec.Name)
+	assert.Equal(t, "A test Tag", parser.openAPI.Tags[0].Spec.Description)
+	assert.Equal(t, "https://example.com", parser.openAPI.Tags[0].Spec.ExternalDocs.Spec.URL)
+	assert.Equal(t, "Best example documentation", parser.openAPI.Tags[0].Spec.ExternalDocs.Spec.Description)
+}
+
+func TestGetAllGoFileInfoV3(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/pet"
+
+	p := New(SetOpenAPIVersion(true))
+	err := p.getAllGoFileInfo("testdata", searchDir)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 2, len(p.packages.files))
+}
+
+func TestParser_ParseTypeV3(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/simple/"
+
+	p := New(SetOpenAPIVersion(true))
+	err := p.getAllGoFileInfo("testdata", searchDir)
+	assert.NoError(t, err)
+
+	_, err = p.packages.ParseTypes()
+
+	assert.NoError(t, err)
+	assert.NotNil(t, p.packages.uniqueDefinitions["api.Pet3"])
+	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet"])
+	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet2"])
+}
+
+func TestParseSimpleApiV3(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/simplev3"
+	p := New(SetOpenAPIVersion(true))
+	p.PropNamingStrategy = PascalCase
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	//TODO add asserts
+}
