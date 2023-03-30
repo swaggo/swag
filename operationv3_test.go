@@ -15,6 +15,8 @@ var typeArray = spec.SingleOrArray[string](spec.SingleOrArray[string]{ARRAY})
 var typeInteger = spec.SingleOrArray[string](spec.SingleOrArray[string]{INTEGER})
 var typeString = spec.SingleOrArray[string](spec.SingleOrArray[string]{STRING})
 var typeFile = spec.SingleOrArray[string](spec.SingleOrArray[string]{"file"})
+var typeNumber = spec.SingleOrArray[string](spec.SingleOrArray[string]{NUMBER})
+var typeBool = spec.SingleOrArray[string](spec.SingleOrArray[string]{BOOLEAN})
 
 func TestParseEmptyCommentV3(t *testing.T) {
 	t.Parallel()
@@ -1199,4 +1201,716 @@ func TestParseParamCommentNotMatchV3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 
 	assert.Error(t, err)
+}
+
+func TestParseParamCommentByEnumsV3(t *testing.T) {
+	t.Parallel()
+
+	t.Run("string", func(t *testing.T) {
+		comment := `@Param some_id query string true "Some ID" Enums(A, B, C)`
+		operation := NewOperationV3(New())
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		assert.Len(t, operation.Parameters, 1)
+
+		parameters := operation.Operation.Parameters
+		assert.NotNil(t, parameters)
+
+		parameterSpec := parameters[0].Spec.Spec
+		assert.NotNil(t, parameterSpec)
+		assert.Equal(t, "Some ID", parameterSpec.Description)
+		assert.Equal(t, "some_id", parameterSpec.Name)
+		assert.True(t, parameterSpec.Required)
+		assert.Equal(t, "query", parameterSpec.In)
+		assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+		assert.Equal(t, 3, len(parameterSpec.Schema.Spec.Enum))
+
+		enums := []interface{}{"A", "B", "C"}
+		assert.EqualValues(t, enums, parameterSpec.Schema.Spec.Enum)
+	})
+
+	t.Run("int", func(t *testing.T) {
+		comment := `@Param some_id query int true "Some ID" Enums(1, 2, 3)`
+		operation := NewOperationV3(New())
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		parameters := operation.Operation.Parameters
+		assert.NotNil(t, parameters)
+
+		parameterSpec := parameters[0].Spec.Spec
+		assert.NotNil(t, parameterSpec)
+		assert.Equal(t, "Some ID", parameterSpec.Description)
+		assert.Equal(t, "some_id", parameterSpec.Name)
+		assert.True(t, parameterSpec.Required)
+		assert.Equal(t, "query", parameterSpec.In)
+		assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
+		assert.Equal(t, 3, len(parameterSpec.Schema.Spec.Enum))
+
+		enums := []interface{}{1, 2, 3}
+		assert.EqualValues(t, enums, parameterSpec.Schema.Spec.Enum)
+	})
+
+	t.Run("number", func(t *testing.T) {
+		comment := `@Param some_id query number true "Some ID" Enums(1.1, 2.2, 3.3)`
+		operation := NewOperationV3(New())
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		parameters := operation.Operation.Parameters
+		assert.NotNil(t, parameters)
+
+		parameterSpec := parameters[0].Spec.Spec
+		assert.NotNil(t, parameterSpec)
+		assert.Equal(t, "Some ID", parameterSpec.Description)
+		assert.Equal(t, "some_id", parameterSpec.Name)
+		assert.True(t, parameterSpec.Required)
+		assert.Equal(t, "query", parameterSpec.In)
+		assert.Equal(t, typeNumber, parameterSpec.Schema.Spec.Type)
+		assert.Equal(t, 3, len(parameterSpec.Schema.Spec.Enum))
+
+		enums := []interface{}{1.1, 2.2, 3.3}
+		assert.EqualValues(t, enums, parameterSpec.Schema.Spec.Enum)
+	})
+
+	t.Run("bool", func(t *testing.T) {
+		comment := `@Param some_id query bool true "Some ID" Enums(true, false)`
+		operation := NewOperationV3(New())
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		parameters := operation.Operation.Parameters
+		assert.NotNil(t, parameters)
+
+		parameterSpec := parameters[0].Spec.Spec
+		assert.NotNil(t, parameterSpec)
+		assert.Equal(t, "Some ID", parameterSpec.Description)
+		assert.Equal(t, "some_id", parameterSpec.Name)
+		assert.True(t, parameterSpec.Required)
+		assert.Equal(t, "query", parameterSpec.In)
+		assert.Equal(t, typeBool, parameterSpec.Schema.Spec.Type)
+		assert.Equal(t, 2, len(parameterSpec.Schema.Spec.Enum))
+
+		enums := []interface{}{true, false}
+		assert.EqualValues(t, enums, parameterSpec.Schema.Spec.Enum)
+	})
+
+	operation := NewOperationV3(New())
+
+	comment := `@Param some_id query int true "Some ID" Enums(A, B, C)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query number true "Some ID" Enums(A, B, C)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query boolean true "Some ID" Enums(A, B, C)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query Document true "Some ID" Enums(A, B, C)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+}
+
+func TestParseParamCommentByMaxLengthV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query string true "Some ID" MaxLength(10)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, 10, *parameterSpec.Schema.Spec.MaxLength)
+
+	comment = `@Param some_id query int true "Some ID" MaxLength(10)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query string true "Some ID" MaxLength(Goopher)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+}
+
+func TestParseParamCommentByMinLengthV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query string true "Some ID" MinLength(10)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, 10, *parameterSpec.Schema.Spec.MinLength)
+
+	comment = `@Param some_id query int true "Some ID" MinLength(10)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query string true "Some ID" MinLength(Goopher)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+}
+
+func TestParseParamCommentByMinimumV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "Some ID" Minimum(10)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, 10, *parameterSpec.Schema.Spec.Minimum)
+
+	comment = `@Param some_id query int true "Some ID" Mininum(10)`
+	assert.NoError(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query string true "Some ID" Minimum(10)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query integer true "Some ID" Minimum(Goopher)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+}
+
+func TestParseParamCommentByMaximumV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "Some ID" Maximum(10)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, 10, *parameterSpec.Schema.Spec.Maximum)
+
+	comment = `@Param some_id query int true "Some ID" Maxinum(10)`
+	assert.NoError(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query string true "Some ID" Maximum(10)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+
+	comment = `@Param some_id query integer true "Some ID" Maximum(Goopher)`
+	assert.Error(t, operation.ParseComment(comment, nil))
+}
+
+func TestParseParamCommentByDefaultV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "Some ID" Default(10)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, 10, parameterSpec.Schema.Spec.Default)
+}
+
+func TestParseParamCommentByExampleIntV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "Some ID" Example(10)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, 10, parameterSpec.Example)
+}
+
+func TestParseParamCommentByExampleStringV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query string true "Some ID" Example(True feelings)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "query", parameterSpec.In)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, "True feelings", parameterSpec.Example)
+}
+
+func TestParseParamCommentByExampleUnsupportedTypeV3(t *testing.T) {
+	t.Parallel()
+	var param spec.Parameter
+
+	setExampleV3(&param, "something", "random value")
+	assert.Equal(t, param.Example, nil)
+
+	setExampleV3(&param, STRING, "string value")
+	assert.Equal(t, param.Example, "string value")
+
+	setExampleV3(&param, INTEGER, "10")
+	assert.Equal(t, param.Example, 10)
+
+	setExampleV3(&param, NUMBER, "10")
+	assert.Equal(t, param.Example, float64(10))
+}
+
+func TestParseParamCommentBySchemaExampleStringV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id body string true "Some ID" SchemaExample(True feelings)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, "body", parameterSpec.In)
+	assert.Equal(t, "True feelings", parameterSpec.Schema.Spec.Example)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+}
+
+func TestParseParamCommentBySchemaExampleUnsupportedTypeV3(t *testing.T) {
+	t.Parallel()
+	var param spec.Parameter
+
+	setSchemaExampleV3(&param, "something", "random value")
+	assert.Nil(t, param.Schema)
+
+	setSchemaExampleV3(&param, STRING, "string value")
+	assert.Nil(t, param.Schema)
+
+	param.Schema = spec.NewSchemaSpec()
+	setSchemaExampleV3(&param, STRING, "string value")
+	assert.Equal(t, "string value", param.Schema.Spec.Example)
+
+	setSchemaExampleV3(&param, INTEGER, "10")
+	assert.Equal(t, 10, param.Schema.Spec.Example)
+
+	setSchemaExampleV3(&param, NUMBER, "10")
+	assert.Equal(t, float64(10), param.Schema.Spec.Example)
+
+	setSchemaExampleV3(&param, STRING, "string \\r\\nvalue")
+	assert.Equal(t, "string \r\nvalue", param.Schema.Spec.Example)
+}
+
+func TestParseParamArrayWithEnumsV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param field query []string true "An enum collection" collectionFormat(csv) enums(also,valid)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "An enum collection", parameterSpec.Description)
+	assert.Equal(t, "field", parameterSpec.Name)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, typeArray, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, "form", parameterSpec.Style)
+
+	enums := []interface{}{"also", "valid"}
+	assert.EqualValues(t, enums, parameterSpec.Schema.Spec.Items.Schema.Spec.Enum)
+	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Items.Schema.Spec.Type)
+}
+
+func TestParseAndExtractionParamAttributeV3(t *testing.T) {
+	t.Parallel()
+
+	op := NewOperationV3(New())
+
+	t.Run("number", func(t *testing.T) {
+		numberParam := spec.Parameter{
+			Schema: spec.NewSchemaSpec(),
+		}
+		err := op.parseParamAttribute(
+			" default(1) maximum(100) minimum(0) format(csv)",
+			"",
+			NUMBER,
+			&numberParam,
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, int(0), *numberParam.Schema.Spec.Minimum)
+		assert.Equal(t, int(100), *numberParam.Schema.Spec.Maximum)
+		assert.Equal(t, "csv", numberParam.Schema.Spec.Format)
+		assert.Equal(t, float64(1), numberParam.Schema.Spec.Default)
+
+		err = op.parseParamAttribute(" minlength(1)", "", NUMBER, nil)
+		assert.Error(t, err)
+
+		err = op.parseParamAttribute(" maxlength(1)", "", NUMBER, nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("string", func(t *testing.T) {
+		stringParam := spec.Parameter{
+			Schema: spec.NewSchemaSpec(),
+		}
+		err := op.parseParamAttribute(
+			" default(test) maxlength(100) minlength(0) format(csv)",
+			"",
+			STRING,
+			&stringParam,
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, int(0), *stringParam.Schema.Spec.MinLength)
+		assert.Equal(t, int(100), *stringParam.Schema.Spec.MaxLength)
+		assert.Equal(t, "csv", stringParam.Schema.Spec.Format)
+		err = op.parseParamAttribute(" minimum(0)", "", STRING, nil)
+		assert.Error(t, err)
+
+		err = op.parseParamAttribute(" maximum(0)", "", STRING, nil)
+		assert.Error(t, err)
+	})
+
+	t.Run("array", func(t *testing.T) {
+		arrayParam := spec.Parameter{
+			Schema: spec.NewSchemaSpec(),
+		}
+
+		arrayParam.In = "path"
+		err := op.parseParamAttribute(" collectionFormat(simple)", ARRAY, STRING, &arrayParam)
+		assert.Equal(t, "simple", arrayParam.Style)
+		assert.NoError(t, err)
+
+		err = op.parseParamAttribute(" collectionFormat(simple)", STRING, STRING, nil)
+		assert.Error(t, err)
+
+		err = op.parseParamAttribute(" default(0)", "", ARRAY, nil)
+		assert.NoError(t, err)
+	})
+}
+
+func TestParseParamCommentByExtensionsV3(t *testing.T) {
+	comment := `@Param some_id path int true "Some ID" extensions(x-example=test,x-custom=Gopher,x-custom2)`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	parameters := operation.Operation.Parameters
+	assert.NotNil(t, parameters)
+
+	parameterSpec := parameters[0].Spec.Spec
+	assert.NotNil(t, parameterSpec)
+	assert.Equal(t, "Some ID", parameterSpec.Description)
+	assert.Equal(t, "some_id", parameterSpec.Name)
+	assert.Equal(t, "path", parameterSpec.In)
+	assert.True(t, parameterSpec.Required)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, "Gopher", parameterSpec.Schema.Spec.Extensions["x-custom"])
+	assert.Equal(t, true, parameterSpec.Schema.Spec.Extensions["x-custom2"])
+	assert.Equal(t, "test", parameterSpec.Schema.Spec.Extensions["x-example"])
+}
+
+func TestParseIdCommentV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Id myOperationId`
+	operation := NewOperationV3(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "myOperationId", operation.Operation.OperationID)
+}
+
+func TestParseSecurityCommentV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Security OAuth2Implicit[read, write]`
+	operation := NewOperationV3(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	expected := []spec.SecurityRequirement{{
+		"OAuth2Implicit": {"read", "write"},
+	}}
+
+	assert.Equal(t, expected, operation.Security)
+}
+
+func TestParseSecurityCommentSimpleV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Security ApiKeyAuth`
+	operation := NewOperationV3(New())
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	expected := []spec.SecurityRequirement{{
+		"ApiKeyAuth": {},
+	}}
+
+	assert.Equal(t, expected, operation.Security)
+}
+
+func TestParseSecurityCommentOrV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Security OAuth2Implicit[read, write] || Firebase[]`
+	operation := NewOperationV3(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	expected := []spec.SecurityRequirement{{
+		"OAuth2Implicit": {"read", "write"},
+		"Firebase":       {""},
+	}}
+
+	assert.Equal(t, expected, operation.Security)
+}
+
+func TestParseMultiDescriptionV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Description line one`
+	operation := NewOperationV3(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	comment = `@Tags multi`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	comment = `@Description line two x`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "line one\nline two x", operation.Description)
+}
+
+func TestParseDescriptionMarkdownV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(New())
+	operation.parser.markdownFileDir = "example/markdown"
+
+	comment := `@description.markdown admin.md`
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	comment = `@description.markdown missing.md`
+
+	err = operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+}
+
+func TestParseSummaryV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@summary line one`
+	operation := NewOperationV3(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, "line one", operation.Summary)
+
+	comment = `@Summary line one`
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+}
+
+func TestParseDeprecationDescriptionV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Deprecated`
+	operation := NewOperationV3(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.True(t, operation.Deprecated)
+}
+
+func TestParseExtensionsV3(t *testing.T) {
+	t.Parallel()
+	// Fail if there are no args for attributes.
+	{
+		comment := `@x-amazon-apigateway-integration`
+		operation := NewOperationV3(New())
+
+		err := operation.ParseComment(comment, nil)
+		assert.EqualError(t, err, "annotation @x-amazon-apigateway-integration need a value")
+	}
+
+	// Fail if args of attributes are broken.
+	{
+		comment := `@x-amazon-apigateway-integration ["broken"}]`
+		operation := NewOperationV3(New())
+
+		err := operation.ParseComment(comment, nil)
+		assert.EqualError(t, err, "annotation @x-amazon-apigateway-integration need a valid json value. error: invalid character '}' after array element")
+	}
+
+	// OK
+	{
+		comment := `@x-amazon-apigateway-integration {"uri": "${some_arn}", "passthroughBehavior": "when_no_match", "httpMethod": "POST", "type": "aws_proxy"}`
+		operation := NewOperationV3(New())
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]interface{}{
+			"httpMethod":          "POST",
+			"passthroughBehavior": "when_no_match",
+			"type":                "aws_proxy",
+			"uri":                 "${some_arn}",
+		}, operation.Responses.Extensions["x-amazon-apigateway-integration"])
+	}
+
+	// Test x-tagGroups
+	{
+		comment := `@x-tagGroups [{"name":"Natural Persons","tags":["Person","PersonRisk","PersonDocuments"]}]`
+		operation := NewOperationV3(New())
+
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+		assert.Equal(t,
+			[]interface{}{map[string]interface{}{
+				"name": "Natural Persons",
+				"tags": []interface{}{
+					"Person",
+					"PersonRisk",
+					"PersonDocuments",
+				},
+			}}, operation.Responses.Extensions["x-tagGroups"])
+	}
+}
+
+func TestParseResponseHeaderCommentV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(New())
+
+	err := operation.ParseResponseComment(`default {string} string "other error"`, nil)
+	assert.NoError(t, err)
+	err = operation.ParseResponseHeaderComment(`all {string} Token "qwerty"`, nil)
+	assert.NoError(t, err)
+}
+
+func TestParseCodeSamplesV3(t *testing.T) {
+	t.Parallel()
+	const comment = `@x-codeSamples file`
+	t.Run("Find sample by file", func(t *testing.T) {
+
+		operation := NewOperationV3(New(), SetCodeExampleFilesDirectoryV3("testdata/code_examples"))
+		operation.Summary = "example"
+
+		err := operation.ParseComment(comment, nil)
+		require.NoError(t, err, "no error should be thrown")
+
+		assert.Equal(t, "example", operation.Summary)
+		assert.Equal(t, map[string]interface{}{"lang": "JavaScript", "source": "console.log('Hello World');"},
+			operation.Responses.Extensions["x-codeSamples"],
+		)
+	})
+
+	t.Run("With broken file sample", func(t *testing.T) {
+		operation := NewOperationV3(New(), SetCodeExampleFilesDirectoryV3("testdata/code_examples"))
+		operation.Summary = "broken"
+
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err, "no error should be thrown")
+	})
+
+	t.Run("Example file not found", func(t *testing.T) {
+		operation := NewOperationV3(New(), SetCodeExampleFilesDirectoryV3("testdata/code_examples"))
+		operation.Summary = "badExample"
+
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err, "error was expected, as file does not exist")
+	})
+
+	t.Run("Without line reminder", func(t *testing.T) {
+		comment := `@x-codeSamples`
+		operation := NewOperationV3(New(), SetCodeExampleFilesDirectoryV3("testdata/code_examples"))
+		operation.Summary = "example"
+
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err, "no error should be thrown")
+	})
+
+	t.Run(" broken dir", func(t *testing.T) {
+		operation := NewOperationV3(New(), SetCodeExampleFilesDirectoryV3("testdata/fake_examples"))
+		operation.Summary = "code"
+
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err, "no error should be thrown")
+	})
 }

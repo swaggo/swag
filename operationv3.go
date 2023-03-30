@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/sv-tools/openapi/spec"
+	"gopkg.in/yaml.v2"
 )
 
 // Operation describes a single API operation on a path.
@@ -87,11 +89,11 @@ func (o *OperationV3) ParseComment(comment string, astFile *ast.File) error {
 	case routerAttr:
 		return o.ParseRouterComment(lineRemainder)
 	case securityAttr:
-		// return o.ParseSecurityComment(lineRemainder)
+		return o.ParseSecurityComment(lineRemainder)
 	case deprecatedAttr:
 		o.Deprecated = true
 	case xCodeSamplesAttr:
-		// return o.ParseCodeSample(attribute, commentLine, lineRemainder)
+		return o.ParseCodeSample(attribute, commentLine, lineRemainder)
 	default:
 		return o.ParseMetadata(attribute, lowerAttribute, lineRemainder)
 	}
@@ -125,10 +127,7 @@ func (o *OperationV3) ParseMetadata(attribute, lowerAttribute, lineRemainder str
 			return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
 		}
 
-		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
-		// o.Extensions[attribute[1:]] = valueJSON
-		// TODO: vendor extensions must be placed under the http method. not sure how to get that at this place
-		// return errors.New("not implemented yet")
+		o.Responses.Extensions[attribute[1:]] = valueJSON
 		return nil
 	}
 
@@ -525,8 +524,6 @@ func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType stri
 	default:
 		return PrimitiveSchemaV3(schemaType), nil
 	}
-
-	return nil, nil
 }
 
 // ParseRouterComment parses comment for given `router` comment string.
@@ -650,8 +647,6 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 
 		return spec.NewSchemaRef(spec.NewRef("#/components/" + refType)), nil
 	}
-
-	return nil, nil
 }
 
 // ParseResponseHeaderComment parses comment for given `response header` comment string.
@@ -675,10 +670,6 @@ func (o *OperationV3) ParseResponseHeaderComment(commentLine string, _ *ast.File
 				v.Spec.Spec.Headers[headerKey] = header
 
 			}
-			// for code, response := range o.Responses.StatusCodeResponses {
-			// 	response.Headers[headerKey] = header
-			// 	o.Responses.StatusCodeResponses[code] = response
-			// }
 		}
 
 		return nil
@@ -922,4 +913,73 @@ func parseCombinedObjectSchemaV3(parser *Parser, refType string, astFile *ast.Fi
 	}
 
 	return schemaSpec, nil
+}
+
+// ParseSecurityComment parses comment for given `security` comment string.
+func (o *OperationV3) ParseSecurityComment(commentLine string) error {
+	var (
+		securityMap    = make(map[string][]string)
+		securitySource = commentLine[strings.Index(commentLine, "@Security")+1:]
+	)
+
+	for _, securityOption := range strings.Split(securitySource, "||") {
+		securityOption = strings.TrimSpace(securityOption)
+
+		left, right := strings.Index(securityOption, "["), strings.Index(securityOption, "]")
+
+		if !(left == -1 && right == -1) {
+			scopes := securityOption[left+1 : right]
+
+			var options []string
+
+			for _, scope := range strings.Split(scopes, ",") {
+				options = append(options, strings.TrimSpace(scope))
+			}
+
+			securityKey := securityOption[0:left]
+			securityMap[securityKey] = append(securityMap[securityKey], options...)
+		} else {
+			securityKey := strings.TrimSpace(securityOption)
+			securityMap[securityKey] = []string{}
+		}
+	}
+
+	o.Security = append(o.Security, securityMap)
+
+	return nil
+}
+
+// ParseCodeSample godoc.
+func (o *OperationV3) ParseCodeSample(attribute, _, lineRemainder string) error {
+	log.Println("line remainder:", lineRemainder)
+
+	if lineRemainder == "file" {
+		log.Println("line remainder is file")
+
+		data, isJSON, err := getCodeExampleForSummary(o.Summary, o.codeExampleFilesDir)
+		if err != nil {
+			return err
+		}
+
+		var valueJSON interface{}
+
+		if isJSON {
+			err = json.Unmarshal(data, &valueJSON)
+			if err != nil {
+				return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
+			}
+		} else {
+			err = yaml.Unmarshal(data, &valueJSON)
+			if err != nil {
+				return fmt.Errorf("annotation %s need a valid yaml value. error: %s", attribute, err.Error())
+			}
+		}
+
+		o.Responses.Extensions[attribute[1:]] = valueJSON
+
+		return nil
+	}
+
+	// Fallback into existing logic
+	return o.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
 }

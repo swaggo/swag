@@ -99,13 +99,15 @@ func TransToValidCollectionFormatV3(format, in string) string {
 	switch in {
 	case "query":
 		switch format {
-		case "form", "space", "pipe", "deepObject":
+		case "form", "spaceDelimited", "pipeDelimited", "deepObject":
 			return format
 		case "ssv":
-			return "space"
+			return "spaceDelimited"
 		case "pipes":
 			return "pipe"
 		case "multi":
+			return "form"
+		case "csv":
 			return "form"
 		default:
 			return ""
@@ -116,8 +118,6 @@ func TransToValidCollectionFormatV3(format, in string) string {
 			return format
 		case "csv":
 			return "simple"
-		case "ssv":
-			return "matrix"
 		default:
 			return ""
 		}
