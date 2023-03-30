@@ -1389,7 +1389,7 @@ func TestParseParamCommentByMinimumV3(t *testing.T) {
 	assert.Equal(t, "some_id", parameterSpec.Name)
 	assert.True(t, parameterSpec.Required)
 	assert.Equal(t, "query", parameterSpec.In)
-	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
 	assert.Equal(t, 10, *parameterSpec.Schema.Spec.Minimum)
 
 	comment = `@Param some_id query int true "Some ID" Mininum(10)`
@@ -1420,7 +1420,7 @@ func TestParseParamCommentByMaximumV3(t *testing.T) {
 	assert.Equal(t, "some_id", parameterSpec.Name)
 	assert.True(t, parameterSpec.Required)
 	assert.Equal(t, "query", parameterSpec.In)
-	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
 	assert.Equal(t, 10, *parameterSpec.Schema.Spec.Maximum)
 
 	comment = `@Param some_id query int true "Some ID" Maxinum(10)`
