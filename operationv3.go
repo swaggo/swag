@@ -648,7 +648,7 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 			return schema, nil
 		}
 
-		return spec.NewSchemaRef(spec.NewRef("#/components/" + refType)), nil
+		return spec.NewSchemaRef(spec.NewRef("#/components/schemas/" + refType)), nil
 	}
 }
 
@@ -898,7 +898,7 @@ func parseCombinedObjectSchemaV3(parser *Parser, refType string, astFile *ast.Fi
 		return schema, nil
 	}
 
-	schemaRefPath := strings.Replace(schema.Ref.Ref, "#/components/", "", 1)
+	schemaRefPath := strings.Replace(schema.Ref.Ref, "#/components/schemas/", "", 1)
 	schemaSpec := parser.openAPI.Components.Spec.Schemas[schemaRefPath]
 	schemaSpec.Spec.JsonSchemaComposition.AllOf = make([]*spec.RefOrSpec[spec.Schema], len(props))
 
@@ -913,7 +913,7 @@ func parseCombinedObjectSchemaV3(parser *Parser, refType string, astFile *ast.Fi
 
 		parser.openAPI.Components.Spec.Schemas[name] = wrapperSpec
 
-		ref := spec.NewRefOrSpec[spec.Schema](spec.NewRef("#/components/"+name), nil)
+		ref := spec.NewRefOrSpec[spec.Schema](spec.NewRef("#/components/schemas/"+name), nil)
 
 		schemaSpec.Spec.JsonSchemaComposition.AllOf[i] = ref
 		i++

@@ -983,9 +983,8 @@ func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], d
 		}
 
 		return []string{schema.Spec.Type[0]}
-	} else {
-		println("yep, check me")
 	}
 
+	println("found schema with no Type, returning any")
 	return []string{ANY}
 }

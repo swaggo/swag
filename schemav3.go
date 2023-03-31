@@ -37,7 +37,7 @@ func IsComplexSchemaV3(schema *SchemaV3) bool {
 
 // RefSchemaV3 build a reference schema.
 func RefSchemaV3(refType string) *spec.RefOrSpec[spec.Schema] {
-	return spec.NewRefOrSpec[spec.Schema](spec.NewRef("#/components/"+refType), nil)
+	return spec.NewRefOrSpec[spec.Schema](spec.NewRef("#/components/schemas/"+refType), nil)
 }
 
 // BuildCustomSchemaV3 build custom schema specified by tag swaggertype.
