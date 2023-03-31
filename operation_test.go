@@ -2349,7 +2349,7 @@ func TestParseCodeSamples(t *testing.T) {
 		require.NoError(t, err, "no error should be thrown")
 
 		assert.Equal(t, "example", operation.Summary)
-		assert.Equal(t, map[string]interface{}{"lang": "JavaScript", "source": "console.log('Hello World');"},
+		assert.Equal(t, []interface{}([]interface{}{map[string]interface{}{"lang": "JavaScript", "source": "console.log('Hello World');"}}),
 			operation.Extensions["x-codeSamples"],
 		)
 	})

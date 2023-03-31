@@ -231,7 +231,7 @@ func TestParseResponseCommentWithNestedPrimitiveTypeV3(t *testing.T) {
 	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
 	require.NotNil(t, response.Spec.Spec.Content["application/json"].Spec.Schema)
 
-	allOf := operation.Responses.Spec.Default.Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf
+	allOf := operation.Responses.Spec.Response["200"].Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf
 	require.NotNil(t, allOf)
 	assert.Equal(t, 2, len(allOf))
 	assert.Equal(t, "#/components/data", allOf[0].Ref.Ref)
@@ -1876,7 +1876,7 @@ func TestParseCodeSamplesV3(t *testing.T) {
 		require.NoError(t, err, "no error should be thrown")
 
 		assert.Equal(t, "example", operation.Summary)
-		assert.Equal(t, map[string]interface{}{"lang": "JavaScript", "source": "console.log('Hello World');"},
+		assert.Equal(t, CodeSamples(CodeSamples{map[string]string{"lang": "JavaScript", "source": "console.log('Hello World');"}}),
 			operation.Responses.Extensions["x-codeSamples"],
 		)
 	})

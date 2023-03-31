@@ -327,5 +327,16 @@ func TestParseSimpleApiV3(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
+	paths := p.openAPI.Paths.Spec.Paths
+	assert.Equal(t, 14, len(paths))
+
+	path := paths["/testapi/get-string-by-int/{some_id}"].Spec.Spec.Get.Spec
+	assert.Equal(t, "get string by ID", path.Description)
+	assert.Equal(t, "Add a new pet to the store", path.Summary)
+	assert.Equal(t, "get-string-by-int", path.OperationID)
+
+	response := path.Responses.Spec.Response["200"]
+	assert.Equal(t, "ok", response.Spec.Spec.Description)
+
 	//TODO add asserts
 }

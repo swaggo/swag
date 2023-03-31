@@ -753,13 +753,13 @@ func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File
 			description = http.StatusText(code)
 		}
 
-		response := o.DefaultResponse()
-		response.Description = description
+		response := spec.NewResponseSpec()
+		response.Spec.Spec.Description = description
 
 		mimeType := "application/json" // TODO: set correct mimeType
-		setResponseSchema(response, mimeType, schema)
+		setResponseSchema(response.Spec.Spec, mimeType, schema)
 
-		o.AddResponse(codeStr, spec.NewRefOrSpec(nil, spec.NewExtendable(response)))
+		o.AddResponse(codeStr, response)
 	}
 
 	return nil
@@ -769,6 +769,10 @@ func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File
 func setResponseSchema(response *spec.Response, mimeType string, schema *spec.RefOrSpec[spec.Schema]) {
 	mediaType := spec.NewMediaType()
 	mediaType.Spec.Schema = schema
+
+	if response.Content == nil {
+		response.Content = make(map[string]*spec.Extendable[spec.MediaType])
+	}
 
 	response.Content[mimeType] = mediaType
 }
@@ -964,6 +968,7 @@ func (o *OperationV3) ParseCodeSample(attribute, _, lineRemainder string) error 
 			return err
 		}
 
+		// using custom type, as json marshaller has problems with []map[interface{}]map[interface{}]interface{}
 		var valueJSON CodeSamples
 
 		if isJSON {

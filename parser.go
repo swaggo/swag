@@ -524,6 +524,8 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 			if err != nil {
 				return err
 			}
+
+			continue
 		}
 
 		err = parseGeneralAPIInfo(parser, comments)
