@@ -132,6 +132,9 @@ type Config struct {
 
 	// CollectionFormat set default collection format
 	CollectionFormat string
+
+	// search the tags base on the regex pattern
+	RegexTags string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -183,6 +186,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.ParseUsingGoList(config.ParseGoList),
 		swag.SetTags(config.Tags),
 		swag.SetCollectionFormat(config.CollectionFormat),
+		swag.SetRegexTags(config.RegexTags),
 	)
 
 	p.PropNamingStrategy = config.PropNamingStrategy

@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -170,6 +171,9 @@ type Parser struct {
 
 	// tags to filter the APIs after
 	tags map[string]struct{}
+
+	// regex tags pattern
+	tagsRegex *regexp.Regexp
 }
 
 // FieldParserFactory create FieldParser.
@@ -282,6 +286,18 @@ func SetTags(include string) func(*Parser) {
 				p.tags[f] = struct{}{}
 			}
 		}
+	}
+}
+
+func SetRegexTags(tagRegex string) func(*Parser) {
+	return func(p *Parser) {
+		regex, err := regexp.Compile(tagRegex)
+
+		if err != nil {
+			return
+		}
+
+		p.tagsRegex = regex
 	}
 }
 
@@ -867,15 +883,24 @@ func getTagsFromComment(comment string) (tags []string) {
 }
 
 func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
-	if len(parser.tags) != 0 {
+	if len(parser.tags) != 0 || parser.tagsRegex != nil {
 		for _, comment := range comments {
 			for _, tag := range getTagsFromComment(comment.Text) {
-				if _, has := parser.tags["!"+tag]; has {
-					return false
+				if parser.tagsRegex != nil {
+					if parser.tagsRegex.MatchString(tag) {
+						match = true
+					}
 				}
-				if _, has := parser.tags[tag]; has {
-					match = true // keep iterating as it may contain a tag that is excluded
+
+				if len(parser.tags) != 0 && !match {
+					if _, has := parser.tags["!"+tag]; has {
+						return false
+					}
+					if _, has := parser.tags[tag]; has {
+						match = true // keep iterating as it may contain a tag that is excluded
+					}
 				}
+
 			}
 		}
 		return

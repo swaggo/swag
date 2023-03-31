@@ -34,6 +34,7 @@ const (
 	parseGoListFlag       = "parseGoList"
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
+	regexTagsFlag         = "regexTags"
 	parseExtensionFlag    = "parseExtension"
 	packageName           = "packageName"
 	collectionFormatFlag  = "collectionFormat"
@@ -154,6 +155,12 @@ var initFlags = []cli.Flag{
 		Value:   "csv",
 		Usage:   "Set default collection format",
 	},
+	&cli.StringFlag{
+		Name:    regexTagsFlag,
+		Aliases: []string{"rt"},
+		Value:   "",
+		Usage:   "A tag use the regex pattern to find the tag which match the pattern",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -200,6 +207,7 @@ func initAction(ctx *cli.Context) error {
 		ParseGoList:         ctx.Bool(parseGoListFlag),
 		Tags:                ctx.String(tagsFlag),
 		PackageName:         ctx.String(packageName),
+		RegexTags:           ctx.String(regexTagsFlag),
 		Debugger:            logger,
 		CollectionFormat:    collectionFormat,
 	})

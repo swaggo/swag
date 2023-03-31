@@ -3889,6 +3889,87 @@ func TestParser_matchTags(t *testing.T) {
 	}
 }
 
+func TestParse_matchRegexPatternTags(t *testing.T) {
+	type args struct {
+		comments []*ast.Comment
+	}
+	tests := []struct {
+		name      string
+		parser    *Parser
+		args      args
+		wantMatch bool
+	}{
+		{
+			name:      "no Regex tags filter",
+			parser:    New(),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags tag1,tag2,tag3"}}},
+			wantMatch: true,
+		},
+		{
+			name:      "with Regex tags filter but no match",
+			parser:    New(SetRegexTags("Tag?")),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags tag1,tag2,tag3"}}},
+			wantMatch: false,
+		},
+		{
+			name:      "with tags filter but match",
+			parser:    New(SetRegexTags("tag?")),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags tag1,tag2,tag3"}}},
+			wantMatch: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotMatch := tt.parser.matchTags(tt.args.comments); gotMatch != tt.wantMatch {
+				t.Errorf("Parser.matchTags() = %v, want %v", gotMatch, tt.wantMatch)
+			}
+		})
+	}
+}
+
+func TestParse_matchRegexPatternTagsAndTags(t *testing.T) {
+	type args struct {
+		comments []*ast.Comment
+	}
+
+	tests := []struct {
+		name      string
+		parser    *Parser
+		args      args
+		wantMatch bool
+	}{
+		{
+			name:      "no match tag and regex tag",
+			parser:    New(SetTags("tag1, tag2, tag3"), SetRegexTags("tag?")),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags Tag4,Tag5,Tag6"}}},
+			wantMatch: false,
+		}, {
+			name:      "only match tag",
+			parser:    New(SetTags("tag1, tag2, tag3"), SetRegexTags("Tag?")),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags tag1,tag5,tag6"}}},
+			wantMatch: true,
+		}, {
+			name:      "only match regex tag",
+			parser:    New(SetTags("tag1, tag2, tag3"), SetRegexTags("Tag?")),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags Tag1,tag5,tag6"}}},
+			wantMatch: true,
+		}, {
+			name:      "match regex tag and tags",
+			parser:    New(SetTags("Tag1, tag2, tag3"), SetRegexTags("Tag?")),
+			args:      args{comments: []*ast.Comment{{Text: "//@Tags Tag1,tag5,tag6"}}},
+			wantMatch: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotMatch := tt.parser.matchTags(tt.args.comments); gotMatch != tt.wantMatch {
+				t.Errorf("Parser.matchTags() = %v, want %v", gotMatch, tt.wantMatch)
+			}
+		})
+	}
+}
+
 func TestParser_parseExtension(t *testing.T) {
 	packagePath := "testdata/parseExtension"
 	filePath := packagePath + "/parseExtension.go"
