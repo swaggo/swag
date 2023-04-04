@@ -168,6 +168,74 @@
                     }
                 }
             }
+        },
+        "/students4": {
+            "get": {
+                "description": "test array enums fields in formdata request",
+                "summary": "test array enums fields in formdata request",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                -1,
+                                1,
+                                2,
+                                3,
+                                4,
+                                5
+                            ],
+                            "type": "integer"
+                        },
+                        "name": "class",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                1,
+                                2,
+                                4,
+                                8
+                            ],
+                            "type": "integer"
+                        },
+                        "name": "mask",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "name": "name",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
+                        "type": "string",
+                        "x-enum-comments": {
+                            "Other": "Other",
+                            "Student": "student",
+                            "Teacher": "teacher"
+                        },
+                        "x-enum-varnames": [
+                            "Teacher",
+                            "Student",
+                            "Other"
+                        ],
+                        "name": "type",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
         }
     },
     "definitions": {
