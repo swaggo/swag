@@ -207,7 +207,7 @@ func initAction(ctx *cli.Context) error {
 		Tags:                ctx.String(tagsFlag),
 		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
-		GenerateOpenApi3Doc: ctx.Bool(openAPIVersionFlag),
+		GenerateOpenAPI3Doc: ctx.Bool(openAPIVersionFlag),
 		CollectionFormat:    collectionFormat,
 	})
 }
