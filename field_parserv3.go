@@ -333,7 +333,7 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 		}
 	}
 
-	eleSchema := schema
+	elemSchema := schema
 
 	if field.schemaType == ARRAY {
 		// For Array only
@@ -341,16 +341,20 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 		schema.MinItems = field.minItems
 		schema.UniqueItems = &field.unique
 
-		eleSchema = schema.Items.Schema.Spec
-		eleSchema.Format = field.formatType
+		elemSchema = schema.Items.Schema.Spec
+		if elemSchema == nil {
+			elemSchema = ps.p.getSchemaByRef(schema.Items.Schema.Ref)
+		}
+
+		elemSchema.Format = field.formatType
 	}
 
-	eleSchema.Maximum = field.maximum
-	eleSchema.Minimum = field.minimum
-	eleSchema.MultipleOf = field.multipleOf
-	eleSchema.MaxLength = field.maxLength
-	eleSchema.MinLength = field.minLength
-	eleSchema.Enum = field.enums
+	elemSchema.Maximum = field.maximum
+	elemSchema.Minimum = field.minimum
+	elemSchema.MultipleOf = field.multipleOf
+	elemSchema.MaxLength = field.maxLength
+	elemSchema.MinLength = field.minLength
+	elemSchema.Enum = field.enums
 
 	return nil
 }

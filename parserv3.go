@@ -639,42 +639,42 @@ func (p *Parser) ParseDefinitionV3(typeSpecDef *TypeSpecDef) (*SchemaV3, error) 
 		return nil, err
 	}
 
-	if definition.Description == "" {
-		fillDefinitionDescriptionV3(definition, typeSpecDef.File, typeSpecDef)
+	if definition.Spec.Description == "" {
+		fillDefinitionDescriptionV3(definition.Spec, typeSpecDef.File, typeSpecDef)
 	}
 
 	if len(typeSpecDef.Enums) > 0 {
 		var varNames []string
 		var enumComments = make(map[string]string)
 		for _, value := range typeSpecDef.Enums {
-			definition.Enum = append(definition.Enum, value.Value)
+			definition.Spec.Enum = append(definition.Spec.Enum, value.Value)
 			varNames = append(varNames, value.key)
 			if len(value.Comment) > 0 {
 				enumComments[value.key] = value.Comment
 			}
 		}
 
-		if definition.Extensions == nil {
-			definition.Extensions = make(map[string]any)
+		if definition.Spec.Extensions == nil {
+			definition.Spec.Extensions = make(map[string]any)
 		}
 
-		definition.Extensions[enumVarNamesExtension] = varNames
+		definition.Spec.Extensions[enumVarNamesExtension] = varNames
 		if len(enumComments) > 0 {
-			definition.Extensions[enumCommentsExtension] = enumComments
+			definition.Spec.Extensions[enumCommentsExtension] = enumComments
 		}
 	}
 
 	sch := SchemaV3{
 		Name:    typeName,
 		PkgPath: typeSpecDef.PkgPath,
-		Schema:  definition,
+		Schema:  definition.Spec,
 	}
 	p.parsedSchemasV3[typeSpecDef] = &sch
 
 	// update an empty schema as a result of recursion
 	s2, found := p.outputSchemasV3[typeSpecDef]
 	if found {
-		p.openAPI.Components.Spec.Schemas[s2.Name] = spec.NewRefOrSpec(nil, definition)
+		p.openAPI.Components.Spec.Schemas[s2.Name] = definition
 	}
 
 	return &sch, nil
@@ -703,13 +703,13 @@ func fillDefinitionDescriptionV3(definition *spec.Schema, file *ast.File, typeSp
 
 // parseTypeExprV3 parses given type expression that corresponds to the type under
 // given name and package, and returns swagger schema for it.
-func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*spec.Schema, error) {
+func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*spec.RefOrSpec[spec.Schema], error) {
 	const errMessage = "parse type expression v3"
 
 	switch expr := typeExpr.(type) {
 	// type Foo interface{}
 	case *ast.InterfaceType:
-		return &spec.Schema{}, nil
+		return spec.NewSchemaSpec(), nil
 
 	// type Foo struct {...}
 	case *ast.StructType:
@@ -717,12 +717,12 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 
 	// type Foo Baz
 	case *ast.Ident:
-		result, err := p.getTypeSchemaV3(expr.Name, file, ref)
+		result, err := p.getTypeSchemaV3(expr.Name, file, true)
 		if err != nil {
 			return nil, errors.Wrap(err, errMessage)
 		}
 
-		return result.Spec, nil
+		return result, nil
 	// type Foo *Baz
 	case *ast.StarExpr:
 		return p.parseTypeExprV3(file, expr.X, ref)
@@ -735,7 +735,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 				return nil, errors.Wrap(err, errMessage)
 			}
 
-			return result.Spec, nil
+			return result, nil
 		}
 	// type Foo []Baz
 	case *ast.ArrayType:
@@ -750,15 +750,14 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 			schema.Items = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
 			p.debug.Printf("Creating array with empty item schema %v", expr.Elt)
 
-			return schema, nil
+			return spec.NewRefOrSpec(nil, schema), nil
 		}
 
 		result := &spec.Schema{}
 		result.Type = spec.NewSingleOrArray(ARRAY)
-		refOrSpec := spec.NewRefOrSpec(nil, itemSchema)
-		result.Items = spec.NewBoolOrSchema(false, refOrSpec)
+		result.Items = spec.NewBoolOrSchema(false, itemSchema)
 
-		return result, nil
+		return spec.NewRefOrSpec(nil, result), nil
 	// type Foo map[string]Bar
 	case *ast.MapType:
 		if _, ok := expr.Value.(*ast.InterfaceType); ok {
@@ -766,7 +765,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 			result.AdditionalProperties = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
 			result.Type = spec.NewSingleOrArray(OBJECT)
 
-			return result, nil
+			return spec.NewRefOrSpec(nil, result), nil
 		}
 
 		schema, err := p.parseTypeExprV3(file, expr.Value, true)
@@ -775,10 +774,10 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 		}
 
 		result := &spec.Schema{}
-		result.AdditionalProperties = spec.NewBoolOrSchema(false, spec.NewRefOrSpec(nil, schema))
+		result.AdditionalProperties = spec.NewBoolOrSchema(false, schema)
 		result.Type = spec.NewSingleOrArray(OBJECT)
 
-		return result, nil
+		return spec.NewRefOrSpec(nil, result), nil
 	case *ast.FuncType:
 		return nil, ErrFuncTypeField
 		// ...
@@ -787,7 +786,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 	return p.parseGenericTypeExprV3(file, typeExpr)
 }
 
-func (p *Parser) parseStructV3(file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
+func (p *Parser) parseStructV3(file *ast.File, fields *ast.FieldList) (*spec.RefOrSpec[spec.Schema], error) {
 	required, properties := make([]string, 0), make(map[string]*spec.RefOrSpec[spec.Schema])
 
 	for _, field := range fields.List {
@@ -818,7 +817,7 @@ func (p *Parser) parseStructV3(file *ast.File, fields *ast.FieldList) (*spec.Sch
 	result.Spec.Properties = properties
 	result.Spec.Required = required
 
-	return result.Spec, nil
+	return result, nil
 }
 
 func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[string]*spec.RefOrSpec[spec.Schema], []string, error) {
@@ -891,8 +890,7 @@ func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[strin
 				return nil, nil, err
 			}
 
-			schema = spec.NewSchemaSpec()
-			schema.Spec = parsedSchema
+			schema = parsedSchema
 		}
 	}
 
@@ -989,4 +987,9 @@ func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], d
 
 	println("found schema with no Type, returning any")
 	return []string{ANY}
+}
+
+func (p *Parser) getSchemaByRef(ref *spec.Ref) *spec.Schema {
+	searchString := strings.ReplaceAll(ref.Ref, "#/components/schemas/", "")
+	return p.openAPI.Components.Spec.Schemas[searchString].Spec
 }

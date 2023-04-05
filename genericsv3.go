@@ -6,7 +6,7 @@ import (
 	"github.com/sv-tools/openapi/spec"
 )
 
-func (p *Parser) parseGenericTypeExprV3(file *ast.File, typeExpr ast.Expr) (*spec.Schema, error) {
+func (p *Parser) parseGenericTypeExprV3(file *ast.File, typeExpr ast.Expr) (*spec.RefOrSpec[spec.Schema], error) {
 	switch expr := typeExpr.(type) {
 	// suppress debug messages for these types
 	case *ast.InterfaceType:
@@ -21,7 +21,7 @@ func (p *Parser) parseGenericTypeExprV3(file *ast.File, typeExpr ast.Expr) (*spe
 		name, err := getExtendedGenericFieldType(file, expr, nil)
 		if err == nil {
 			if schema, err := p.getTypeSchemaV3(name, file, false); err == nil {
-				return schema.Spec, nil
+				return schema, nil
 			}
 		}
 
@@ -30,5 +30,5 @@ func (p *Parser) parseGenericTypeExprV3(file *ast.File, typeExpr ast.Expr) (*spe
 		p.debug.Printf("Type definition of type '%T' is not supported yet. Using 'object' instead.\n", typeExpr)
 	}
 
-	return PrimitiveSchemaV3(OBJECT).Spec, nil
+	return PrimitiveSchemaV3(OBJECT), nil
 }
