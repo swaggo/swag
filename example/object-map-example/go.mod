@@ -3,9 +3,9 @@ module github.com/swaggo/swag/example/object-map-example
 go 1.17
 
 require (
-	github.com/gin-gonic/gin v1.6.3
-	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
-	github.com/swaggo/gin-swagger v1.3.0
+	github.com/gin-gonic/gin v1.7.7
+	github.com/swaggo/files v0.0.0-20210815190702-a29dd2bc99b2
+	github.com/swaggo/gin-swagger v1.4.2
 	github.com/swaggo/swag v1.8.1
 )
 
@@ -31,6 +31,6 @@ require (
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/tools v0.1.10 // indirect
+	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
