@@ -1,6 +1,6 @@
 # swag
 
-🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md)*
+🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md) ∙ [Português](README_pt.md)*
 
 <img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
