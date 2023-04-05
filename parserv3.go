@@ -748,11 +748,13 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 			schema := &spec.Schema{}
 			schema.Type = spec.NewSingleOrArray(ARRAY)
 			schema.Items = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
+			p.debug.Printf("Creating array with empty item schema %v", expr.Elt)
 
 			return schema, nil
 		}
 
 		result := &spec.Schema{}
+		result.Type = spec.NewSingleOrArray(ARRAY)
 		refOrSpec := spec.NewRefOrSpec(nil, itemSchema)
 		result.Items = spec.NewBoolOrSchema(false, refOrSpec)
 

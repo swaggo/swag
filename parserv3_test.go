@@ -303,7 +303,7 @@ func TestGetAllGoFileInfoV3(t *testing.T) {
 func TestParser_ParseTypeV3(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "testdata/simple/"
+	searchDir := "testdata/v3/simple/"
 
 	p := New(SetOpenAPIVersion(true))
 	err := p.getAllGoFileInfo("testdata", searchDir)
@@ -317,10 +317,37 @@ func TestParser_ParseTypeV3(t *testing.T) {
 	assert.NotNil(t, p.packages.uniqueDefinitions["web.Pet2"])
 }
 
+func TestParsePet(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/v3/pet"
+
+	p := New(SetOpenAPIVersion(true))
+	p.PropNamingStrategy = PascalCase
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	schemas := p.openAPI.Components.Spec.Schemas
+	assert.NotNil(t, schemas)
+
+	tagSchema := schemas["web.Tag"].Spec
+	assert.Equal(t, 2, len(tagSchema.Properties))
+	assert.Equal(t, typeInteger, tagSchema.Properties["id"].Spec.Type)
+	assert.Equal(t, typeString, tagSchema.Properties["name"].Spec.Type)
+
+	petSchema := schemas["web.Pet"].Spec
+	assert.NotNil(t, petSchema)
+	assert.Equal(t, 8, len(petSchema.Properties))
+	assert.Equal(t, typeInteger, petSchema.Properties["id"].Spec.Type)
+	assert.Equal(t, typeString, petSchema.Properties["name"].Spec.Type)
+
+}
+
 func TestParseSimpleApiV3(t *testing.T) {
 	t.Parallel()
 
-	searchDir := "testdata/simplev3"
+	searchDir := "testdata/v3/simple"
 	p := New(SetOpenAPIVersion(true))
 	p.PropNamingStrategy = PascalCase
 
