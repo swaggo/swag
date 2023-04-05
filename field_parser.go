@@ -21,6 +21,7 @@ const (
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
 )
+var _ FieldParser = &tagBaseFieldParser{}
 
 var _ FieldParser = &tagBaseFieldParser{}
 
