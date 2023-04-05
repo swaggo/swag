@@ -291,6 +291,11 @@ func SetTags(include string) func(*Parser) {
 
 func SetRegexTags(tagRegex string) func(*Parser) {
 	return func(p *Parser) {
+
+		if tagRegex == "" {
+			return
+		}
+
 		regex, err := regexp.Compile(tagRegex)
 
 		if err != nil {
