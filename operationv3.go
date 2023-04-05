@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Operation describes a single API operation on a path.
+// OperationV3 describes a single API operation on a path.
 // For more information: https://github.com/swaggo/swag#api-operation
 type OperationV3 struct {
 	parser              *Parser
@@ -39,7 +39,7 @@ func NewOperationV3(parser *Parser, options ...func(*OperationV3)) *OperationV3 
 	return operation
 }
 
-// SetCodeExampleFilesDirectory sets the directory to search for codeExamples.
+// SetCodeExampleFilesDirectoryV3 sets the directory to search for codeExamples.
 func SetCodeExampleFilesDirectoryV3(directoryPath string) func(*OperationV3) {
 	return func(o *OperationV3) {
 		o.codeExampleFilesDir = directoryPath

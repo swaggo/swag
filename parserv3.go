@@ -14,10 +14,10 @@ import (
 	"github.com/sv-tools/openapi/spec"
 )
 
-// FieldParserFactory create FieldParser.
+// FieldParserFactoryV3 func(ps *Parser, field *ast.Field) FieldParserV3 create FieldParser.
 type FieldParserFactoryV3 func(ps *Parser, field *ast.Field) FieldParserV3
 
-// FieldParser parse struct field.
+// FieldParserV3 parse struct field.
 type FieldParserV3 interface {
 	ShouldSkip() bool
 	FieldName() (string, error)
@@ -28,8 +28,8 @@ type FieldParserV3 interface {
 }
 
 // GetOpenAPI returns *spec.OpenAPI which is the root document object for the API specification.
-func (parser *Parser) GetOpenAPI() *spec.OpenAPI {
-	return parser.openAPI
+func (p *Parser) GetOpenAPI() *spec.OpenAPI {
+	return p.openAPI
 }
 
 func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
@@ -419,8 +419,8 @@ func getSecurityDefinitionKey(lines []string) string {
 	return ""
 }
 
-// ParseRouterAPIInfo parses router api info for given astFile.
-func (parser *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
+// ParseRouterAPIInfoV3 parses router api info for given astFile.
+func (p *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 	for _, astDescription := range fileInfo.File.Decls {
 		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
 			continue
@@ -431,10 +431,10 @@ func (parser *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 			continue
 		}
 
-		if parser.matchTags(astDeclaration.Doc.List) &&
-			matchExtension(parser.parseExtension, astDeclaration.Doc.List) {
+		if p.matchTags(astDeclaration.Doc.List) &&
+			matchExtension(p.parseExtension, astDeclaration.Doc.List) {
 			// for per 'function' comment, create a new 'Operation' object
-			operation := NewOperationV3(parser, SetCodeExampleFilesDirectoryV3(parser.codeExampleFilesDir))
+			operation := NewOperationV3(p, SetCodeExampleFilesDirectoryV3(p.codeExampleFilesDir))
 
 			for _, comment := range astDeclaration.Doc.List {
 				err := operation.ParseComment(comment.Text, fileInfo.File)
@@ -442,7 +442,7 @@ func (parser *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 					return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
 				}
 			}
-			err := processRouterOperationV3(parser, operation)
+			err := processRouterOperationV3(p, operation)
 			if err != nil {
 				return err
 			}
@@ -941,8 +941,8 @@ func (p *Parser) getRefTypeSchemaV3(typeSpecDef *TypeSpecDef, schema *SchemaV3) 
 	return refSchema
 }
 
-// GetSchemaTypePath get path of schema type.
-func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], depth int) []string {
+// GetSchemaTypePathV3 get path of schema type.
+func (p *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], depth int) []string {
 	if schema == nil || depth == 0 {
 		return nil
 	}
@@ -955,8 +955,8 @@ func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], d
 	if name != "" {
 		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
 			name = name[pos+1:]
-			if schema, ok := parser.openAPI.Components.Spec.Schemas[name]; ok {
-				return parser.GetSchemaTypePathV3(schema, depth)
+			if schema, ok := p.openAPI.Components.Spec.Schemas[name]; ok {
+				return p.GetSchemaTypePathV3(schema, depth)
 			}
 		}
 
@@ -970,7 +970,7 @@ func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], d
 
 			s := []string{schema.Spec.Type[0]}
 
-			return append(s, parser.GetSchemaTypePathV3(schema.Spec.Items.Schema, depth)...)
+			return append(s, p.GetSchemaTypePathV3(schema.Spec.Items.Schema, depth)...)
 		case OBJECT:
 			if schema.Spec.AdditionalProperties != nil && schema.Spec.AdditionalProperties.Schema != nil {
 				// for map
@@ -978,7 +978,7 @@ func (parser *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], d
 
 				s := []string{schema.Spec.Type[0]}
 
-				return append(s, parser.GetSchemaTypePathV3(schema.Spec.AdditionalProperties.Schema, depth)...)
+				return append(s, p.GetSchemaTypePathV3(schema.Spec.AdditionalProperties.Schema, depth)...)
 			}
 		}
 
