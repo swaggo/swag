@@ -35,8 +35,8 @@ const (
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
-	openAPIVersionFlag    = "v3.1"
 	templateDelimsFlag    = "templateDelims"
+	openAPIVersionFlag    = "v3.1"
 	packageName           = "packageName"
 	collectionFormatFlag  = "collectionFormat"
 )
