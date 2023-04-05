@@ -17,10 +17,10 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/ghodss/yaml"
 	"github.com/go-openapi/spec"
 	openapi "github.com/sv-tools/openapi/spec"
 	"github.com/swaggo/swag"
+	"sigs.k8s.io/yaml"
 )
 
 var open = os.Open
