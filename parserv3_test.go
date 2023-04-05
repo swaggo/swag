@@ -108,7 +108,7 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 
-	p := New(SetOpenAPIVersion(true))
+	p := New(GenerateOpenApi3Docs(true))
 
 	err := p.ParseGeneralAPIInfo("testdata/v3/main.go")
 	assert.NoError(t, err)
@@ -172,7 +172,7 @@ func TestParser_ParseGeneralApiInfoExtensionsV3(t *testing.T) {
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
 
-		p := New(SetOpenAPIVersion(true))
+		p := New(GenerateOpenApi3Docs(true))
 
 		err := p.ParseGeneralAPIInfo("testdata/v3/extensionsFail1.go")
 		if assert.Error(t, err) {
@@ -188,7 +188,7 @@ func TestParser_ParseGeneralApiInfoExtensionsV3(t *testing.T) {
 		gopath := os.Getenv("GOPATH")
 		assert.NotNil(t, gopath)
 
-		p := New(SetOpenAPIVersion(true))
+		p := New(GenerateOpenApi3Docs(true))
 
 		err := p.ParseGeneralAPIInfo("testdata/v3/extensionsFail2.go")
 		if assert.Error(t, err) {
@@ -203,7 +203,7 @@ func TestParserParseGeneralApiInfoWithOpsInSameFileV3(t *testing.T) {
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
 
-	p := New(SetOpenAPIVersion(true))
+	p := New(GenerateOpenApi3Docs(true))
 
 	err := p.ParseGeneralAPIInfo("testdata/single_file_api/main.go")
 	assert.NoError(t, err)
@@ -216,7 +216,7 @@ func TestParserParseGeneralApiInfoWithOpsInSameFileV3(t *testing.T) {
 func TestParserParseGeneralAPIInfoMarkdownV3(t *testing.T) {
 	t.Parallel()
 
-	p := New(SetMarkdownFileDirectory("testdata"), SetOpenAPIVersion(true))
+	p := New(SetMarkdownFileDirectory("testdata"), GenerateOpenApi3Docs(true))
 	mainAPIFile := "testdata/markdown.go"
 	err := p.ParseGeneralAPIInfo(mainAPIFile)
 	assert.NoError(t, err)
@@ -224,7 +224,7 @@ func TestParserParseGeneralAPIInfoMarkdownV3(t *testing.T) {
 	assert.Equal(t, "users", p.openAPI.Tags[0].Spec.Name)
 	assert.Equal(t, "Users Tag Markdown Description", p.openAPI.Tags[0].Spec.Description)
 
-	p = New(SetOpenAPIVersion(true))
+	p = New(GenerateOpenApi3Docs(true))
 
 	err = p.ParseGeneralAPIInfo(mainAPIFile)
 	assert.Error(t, err)
@@ -235,14 +235,14 @@ func TestParserParseGeneralApiInfoFailedV3(t *testing.T) {
 
 	gopath := os.Getenv("GOPATH")
 	assert.NotNil(t, gopath)
-	p := New(SetOpenAPIVersion(true))
+	p := New(GenerateOpenApi3Docs(true))
 	assert.Error(t, p.ParseGeneralAPIInfo("testdata/noexist.go"))
 }
 
 func TestParserParseGeneralAPIInfoCollectionFormatV3(t *testing.T) {
 	t.Parallel()
 
-	parser := New(SetOpenAPIVersion(true))
+	parser := New(GenerateOpenApi3Docs(true))
 	assert.NoError(t, parser.parseGeneralAPIInfoV3([]string{
 		"@query.collection.format csv",
 	}))
@@ -257,7 +257,7 @@ func TestParserParseGeneralAPIInfoCollectionFormatV3(t *testing.T) {
 func TestParserParseGeneralAPITagGroupsV3(t *testing.T) {
 	t.Parallel()
 
-	parser := New(SetOpenAPIVersion(true))
+	parser := New(GenerateOpenApi3Docs(true))
 	assert.NoError(t, parser.parseGeneralAPIInfoV3([]string{
 		"@x-tagGroups [{\"name\":\"General\",\"tags\":[\"lanes\",\"video-recommendations\"]}]",
 	}))
@@ -269,12 +269,12 @@ func TestParserParseGeneralAPITagGroupsV3(t *testing.T) {
 func TestParserParseGeneralAPITagDocsV3(t *testing.T) {
 	t.Parallel()
 
-	parser := New(SetOpenAPIVersion(true))
+	parser := New(GenerateOpenApi3Docs(true))
 	assert.Error(t, parser.parseGeneralAPIInfoV3([]string{
 		"@tag.name Test",
 		"@tag.docs.description Best example documentation"}))
 
-	parser = New(SetOpenAPIVersion(true))
+	parser = New(GenerateOpenApi3Docs(true))
 	err := parser.parseGeneralAPIInfoV3([]string{
 		"@tag.name test",
 		"@tag.description A test Tag",
@@ -293,7 +293,7 @@ func TestGetAllGoFileInfoV3(t *testing.T) {
 
 	searchDir := "testdata/pet"
 
-	p := New(SetOpenAPIVersion(true))
+	p := New(GenerateOpenApi3Docs(true))
 	err := p.getAllGoFileInfo("testdata", searchDir)
 
 	assert.NoError(t, err)
@@ -305,7 +305,7 @@ func TestParser_ParseTypeV3(t *testing.T) {
 
 	searchDir := "testdata/v3/simple/"
 
-	p := New(SetOpenAPIVersion(true))
+	p := New(GenerateOpenApi3Docs(true))
 	err := p.getAllGoFileInfo("testdata", searchDir)
 	assert.NoError(t, err)
 
@@ -322,7 +322,7 @@ func TestParsePet(t *testing.T) {
 
 	searchDir := "testdata/v3/pet"
 
-	p := New(SetOpenAPIVersion(true))
+	p := New(GenerateOpenApi3Docs(true))
 	p.PropNamingStrategy = PascalCase
 
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
@@ -348,7 +348,7 @@ func TestParseSimpleApiV3(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/v3/simple"
-	p := New(SetOpenAPIVersion(true))
+	p := New(GenerateOpenApi3Docs(true))
 	p.PropNamingStrategy = PascalCase
 
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)

@@ -17,8 +17,9 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/go-openapi/spec"
-	openapi "github.com/sv-tools/openapi/spec"
+	v2 "github.com/go-openapi/spec"
+	v3 "github.com/sv-tools/openapi/spec"
+
 	"github.com/swaggo/swag"
 	"sigs.k8s.io/yaml"
 )
@@ -28,16 +29,15 @@ var open = os.Open
 // DefaultOverridesFile is the location swagger will look for type overrides.
 const DefaultOverridesFile = ".swaggo"
 
-type genTypeWriter func(*Config, *spec.Swagger) error
+type genTypeWriter func(*Config, interface{}) error
 
 // Gen presents a generate tool for swag.
 type Gen struct {
-	json            func(data interface{}) ([]byte, error)
-	jsonIndent      func(data interface{}) ([]byte, error)
-	jsonToYAML      func(data []byte) ([]byte, error)
-	outputTypeMap   map[string]genTypeWriter
-	outputTypeMapV3 map[string]openAPITypeWriter
-	debug           Debugger
+	json          func(data interface{}) ([]byte, error)
+	jsonIndent    func(data interface{}) ([]byte, error)
+	jsonToYAML    func(data []byte) ([]byte, error)
+	outputTypeMap map[string]genTypeWriter
+	debug         Debugger
 }
 
 // Debugger is the interface that wraps the basic Printf method.
@@ -50,25 +50,17 @@ func New() *Gen {
 	gen := Gen{
 		json: json.Marshal,
 		jsonIndent: func(data interface{}) ([]byte, error) {
-			var json = jsoniter.ConfigCompatibleWithStandardLibrary
-			return json.MarshalIndent(&data, "", "    ")
+			return jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent(&data, "", "    ")
 		},
 		jsonToYAML: yaml.JSONToYAML,
 		debug:      log.New(os.Stdout, "", log.LstdFlags),
 	}
 
 	gen.outputTypeMap = map[string]genTypeWriter{
-		"go":   gen.writeDocSwagger,
-		"json": gen.writeJSONSwagger,
-		"yaml": gen.writeYAMLSwagger,
-		"yml":  gen.writeYAMLSwagger,
-	}
-
-	gen.outputTypeMapV3 = map[string]openAPITypeWriter{
-		"go":   gen.writeDocOpenAPI,
-		"json": gen.writeJSONOpenAPI,
-		"yaml": gen.writeYAMLOpenAPI,
-		"yml":  gen.writeYAMLOpenAPI,
+		"go":   gen.writeDoc,
+		"json": gen.writeJSON,
+		"yaml": gen.writeYAML,
+		"yml":  gen.writeYAML,
 	}
 
 	return &gen
@@ -140,7 +132,7 @@ type Config struct {
 	Tags string
 
 	// if true, OpenAPI V3.1 spec will be generated
-	OpenAPIVersion bool
+	GenerateOpenApi3Doc bool
 	// PackageName defines package name of generated `docs.go`
 	PackageName string
 
@@ -196,7 +188,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetOverrides(overrides),
 		swag.ParseUsingGoList(config.ParseGoList),
 		swag.SetTags(config.Tags),
-		swag.SetOpenAPIVersion(config.OpenAPIVersion),
+		swag.GenerateOpenApi3Docs(config.GenerateOpenApi3Doc),
 		swag.SetCollectionFormat(config.CollectionFormat),
 	)
 
@@ -213,45 +205,18 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
-	if config.OpenAPIVersion {
-		openAPI := p.GetOpenAPI()
-		err := g.writeOpenAPI(config, openAPI)
-		if err != nil {
-			return err
-		}
-
-		return nil
+	if config.GenerateOpenApi3Doc {
+		return g.writeOpenAPI(config, p.GetOpenAPI())
 	}
 
-	swagger := p.GetSwagger()
-	err := g.writeSwagger(config, swagger)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return g.writeOpenAPI(config, p.GetSwagger())
 }
 
-func (g *Gen) writeOpenAPI(config *Config, o *openapi.OpenAPI) error {
-	for _, outputType := range config.OutputTypes {
-		outputType = strings.ToLower(strings.TrimSpace(outputType))
-		if typeWriter, ok := g.outputTypeMapV3[outputType]; ok {
-			if err := typeWriter(config, o); err != nil {
-				return err
-			}
-		} else {
-			log.Printf("output type '%s' not supported", outputType)
-		}
-	}
-
-	return nil
-}
-
-func (g *Gen) writeSwagger(config *Config, swagger *spec.Swagger) error {
+func (g *Gen) writeOpenAPI(config *Config, doc interface{}) error {
 	for _, outputType := range config.OutputTypes {
 		outputType = strings.ToLower(strings.TrimSpace(outputType))
 		if typeWriter, ok := g.outputTypeMap[outputType]; ok {
-			if err := typeWriter(config, swagger); err != nil {
+			if err := typeWriter(config, doc); err != nil {
 				return err
 			}
 		} else {
@@ -262,7 +227,7 @@ func (g *Gen) writeSwagger(config *Config, swagger *spec.Swagger) error {
 	return nil
 }
 
-func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
+func (g *Gen) writeDoc(config *Config, doc interface{}) error {
 	var filename = "docs.go"
 
 	if config.InstanceName != swag.Name {
@@ -291,17 +256,25 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 	defer docs.Close()
 
 	// Write doc
-	err = g.writeGoDoc(packageName, docs, swagger, config)
-	if err != nil {
-		return err
-	}
+	switch spec := doc.(type) {
+	case *v2.Swagger:
+		err = g.writeGoDoc(packageName, docs, spec, config)
+		if err != nil {
+			return err
 
+		}
+	case *v3.OpenAPI:
+		err = g.writeGoDocV3(packageName, docs, spec, config)
+		if err != nil {
+			return nil
+		}
+	}
 	g.debug.Printf("create docs.go at %+v", docFileName)
 
 	return nil
 }
 
-func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
+func (g *Gen) writeJSON(config *Config, spec interface{}) error {
 	var filename = "swagger.json"
 
 	if config.InstanceName != swag.Name {
@@ -310,7 +283,7 @@ func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 
 	jsonFileName := path.Join(config.OutputDir, filename)
 
-	b, err := g.jsonIndent(swagger)
+	b, err := g.jsonIndent(spec)
 	if err != nil {
 		return err
 	}
@@ -325,7 +298,7 @@ func (g *Gen) writeJSONSwagger(config *Config, swagger *spec.Swagger) error {
 	return nil
 }
 
-func (g *Gen) writeYAMLSwagger(config *Config, swagger *spec.Swagger) error {
+func (g *Gen) writeYAML(config *Config, swagger interface{}) error {
 	var filename = "swagger.yaml"
 
 	if config.InstanceName != swag.Name {
@@ -421,7 +394,7 @@ func parseOverrides(r io.Reader) (map[string]string, error) {
 	return overrides, nil
 }
 
-func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swagger, config *Config) error {
+func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *v2.Swagger, config *Config) error {
 	generator, err := template.New("swagger_info").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
 			// Add schemes
@@ -434,16 +407,16 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 		return err
 	}
 
-	swaggerSpec := &spec.Swagger{
+	swaggerSpec := &v2.Swagger{
 		VendorExtensible: swagger.VendorExtensible,
-		SwaggerProps: spec.SwaggerProps{
+		SwaggerProps: v2.SwaggerProps{
 			ID:       swagger.ID,
 			Consumes: swagger.Consumes,
 			Produces: swagger.Produces,
 			Swagger:  swagger.Swagger,
-			Info: &spec.Info{
+			Info: &v2.Info{
 				VendorExtensible: swagger.Info.VendorExtensible,
-				InfoProps: spec.InfoProps{
+				InfoProps: v2.InfoProps{
 					Description:    "{{escape .Description}}",
 					Title:          "{{.Title}}",
 					TermsOfService: swagger.Info.TermsOfService,

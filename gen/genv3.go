@@ -2,106 +2,13 @@ package gen
 
 import (
 	"bytes"
-	"fmt"
 	"io"
-	"os"
-	"path"
-	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/sv-tools/openapi/spec"
-	"github.com/swaggo/swag"
 )
-
-type openAPITypeWriter func(*Config, *spec.OpenAPI) error
-
-func (g *Gen) writeDocOpenAPI(config *Config, openAPI *spec.OpenAPI) error {
-	var filename = "docs.go"
-
-	if config.InstanceName != swag.Name {
-		filename = config.InstanceName + "_" + filename
-	}
-
-	docFileName := path.Join(config.OutputDir, filename)
-
-	absOutputDir, err := filepath.Abs(config.OutputDir)
-	if err != nil {
-		return err
-	}
-
-	packageName := filepath.Base(absOutputDir)
-
-	docs, err := os.Create(docFileName)
-	if err != nil {
-		return err
-	}
-	defer docs.Close()
-
-	// Write doc
-	err = g.writeGoDocV3(packageName, docs, openAPI, config)
-	if err != nil {
-		return err
-	}
-
-	g.debug.Printf("create docs.go at %+v", docFileName)
-
-	return nil
-}
-
-func (g *Gen) writeJSONOpenAPI(config *Config, swagger *spec.OpenAPI) error {
-	var filename = "swagger.json"
-
-	if config.InstanceName != swag.Name {
-		filename = config.InstanceName + "_" + filename
-	}
-
-	jsonFileName := path.Join(config.OutputDir, filename)
-
-	b, err := g.jsonIndent(swagger)
-	if err != nil {
-		return err
-	}
-
-	err = g.writeFile(b, jsonFileName)
-	if err != nil {
-		return err
-	}
-
-	g.debug.Printf("create swagger.json at %+v", jsonFileName)
-
-	return nil
-}
-
-func (g *Gen) writeYAMLOpenAPI(config *Config, swagger *spec.OpenAPI) error {
-	var filename = "swagger.yaml"
-
-	if config.InstanceName != swag.Name {
-		filename = config.InstanceName + "_" + filename
-	}
-
-	yamlFileName := path.Join(config.OutputDir, filename)
-
-	b, err := g.json(swagger)
-	if err != nil {
-		return err
-	}
-
-	y, err := g.jsonToYAML(b)
-	if err != nil {
-		return fmt.Errorf("cannot covert json to yaml error: %s", err)
-	}
-
-	err = g.writeFile(y, yamlFileName)
-	if err != nil {
-		return err
-	}
-
-	g.debug.Printf("create swagger.yaml at %+v", yamlFileName)
-
-	return nil
-}
 
 func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *spec.OpenAPI, config *Config) error {
 	generator, err := template.New("swagger_info").Funcs(template.FuncMap{
