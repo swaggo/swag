@@ -457,13 +457,13 @@ func (sf *structFieldV3) parseValidTags(validTag string) {
 	}
 }
 
-func (field *structFieldV3) parseEnumTags(enumTag string) error {
-	enumType := field.schemaType
-	if field.schemaType == ARRAY {
-		enumType = field.arrayType
+func (sf *structFieldV3) parseEnumTags(enumTag string) error {
+	enumType := sf.schemaType
+	if sf.schemaType == ARRAY {
+		enumType = sf.arrayType
 	}
 
-	field.enums = nil
+	sf.enums = nil
 
 	for _, e := range strings.Split(enumTag, ",") {
 		value, err := defineType(enumType, e)
@@ -471,7 +471,7 @@ func (field *structFieldV3) parseEnumTags(enumTag string) error {
 			return err
 		}
 
-		field.enums = append(field.enums, value)
+		sf.enums = append(sf.enums, value)
 	}
 
 	return nil

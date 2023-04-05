@@ -1202,9 +1202,9 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, bool,
 
 		fileName := entry.Name()
 
-		isJson := strings.Contains(fileName, ".json")
+		isJSON := strings.Contains(fileName, ".json")
 		isYaml := strings.Contains(fileName, ".yaml")
-		if !isJson && !isYaml {
+		if !isJSON && !isYaml {
 			continue
 		}
 
@@ -1216,7 +1216,7 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, bool,
 				return nil, false, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
 			}
 
-			return commentInfo, isJson, nil
+			return commentInfo, isJSON, nil
 		}
 	}
 
