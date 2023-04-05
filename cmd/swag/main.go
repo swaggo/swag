@@ -7,11 +7,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/swaggo/swag"
 	"github.com/swaggo/swag/format"
 	"github.com/swaggo/swag/gen"
+
+	"github.com/urfave/cli/v2"
 )
 
 const (
@@ -35,6 +35,7 @@ const (
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
+	openAPIVersionFlag    = "v3.1"
 	packageName           = "packageName"
 	collectionFormatFlag  = "collectionFormat"
 )
@@ -143,6 +144,11 @@ var initFlags = []cli.Flag{
 		Value:   "",
 		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
 	},
+	&cli.BoolFlag{
+		Name:  openAPIVersionFlag,
+		Value: false,
+		Usage: "Generate OpenAPI V3.1 spec",
+	},
 	&cli.StringFlag{
 		Name:  packageName,
 		Value: "",
@@ -201,11 +207,13 @@ func initAction(ctx *cli.Context) error {
 		Tags:                ctx.String(tagsFlag),
 		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
+		OpenAPIVersion:      ctx.Bool(openAPIVersionFlag),
 		CollectionFormat:    collectionFormat,
 	})
 }
 
 func main() {
+	fmt.Println("Swag version: ", swag.Version)
 	app := cli.NewApp()
 	app.Version = swag.Version
 	app.Usage = "Automatically generate RESTful API documentation with Swagger 2.0 for Go."

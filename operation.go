@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/go-openapi/spec"
 	"golang.org/x/tools/go/loader"
+	"gopkg.in/yaml.v2"
 )
 
 // RouteProperties describes HTTP properties of a single router comment.
@@ -160,17 +162,28 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 
 // ParseCodeSample godoc.
 func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) error {
+	log.Println("line remainder:", lineRemainder)
+
 	if lineRemainder == "file" {
-		data, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
+		log.Println("line remainder is file")
+
+		data, isJSON, err := getCodeExampleForSummary(operation.Summary, operation.codeExampleFilesDir)
 		if err != nil {
 			return err
 		}
 
 		var valueJSON interface{}
 
-		err = json.Unmarshal(data, &valueJSON)
-		if err != nil {
-			return fmt.Errorf("annotation %s need a valid json value", attribute)
+		if isJSON {
+			err = json.Unmarshal(data, &valueJSON)
+			if err != nil {
+				return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
+			}
+		} else {
+			err = yaml.Unmarshal(data, &valueJSON)
+			if err != nil {
+				return fmt.Errorf("annotation %s need a valid yaml value. error: %s", attribute, err.Error())
+			}
 		}
 
 		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
@@ -206,7 +219,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 
 		err := json.Unmarshal([]byte(lineRemainder), &valueJSON)
 		if err != nil {
-			return fmt.Errorf("annotation %s need a valid json value", attribute)
+			return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
 		}
 
 		// don't use the method provided by spec lib, because it will call toLower() on attribute names, which is wrongly
@@ -1176,10 +1189,10 @@ func createParameter(paramType, description, paramName, objectType, schemaType s
 	return result
 }
 
-func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error) {
+func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, bool, error) {
 	dirEntries, err := os.ReadDir(dirPath)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	for _, entry := range dirEntries {
@@ -1189,7 +1202,9 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 
 		fileName := entry.Name()
 
-		if !strings.Contains(fileName, ".json") {
+		isJson := strings.Contains(fileName, ".json")
+		isYaml := strings.Contains(fileName, ".yaml")
+		if !isJson && !isYaml {
 			continue
 		}
 
@@ -1198,12 +1213,12 @@ func getCodeExampleForSummary(summaryName string, dirPath string) ([]byte, error
 
 			commentInfo, err := os.ReadFile(fullPath)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
+				return nil, false, fmt.Errorf("Failed to read code example file %s error: %s ", fullPath, err)
 			}
 
-			return commentInfo, nil
+			return commentInfo, isJson, nil
 		}
 	}
 
-	return nil, fmt.Errorf("unable to find code example file for tag %s in the given directory", summaryName)
+	return nil, false, fmt.Errorf("unable to find code example file for tag %s in the given directory", summaryName)
 }

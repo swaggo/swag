@@ -3,7 +3,6 @@ package swag
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -19,8 +18,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
+	openapi "github.com/sv-tools/openapi/spec"
 )
 
 const (
@@ -33,39 +35,40 @@ const (
 	// SnakeCase indicates using SnakeCase strategy for struct field.
 	SnakeCase = "snakecase"
 
-	idAttr                  = "@id"
-	acceptAttr              = "@accept"
-	produceAttr             = "@produce"
-	paramAttr               = "@param"
-	successAttr             = "@success"
-	failureAttr             = "@failure"
-	responseAttr            = "@response"
-	headerAttr              = "@header"
-	tagsAttr                = "@tags"
-	routerAttr              = "@router"
-	summaryAttr             = "@summary"
-	deprecatedAttr          = "@deprecated"
-	securityAttr            = "@security"
-	titleAttr               = "@title"
-	conNameAttr             = "@contact.name"
-	conURLAttr              = "@contact.url"
-	conEmailAttr            = "@contact.email"
-	licNameAttr             = "@license.name"
-	licURLAttr              = "@license.url"
-	versionAttr             = "@version"
-	descriptionAttr         = "@description"
-	descriptionMarkdownAttr = "@description.markdown"
-	secBasicAttr            = "@securitydefinitions.basic"
-	secAPIKeyAttr           = "@securitydefinitions.apikey"
-	secApplicationAttr      = "@securitydefinitions.oauth2.application"
-	secImplicitAttr         = "@securitydefinitions.oauth2.implicit"
-	secPasswordAttr         = "@securitydefinitions.oauth2.password"
-	secAccessCodeAttr       = "@securitydefinitions.oauth2.accesscode"
-	tosAttr                 = "@termsofservice"
-	extDocsDescAttr         = "@externaldocs.description"
-	extDocsURLAttr          = "@externaldocs.url"
-	xCodeSamplesAttr        = "@x-codesamples"
-	scopeAttrPrefix         = "@scope."
+	idAttr                   = "@id"
+	acceptAttr               = "@accept"
+	produceAttr              = "@produce"
+	paramAttr                = "@param"
+	successAttr              = "@success"
+	failureAttr              = "@failure"
+	responseAttr             = "@response"
+	headerAttr               = "@header"
+	tagsAttr                 = "@tags"
+	routerAttr               = "@router"
+	summaryAttr              = "@summary"
+	deprecatedAttr           = "@deprecated"
+	securityAttr             = "@security"
+	titleAttr                = "@title"
+	conNameAttr              = "@contact.name"
+	conURLAttr               = "@contact.url"
+	conEmailAttr             = "@contact.email"
+	licNameAttr              = "@license.name"
+	licURLAttr               = "@license.url"
+	versionAttr              = "@version"
+	descriptionAttr          = "@description"
+	descriptionMarkdownAttr  = "@description.markdown"
+	secBasicAttr             = "@securitydefinitions.basic"
+	secAPIKeyAttr            = "@securitydefinitions.apikey"
+	secApplicationAttr       = "@securitydefinitions.oauth2.application"
+	secImplicitAttr          = "@securitydefinitions.oauth2.implicit"
+	secPasswordAttr          = "@securitydefinitions.oauth2.password"
+	secAccessCodeAttr        = "@securitydefinitions.oauth2.accesscode"
+	tosAttr                  = "@termsofservice"
+	extDocsDescAttr          = "@externaldocs.description"
+	extDocsURLAttr           = "@externaldocs.url"
+	xCodeSamplesAttr         = "@x-codesamples"
+	xCodeSamplesAttrOriginal = "@x-codeSamples"
+	scopeAttrPrefix          = "@scope."
 )
 
 // ParseFlag determine what to parse
@@ -111,14 +114,23 @@ type Parser struct {
 	// swagger represents the root document object for the API specification
 	swagger *spec.Swagger
 
+	// openAPI represents the v3.1 root document object for the API specification
+	openAPI *openapi.OpenAPI
+
 	// packages store entities of APIs, definitions, file, package path etc.  and their relations
 	packages *PackagesDefinitions
 
 	// parsedSchemas store schemas which have been parsed from ast.TypeSpec
 	parsedSchemas map[*TypeSpecDef]*Schema
 
+	// parsedSchemasV3 store schemas which have been parsed from ast.TypeSpec
+	parsedSchemasV3 map[*TypeSpecDef]*SchemaV3
+
 	// outputSchemas store schemas which will be export to swagger
 	outputSchemas map[*TypeSpecDef]*Schema
+
+	// outputSchemas store schemas which will be export to swagger
+	outputSchemasV3 map[*TypeSpecDef]*SchemaV3
 
 	// PropNamingStrategy naming strategy
 	PropNamingStrategy string
@@ -162,6 +174,9 @@ type Parser struct {
 	// fieldParserFactory create FieldParser
 	fieldParserFactory FieldParserFactory
 
+	// fieldParserFactoryV3 create FieldParser
+	fieldParserFactoryV3 FieldParserFactoryV3
+
 	// Overrides allows global replacements of types. A blank replacement will be skipped.
 	Overrides map[string]string
 
@@ -170,6 +185,9 @@ type Parser struct {
 
 	// tags to filter the APIs after
 	tags map[string]struct{}
+
+	// use new openAPI version
+	openAPIVersion bool
 }
 
 // FieldParserFactory create FieldParser.
@@ -214,17 +232,31 @@ func New(options ...func(*Parser)) *Parser {
 				SecurityDefinitions: make(map[string]*spec.SecurityScheme),
 			},
 			VendorExtensible: spec.VendorExtensible{
-				Extensions: nil,
+				Extensions: make(spec.Extensions),
 			},
 		},
-		packages:           NewPackagesDefinitions(),
-		debug:              log.New(os.Stdout, "", log.LstdFlags),
-		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
-		outputSchemas:      make(map[*TypeSpecDef]*Schema),
-		excludes:           make(map[string]struct{}),
-		tags:               make(map[string]struct{}),
-		fieldParserFactory: newTagBaseFieldParser,
-		Overrides:          make(map[string]string),
+		openAPI: &openapi.OpenAPI{
+			Info:         openapi.NewInfo(),
+			OpenAPI:      "3.1.0",
+			Components:   openapi.NewComponents(),
+			ExternalDocs: openapi.NewExternalDocs(),
+			Paths:        openapi.NewPaths(),
+			WebHooks:     map[string]*openapi.RefOrSpec[openapi.Extendable[openapi.PathItem]]{},
+			Security:     []openapi.SecurityRequirement{},
+			Tags:         []*openapi.Extendable[openapi.Tag]{},
+			Servers:      []*openapi.Extendable[openapi.Server]{},
+		},
+		packages:             NewPackagesDefinitions(),
+		debug:                log.New(os.Stdout, "", log.LstdFlags),
+		parsedSchemas:        make(map[*TypeSpecDef]*Schema),
+		parsedSchemasV3:      make(map[*TypeSpecDef]*SchemaV3),
+		outputSchemas:        make(map[*TypeSpecDef]*Schema),
+		outputSchemasV3:      make(map[*TypeSpecDef]*SchemaV3),
+		excludes:             make(map[string]struct{}),
+		tags:                 make(map[string]struct{}),
+		fieldParserFactory:   newTagBaseFieldParser,
+		fieldParserFactoryV3: newTagBaseFieldParserV3,
+		Overrides:            make(map[string]string),
 	}
 
 	for _, option := range options {
@@ -338,6 +370,13 @@ func ParseUsingGoList(enabled bool) func(parser *Parser) {
 	}
 }
 
+// SetOpenAPIVersion parses only those operations which match given extension
+func SetOpenAPIVersion(openAPIVersion bool) func(*Parser) {
+	return func(p *Parser) {
+		p.openAPIVersion = openAPIVersion
+	}
+}
+
 // ParseAPI parses general api info for given searchDir and mainAPIFile.
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth int) error {
 	return parser.ParseAPIMultiSearchDir([]string{searchDir}, mainAPIFile, parseDepth)
@@ -366,40 +405,7 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 
 	// Use 'go list' command instead of depth.Resolve()
 	if parser.ParseDependency {
-		if parser.parseGoList {
-			pkgs, err := listPackages(context.Background(), filepath.Dir(absMainAPIFilePath), nil, "-deps")
-			if err != nil {
-				return fmt.Errorf("pkg %s cannot find all dependencies, %s", filepath.Dir(absMainAPIFilePath), err)
-			}
-
-			length := len(pkgs)
-			for i := 0; i < length; i++ {
-				err := parser.getAllGoFileInfoFromDepsByList(pkgs[i])
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			var t depth.Tree
-			t.ResolveInternal = true
-			t.MaxDepth = parseDepth
-
-			pkgName, err := getPkgName(filepath.Dir(absMainAPIFilePath))
-			if err != nil {
-				return err
-			}
-
-			err = t.Resolve(pkgName)
-			if err != nil {
-				return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
-			}
-			for i := 0; i < len(t.Root.Deps); i++ {
-				err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i])
-				if err != nil {
-					return err
-				}
-			}
-		}
+		parser.parseDeps(absMainAPIFilePath, parseDepth)
 	}
 
 	err = parser.ParseGeneralAPIInfo(absMainAPIFilePath)
@@ -412,12 +418,57 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 		return err
 	}
 
-	err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
-	if err != nil {
-		return err
+	if parser.openAPIVersion {
+		err = parser.packages.RangeFiles(parser.ParseRouterAPIInfoV3)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = parser.packages.RangeFiles(parser.ParseRouterAPIInfo)
+		if err != nil {
+			return err
+		}
 	}
 
 	return parser.checkOperationIDUniqueness()
+}
+
+func (parser *Parser) parseDeps(absMainAPIFilePath string, parseDepth int) error {
+	if parser.parseGoList {
+		pkgs, err := listPackages(context.Background(), filepath.Dir(absMainAPIFilePath), nil, "-deps")
+		if err != nil {
+			return fmt.Errorf("pkg %s cannot find all dependencies, %s", filepath.Dir(absMainAPIFilePath), err)
+		}
+
+		length := len(pkgs)
+		for i := 0; i < length; i++ {
+			err := parser.getAllGoFileInfoFromDepsByList(pkgs[i])
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		var t depth.Tree
+		t.ResolveInternal = true
+		t.MaxDepth = parseDepth
+
+		pkgName, err := getPkgName(absMainAPIFilePath)
+		if err != nil {
+			return errors.Wrap(err, "could not parse dependencies")
+		}
+
+		if err := t.Resolve(pkgName); err != nil {
+			return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not resolve dependencies")
+		}
+
+		for i := 0; i < len(t.Root.Deps); i++ {
+			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
+				return errors.Wrap(err, "could not parse dependencies")
+			}
+		}
+	}
+
+	return nil
 }
 
 func getPkgName(searchDir string) (string, error) {
@@ -428,6 +479,8 @@ func getPkgName(searchDir string) (string, error) {
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+
+	fmt.Println("get pkg name for directory:", searchDir)
 
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("execute go list command, %s, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
@@ -448,16 +501,30 @@ func getPkgName(searchDir string) (string, error) {
 
 // ParseGeneralAPIInfo parses general api info for given mainAPIFile path.
 func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
-	fileTree, err := goparser.ParseFile(token.NewFileSet(), mainAPIFile, nil, goparser.ParseComments)
+	fileSet := token.NewFileSet()
+	filePath := mainAPIFile
+
+	fileTree, err := goparser.ParseFile(fileSet, filePath, nil, goparser.ParseComments)
 	if err != nil {
-		return fmt.Errorf("cannot parse source files %s: %s", mainAPIFile, err)
+		return fmt.Errorf("cannot parse source files %s: %s", filePath, err)
 	}
 
 	parser.swagger.Swagger = "2.0"
 
-	for _, comment := range fileTree.Comments {
+	for i := range fileTree.Comments {
+		comment := fileTree.Comments[i]
+		if !isGeneralAPIComment(comment.Text()) {
+			continue
+		}
+
 		comments := strings.Split(comment.Text(), "\n")
-		if !isGeneralAPIComment(comments) {
+
+		if parser.openAPIVersion {
+			err = parser.parseGeneralAPIInfoV3(comments)
+			if err != nil {
+				return err
+			}
+
 			continue
 		}
 
@@ -465,6 +532,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 		if err != nil {
 			return err
 		}
+
 	}
 
 	return nil
@@ -583,6 +651,18 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 				parser.swagger.ExternalDocs.URL = value
 			}
 
+		case "@x-taggroups":
+			originalAttribute := strings.Split(commentLine, " ")[0]
+			if len(value) == 0 {
+				return fmt.Errorf("annotation %s need a value", attribute)
+			}
+
+			var valueJSON interface{}
+			if err := json.Unmarshal([]byte(value), &valueJSON); err != nil {
+				return fmt.Errorf("annotation %s need a valid json value. error: %s", originalAttribute, err.Error())
+			}
+
+			parser.swagger.Extensions[originalAttribute[1:]] = valueJSON // don't use the method provided by spec lib, cause it will call toLower() on attribute names, which is wrongy
 		default:
 			if strings.HasPrefix(attribute, "@x-") {
 				extensionName := attribute[1:]
@@ -610,7 +690,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 				var valueJSON interface{}
 				err := json.Unmarshal([]byte(value), &valueJSON)
 				if err != nil {
-					return fmt.Errorf("annotation %s need a valid json value", attribute)
+					return fmt.Errorf("annotation %s need a valid json value. error: %s", attribute, err.Error())
 				}
 
 				if strings.Contains(extensionName, "logo") {
@@ -695,13 +775,14 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 
 		fields := FieldsByAnySpace(v, 2)
 		securityAttr := strings.ToLower(fields[0])
+
 		var value string
 		if len(fields) > 1 {
 			value = fields[1]
 		}
 
-		for _, findterm := range search {
-			if securityAttr == findterm {
+		for _, findTerm := range search {
+			if securityAttr == findTerm {
 				attrMap[securityAttr] = value
 
 				break
@@ -786,19 +867,20 @@ func (parser *Parser) ParseProduceComment(commentLine string) error {
 	return parseMimeTypeList(commentLine, &parser.swagger.Produces, "%v produce type can't be accepted")
 }
 
-func isGeneralAPIComment(comments []string) bool {
-	for _, commentLine := range comments {
-		commentLine = strings.TrimSpace(commentLine)
-		if len(commentLine) == 0 {
-			continue
-		}
-		attribute := strings.ToLower(FieldsByAnySpace(commentLine, 2)[0])
-		switch attribute {
-		// The @summary, @router, @success, @failure annotation belongs to Operation
-		case summaryAttr, routerAttr, successAttr, failureAttr, responseAttr:
-			return false
-		}
+func isGeneralAPIComment(comment string) bool {
+	// for _, commentLine := range comments {
+	commentLine := strings.TrimSpace(comment)
+	if len(commentLine) == 0 {
+		return false
 	}
+
+	attribute := strings.ToLower(FieldsByAnySpace(commentLine, 2)[0])
+	switch attribute {
+	// The @summary, @router, @success, @failure annotation belongs to Operation
+	case summaryAttr, routerAttr, successAttr, failureAttr, responseAttr:
+		return false
+	}
+	// }
 
 	return true
 }
@@ -873,6 +955,7 @@ func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
 				if _, has := parser.tags["!"+tag]; has {
 					return false
 				}
+
 				if _, has := parser.tags[tag]; has {
 					match = true // keep iterating as it may contain a tag that is excluded
 				}
@@ -880,25 +963,28 @@ func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
 		}
 		return
 	}
+
 	return true
 }
 
 func matchExtension(extensionToMatch string, comments []*ast.Comment) (match bool) {
-	if len(extensionToMatch) != 0 {
-		for _, comment := range comments {
-			commentLine := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
-			fields := FieldsByAnySpace(commentLine, 2)
-			if len(fields) > 0 {
-				lowerAttribute := strings.ToLower(fields[0])
+	if len(extensionToMatch) == 0 {
+		return true
+	}
 
-				if lowerAttribute == fmt.Sprintf("@x-%s", strings.ToLower(extensionToMatch)) {
-					return true
-				}
+	for _, comment := range comments {
+		commentLine := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
+		fields := FieldsByAnySpace(commentLine, 2)
+		if len(fields) > 0 {
+			lowerAttribute := strings.ToLower(fields[0])
+
+			if lowerAttribute == fmt.Sprintf("@x-%s", strings.ToLower(extensionToMatch)) {
+				return true
 			}
 		}
-		return false
 	}
-	return true
+
+	return false
 }
 
 // ParseRouterAPIInfo parses router api info for given astFile.
@@ -907,12 +993,14 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
 			continue
 		}
+
 		astDeclaration, ok := astDescription.(*ast.FuncDecl)
 		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
 			if parser.matchTags(astDeclaration.Doc.List) &&
 				matchExtension(parser.parseExtension, astDeclaration.Doc.List) {
 				// for per 'function' comment, create a new 'Operation' object
 				operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
+
 				for _, comment := range astDeclaration.Doc.List {
 					err := operation.ParseComment(comment.Text, fileInfo.File)
 					if err != nil {
@@ -923,6 +1011,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 				if err != nil {
 					return err
 				}
+
 			}
 		}
 	}
@@ -1019,6 +1108,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 
 	typeSpecDef := parser.packages.FindTypeSpec(typeName, file)
 	if typeSpecDef == nil {
+		parser.packages.FindTypeSpec(typeName, file) // uncomment for debugging
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 
@@ -1543,6 +1633,8 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 		}
 
 		return result, nil
+	case ANY:
+		return exampleValue, nil
 	}
 
 	return nil, fmt.Errorf("%s is unsupported type in example value %s", schemaType, exampleValue)
@@ -1688,5 +1780,11 @@ func (parser *Parser) addTestType(typename string) {
 		PkgPath: "",
 		Name:    typename,
 		Schema:  PrimitiveSchema(OBJECT),
+	}
+
+	parser.parsedSchemasV3[typeDef] = &SchemaV3{
+		PkgPath: "",
+		Name:    typename,
+		Schema:  PrimitiveSchemaV3(OBJECT).Spec,
 	}
 }
