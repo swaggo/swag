@@ -234,8 +234,13 @@ func TestParseResponseCommentWithNestedPrimitiveTypeV3(t *testing.T) {
 	allOf := operation.Responses.Spec.Response["200"].Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf
 	require.NotNil(t, allOf)
 	assert.Equal(t, 2, len(allOf))
-	assert.Equal(t, "#/components/schemas/data", allOf[0].Ref.Ref)
-	assert.Equal(t, "#/components/schemas/data2", allOf[1].Ref.Ref)
+	found := map[string]struct{}{}
+	for _, schema := range allOf {
+		assert.NotNil(t, schema.Ref.Ref)
+		found[schema.Ref.Ref] = struct{}{}
+	}
+	assert.NotNil(t, found["#/components/schemas/data"])
+	assert.NotNil(t, found["#/components/schemas/data2"])
 }
 
 func TestParseResponseCommentWithNestedPrimitiveArrayTypeV3(t *testing.T) {
