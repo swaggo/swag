@@ -527,12 +527,6 @@ func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths
 	}
 
 	return typeDef
-	// if pd, ok := pkgs.packages[path]; ok {
-	// 	if pd.Name == pkgName {
-	// 		return path
-	// 	}
-	// }
-
 }
 
 // FindTypeSpec finds out TypeSpecDef of a type by typeName
