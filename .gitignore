@@ -20,3 +20,6 @@ cover.out
 
 /swag
 /swag.exe
+cmd/swag/docs/*
+
+.vscode/launch.json

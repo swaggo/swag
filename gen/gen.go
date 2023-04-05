@@ -15,7 +15,10 @@ import (
 	"text/template"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/go-openapi/spec"
+	openapi "github.com/sv-tools/openapi/spec"
 	"github.com/swaggo/swag"
 	"sigs.k8s.io/yaml"
 )
@@ -29,11 +32,12 @@ type genTypeWriter func(*Config, *spec.Swagger) error
 
 // Gen presents a generate tool for swag.
 type Gen struct {
-	json          func(data interface{}) ([]byte, error)
-	jsonIndent    func(data interface{}) ([]byte, error)
-	jsonToYAML    func(data []byte) ([]byte, error)
-	outputTypeMap map[string]genTypeWriter
-	debug         Debugger
+	json            func(data interface{}) ([]byte, error)
+	jsonIndent      func(data interface{}) ([]byte, error)
+	jsonToYAML      func(data []byte) ([]byte, error)
+	outputTypeMap   map[string]genTypeWriter
+	outputTypeMapV3 map[string]openAPITypeWriter
+	debug           Debugger
 }
 
 // Debugger is the interface that wraps the basic Printf method.
@@ -46,7 +50,8 @@ func New() *Gen {
 	gen := Gen{
 		json: json.Marshal,
 		jsonIndent: func(data interface{}) ([]byte, error) {
-			return json.MarshalIndent(data, "", "    ")
+			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			return json.MarshalIndent(&data, "", "    ")
 		},
 		jsonToYAML: yaml.JSONToYAML,
 		debug:      log.New(os.Stdout, "", log.LstdFlags),
@@ -57,6 +62,13 @@ func New() *Gen {
 		"json": gen.writeJSONSwagger,
 		"yaml": gen.writeYAMLSwagger,
 		"yml":  gen.writeYAMLSwagger,
+	}
+
+	gen.outputTypeMapV3 = map[string]openAPITypeWriter{
+		"go":   gen.writeDocOpenAPI,
+		"json": gen.writeJSONOpenAPI,
+		"yaml": gen.writeYAMLOpenAPI,
+		"yml":  gen.writeYAMLOpenAPI,
 	}
 
 	return &gen
@@ -127,6 +139,8 @@ type Config struct {
 	// include only tags mentioned when searching, comma separated
 	Tags string
 
+	// if true, OpenAPI V3.1 spec will be generated
+	OpenAPIVersion bool
 	// PackageName defines package name of generated `docs.go`
 	PackageName string
 
@@ -182,6 +196,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetOverrides(overrides),
 		swag.ParseUsingGoList(config.ParseGoList),
 		swag.SetTags(config.Tags),
+		swag.SetOpenAPIVersion(config.OpenAPIVersion),
 		swag.SetCollectionFormat(config.CollectionFormat),
 	)
 
@@ -194,12 +209,45 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
-	swagger := p.GetSwagger()
-
 	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
 		return err
 	}
 
+	if config.OpenAPIVersion {
+		openAPI := p.GetOpenAPI()
+		err := g.writeOpenAPI(config, openAPI)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	swagger := p.GetSwagger()
+	err := g.writeSwagger(config, swagger)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *Gen) writeOpenAPI(config *Config, o *openapi.OpenAPI) error {
+	for _, outputType := range config.OutputTypes {
+		outputType = strings.ToLower(strings.TrimSpace(outputType))
+		if typeWriter, ok := g.outputTypeMapV3[outputType]; ok {
+			if err := typeWriter(config, o); err != nil {
+				return err
+			}
+		} else {
+			log.Printf("output type '%s' not supported", outputType)
+		}
+	}
+
+	return nil
+}
+
+func (g *Gen) writeSwagger(config *Config, swagger *spec.Swagger) error {
 	for _, outputType := range config.OutputTypes {
 		outputType = strings.ToLower(strings.TrimSpace(outputType))
 		if typeWriter, ok := g.outputTypeMap[outputType]; ok {
