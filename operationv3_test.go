@@ -213,7 +213,7 @@ func TestParseResponseCommentWithObjectTypeV3(t *testing.T) {
 	response := operation.Responses.Spec.Response["200"]
 	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
 
-	assert.Equal(t, "#/components/model.OrderRow", response.Spec.Spec.Content["application/json"].Spec.Schema.Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.OrderRow", response.Spec.Spec.Content["application/json"].Spec.Schema.Ref.Ref)
 }
 
 func TestParseResponseCommentWithNestedPrimitiveTypeV3(t *testing.T) {
@@ -234,8 +234,8 @@ func TestParseResponseCommentWithNestedPrimitiveTypeV3(t *testing.T) {
 	allOf := operation.Responses.Spec.Response["200"].Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf
 	require.NotNil(t, allOf)
 	assert.Equal(t, 2, len(allOf))
-	assert.Equal(t, "#/components/data", allOf[0].Ref.Ref)
-	assert.Equal(t, "#/components/data2", allOf[1].Ref.Ref)
+	assert.Equal(t, "#/components/schemas/data", allOf[0].Ref.Ref)
+	assert.Equal(t, "#/components/schemas/data2", allOf[1].Ref.Ref)
 }
 
 func TestParseResponseCommentWithNestedPrimitiveArrayTypeV3(t *testing.T) {
@@ -272,8 +272,8 @@ func TestParseResponseCommentWithNestedObjectTypeV3(t *testing.T) {
 	assert.Equal(t, 2, len(response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf))
 	assert.Equal(t, 5, len(operation.parser.openAPI.Components.Spec.Schemas))
 
-	assert.Equal(t, "#/components/model.Payload", operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Ref.Ref)
-	assert.Equal(t, "#/components/model.Payload2", operation.parser.openAPI.Components.Spec.Schemas["data2"].Spec.Properties["data2"].Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.Payload", operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.Payload2", operation.parser.openAPI.Components.Spec.Schemas["data2"].Spec.Properties["data2"].Ref.Ref)
 }
 
 func TestParseResponseCommentWithNestedArrayObjectTypeV3(t *testing.T) {
@@ -295,10 +295,10 @@ func TestParseResponseCommentWithNestedArrayObjectTypeV3(t *testing.T) {
 	allOf := response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.AllOf
 	assert.Equal(t, 2, len(allOf))
 
-	assert.Equal(t, "#/components/model.Payload", operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Spec.Items.Schema.Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.Payload", operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Spec.Items.Schema.Ref.Ref)
 	assert.Equal(t, typeArray, operation.parser.openAPI.Components.Spec.Schemas["data"].Spec.Properties["data"].Spec.Type)
 
-	assert.Equal(t, "#/components/model.Payload2", operation.parser.openAPI.Components.Spec.Schemas["data2"].Spec.Properties["data2"].Spec.Items.Schema.Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.Payload2", operation.parser.openAPI.Components.Spec.Schemas["data2"].Spec.Properties["data2"].Spec.Items.Schema.Ref.Ref)
 	assert.Equal(t, typeArray, operation.parser.openAPI.Components.Spec.Schemas["data2"].Spec.Properties["data2"].Spec.Type)
 }
 
@@ -329,10 +329,10 @@ func TestParseResponseCommentWithNestedFieldsV3(t *testing.T) {
 	assert.Equal(t, typeInteger, schemas["data2"].Spec.Properties["data2"].Spec.Items.Schema.Spec.Type)
 	assert.Equal(t, typeObject, schemas["data2"].Spec.Type)
 
-	assert.Equal(t, "#/components/model.Payload", schemas["data3"].Spec.Properties["data3"].Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.Payload", schemas["data3"].Spec.Properties["data3"].Ref.Ref)
 	assert.Equal(t, typeObject, schemas["data3"].Spec.Type)
 
-	assert.Equal(t, "#/components/model.Payload", schemas["data4"].Spec.Properties["data4"].Spec.Items.Schema.Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.Payload", schemas["data4"].Spec.Properties["data4"].Spec.Items.Schema.Ref.Ref)
 	assert.Equal(t, typeArray, schemas["data4"].Spec.Properties["data4"].Spec.Type)
 	assert.Equal(t, typeObject, schemas["data4"].Spec.Type)
 }
@@ -410,7 +410,7 @@ func TestParseResponseCommentWithNestedArrayMapFieldsV3(t *testing.T) {
 	assert.Equal(t, typeObject, data1.Spec.Type)
 	assert.Equal(t, typeArray, data1.Spec.Properties["data1"].Spec.Type)
 	assert.Equal(t, typeObject, data1.Spec.Properties["data1"].Spec.Items.Schema.Spec.Type)
-	assert.Equal(t, "#/components/model.Payload", data1.Spec.Properties["data1"].Spec.Items.Schema.Spec.AdditionalProperties.Schema.Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.Payload", data1.Spec.Properties["data1"].Spec.Items.Schema.Spec.AdditionalProperties.Schema.Ref.Ref)
 
 	data2 := schemas["data2"]
 	assert.NotNil(t, data2)
@@ -455,7 +455,7 @@ func TestParseResponseCommentWithObjectTypeInSameFileV3(t *testing.T) {
 
 	response := operation.Responses.Spec.Response["200"]
 	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
-	assert.Equal(t, "#/components/swag.testOwner", response.Spec.Spec.Content["application/json"].Spec.Schema.Ref.Ref)
+	assert.Equal(t, "#/components/schemas/swag.testOwner", response.Spec.Spec.Content["application/json"].Spec.Schema.Ref.Ref)
 }
 
 func TestParseResponseCommentWithObjectTypeErrV3(t *testing.T) {
@@ -483,7 +483,7 @@ func TestParseResponseCommentWithArrayTypeV3(t *testing.T) {
 	response := operation.Responses.Spec.Response["200"]
 	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
 	assert.Equal(t, typeArray, response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.Type)
-	assert.Equal(t, "#/components/model.OrderRow", response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.Items.Schema.Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.OrderRow", response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.Items.Schema.Ref.Ref)
 
 }
 
@@ -1028,7 +1028,7 @@ func TestParseParamCommentByBodyTypeV3(t *testing.T) {
 	assert.Equal(t, "some_id", parameterSpec.Name)
 	assert.Equal(t, true, parameterSpec.Required)
 	assert.Equal(t, "body", parameterSpec.In)
-	assert.Equal(t, "#/components/model.OrderRow", parameterSpec.Schema.Ref.Ref)
+	assert.Equal(t, "#/components/schemas/model.OrderRow", parameterSpec.Schema.Ref.Ref)
 }
 
 func TestParseParamCommentByBodyTextPlainV3(t *testing.T) {
