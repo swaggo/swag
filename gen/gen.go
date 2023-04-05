@@ -131,8 +131,9 @@ type Config struct {
 	// include only tags mentioned when searching, comma separated
 	Tags string
 
-	// if true, OpenAPI V3.1 spec will be generated
-	GenerateOpenApi3Doc bool
+	// GenerateOpenAPI3Doc if true, OpenAPI V3.1 spec will be generated
+	GenerateOpenAPI3Doc bool
+
 	// PackageName defines package name of generated `docs.go`
 	PackageName string
 
@@ -188,7 +189,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetOverrides(overrides),
 		swag.ParseUsingGoList(config.ParseGoList),
 		swag.SetTags(config.Tags),
-		swag.GenerateOpenApi3Docs(config.GenerateOpenApi3Doc),
+		swag.GenerateOpenAPI3Doc(config.GenerateOpenAPI3Doc),
 		swag.SetCollectionFormat(config.CollectionFormat),
 	)
 
@@ -205,7 +206,7 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
-	if config.GenerateOpenApi3Doc {
+	if config.GenerateOpenAPI3Doc {
 		return g.writeOpenAPI(config, p.GetOpenAPI())
 	}
 

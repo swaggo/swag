@@ -370,8 +370,8 @@ func ParseUsingGoList(enabled bool) func(parser *Parser) {
 	}
 }
 
-// GenerateOpenApi3Docs parses only those operations which match given extension
-func GenerateOpenApi3Docs(enable bool) func(*Parser) {
+// GenerateOpenAPI3Doc parses only those operations which match given extension
+func GenerateOpenAPI3Doc(enable bool) func(*Parser) {
 	return func(p *Parser) {
 		p.openAPIVersion = enable
 	}
