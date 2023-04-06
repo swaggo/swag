@@ -350,14 +350,32 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 		}
 	case "body":
 		if objectType == PRIMITIVE {
-			param.Schema = PrimitiveSchemaV3(refType)
+			schema := PrimitiveSchemaV3(refType)
+
+			err := o.parseParamAttributeForBody(commentLine, objectType, refType, schema.Spec)
+			if err != nil {
+				return err
+			}
+
+			o.fillRequestBody(schema, required, description, true)
+
+			return nil
+
 		} else {
 			schema, err := o.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
 			if err != nil {
 				return err
 			}
 
-			param.Schema = schema
+			err = o.parseParamAttributeForBody(commentLine, objectType, refType, schema.Spec)
+			if err != nil {
+				return err
+			}
+
+			o.fillRequestBody(schema, required, description, false)
+
+			return nil
+
 		}
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
@@ -377,7 +395,74 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 	return nil
 }
 
+func (o *OperationV3) fillRequestBody(schema *spec.RefOrSpec[spec.Schema], required bool, description string, primitive bool) {
+	if o.RequestBody == nil {
+		o.RequestBody = spec.NewRequestBodySpec()
+		o.RequestBody.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType])
+
+		if primitive {
+			o.RequestBody.Spec.Spec.Content["text/plain"] = spec.NewMediaType()
+		} else {
+			o.RequestBody.Spec.Spec.Content["application/json"] = spec.NewMediaType()
+		}
+	}
+
+	o.RequestBody.Spec.Spec.Description = description
+	o.RequestBody.Spec.Spec.Required = required
+
+	for _, value := range o.RequestBody.Spec.Spec.Content {
+		value.Spec.Schema = schema
+	}
+}
+
 func (o *OperationV3) parseParamAttribute(comment, objectType, schemaType string, param *spec.Parameter) error {
+	if param == nil {
+		return fmt.Errorf("cannot parse empty parameter for comment: %s", comment)
+	}
+
+	schemaType = TransToValidSchemeType(schemaType)
+
+	for attrKey, re := range regexAttributes {
+		attr, err := findAttr(re, comment)
+		if err != nil {
+			continue
+		}
+
+		switch attrKey {
+		case enumsTag:
+			err = setEnumParamV3(param.Schema.Spec, attr, objectType, schemaType)
+		case minimumTag, maximumTag:
+			err = setNumberParamV3(param.Schema.Spec, attrKey, schemaType, attr, comment)
+		case defaultTag:
+			err = setDefaultV3(param.Schema.Spec, schemaType, attr)
+		case minLengthTag, maxLengthTag:
+			err = setStringParamV3(param.Schema.Spec, attrKey, schemaType, attr, comment)
+		case formatTag:
+			param.Schema.Spec.Format = attr
+		case exampleTag:
+			val, err := defineType(schemaType, attr)
+			if err != nil {
+				continue // Don't set a example value if it's not valid
+			}
+
+			param.Example = val
+		case schemaExampleTag:
+			err = setSchemaExampleV3(param.Schema.Spec, schemaType, attr)
+		case extensionsTag:
+			param.Schema.Spec.Extensions = setExtensionParam(attr)
+		case collectionFormatTag:
+			err = setCollectionFormatParamV3(param, attrKey, objectType, attr, comment)
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (o *OperationV3) parseParamAttributeForBody(comment, objectType, schemaType string, param *spec.Schema) error {
 	schemaType = TransToValidSchemeType(schemaType)
 
 	for attrKey, re := range regexAttributes {
@@ -396,15 +481,13 @@ func (o *OperationV3) parseParamAttribute(comment, objectType, schemaType string
 		case minLengthTag, maxLengthTag:
 			err = setStringParamV3(param, attrKey, schemaType, attr, comment)
 		case formatTag:
-			param.Schema.Spec.Format = attr
+			param.Format = attr
 		case exampleTag:
-			err = setExampleV3(param, schemaType, attr)
+			err = setSchemaExampleV3(param, schemaType, attr)
 		case schemaExampleTag:
 			err = setSchemaExampleV3(param, schemaType, attr)
 		case extensionsTag:
-			param.Schema.Spec.Extensions = setExtensionParam(attr)
-		case collectionFormatTag:
-			err = setCollectionFormatParamV3(param, attrKey, objectType, attr, comment)
+			param.Extensions = setExtensionParam(attr)
 		}
 
 		if err != nil {
@@ -424,28 +507,29 @@ func setCollectionFormatParamV3(param *spec.Parameter, name, schemaType, attr, c
 	return fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
 }
 
-func setSchemaExampleV3(param *spec.Parameter, schemaType string, value string) error {
+func setSchemaExampleV3(param *spec.Schema, schemaType string, value string) error {
 	val, err := defineType(schemaType, value)
 	if err != nil {
 		return nil // Don't set a example value if it's not valid
 	}
+
 	// skip schema
-	if param.Schema == nil {
+	if param == nil {
 		return nil
 	}
 
 	switch v := val.(type) {
 	case string:
 		//  replaces \r \n \t in example string values.
-		param.Schema.Spec.Example = strings.NewReplacer(`\r`, "\r", `\n`, "\n", `\t`, "\t").Replace(v)
+		param.Example = strings.NewReplacer(`\r`, "\r", `\n`, "\n", `\t`, "\t").Replace(v)
 	default:
-		param.Schema.Spec.Example = val
+		param.Example = val
 	}
 
 	return nil
 }
 
-func setExampleV3(param *spec.Parameter, schemaType string, value string) error {
+func setExampleParameterV3(param *spec.Parameter, schemaType string, value string) error {
 	val, err := defineType(schemaType, value)
 	if err != nil {
 		return nil // Don't set a example value if it's not valid
@@ -456,7 +540,7 @@ func setExampleV3(param *spec.Parameter, schemaType string, value string) error 
 	return nil
 }
 
-func setStringParamV3(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
+func setStringParamV3(param *spec.Schema, name, schemaType, attr, commentLine string) error {
 	if schemaType != STRING {
 		return fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)
 	}
@@ -468,26 +552,26 @@ func setStringParamV3(param *spec.Parameter, name, schemaType, attr, commentLine
 
 	switch name {
 	case minLengthTag:
-		param.Schema.Spec.MinLength = &n
+		param.MinLength = &n
 	case maxLengthTag:
-		param.Schema.Spec.MaxLength = &n
+		param.MaxLength = &n
 	}
 
 	return nil
 }
 
-func setDefaultV3(param *spec.Parameter, schemaType string, value string) error {
+func setDefaultV3(param *spec.Schema, schemaType string, value string) error {
 	val, err := defineType(schemaType, value)
 	if err != nil {
 		return nil // Don't set a default value if it's not valid
 	}
 
-	param.Schema.Spec.Default = val
+	param.Default = val
 
 	return nil
 }
 
-func setEnumParamV3(param *spec.Parameter, attr, objectType, schemaType string) error {
+func setEnumParamV3(param *spec.Schema, attr, objectType, schemaType string) error {
 	for _, e := range strings.Split(attr, ",") {
 		e = strings.TrimSpace(e)
 
@@ -498,16 +582,16 @@ func setEnumParamV3(param *spec.Parameter, attr, objectType, schemaType string) 
 
 		switch objectType {
 		case ARRAY:
-			param.Schema.Spec.Items.Schema.Spec.Enum = append(param.Schema.Spec.Items.Schema.Spec.Enum, value)
+			param.Items.Schema.Spec.Enum = append(param.Items.Schema.Spec.Enum, value)
 		default:
-			param.Schema.Spec.Enum = append(param.Schema.Spec.Enum, value)
+			param.Enum = append(param.Enum, value)
 		}
 	}
 
 	return nil
 }
 
-func setNumberParamV3(param *spec.Parameter, name, schemaType, attr, commentLine string) error {
+func setNumberParamV3(param *spec.Schema, name, schemaType, attr, commentLine string) error {
 	switch schemaType {
 	case INTEGER, NUMBER:
 		n, err := strconv.Atoi(attr)
@@ -517,9 +601,9 @@ func setNumberParamV3(param *spec.Parameter, name, schemaType, attr, commentLine
 
 		switch name {
 		case minimumTag:
-			param.Schema.Spec.Minimum = &n
+			param.Minimum = &n
 		case maximumTag:
-			param.Schema.Spec.Maximum = &n
+			param.Maximum = &n
 		}
 
 		return nil
