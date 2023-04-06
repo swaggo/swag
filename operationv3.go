@@ -361,22 +361,22 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 
 			return nil
 
-		} else {
-			schema, err := o.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
-			if err != nil {
-				return err
-			}
-
-			err = o.parseParamAttributeForBody(commentLine, objectType, refType, schema.Spec)
-			if err != nil {
-				return err
-			}
-
-			o.fillRequestBody(schema, required, description, false)
-
-			return nil
-
 		}
+
+		schema, err := o.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
+		if err != nil {
+			return err
+		}
+
+		err = o.parseParamAttributeForBody(commentLine, objectType, refType, schema.Spec)
+		if err != nil {
+			return err
+		}
+
+		o.fillRequestBody(schema, required, description, false)
+
+		return nil
+
 	default:
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
