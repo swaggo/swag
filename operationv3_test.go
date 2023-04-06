@@ -1919,3 +1919,47 @@ func TestParseCodeSamplesV3(t *testing.T) {
 		assert.Error(t, err, "no error should be thrown")
 	})
 }
+
+func TestParseAcceptCommentV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	resultMapKeys := []string{
+		"application/json",
+		"text/xml",
+		"text/plain",
+		"text/html",
+		"multipart/form-data",
+		"application/x-www-form-urlencoded",
+		"application/vnd.api+json",
+		"application/x-json-stream",
+		"application/octet-stream",
+		"image/png",
+		"image/jpeg",
+		"image/gif",
+		"application/xhtml+xml",
+		"application/health+json"}
+
+	content := operation.RequestBody.Spec.Spec.Content
+	for _, key := range resultMapKeys {
+		assert.NotNil(t, content[key])
+	}
+
+	assert.Equal(t, typeObject, content["application/json"].Spec.Schema.Spec.Type)
+	assert.Equal(t, typeObject, content["text/xml"].Spec.Schema.Spec.Type)
+	assert.Equal(t, typeString, content["image/png"].Spec.Schema.Spec.Type)
+	assert.Equal(t, "binary", content["image/png"].Spec.Schema.Spec.Format)
+}
+
+func TestParseAcceptCommentErrV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `/@Accept unknown`
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+}

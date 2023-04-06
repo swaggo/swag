@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sv-tools/openapi/spec"
 	"gopkg.in/yaml.v2"
 )
@@ -145,16 +146,49 @@ func (o *OperationV3) ParseTagsComment(commentLine string) {
 func (o *OperationV3) ParseAcceptComment(commentLine string) error {
 	const errMessage = "could not parse accept comment"
 
-	// TODO this must be moved into another comment
-	// return parseMimeTypeList(commentLine, &o.RequestBody.Spec.Spec.Content, )
-	// result, err := parseMimeTypeListV3(commentLine, "%v accept type can't be accepted")
-	// if err != nil {
-	// 	return errors.Wrap(err, errMessage)
-	// }
+	validTypes, err := parseMimeTypeListV3(commentLine, "%v accept type can't be accepted")
+	if err != nil {
+		return errors.Wrap(err, errMessage)
+	}
 
-	// for _, value := range result {
-	// 	o.RequestBody.Spec.Spec.Content[value] = spec.NewMediaType()
-	// }
+	if o.RequestBody == nil {
+		o.RequestBody = spec.NewRequestBodySpec()
+	}
+
+	if o.RequestBody.Spec.Spec.Content == nil {
+		o.RequestBody.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType], len(validTypes))
+	}
+
+	for _, value := range validTypes {
+		// skip correctly setup types like application/json
+		if o.RequestBody.Spec.Spec.Content[value] != nil {
+			continue
+		}
+
+		mediaType := spec.NewMediaType()
+		schema := spec.NewSchemaSpec()
+
+		switch value {
+		case "application/json", "multipart/form-data", "text/xml":
+			schema.Spec.Type = spec.NewSingleOrArray(OBJECT)
+		case "image/png",
+			"image/jpeg",
+			"image/gif",
+			"application/octet-stream",
+			"application/pdf",
+			"application/msexcel",
+			"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			"application/vnd.openxmlformats-officedocument.presentationml.presentation":
+			schema.Spec.Type = spec.NewSingleOrArray(STRING)
+			schema.Spec.Format = "binary"
+		default:
+			schema.Spec.Type = spec.NewSingleOrArray(STRING)
+		}
+
+		mediaType.Spec.Schema = schema
+		o.RequestBody.Spec.Spec.Content[value] = mediaType
+	}
 
 	return nil
 }
