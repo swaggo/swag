@@ -863,42 +863,10 @@ func TestParseParamCommentBodyArrayV3(t *testing.T) {
 	err := o.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	expected := &spec.RefOrSpec[spec.Extendable[spec.Parameter]]{
-		Spec: &spec.Extendable[spec.Parameter]{
-			Spec: &spec.Parameter{
-				Name:        "names",
-				Description: "Users List",
-				In:          "body",
-				Required:    true,
-				Schema: &spec.RefOrSpec[spec.Schema]{
-					Spec: &spec.Schema{
-						JsonSchema: spec.JsonSchema{
-							JsonSchemaCore: spec.JsonSchemaCore{
-								Type: typeArray,
-							},
-							JsonSchemaTypeArray: spec.JsonSchemaTypeArray{
-								Items: &spec.BoolOrSchema{
-									Schema: &spec.RefOrSpec[spec.Schema]{
-										Spec: &spec.Schema{
-											JsonSchema: spec.JsonSchema{
-												JsonSchemaCore: spec.JsonSchemaCore{
-													Type: typeString,
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	expectedArray := []*spec.RefOrSpec[spec.Extendable[spec.Parameter]]{expected}
-	assert.Equal(t, o.Parameters, expectedArray)
-
+	assert.NotNil(t, o.RequestBody)
+	assert.Equal(t, "Users List", o.RequestBody.Spec.Spec.Description)
+	assert.True(t, o.RequestBody.Spec.Spec.Required)
+	assert.Equal(t, typeArray, o.RequestBody.Spec.Spec.Content["application/json"].Spec.Schema.Spec.Type)
 }
 
 func TestParseParamCommentArrayV3(t *testing.T) {
@@ -1024,16 +992,14 @@ func TestParseParamCommentByBodyTypeV3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	parameters := operation.Operation.Parameters
-	assert.NotNil(t, parameters)
+	requestBody := operation.RequestBody
+	assert.NotNil(t, requestBody)
 
-	parameterSpec := parameters[0].Spec.Spec
-	assert.NotNil(t, parameterSpec)
-	assert.Equal(t, "Some ID", parameterSpec.Description)
-	assert.Equal(t, "some_id", parameterSpec.Name)
-	assert.Equal(t, true, parameterSpec.Required)
-	assert.Equal(t, "body", parameterSpec.In)
-	assert.Equal(t, "#/components/schemas/model.OrderRow", parameterSpec.Schema.Ref.Ref)
+	requestBodySpec := requestBody.Spec.Spec
+	assert.NotNil(t, requestBodySpec)
+	assert.Equal(t, "Some ID", requestBodySpec.Description)
+	assert.Equal(t, true, requestBodySpec.Required)
+	assert.Equal(t, "#/components/schemas/model.OrderRow", requestBodySpec.Content["application/json"].Spec.Schema.Ref.Ref)
 }
 
 func TestParseParamCommentByBodyTextPlainV3(t *testing.T) {
@@ -1045,16 +1011,14 @@ func TestParseParamCommentByBodyTextPlainV3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	parameters := operation.Operation.Parameters
-	assert.NotNil(t, parameters)
+	requestBody := operation.RequestBody
+	assert.NotNil(t, requestBody)
 
-	parameterSpec := parameters[0].Spec.Spec
-	assert.NotNil(t, parameterSpec)
-	assert.Equal(t, "Text to process", parameterSpec.Description)
-	assert.Equal(t, "text", parameterSpec.Name)
-	assert.Equal(t, true, parameterSpec.Required)
-	assert.Equal(t, "body", parameterSpec.In)
-	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	requestBodySpec := requestBody.Spec.Spec
+	assert.NotNil(t, requestBodySpec)
+	assert.Equal(t, "Text to process", requestBodySpec.Description)
+	assert.Equal(t, true, requestBodySpec.Required)
+	assert.Equal(t, typeString, requestBodySpec.Content["text/plain"].Spec.Schema.Spec.Type)
 }
 
 func TestParseParamCommentByBodyTypeWithDeepNestedFieldsV3(t *testing.T) {
@@ -1068,19 +1032,17 @@ func TestParseParamCommentByBodyTypeWithDeepNestedFieldsV3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	assert.Len(t, operation.Parameters, 1)
+	assert.Len(t, operation.Parameters, 0)
 
-	parameters := operation.Operation.Parameters
-	assert.NotNil(t, parameters)
+	requestBody := operation.RequestBody
+	assert.NotNil(t, requestBody)
 
-	parameterSpec := parameters[0].Spec.Spec
-	assert.NotNil(t, parameterSpec)
-	assert.Equal(t, "test deep", parameterSpec.Description)
-	assert.Equal(t, "body", parameterSpec.Name)
-	assert.True(t, parameterSpec.Required)
-	assert.Equal(t, "body", parameterSpec.In)
+	requestBodySpec := requestBody.Spec.Spec
+	assert.NotNil(t, requestBodySpec)
+	assert.Equal(t, "test deep", requestBodySpec.Description)
+	assert.True(t, requestBodySpec.Required)
 
-	assert.Equal(t, 2, len(parameterSpec.Schema.Spec.AllOf))
+	assert.Equal(t, 2, len(requestBodySpec.Content["application/json"].Spec.Schema.Spec.AllOf))
 	assert.Equal(t, 3, len(operation.parser.openAPI.Components.Spec.Schemas))
 }
 
@@ -1093,17 +1055,15 @@ func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoV3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	parameters := operation.Operation.Parameters
-	assert.NotNil(t, parameters)
+	requestBody := operation.RequestBody
+	assert.NotNil(t, requestBody)
 
-	parameterSpec := parameters[0].Spec.Spec
-	assert.NotNil(t, parameterSpec)
-	assert.Equal(t, "Some ID", parameterSpec.Description)
-	assert.Equal(t, "some_id", parameterSpec.Name)
-	assert.True(t, parameterSpec.Required)
-	assert.Equal(t, "body", parameterSpec.In)
-	assert.Equal(t, typeArray, parameterSpec.Schema.Spec.Type)
-	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Items.Schema.Spec.Type)
+	requestBodySpec := requestBody.Spec.Spec
+	assert.NotNil(t, requestBodySpec)
+	assert.Equal(t, "Some ID", requestBodySpec.Description)
+	assert.True(t, requestBodySpec.Required)
+	assert.Equal(t, typeArray, requestBodySpec.Content["application/json"].Spec.Schema.Spec.Type)
+	assert.Equal(t, typeInteger, requestBodySpec.Content["application/json"].Spec.Schema.Spec.Items.Schema.Spec.Type)
 }
 
 func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFieldsV3(t *testing.T) {
@@ -1116,18 +1076,15 @@ func TestParseParamCommentByBodyTypeArrayOfPrimitiveGoWithDeepNestedFieldsV3(t *
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	assert.Len(t, operation.Parameters, 1)
+	assert.Len(t, operation.Parameters, 0)
 
-	parameters := operation.Operation.Parameters
-	assert.NotNil(t, parameters)
+	assert.NotNil(t, operation.RequestBody)
 
-	parameterSpec := parameters[0].Spec.Spec
+	parameterSpec := operation.RequestBody.Spec.Spec.Content["application/json"].Spec
 	assert.NotNil(t, parameterSpec)
-	assert.Equal(t, "test deep", parameterSpec.Description)
-	assert.Equal(t, "body", parameterSpec.Name)
-	assert.True(t, parameterSpec.Required)
-	assert.Equal(t, "body", parameterSpec.In)
+	assert.Equal(t, "test deep", operation.RequestBody.Spec.Spec.Description)
 	assert.Equal(t, typeArray, parameterSpec.Schema.Spec.Type)
+	assert.True(t, operation.RequestBody.Spec.Spec.Required)
 	assert.Equal(t, 2, len(parameterSpec.Schema.Spec.Items.Schema.Spec.AllOf))
 }
 
@@ -1504,23 +1461,6 @@ func TestParseParamCommentByExampleStringV3(t *testing.T) {
 	assert.Equal(t, "True feelings", parameterSpec.Example)
 }
 
-func TestParseParamCommentByExampleUnsupportedTypeV3(t *testing.T) {
-	t.Parallel()
-	var param spec.Parameter
-
-	setExampleV3(&param, "something", "random value")
-	assert.Equal(t, param.Example, nil)
-
-	setExampleV3(&param, STRING, "string value")
-	assert.Equal(t, param.Example, "string value")
-
-	setExampleV3(&param, INTEGER, "10")
-	assert.Equal(t, param.Example, 10)
-
-	setExampleV3(&param, NUMBER, "10")
-	assert.Equal(t, param.Example, float64(10))
-}
-
 func TestParseParamCommentBySchemaExampleStringV3(t *testing.T) {
 	t.Parallel()
 
@@ -1530,40 +1470,38 @@ func TestParseParamCommentBySchemaExampleStringV3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	parameters := operation.Operation.Parameters
-	assert.NotNil(t, parameters)
+	requestBody := operation.RequestBody
+	assert.NotNil(t, requestBody)
 
-	parameterSpec := parameters[0].Spec.Spec
-	assert.NotNil(t, parameterSpec)
-	assert.Equal(t, "Some ID", parameterSpec.Description)
-	assert.Equal(t, "some_id", parameterSpec.Name)
-	assert.True(t, parameterSpec.Required)
-	assert.Equal(t, "body", parameterSpec.In)
-	assert.Equal(t, "True feelings", parameterSpec.Schema.Spec.Example)
-	assert.Equal(t, typeString, parameterSpec.Schema.Spec.Type)
+	requestBodySpec := requestBody.Spec.Spec
+	assert.NotNil(t, requestBodySpec)
+	assert.Equal(t, "Some ID", requestBodySpec.Description)
+	assert.True(t, requestBodySpec.Required)
+	assert.Equal(t, "True feelings", requestBodySpec.Content["text/plain"].Spec.Schema.Spec.Example)
+	assert.Equal(t, typeString, requestBodySpec.Content["text/plain"].Spec.Schema.Spec.Type)
 }
 
 func TestParseParamCommentBySchemaExampleUnsupportedTypeV3(t *testing.T) {
 	t.Parallel()
 	var param spec.Parameter
 
-	setSchemaExampleV3(&param, "something", "random value")
+	setSchemaExampleV3(nil, "something", "random value")
 	assert.Nil(t, param.Schema)
 
-	setSchemaExampleV3(&param, STRING, "string value")
+	setSchemaExampleV3(nil, STRING, "string value")
 	assert.Nil(t, param.Schema)
 
 	param.Schema = spec.NewSchemaSpec()
-	setSchemaExampleV3(&param, STRING, "string value")
+	setSchemaExampleV3(param.Schema.Spec, STRING, "string value")
 	assert.Equal(t, "string value", param.Schema.Spec.Example)
 
-	setSchemaExampleV3(&param, INTEGER, "10")
+	setSchemaExampleV3(param.Schema.Spec, INTEGER, "10")
 	assert.Equal(t, 10, param.Schema.Spec.Example)
 
-	setSchemaExampleV3(&param, NUMBER, "10")
+	setSchemaExampleV3(param.Schema.Spec, NUMBER, "10")
 	assert.Equal(t, float64(10), param.Schema.Spec.Example)
 
-	setSchemaExampleV3(&param, STRING, "string \\r\\nvalue")
+	setSchemaExampleV3(param.Schema.Spec, STRING, "string \\r\\nvalue")
 	assert.Equal(t, "string \r\nvalue", param.Schema.Spec.Example)
 }
 
@@ -1655,7 +1593,7 @@ func TestParseAndExtractionParamAttributeV3(t *testing.T) {
 		assert.Error(t, err)
 
 		err = op.parseParamAttribute(" default(0)", "", ARRAY, nil)
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 }
 
@@ -1918,4 +1856,48 @@ func TestParseCodeSamplesV3(t *testing.T) {
 		err := operation.ParseComment(comment, nil)
 		assert.Error(t, err, "no error should be thrown")
 	})
+}
+
+func TestParseAcceptCommentV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	resultMapKeys := []string{
+		"application/json",
+		"text/xml",
+		"text/plain",
+		"text/html",
+		"multipart/form-data",
+		"application/x-www-form-urlencoded",
+		"application/vnd.api+json",
+		"application/x-json-stream",
+		"application/octet-stream",
+		"image/png",
+		"image/jpeg",
+		"image/gif",
+		"application/xhtml+xml",
+		"application/health+json"}
+
+	content := operation.RequestBody.Spec.Spec.Content
+	for _, key := range resultMapKeys {
+		assert.NotNil(t, content[key])
+	}
+
+	assert.Equal(t, typeObject, content["application/json"].Spec.Schema.Spec.Type)
+	assert.Equal(t, typeObject, content["text/xml"].Spec.Schema.Spec.Type)
+	assert.Equal(t, typeString, content["image/png"].Spec.Schema.Spec.Type)
+	assert.Equal(t, "binary", content["image/png"].Spec.Schema.Spec.Format)
+}
+
+func TestParseAcceptCommentErrV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `/@Accept unknown`
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(comment, nil)
+	assert.Error(t, err)
 }
