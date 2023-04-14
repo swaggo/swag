@@ -209,7 +209,7 @@ func (o *OperationV3) ParseProduceComment(commentLine string) error {
 	return nil
 }
 
-// ParseParamComment produces the previously parsed produce comment.
+// ProcessProduceComment processes the previously parsed produce comment.
 func (o *OperationV3) ProcessProduceComment() error {
 	const errMessage = "could not process produce comment"
 
