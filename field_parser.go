@@ -173,6 +173,7 @@ type structField struct {
 	enums        []interface{}
 	enumVarNames []interface{}
 	unique       bool
+	pattern      string
 }
 
 // splitNotWrapped slices s into all substrings separated by sep if sep is not
@@ -337,6 +338,11 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 		if minLength != nil {
 			field.minLength = minLength
 		}
+
+		pattern, ok := ps.tag.Lookup(patternTag)
+		if ok {
+			field.pattern = pattern
+		}
 	}
 
 	// json:"name,string" or json:",string"
@@ -445,6 +451,7 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 		schema.MaxItems = field.maxItems
 		schema.MinItems = field.minItems
 		schema.UniqueItems = field.unique
+		schema.Pattern = field.pattern
 
 		eleSchema = schema.Items.Schema
 		eleSchema.Format = field.formatType
@@ -456,6 +463,7 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	eleSchema.MaxLength = field.maxLength
 	eleSchema.MinLength = field.minLength
 	eleSchema.Enum = field.enums
+	eleSchema.Pattern = field.pattern
 
 	return nil
 }

@@ -25,6 +25,7 @@ type structFieldV3 struct {
 	enums        []interface{}
 	enumVarNames []interface{}
 	unique       bool
+	pattern      string
 }
 
 func (sf *structFieldV3) setOneOf(valValue string) {
@@ -232,6 +233,11 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 		if minLength != nil {
 			field.minLength = minLength
 		}
+
+		pattern, ok := ps.tag.Lookup(patternTag)
+		if ok {
+			field.pattern = pattern
+		}
 	}
 
 	// json:"name,string" or json:",string"
@@ -355,6 +361,7 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 	elemSchema.MaxLength = field.maxLength
 	elemSchema.MinLength = field.minLength
 	elemSchema.Enum = field.enums
+	elemSchema.Pattern = field.pattern
 
 	return nil
 }
