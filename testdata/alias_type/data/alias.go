@@ -1,8 +1,9 @@
 package data
 
 import (
-	"github.com/swaggo/swag/testdata/alias_type/types"
 	"time"
+
+	"github.com/swaggo/swag/v2/testdata/alias_type/types"
 )
 
 type TimeContainer struct {
