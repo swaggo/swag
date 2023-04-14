@@ -82,6 +82,160 @@
                     }
                 }
             }
+        },
+        "/students2": {
+            "get": {
+                "description": "test enums fields in formdata request",
+                "summary": "test enums fields in formdata request",
+                "parameters": [
+                    {
+                        "enum": [
+                            -1,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5
+                        ],
+                        "type": "integer",
+                        "x-enum-comments": {
+                            "A": "AAA",
+                            "B": "BBB"
+                        },
+                        "x-enum-varnames": [
+                            "None",
+                            "A",
+                            "B",
+                            "C",
+                            "D",
+                            "F"
+                        ],
+                        "name": "class",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
+                            1,
+                            2,
+                            4,
+                            8
+                        ],
+                        "type": "integer",
+                        "x-enum-comments": {
+                            "Mask1": "Mask1",
+                            "Mask2": "Mask2",
+                            "Mask3": "Mask3",
+                            "Mask4": "Mask4"
+                        },
+                        "x-enum-varnames": [
+                            "Mask1",
+                            "Mask2",
+                            "Mask3",
+                            "Mask4"
+                        ],
+                        "name": "mask",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "name": "name",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
+                        "type": "string",
+                        "x-enum-comments": {
+                            "Other": "Other",
+                            "Student": "student",
+                            "Teacher": "teacher"
+                        },
+                        "x-enum-varnames": [
+                            "Teacher",
+                            "Student",
+                            "Other"
+                        ],
+                        "name": "type",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/students4": {
+            "get": {
+                "description": "test array enums fields in formdata request",
+                "summary": "test array enums fields in formdata request",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                -1,
+                                1,
+                                2,
+                                3,
+                                4,
+                                5
+                            ],
+                            "type": "integer"
+                        },
+                        "name": "class",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                1,
+                                2,
+                                4,
+                                8
+                            ],
+                            "type": "integer"
+                        },
+                        "name": "mask",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "string",
+                        "name": "name",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
+                        "type": "string",
+                        "x-enum-comments": {
+                            "Other": "Other",
+                            "Student": "student",
+                            "Teacher": "teacher"
+                        },
+                        "x-enum-varnames": [
+                            "Teacher",
+                            "Student",
+                            "Other"
+                        ],
+                        "name": "type",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
         }
     },
     "definitions": {

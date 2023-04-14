@@ -36,6 +36,8 @@ const (
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
 	templateDelimsFlag    = "templateDelims"
+	packageName           = "packageName"
+	collectionFormatFlag  = "collectionFormat"
 )
 
 var initFlags = []cli.Flag{
@@ -148,6 +150,17 @@ var initFlags = []cli.Flag{
 		Value:   "",
 		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
 	},
+	&cli.StringFlag{
+		Name:  packageName,
+		Value: "",
+		Usage: "A package name of docs.go, using output directory name by default (check `--output` option)",
+	},
+	&cli.StringFlag{
+		Name:    collectionFormatFlag,
+		Aliases: []string{"cf"},
+		Value:   "csv",
+		Usage:   "Set default collection format",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -180,6 +193,11 @@ func initAction(ctx *cli.Context) error {
 		logger = log.New(io.Discard, "", log.LstdFlags)
 	}
 
+	collectionFormat := swag.TransToValidCollectionFormat(ctx.String(collectionFormatFlag))
+	if collectionFormat == "" {
+		return fmt.Errorf("not supported %s collectionFormat", ctx.String(collectionFormat))
+	}
+
 	return gen.New().Build(&gen.Config{
 		SearchDir:           ctx.String(searchDirFlag),
 		Excludes:            ctx.String(excludeFlag),
@@ -202,7 +220,9 @@ func initAction(ctx *cli.Context) error {
 		Tags:                ctx.String(tagsFlag),
 		LeftTemplateDelim:   leftDelim,
 		RightTemplateDelim:  rightDelim,
+		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
+		CollectionFormat:    collectionFormat,
 	})
 }
 

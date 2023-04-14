@@ -55,3 +55,10 @@ type Person struct {
 	Mask  Mask
 	Type  Type
 }
+
+type PersonWithArrayEnum struct {
+	Name  string
+	Class []Class
+	Mask  []Mask
+	Type  Type
+}

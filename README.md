@@ -1,6 +1,6 @@
 # swag
 
-🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md)*
+🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md) ∙ [Português](README_pt.md)*
 
 <img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
@@ -54,7 +54,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 ```sh
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
-To build from source you need [Go](https://golang.org/dl/) (1.16 or newer).
+To build from source you need [Go](https://golang.org/dl/) (1.17 or newer).
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
@@ -105,6 +105,7 @@ OPTIONS:
    --parseGoList                          Parse dependency via 'go list' (default: true)
    --tags value, -t value                 A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded
    --templateDelims value, --td value     Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: "[[,]]"
+   --collectionFormat value, --cf value   Set default collection format (default: "csv")
    --help, -h                             show help (default: false)
 ```
 
@@ -471,6 +472,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 - integer (int, uint, uint32, uint64)
 - number (float32)
 - boolean (bool)
+- file (param data type when uploading)
 - user defined struct
 
 ## Security
