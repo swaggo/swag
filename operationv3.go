@@ -20,7 +20,8 @@ type OperationV3 struct {
 	parser              *Parser
 	codeExampleFilesDir string
 	spec.Operation
-	RouterProperties []RouteProperties
+	RouterProperties  []RouteProperties
+	responseMimeTypes []string
 }
 
 // NewOperationV3 returns a new instance of OperationV3.
@@ -177,6 +178,7 @@ func (o *OperationV3) ParseAcceptComment(commentLine string) error {
 			"application/octet-stream",
 			"application/pdf",
 			"application/msexcel",
+			"application/zip",
 			"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 			"application/vnd.openxmlformats-officedocument.presentationml.presentation":
@@ -196,19 +198,84 @@ func (o *OperationV3) ParseAcceptComment(commentLine string) error {
 // ParseProduceComment parses comment for given `produce` comment string.
 func (o *OperationV3) ParseProduceComment(commentLine string) error {
 	const errMessage = "could not parse produce comment"
-	// return parseMimeTypeList(commentLine, &o.Responses, "%v produce type can't be accepted")
 
-	// result, err := parseMimeTypeListV3(commentLine, "%v accept type can't be accepted")
-	// if err != nil {
-	// 	return errors.Wrap(err, errMessage)
-	// }
+	validTypes, err := parseMimeTypeListV3(commentLine, "%v produce type can't be accepted")
+	if err != nil {
+		return errors.Wrap(err, errMessage)
+	}
 
-	// for _, value := range result {
-	// 	o.Responses.Spec.Response
-	// }
+	o.responseMimeTypes = validTypes
 
-	// TODO the format of the comment needs to be changed in order to work
-	// The produce can be different per response code, so the produce mimetype needs to be included in the response comment
+	return nil
+}
+
+// ParseParamComment produces the previously parsed produce comment.
+func (o *OperationV3) ProcessProduceComment() error {
+	const errMessage = "could not process produce comment"
+
+	if o.Responses == nil {
+		return nil
+	}
+
+	for _, value := range o.responseMimeTypes {
+		if o.Responses.Spec.Response == nil {
+			o.Responses.Spec.Response = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Response]], len(o.responseMimeTypes))
+		}
+
+		for key, response := range o.Responses.Spec.Response {
+			code, err := strconv.Atoi(key)
+			if err != nil {
+				return errors.Wrap(err, errMessage)
+			}
+
+			// Status 204 is no content. So we do not need to add content.
+			if code == 204 {
+				continue
+			}
+
+			// As this is a workaround, we need to check if the code is in range.
+			// The Produce comment is being deprecated soon.
+			if code < 200 || code > 299 {
+				continue
+			}
+
+			// skip correctly setup types like application/json
+			if response.Spec.Spec.Content[value] != nil {
+				continue
+			}
+
+			mediaType := spec.NewMediaType()
+			schema := spec.NewSchemaSpec()
+
+			switch value {
+			case "application/json", "multipart/form-data", "text/xml":
+				schema.Spec.Type = spec.NewSingleOrArray(OBJECT)
+			case "image/png",
+				"image/jpeg",
+				"image/gif",
+				"application/octet-stream",
+				"application/pdf",
+				"application/msexcel",
+				"application/zip",
+				"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+				"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+				"application/vnd.openxmlformats-officedocument.presentationml.presentation":
+				schema.Spec.Type = spec.NewSingleOrArray(STRING)
+				schema.Spec.Format = "binary"
+			default:
+				schema.Spec.Type = spec.NewSingleOrArray(STRING)
+			}
+
+			mediaType.Spec.Schema = schema
+
+			if response.Spec.Spec.Content == nil {
+				response.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType])
+			}
+
+			response.Spec.Spec.Content[value] = mediaType
+
+		}
+	}
 
 	return nil
 }
@@ -219,6 +286,8 @@ func (o *OperationV3) ParseProduceComment(commentLine string) error {
 func parseMimeTypeListV3(mimeTypeList string, format string) ([]string, error) {
 	var result []string
 	for _, typeName := range strings.Split(mimeTypeList, ",") {
+		typeName = strings.TrimSpace(typeName)
+
 		if mimeTypePattern.MatchString(typeName) {
 			result = append(result, typeName)
 

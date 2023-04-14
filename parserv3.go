@@ -442,7 +442,15 @@ func (p *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 					return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
 				}
 			}
-			err := processRouterOperationV3(p, operation)
+
+			// workaround until we replace the produce comment with a new @Success syntax
+			// We first need to setup all responses before we can set the mimetypes
+			err := operation.ProcessProduceComment()
+			if err != nil {
+				return err
+			}
+
+			err = processRouterOperationV3(p, operation)
 			if err != nil {
 				return err
 			}
