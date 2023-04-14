@@ -16,7 +16,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/swaggo/swag"
+	"github.com/swaggo/swag/v2"
 )
 
 const searchDir = "../testdata/simple"
