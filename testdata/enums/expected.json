@@ -118,7 +118,8 @@
                             1,
                             2,
                             4,
-                            8
+                            8,
+                            3
                         ],
                         "type": "integer",
                         "x-enum-comments": {
@@ -131,7 +132,8 @@
                             "Mask1",
                             "Mask2",
                             "Mask3",
-                            "Mask4"
+                            "Mask4",
+                            "Mask5"
                         ],
                         "name": "mask",
                         "in": "formData"
@@ -197,7 +199,8 @@
                                 1,
                                 2,
                                 4,
-                                8
+                                8,
+                                3
                             ],
                             "type": "integer"
                         },
@@ -268,7 +271,8 @@
                 1,
                 2,
                 4,
-                8
+                8,
+                3
             ],
             "x-enum-comments": {
                 "Mask1": "Mask1",
@@ -280,7 +284,8 @@
                 "Mask1",
                 "Mask2",
                 "Mask3",
-                "Mask4"
+                "Mask4",
+                "Mask5"
             ]
         },
         "types.Person": {
