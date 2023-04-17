@@ -35,6 +35,7 @@ const (
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
+	templateDelimsFlag    = "templateDelims"
 	packageName           = "packageName"
 	collectionFormatFlag  = "collectionFormat"
 )
@@ -144,6 +145,12 @@ var initFlags = []cli.Flag{
 		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
 	},
 	&cli.StringFlag{
+		Name:    templateDelimsFlag,
+		Aliases: []string{"td"},
+		Value:   "",
+		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
+	},
+	&cli.StringFlag{
 		Name:  packageName,
 		Value: "",
 		Usage: "A package name of docs.go, using output directory name by default (check `--output` option)",
@@ -163,6 +170,18 @@ func initAction(ctx *cli.Context) error {
 	case swag.CamelCase, swag.SnakeCase, swag.PascalCase:
 	default:
 		return fmt.Errorf("not supported %s propertyStrategy", strategy)
+	}
+
+	leftDelim, rightDelim := "{{", "}}"
+
+	if ctx.IsSet(templateDelimsFlag) {
+		delims := strings.Split(ctx.String(templateDelimsFlag), ",")
+		if len(delims) != 2 {
+			return fmt.Errorf("exactly two template delimeters must be provided, comma separated")
+		} else if delims[0] == delims[1] {
+			return fmt.Errorf("template delimiters must be different")
+		}
+		leftDelim, rightDelim = strings.TrimSpace(delims[0]), strings.TrimSpace(delims[1])
 	}
 
 	outputTypes := strings.Split(ctx.String(outputTypesFlag), ",")
@@ -199,6 +218,8 @@ func initAction(ctx *cli.Context) error {
 		OverridesFile:       ctx.String(overridesFileFlag),
 		ParseGoList:         ctx.Bool(parseGoListFlag),
 		Tags:                ctx.String(tagsFlag),
+		LeftTemplateDelim:   leftDelim,
+		RightTemplateDelim:  rightDelim,
 		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
 		CollectionFormat:    collectionFormat,
