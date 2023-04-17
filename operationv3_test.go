@@ -1861,7 +1861,7 @@ func TestParseCodeSamplesV3(t *testing.T) {
 func TestParseAcceptCommentV3(t *testing.T) {
 	t.Parallel()
 
-	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+	comment := `//@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
 	operation := NewOperationV3(New())
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -1896,8 +1896,75 @@ func TestParseAcceptCommentV3(t *testing.T) {
 func TestParseAcceptCommentErrV3(t *testing.T) {
 	t.Parallel()
 
-	comment := `/@Accept unknown`
+	comment := `//@Accept unknown`
 	operation := NewOperationV3(New())
 	err := operation.ParseComment(comment, nil)
 	assert.Error(t, err)
+}
+
+func TestParseProduceCommandV3(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Produce success", func(t *testing.T) {
+		t.Parallel()
+
+		const comment = "//@Produce application/json,text/csv,application/zip"
+
+		operation := NewOperationV3(New())
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		assert.Equal(t, 3, len(operation.responseMimeTypes))
+	})
+
+	t.Run("Produce Invalid Mime Type", func(t *testing.T) {
+		t.Parallel()
+
+		const comment = "//@Produce text,stuff,gophers"
+
+		operation := NewOperationV3(New())
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err)
+	})
+}
+
+func TestProcessProduceComment(t *testing.T) {
+	t.Parallel()
+
+	const comment = "//@Produce application/json,text/csv,application/zip"
+
+	operation := NewOperationV3(New())
+	err := operation.ParseComment(comment, nil)
+	require.NoError(t, err)
+
+	operation.Responses.Spec.Response = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Response]])
+	operation.Responses.Spec.Response["200"] = spec.NewResponseSpec()
+	operation.Responses.Spec.Response["201"] = spec.NewResponseSpec()
+	operation.Responses.Spec.Response["204"] = spec.NewResponseSpec()
+	operation.Responses.Spec.Response["400"] = spec.NewResponseSpec()
+	operation.Responses.Spec.Response["500"] = spec.NewResponseSpec()
+
+	err = operation.ProcessProduceComment()
+	require.NoError(t, err)
+
+	content := operation.Responses.Spec.Response["200"].Spec.Spec.Content
+	assert.Equal(t, 3, len(content))
+	assert.NotNil(t, content["application/json"].Spec.Schema)
+	assert.NotNil(t, content["text/csv"].Spec.Schema)
+	assert.NotNil(t, content["application/zip"].Spec.Schema)
+
+	content = operation.Responses.Spec.Response["201"].Spec.Spec.Content
+	assert.Equal(t, 3, len(content))
+	assert.NotNil(t, content["application/json"].Spec.Schema)
+	assert.NotNil(t, content["text/csv"].Spec.Schema)
+	assert.NotNil(t, content["application/zip"].Spec.Schema)
+
+	content = operation.Responses.Spec.Response["204"].Spec.Spec.Content
+	assert.Nil(t, content)
+
+	content = operation.Responses.Spec.Response["400"].Spec.Spec.Content
+	assert.Nil(t, content)
+
+	content = operation.Responses.Spec.Response["500"].Spec.Spec.Content
+	assert.Nil(t, content)
 }
