@@ -668,4 +668,48 @@ func TestValidTags(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, schema.Enum)
 	})
+
+	t.Run("Pattern tag", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"array"}
+		schema.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"string"},
+				},
+			},
+		}
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" pattern:"^[a-zA-Z0-9_]*$"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "^[a-zA-Z0-9_]*$", schema.Pattern)
+	})
+
+	t.Run("Pattern tag array", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"array"}
+		schema.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Type: []string{"string"},
+				},
+			},
+		}
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" pattern:"^[a-zA-Z0-9_]*$"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "^[a-zA-Z0-9_]*$", schema.Items.Schema.Pattern)
+	})
 }
