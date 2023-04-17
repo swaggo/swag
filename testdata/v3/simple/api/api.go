@@ -138,3 +138,9 @@ func GetPet6FunctionScopedResponse() {
 		Name string
 	}
 }
+
+// @param Token formData web.Request true "Params" comment
+// @Router /FormData [post]
+func FormData() {
+
+}
