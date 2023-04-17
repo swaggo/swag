@@ -158,19 +158,18 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 			if name == "uintptr" {
 				name = "uint"
 			}
+			value, _ := pkg.evaluateConstValue(file, iota, arg, globalEvaluator, recursiveStack)
 			if IsGolangPrimitiveType(name) {
-				value, _ := pkg.evaluateConstValue(file, iota, arg, globalEvaluator, recursiveStack)
 				value = EvaluateDataConversion(value, name)
 				return value, nil
 			} else if name == "len" {
-				value, _ := pkg.evaluateConstValue(file, iota, arg, globalEvaluator, recursiveStack)
 				return reflect.ValueOf(value).Len(), nil
 			}
 			typeDef := globalEvaluator.FindTypeSpec(name, file)
 			if typeDef == nil {
 				return nil, nil
 			}
-			return arg, valueExpr.Fun
+			return value, valueExpr.Fun
 		} else if selector, ok := valueExpr.Fun.(*ast.SelectorExpr); ok {
 			typeDef := globalEvaluator.FindTypeSpec(fullTypeName(selector.X.(*ast.Ident).Name, selector.Sel.Name), file)
 			if typeDef == nil {
