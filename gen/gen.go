@@ -510,7 +510,7 @@ func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.Ope
 	generator, err := template.New("oas3.tmpl").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
 			// Add schemes
-			v = "{\n    \"schemes\": {{ marshal .Schemes }}," + v[1:]
+			v = "{\n    \"schemes\": " + config.LeftTemplateDelim + " marshal .Schemes " + config.RightTemplateDelim + "," + v[1:]
 			// Sanitize backticks
 			return strings.Replace(v, "`", "`+\"`\"+`", -1)
 		},
@@ -524,9 +524,9 @@ func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.Ope
 		OpenAPI:    openAPI.OpenAPI,
 		Info: &v3.Extendable[v3.Info]{
 			Spec: &v3.Info{
-				Description:    "{{escape .Description}}",
-				Title:          "{{.Title}}",
-				Version:        "{{.Version}}",
+				Description:    config.LeftTemplateDelim + "escape .Description" + config.RightTemplateDelim,
+				Title:          config.LeftTemplateDelim + ".Title" + config.RightTemplateDelim,
+				Version:        config.LeftTemplateDelim + ".Version" + config.RightTemplateDelim,
 				TermsOfService: openAPI.Info.Spec.TermsOfService,
 				Contact:        openAPI.Info.Spec.Contact,
 				License:        openAPI.Info.Spec.License,
