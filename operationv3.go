@@ -364,7 +364,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 		case OBJECT:
 			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
 		}
-	case "query", "formData":
+	case "query":
 		switch objectType {
 		case ARRAY:
 			if !IsPrimitiveType(refType) && !(refType == "file" && paramType == "formData") {
@@ -417,7 +417,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 
 			return nil
 		}
-	case "body":
+	case "body", "formData":
 		if objectType == PRIMITIVE {
 			schema := PrimitiveSchemaV3(refType)
 
@@ -426,7 +426,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 				return err
 			}
 
-			o.fillRequestBody(schema, required, description, true)
+			o.fillRequestBody(schema, required, description, true, paramType == "formData")
 
 			return nil
 
@@ -442,7 +442,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 			return err
 		}
 
-		o.fillRequestBody(schema, required, description, false)
+		o.fillRequestBody(schema, required, description, false, paramType == "formData")
 
 		return nil
 
@@ -464,13 +464,15 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 	return nil
 }
 
-func (o *OperationV3) fillRequestBody(schema *spec.RefOrSpec[spec.Schema], required bool, description string, primitive bool) {
+func (o *OperationV3) fillRequestBody(schema *spec.RefOrSpec[spec.Schema], required bool, description string, primitive, formData bool) {
 	if o.RequestBody == nil {
 		o.RequestBody = spec.NewRequestBodySpec()
 		o.RequestBody.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType])
 
-		if primitive {
+		if primitive && !formData {
 			o.RequestBody.Spec.Spec.Content["text/plain"] = spec.NewMediaType()
+		} else if formData {
+			o.RequestBody.Spec.Spec.Content["application/x-www-form-urlencoded"] = spec.NewMediaType()
 		} else {
 			o.RequestBody.Spec.Spec.Content["application/json"] = spec.NewMediaType()
 		}

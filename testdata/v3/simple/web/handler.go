@@ -99,3 +99,16 @@ type Pet5c struct {
 	*Pet5b
 	Odd bool `json:"odd" binding:"required"`
 }
+
+type Request struct {
+	GrantType    string `json:"grant_type" validate:"required"`
+	ClientID     string `json:"client_id" validate:"required"`
+	ClientSecret string `json:"client_secret" validate:"required"`
+	RedirectURI  string `json:"redirect_uri"`
+	Code         string `json:"code"`
+	CodeVerifier string `json:"code_verifier"`
+	Scope        string `json:"scope"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	RefreshToken string `json:"refresh_token"`
+}
