@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/swaggo/swag/testdata/alias_type/data"
+	"github.com/swaggo/swag/v2/testdata/alias_type/data"
 )
 
 /*// @Summary Get time as string
