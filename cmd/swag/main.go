@@ -37,7 +37,6 @@ const (
 	parseExtensionFlag    = "parseExtension"
 	templateDelimsFlag    = "templateDelims"
 	openAPIVersionFlag    = "v3.1"
-	templateDelimsFlag    = "templateDelims"
 	packageName           = "packageName"
 	collectionFormatFlag  = "collectionFormat"
 )

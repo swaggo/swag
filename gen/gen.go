@@ -144,12 +144,6 @@ type Config struct {
 	// GenerateOpenAPI3Doc if true, OpenAPI V3.1 spec will be generated
 	GenerateOpenAPI3Doc bool
 
-	// LeftTemplateDelim defines the left delimiter for the template generation
-	LeftTemplateDelim string
-
-	// RightTemplateDelim defines the right delimiter for the template generation
-	RightTemplateDelim string
-
 	// PackageName defines package name of generated `docs.go`
 	PackageName string
 
