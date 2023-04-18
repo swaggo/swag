@@ -223,7 +223,7 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 			require.NoError(t, err)
 		}
 	}
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/quotes")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/v2/testdata/quotes")
 
 	cmd.Dir = config.SearchDir
 
@@ -284,7 +284,7 @@ func TestGen_BuildDocCustomDelims(t *testing.T) {
 		}
 	}
 
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/delims")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/v2/testdata/delims")
 
 	cmd.Dir = config.SearchDir
 

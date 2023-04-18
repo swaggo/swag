@@ -137,6 +137,7 @@ type Config struct {
 
 	// GenerateOpenAPI3Doc if true, OpenAPI V3.1 spec will be generated
 	GenerateOpenAPI3Doc bool
+
 	// LeftTemplateDelim defines the left delimiter for the template generation
 	LeftTemplateDelim string
 
@@ -523,9 +524,9 @@ func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.Ope
 		OpenAPI:    openAPI.OpenAPI,
 		Info: &v3.Extendable[v3.Info]{
 			Spec: &v3.Info{
-				Description:    "{{escape .Description}}",
-				Title:          "{{.Title}}",
-				Version:        "{{.Version}}",
+				Description:    config.LeftTemplateDelim + "escape .Description" + config.RightTemplateDelim,
+				Title:          config.LeftTemplateDelim + ".Title" + config.RightTemplateDelim,
+				Version:        config.LeftTemplateDelim + ".Version" + config.RightTemplateDelim,
 				TermsOfService: openAPI.Info.Spec.TermsOfService,
 				Contact:        openAPI.Info.Spec.Contact,
 				License:        openAPI.Info.Spec.License,
@@ -562,8 +563,6 @@ func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.Ope
 	}{
 		Timestamp:     time.Now(),
 		GeneratedTime: config.GeneratedTime,
-	LeftDelim:        {{ printf "%q" .LeftTemplateDelim}},
-	RightDelim:       {{ printf "%q" .RightTemplateDelim}},
 		Doc:           string(buf),
 		PackageName:   packageName,
 		Title:         openAPI.Info.Spec.Title,
