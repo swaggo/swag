@@ -24,6 +24,8 @@ const (
 
 var _ FieldParser = &tagBaseFieldParser{}
 
+var _ FieldParser = &tagBaseFieldParser{}
+
 type tagBaseFieldParser struct {
 	p     *Parser
 	field *ast.Field

@@ -773,7 +773,7 @@ func TestOperation_ParseParamCommentV3(t *testing.T) {
 
 	t.Run("integer", func(t *testing.T) {
 		t.Parallel()
-		for _, paramType := range []string{"header", "path", "query", "formData"} {
+		for _, paramType := range []string{"header", "path", "query"} {
 			t.Run(paramType, func(t *testing.T) {
 				o := NewOperationV3(New())
 				err := o.ParseComment(`@Param some_id `+paramType+` int true "Some ID"`, nil)
@@ -808,7 +808,7 @@ func TestOperation_ParseParamCommentV3(t *testing.T) {
 
 	t.Run("string", func(t *testing.T) {
 		t.Parallel()
-		for _, paramType := range []string{"header", "path", "query", "formData"} {
+		for _, paramType := range []string{"header", "path", "query"} {
 			t.Run(paramType, func(t *testing.T) {
 				o := NewOperationV3(New())
 				err := o.ParseComment(`@Param some_string `+paramType+` string true "Some String"`, nil)
@@ -842,7 +842,7 @@ func TestOperation_ParseParamCommentV3(t *testing.T) {
 
 	t.Run("object", func(t *testing.T) {
 		t.Parallel()
-		for _, paramType := range []string{"header", "path", "query", "formData"} {
+		for _, paramType := range []string{"header", "path", "query"} {
 			t.Run(paramType, func(t *testing.T) {
 				assert.Error(t,
 					NewOperationV3(New()).
@@ -1108,18 +1108,17 @@ func TestParseParamCommentByFormDataTypeV3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	assert.Len(t, operation.Parameters, 1)
+	assert.Len(t, operation.Parameters, 0)
+	assert.NotNil(t, operation.RequestBody)
 
-	parameters := operation.Operation.Parameters
-	assert.NotNil(t, parameters)
+	requestBody := operation.RequestBody
+	assert.True(t, requestBody.Spec.Spec.Required)
+	assert.Equal(t, "this is a test file", requestBody.Spec.Spec.Description)
+	assert.NotNil(t, requestBody)
 
-	parameterSpec := parameters[0].Spec.Spec
-	assert.NotNil(t, parameterSpec)
-	assert.Equal(t, "this is a test file", parameterSpec.Description)
-	assert.Equal(t, "file", parameterSpec.Name)
-	assert.True(t, parameterSpec.Required)
-	assert.Equal(t, "formData", parameterSpec.In)
-	assert.Equal(t, typeFile, parameterSpec.Schema.Spec.Type)
+	requestBodySpec := requestBody.Spec.Spec
+	assert.NotNil(t, requestBodySpec)
+	assert.Equal(t, typeFile, requestBodySpec.Content["application/x-www-form-urlencoded"].Spec.Schema.Spec.Type)
 }
 
 func TestParseParamCommentByFormDataTypeUint64V3(t *testing.T) {
@@ -1131,18 +1130,15 @@ func TestParseParamCommentByFormDataTypeUint64V3(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	assert.Len(t, operation.Parameters, 1)
+	assert.Len(t, operation.Parameters, 0)
 
-	parameters := operation.Operation.Parameters
-	assert.NotNil(t, parameters)
+	requestBody := operation.RequestBody
+	assert.NotNil(t, requestBody)
+	assert.Equal(t, "this is a test file", requestBody.Spec.Spec.Description)
 
-	parameterSpec := parameters[0].Spec.Spec
-	assert.NotNil(t, parameterSpec)
-	assert.Equal(t, "this is a test file", parameterSpec.Description)
-	assert.Equal(t, "file", parameterSpec.Name)
-	assert.True(t, parameterSpec.Required)
-	assert.Equal(t, "formData", parameterSpec.In)
-	assert.Equal(t, typeInteger, parameterSpec.Schema.Spec.Type)
+	requestBodySpec := requestBody.Spec.Spec.Content["application/x-www-form-urlencoded"].Spec
+	assert.NotNil(t, requestBodySpec)
+	assert.Equal(t, typeInteger, requestBodySpec.Schema.Spec.Type)
 }
 
 func TestParseParamCommentByNotSupportedTypeV3(t *testing.T) {

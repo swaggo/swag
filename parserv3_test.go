@@ -355,7 +355,7 @@ func TestParseSimpleApiV3(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := p.openAPI.Paths.Spec.Paths
-	assert.Equal(t, 14, len(paths))
+	assert.Equal(t, 15, len(paths))
 
 	path := paths["/testapi/get-string-by-int/{some_id}"].Spec.Spec.Get.Spec
 	assert.Equal(t, "get string by ID", path.Description)
@@ -365,5 +365,8 @@ func TestParseSimpleApiV3(t *testing.T) {
 	response := path.Responses.Spec.Response["200"]
 	assert.Equal(t, "ok", response.Spec.Spec.Description)
 
+	path = paths["/FormData"].Spec.Spec.Post.Spec
+	assert.NotNil(t, path)
+	assert.NotNil(t, path.RequestBody)
 	//TODO add asserts
 }

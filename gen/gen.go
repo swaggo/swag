@@ -135,6 +135,12 @@ type Config struct {
 	// include only tags mentioned when searching, comma separated
 	Tags string
 
+	// LeftTemplateDelim defines the left delimiter for the template generation
+	LeftTemplateDelim string
+
+	// RightTemplateDelim defines the right delimiter for the template generation
+	RightTemplateDelim string
+
 	// GenerateOpenAPI3Doc if true, OpenAPI V3.1 spec will be generated
 	GenerateOpenAPI3Doc bool
 
@@ -510,7 +516,7 @@ func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.Ope
 	generator, err := template.New("oas3.tmpl").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
 			// Add schemes
-			v = "{\n    \"schemes\": {{ marshal .Schemes }}," + v[1:]
+			v = "{\n    \"schemes\": " + config.LeftTemplateDelim + " marshal .Schemes " + config.RightTemplateDelim + "," + v[1:]
 			// Sanitize backticks
 			return strings.Replace(v, "`", "`+\"`\"+`", -1)
 		},

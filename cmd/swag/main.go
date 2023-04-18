@@ -35,6 +35,7 @@ const (
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
+	templateDelimsFlag    = "templateDelims"
 	openAPIVersionFlag    = "v3.1"
 	templateDelimsFlag    = "templateDelims"
 	packageName           = "packageName"
