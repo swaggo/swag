@@ -14,7 +14,7 @@ var SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }}
 	InfoInstanceName: {{ printf "%q" .InstanceName }},
 	SwaggerTemplate: docTemplate{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }},
 	LeftDelim:        {{ printf "%q" .LeftTemplateDelim}},
-    RightDelim:       {{ printf "%q" .RightTemplateDelim}},
+	RightDelim:       {{ printf "%q" .RightTemplateDelim}},
 }
 
 func init() {
