@@ -285,7 +285,7 @@ func (g *Gen) writeDoc(config *Config, doc interface{}) error {
 	case *v3.OpenAPI:
 		err = g.writeGoDocV3(packageName, docs, spec, config)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 	g.debug.Printf("create docs.go at %+v", docFileName)
@@ -552,23 +552,27 @@ func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.Ope
 	buffer := &bytes.Buffer{}
 
 	err = generator.Execute(buffer, struct {
-		Timestamp     time.Time
-		Doc           string
-		PackageName   string
-		Title         string
-		Description   string
-		Version       string
-		InstanceName  string
-		GeneratedTime bool
+		Timestamp          time.Time
+		Doc                string
+		PackageName        string
+		Title              string
+		Description        string
+		Version            string
+		InstanceName       string
+		GeneratedTime      bool
+		LeftTemplateDelim  string
+		RightTemplateDelim string
 	}{
-		Timestamp:     time.Now(),
-		GeneratedTime: config.GeneratedTime,
-		Doc:           string(buf),
-		PackageName:   packageName,
-		Title:         openAPI.Info.Spec.Title,
-		Description:   openAPI.Info.Spec.Description,
-		Version:       openAPI.Info.Spec.Version,
-		InstanceName:  config.InstanceName,
+		Timestamp:          time.Now(),
+		GeneratedTime:      config.GeneratedTime,
+		Doc:                string(buf),
+		PackageName:        packageName,
+		Title:              openAPI.Info.Spec.Title,
+		Description:        openAPI.Info.Spec.Description,
+		Version:            openAPI.Info.Spec.Version,
+		InstanceName:       config.InstanceName,
+		LeftTemplateDelim:  config.LeftTemplateDelim,
+		RightTemplateDelim: config.RightTemplateDelim,
 	})
 	if err != nil {
 		return err
