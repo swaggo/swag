@@ -95,7 +95,7 @@ OPÇÕES:
    --parseInternal Parse go ficheiros em pacotes internos, desactivados por padrão (padrão: falso)
    --generatedTime Gerar timestamp no topo dos docs.go, desactivado por padrão (padrão: falso)
    --parteDepth value Dependência profundidade parse (por padrão: 100)
-
+   --templateDelims value, --td value fornecem delimitadores personalizados para a geração de modelos Go. O formato é leftDelim,rightDelim. Por exemplo: "[[,]]"
    ...
 
    --help, -h mostrar ajuda (por padrão: falso)
@@ -905,6 +905,18 @@ Por defeito, o comando `swag` gera especificação Swagger em três tipos difere
 
 Se desejar limitar um conjunto de tipos de ficheiros que devem ser gerados pode utilizar a bandeira `--outputTypes` (short `-ot`). O valor por defeito é `go,json,yaml` - tipos de saída separados por vírgula. Para limitar a saída apenas a ficheiros `go` e `yaml`, escrever-se-ia `go,yaml'. Com comando completo que seria `swag init --outputTypes go,yaml`.
 
+### Alterar os delimitadores de acção padrão Go Template
+[#980](https://github.com/swaggo/swag/issues/980)
+[#1177](https://github.com/swaggo/swag/issues/1177)
+
+Se as suas anotações ou campos estruturantes contêm "{{" or "}}", a geração de modelos irá muito provavelmente falhar, uma vez que estes são os delimitadores por defeito para [go templates](https://pkg.go.dev/text/template#Template.Delims).
+
+Para que a geração funcione correctamente, pode alterar os delimitadores por defeito com `-td'. Por exemplo:
+``console
+swag init -g http/api.go -td "[[,]"
+```
+
+O novo delimitador é um fio com o formato "`<left delimiter>`,`<right delimiter>`".
 
 ## Sobre o projecto
 Este projecto foi inspirado por [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) mas simplificámos a utilização e acrescentámos apoio a uma variedade de [frameworks web](#estruturas-web-suportadas). A fonte de imagem Gopher é [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). Tem licenças [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).
