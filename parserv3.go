@@ -164,6 +164,22 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			}
 
 			p.openAPI.Info.Extensions[originalAttribute[1:]] = valueJSON
+		case "@servers.url":
+			server := spec.NewServer()
+			server.Spec.URL = value
+
+			p.openAPI.Servers = append(p.openAPI.Servers, server)
+		case "@servers.description":
+			server := p.openAPI.Servers[len(p.openAPI.Servers)-1]
+			server.Spec.Description = value
+		case "@servers.variables.enum":
+			p.debug.Printf("not yet implemented: @servers.variables.enum")
+		case "@servers.variables.default":
+			p.debug.Printf("not yet implemented: @servers.variables.default")
+		case "@servers.variables.description":
+			p.debug.Printf("not yet implemented: @servers.variables.description")
+		case "@servers.variables.description.markdown":
+			p.debug.Printf("not yet implemented: @servers.variables.description.markdown")
 		default:
 			if strings.HasPrefix(attribute, "@x-") {
 				err := p.parseExtensionsV3(value, attribute)

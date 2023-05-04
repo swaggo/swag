@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOverridesGetTypeSchemaV3(t *testing.T) {
@@ -369,4 +370,26 @@ func TestParseSimpleApiV3(t *testing.T) {
 	assert.NotNil(t, path)
 	assert.NotNil(t, path.RequestBody)
 	//TODO add asserts
+}
+
+func TestParserParseServers(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/v3/servers"
+	p := New(GenerateOpenAPI3Doc(true))
+	p.PropNamingStrategy = PascalCase
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	servers := p.openAPI.Servers
+	require.NotNil(t, servers)
+
+	assert.Equal(t, 2, len(servers))
+	assert.Equal(t, "https://test.petstore.com/v3", servers[0].Spec.URL)
+	assert.Equal(t, "Test Petstore server.", servers[0].Spec.Description)
+
+	assert.Equal(t, "https://petstore.com/v3", servers[1].Spec.URL)
+	assert.Equal(t, "Production Petstore server.", servers[1].Spec.Description)
+
 }

@@ -407,6 +407,14 @@ When a short string in your documentation is insufficient, or you need images, c
 | tag.name    | Name of a tag.| // @tag.name This is the name of the tag                     |
 | tag.description.markdown   | Description of the tag this is an alternative to tag.description. The description will be read from a file named like tagname.md  | // @tag.description.markdown         |
 
+## Open API V3.1.0+
+
+The following annotations are only available if you set the -v3.1 flag in the CLI.
+
+| annotation  | description                                | example                         |
+|-------------|--------------------------------------------|---------------------------------|
+| servers.url       | The URL of a server| // @servers.url https://petstore.example.com/api/v1   |
+| servers.description       | The description of a server| // @servers.description Production API   |
 
 ## API Operation
 
