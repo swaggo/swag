@@ -10,3 +10,4 @@ const octnum = 017
 const nonescapestr = `aa\nbb\u8888cc`
 const escapestr = "aa\nbb\u8888cc"
 const escapechar = '\u8888'
+const underscored = 1_000_000
