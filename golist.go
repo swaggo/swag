@@ -53,6 +53,10 @@ func (parser *Parser) getAllGoFileInfoFromDepsByList(pkg *build.Package, parseFl
 		return nil
 	}
 
+	if parser.skipPackageByPrefix(pkg.ImportPath) {
+		return nil // ignored by user-defined package path prefixes
+	}
+
 	srcDir := pkg.Dir
 	var err error
 	for i := range pkg.GoFiles {

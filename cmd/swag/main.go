@@ -39,6 +39,7 @@ const (
 	templateDelimsFlag       = "templateDelims"
 	packageName              = "packageName"
 	collectionFormatFlag     = "collectionFormat"
+	packagePrefixFlag        = "packagePrefix"
 )
 
 var initFlags = []cli.Flag{
@@ -167,6 +168,11 @@ var initFlags = []cli.Flag{
 		Value:   "csv",
 		Usage:   "Set default collection format",
 	},
+	&cli.StringFlag{
+		Name:  packagePrefixFlag,
+		Value: "",
+		Usage: "Parse only packages whose import path match the given prefix, comma separated",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -235,6 +241,7 @@ func initAction(ctx *cli.Context) error {
 		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
 		CollectionFormat:    collectionFormat,
+		PackagePrefix:       ctx.String(packagePrefixFlag),
 	})
 }
 
