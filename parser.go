@@ -434,7 +434,11 @@ func getPkgName(searchDir string) (string, error) {
 	}
 
 	outStr, _ := stdout.String(), stderr.String()
-
+	defer func() {
+		if err := recover(); err != nil {
+			// in case `outStr` is empty, ignore it.
+		}
+	}()
 	if outStr[0] == '_' { // will shown like _/{GOPATH}/src/{YOUR_PACKAGE} when NOT enable GO MODULE.
 		outStr = strings.TrimPrefix(outStr, "_"+build.Default.GOPATH+"/src/")
 	}
