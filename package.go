@@ -5,6 +5,7 @@ import (
 	"go/token"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // PackageDefinitions files and definition in a package.
@@ -94,6 +95,10 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 	case *ast.BasicLit:
 		switch valueExpr.Kind {
 		case token.INT:
+			// handle underscored number, such as 1_000_000
+			if strings.ContainsRune(valueExpr.Value, '_') {
+				valueExpr.Value = strings.Replace(valueExpr.Value, "_", "", -1)
+			}
 			// hexadecimal
 			if len(valueExpr.Value) > 2 && valueExpr.Value[0] == '0' && valueExpr.Value[1] == 'x' {
 				if x, err := strconv.ParseInt(valueExpr.Value[2:], 16, 64); err == nil {
