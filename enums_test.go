@@ -28,5 +28,6 @@ func TestParseGlobalEnums(t *testing.T) {
 	assert.Equal(t, 15, p.packages.packages[constsPath].ConstTable["octnum"].Value)
 	assert.Equal(t, `aa\nbb\u8888cc`, p.packages.packages[constsPath].ConstTable["nonescapestr"].Value)
 	assert.Equal(t, "aa\nbb\u8888cc", p.packages.packages[constsPath].ConstTable["escapestr"].Value)
-	assert.Equal(t, '\u8888', p.packages.packages[constsPath].ConstTable["escapechar"].Value)
+	assert.Equal(t, 1_000_000, p.packages.packages[constsPath].ConstTable["underscored"].Value)
+	assert.Equal(t, 0b10001000, p.packages.packages[constsPath].ConstTable["binaryInteger"].Value)
 }
