@@ -3,6 +3,7 @@ package swag
 import (
 	"go/ast"
 	"go/token"
+	"regexp"
 	"strings"
 
 	"github.com/go-openapi/spec"
@@ -47,9 +48,15 @@ func (t *TypeSpecDef) TypeName() string {
 		return t.TypeSpec.Name.Name[1:]
 	} else if t.TypeSpec.Comment != nil {
 		// get alias from comment '// @name '
+		const regexCaseInsensitive = "(?i)"
+		reTypeName, err := regexp.Compile(regexCaseInsensitive + `^@name\s+(\S+)`)
+		if err != nil {
+			panic(err)
+		}
 		for _, comment := range t.TypeSpec.Comment.List {
-			texts := strings.Split(strings.TrimSpace(strings.TrimLeft(comment.Text, "/")), " ")
-			if len(texts) > 1 && strings.ToLower(texts[0]) == "@name" {
+			trimmedComment := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
+			texts := reTypeName.FindStringSubmatch(trimmedComment)
+			if len(texts) > 1 {
 				return texts[1]
 			}
 		}
