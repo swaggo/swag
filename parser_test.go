@@ -3249,6 +3249,30 @@ func Fun()  {
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }
 
+func TestParseTabFormattedRenamedStructDefinition(t *testing.T) {
+	t.Parallel()
+
+	src := "package main\n" +
+		"\n" +
+		"type Child struct {\n" +
+		"\tName string\n" +
+		"}\t//\t@name\tPupil\n" +
+		"\n" +
+		"// @Success 200 {object} Pupil\n" +
+		"func Fun()  { }"
+
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	_, ok := p.swagger.Definitions["Pupil"]
+	assert.True(t, ok)
+}
+
 func TestParseFunctionScopedStructDefinition(t *testing.T) {
 	t.Parallel()
 
