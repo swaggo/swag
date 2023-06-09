@@ -14,9 +14,18 @@ type Response[T any, X any] struct {
 	Status string
 }
 
+type Response2[T, X any, Y any] struct {
+	Data T
+	Meta X
+
+	Status Y
+}
+
 type StringStruct struct {
 	Data string
 }
+
+type Foo = web.GenericResponseMulti[types.Post, types.Post]
 
 // @Summary Add a new pet to the store
 // @Description get string by ID
@@ -29,6 +38,7 @@ type StringStruct struct {
 // @Success 203 {object} web.GenericResponse[types.Field[int]]
 // @Success 204 {object} Response[string, types.Field[int]]
 // @Success 205 {object} Response[StringStruct, types.Field[int]]
+// @Success 206 {object} Response2[string, types.Field[int],string]
 // @Success 222 {object} web.GenericResponseMulti[types.Post, types.Post]
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
@@ -46,6 +56,7 @@ func GetPost(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} web.GenericResponse[types.Post]
 // @Success 201 {object} web.GenericResponse[types.Hello]
 // @Success 202 {object} web.GenericResponse[types.Field[string]]
+// @Success 203 {object} Foo
 // @Success 222 {object} web.GenericResponseMulti[types.Post, types.Post]
 // @Router /posts-multi/ [post]
 func GetPostMulti(w http.ResponseWriter, r *http.Request) {

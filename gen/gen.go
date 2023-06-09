@@ -15,9 +15,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag"
+	"sigs.k8s.io/yaml"
 )
 
 var open = os.Open
@@ -126,6 +126,18 @@ type Config struct {
 
 	// include only tags mentioned when searching, comma separated
 	Tags string
+
+	// LeftTemplateDelim defines the left delimiter for the template generation
+	LeftTemplateDelim string
+
+	// RightTemplateDelim defines the right delimiter for the template generation
+	RightTemplateDelim string
+
+	// PackageName defines package name of generated `docs.go`
+	PackageName string
+
+	// CollectionFormat set default collection format
+	CollectionFormat string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -142,6 +154,14 @@ func (g *Gen) Build(config *Config) error {
 		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
 			return fmt.Errorf("dir: %s does not exist", searchDir)
 		}
+	}
+
+	if config.LeftTemplateDelim == "" {
+		config.LeftTemplateDelim = "{{"
+	}
+
+	if config.RightTemplateDelim == "" {
+		config.RightTemplateDelim = "}}"
 	}
 
 	var overrides map[string]string
@@ -176,6 +196,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetOverrides(overrides),
 		swag.ParseUsingGoList(config.ParseGoList),
 		swag.SetTags(config.Tags),
+		swag.SetCollectionFormat(config.CollectionFormat),
 	)
 
 	p.PropNamingStrategy = config.PropNamingStrategy
@@ -221,7 +242,13 @@ func (g *Gen) writeDocSwagger(config *Config, swagger *spec.Swagger) error {
 		return err
 	}
 
-	packageName := filepath.Base(absOutputDir)
+	var packageName string
+	if len(config.PackageName) > 0 {
+		packageName = config.PackageName
+	} else {
+		packageName = filepath.Base(absOutputDir)
+		packageName = strings.ReplaceAll(packageName, "-", "_")
+	}
 
 	docs, err := os.Create(docFileName)
 	if err != nil {
@@ -364,7 +391,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 	generator, err := template.New("swagger_info").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
 			// Add schemes
-			v = "{\n    \"schemes\": {{ marshal .Schemes }}," + v[1:]
+			v = "{\n    \"schemes\": " + config.LeftTemplateDelim + " marshal .Schemes " + config.RightTemplateDelim + "," + v[1:]
 			// Sanitize backticks
 			return strings.Replace(v, "`", "`+\"`\"+`", -1)
 		},
@@ -383,16 +410,16 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 			Info: &spec.Info{
 				VendorExtensible: swagger.Info.VendorExtensible,
 				InfoProps: spec.InfoProps{
-					Description:    "{{escape .Description}}",
-					Title:          "{{.Title}}",
+					Description:    config.LeftTemplateDelim + "escape .Description" + config.RightTemplateDelim,
+					Title:          config.LeftTemplateDelim + ".Title" + config.RightTemplateDelim,
 					TermsOfService: swagger.Info.TermsOfService,
 					Contact:        swagger.Info.Contact,
 					License:        swagger.Info.License,
-					Version:        "{{.Version}}",
+					Version:        config.LeftTemplateDelim + ".Version" + config.RightTemplateDelim,
 				},
 			},
-			Host:                "{{.Host}}",
-			BasePath:            "{{.BasePath}}",
+			Host:                config.LeftTemplateDelim + ".Host" + config.RightTemplateDelim,
+			BasePath:            config.LeftTemplateDelim + ".BasePath" + config.RightTemplateDelim,
 			Paths:               swagger.Paths,
 			Definitions:         swagger.Definitions,
 			Parameters:          swagger.Parameters,
@@ -413,29 +440,33 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 	buffer := &bytes.Buffer{}
 
 	err = generator.Execute(buffer, struct {
-		Timestamp     time.Time
-		Doc           string
-		Host          string
-		PackageName   string
-		BasePath      string
-		Title         string
-		Description   string
-		Version       string
-		InstanceName  string
-		Schemes       []string
-		GeneratedTime bool
+		Timestamp          time.Time
+		Doc                string
+		Host               string
+		PackageName        string
+		BasePath           string
+		Title              string
+		Description        string
+		Version            string
+		InstanceName       string
+		Schemes            []string
+		GeneratedTime      bool
+		LeftTemplateDelim  string
+		RightTemplateDelim string
 	}{
-		Timestamp:     time.Now(),
-		GeneratedTime: config.GeneratedTime,
-		Doc:           string(buf),
-		Host:          swagger.Host,
-		PackageName:   packageName,
-		BasePath:      swagger.BasePath,
-		Schemes:       swagger.Schemes,
-		Title:         swagger.Info.Title,
-		Description:   swagger.Info.Description,
-		Version:       swagger.Info.Version,
-		InstanceName:  config.InstanceName,
+		Timestamp:          time.Now(),
+		GeneratedTime:      config.GeneratedTime,
+		Doc:                string(buf),
+		Host:               swagger.Host,
+		PackageName:        packageName,
+		BasePath:           swagger.BasePath,
+		Schemes:            swagger.Schemes,
+		Title:              swagger.Info.Title,
+		Description:        swagger.Info.Description,
+		Version:            swagger.Info.Version,
+		InstanceName:       config.InstanceName,
+		LeftTemplateDelim:  config.LeftTemplateDelim,
+		RightTemplateDelim: config.RightTemplateDelim,
 	})
 	if err != nil {
 		return err
@@ -449,7 +480,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 	return err
 }
 
-var packageTemplate = `// Code generated by swaggo/swag{{ if .GeneratedTime }} at {{ .Timestamp }}{{ end }}. DO NOT EDIT
+var packageTemplate = `// Package {{.PackageName}} Code generated by swaggo/swag{{ if .GeneratedTime }} at {{ .Timestamp }}{{ end }}. DO NOT EDIT
 package {{.PackageName}}
 
 import "github.com/swaggo/swag"
@@ -466,6 +497,8 @@ var SwaggerInfo{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }}
 	Description: {{ printf "%q" .Description}},
 	InfoInstanceName: {{ printf "%q" .InstanceName }},
 	SwaggerTemplate: docTemplate{{ if ne .InstanceName "swagger" }}{{ .InstanceName }} {{- end }},
+	LeftDelim:        {{ printf "%q" .LeftTemplateDelim}},
+	RightDelim:       {{ printf "%q" .RightTemplateDelim}},
 }
 
 func init() {

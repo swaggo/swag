@@ -1,6 +1,6 @@
 # swag
 
-🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md)*
+🌍 *[English](README.md) ∙ [简体中文](README_zh-CN.md) ∙ [Português](README_pt.md)*
 
 <img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
@@ -54,7 +54,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 ```sh
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
-To build from source you need [Go](https://golang.org/dl/) (1.16 or newer).
+To build from source you need [Go](https://golang.org/dl/) (1.17 or newer).
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
@@ -104,6 +104,8 @@ OPTIONS:
    --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
    --parseGoList                          Parse dependency via 'go list' (default: true)
    --tags value, -t value                 A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded
+   --templateDelims value, --td value     Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: "[[,]]"
+   --collectionFormat value, --cf value   Set default collection format (default: "csv")
    --help, -h                             show help (default: false)
 ```
 
@@ -470,6 +472,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 - integer (int, uint, uint32, uint64)
 - number (float32)
 - boolean (bool)
+- file (param data type when uploading)
 - user defined struct
 
 ## Security
@@ -905,6 +908,18 @@ By default `swag` command generates Swagger specification in three different fil
 - swagger.yaml
 
 If you would like to limit a set of file types which should be generated you can use `--outputTypes` (short `-ot`) flag. Default value is `go,json,yaml` - output types separated with comma. To limit output only to `go` and `yaml` files, you would write `go,yaml`. With complete command that would be `swag init --outputTypes go,yaml`.
+
+### Change the default Go Template action delimiters
+[#980](https://github.com/swaggo/swag/issues/980)
+[#1177](https://github.com/swaggo/swag/issues/1177)
+
+If your swagger annotations or struct fields contain "{{" or "}}", the template generation will most likely fail, as these are the default delimiters for [go templates](https://pkg.go.dev/text/template#Template.Delims).
+
+To make the generation work properly, you can change the default delimiters with `-td`. For example:
+```console
+swag init -g http/api.go -td "[[,]]"
+```
+The new delimiter is a string with the format "`<left delimiter>`,`<right delimiter>`".
 
 ## About the Project
 This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks). Gopher image source is [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). It has licenses [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).

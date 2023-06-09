@@ -19,6 +19,11 @@ type genericTypeSpec struct {
 	Name       string
 }
 
+type formalParamType struct {
+	Name string
+	Type string
+}
+
 func (t *genericTypeSpec) TypeName() string {
 	if t.TypeSpec != nil {
 		return t.TypeSpec.TypeName()
@@ -36,10 +41,21 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 		return nil
 	}
 
-	genericParamTypeDefs := map[string]*genericTypeSpec{}
-	if len(genericParams) != len(original.TypeSpec.TypeParams.List) {
+	//generic[x,y any,z any] considered, TODO what if the type is not `any`, but a concrete one, such as `int32|int64` or an certain interface{}
+	var formals []formalParamType
+	for _, field := range original.TypeSpec.TypeParams.List {
+		for _, ident := range field.Names {
+			formal := formalParamType{Name: ident.Name}
+			if ident, ok := field.Type.(*ast.Ident); ok {
+				formal.Type = ident.Name
+			}
+			formals = append(formals, formal)
+		}
+	}
+	if len(genericParams) != len(formals) {
 		return nil
 	}
+	genericParamTypeDefs := map[string]*genericTypeSpec{}
 
 	for i, genericParam := range genericParams {
 		arrayDepth := 0
@@ -59,7 +75,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 			}
 		}
 
-		genericParamTypeDefs[original.TypeSpec.TypeParams.List[i].Names[0].Name] = &genericTypeSpec{
+		genericParamTypeDefs[formals[i].Name] = &genericTypeSpec{
 			ArrayDepth: arrayDepth,
 			TypeSpec:   typeDef,
 			Name:       genericParam,
@@ -68,8 +84,8 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 
 	name = fmt.Sprintf("%s%s-", string(IgnoreNameOverridePrefix), original.TypeName())
 	var nameParts []string
-	for _, def := range original.TypeSpec.TypeParams.List {
-		if specDef, ok := genericParamTypeDefs[def.Names[0].Name]; ok {
+	for _, def := range formals {
+		if specDef, ok := genericParamTypeDefs[def.Name]; ok {
 			var prefix = ""
 			if specDef.ArrayDepth == 1 {
 				prefix = "array_"
@@ -175,6 +191,12 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 			Elt:    pkgDefs.resolveGenericType(file, astExpr.Elt, genericParamTypeDefs),
 			Len:    astExpr.Len,
 			Lbrack: astExpr.Lbrack,
+		}
+	case *ast.MapType:
+		return &ast.MapType{
+			Map:   astExpr.Map,
+			Key:   pkgDefs.resolveGenericType(file, astExpr.Key, genericParamTypeDefs),
+			Value: pkgDefs.resolveGenericType(file, astExpr.Value, genericParamTypeDefs),
 		}
 	case *ast.StarExpr:
 		return &ast.StarExpr{
@@ -331,7 +353,7 @@ func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr) (*
 	case *ast.ArrayType:
 	case *ast.MapType:
 	case *ast.FuncType:
-	case *ast.IndexExpr:
+	case *ast.IndexExpr, *ast.IndexListExpr:
 		name, err := getExtendedGenericFieldType(file, expr, nil)
 		if err == nil {
 			if schema, err := parser.getTypeSchema(name, file, false); err == nil {

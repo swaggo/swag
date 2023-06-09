@@ -30,6 +30,7 @@ const (
 	Mask2                          /* Mask2 */
 	Mask3                          // Mask3
 	Mask4                          // Mask4
+	Mask5 = Mask(A + B)
 )
 
 type Type string
@@ -53,5 +54,12 @@ type Person struct {
 	Name  string
 	Class Class
 	Mask  Mask
+	Type  Type
+}
+
+type PersonWithArrayEnum struct {
+	Name  string
+	Class []Class
+	Mask  []Mask
 	Type  Type
 }

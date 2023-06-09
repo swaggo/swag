@@ -3249,6 +3249,30 @@ func Fun()  {
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }
 
+func TestParseTabFormattedRenamedStructDefinition(t *testing.T) {
+	t.Parallel()
+
+	src := "package main\n" +
+		"\n" +
+		"type Child struct {\n" +
+		"\tName string\n" +
+		"}\t//\t@name\tPupil\n" +
+		"\n" +
+		"// @Success 200 {object} Pupil\n" +
+		"func Fun()  { }"
+
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	_, ok := p.swagger.Definitions["Pupil"]
+	assert.True(t, ok)
+}
+
 func TestParseFunctionScopedStructDefinition(t *testing.T) {
 	t.Parallel()
 
@@ -3942,5 +3966,36 @@ func TestParser_parseExtension(t *testing.T) {
 			}
 		})
 
+	}
+}
+
+func TestParser_collectionFormat(t *testing.T) {
+	tests := []struct {
+		name   string
+		parser *Parser
+		format string
+	}{
+		{
+			name:   "no collectionFormat",
+			parser: New(),
+			format: "",
+		},
+		{
+			name:   "multi collectionFormat",
+			parser: New(SetCollectionFormat("multi")),
+			format: "multi",
+		},
+		{
+			name:   "ssv collectionFormat",
+			parser: New(SetCollectionFormat("ssv")),
+			format: "ssv",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.parser.collectionFormatInQuery != tt.format {
+				t.Errorf("Parser.collectionFormatInQuery = %s, want %s", tt.parser.collectionFormatInQuery, tt.format)
+			}
+		})
 	}
 }

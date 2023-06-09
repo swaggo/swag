@@ -35,6 +35,9 @@ const (
 	quietFlag             = "quiet"
 	tagsFlag              = "tags"
 	parseExtensionFlag    = "parseExtension"
+	templateDelimsFlag    = "templateDelims"
+	packageName           = "packageName"
+	collectionFormatFlag  = "collectionFormat"
 )
 
 var initFlags = []cli.Flag{
@@ -141,6 +144,23 @@ var initFlags = []cli.Flag{
 		Value:   "",
 		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
 	},
+	&cli.StringFlag{
+		Name:    templateDelimsFlag,
+		Aliases: []string{"td"},
+		Value:   "",
+		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
+	},
+	&cli.StringFlag{
+		Name:  packageName,
+		Value: "",
+		Usage: "A package name of docs.go, using output directory name by default (check `--output` option)",
+	},
+	&cli.StringFlag{
+		Name:    collectionFormatFlag,
+		Aliases: []string{"cf"},
+		Value:   "csv",
+		Usage:   "Set default collection format",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -152,6 +172,18 @@ func initAction(ctx *cli.Context) error {
 		return fmt.Errorf("not supported %s propertyStrategy", strategy)
 	}
 
+	leftDelim, rightDelim := "{{", "}}"
+
+	if ctx.IsSet(templateDelimsFlag) {
+		delims := strings.Split(ctx.String(templateDelimsFlag), ",")
+		if len(delims) != 2 {
+			return fmt.Errorf("exactly two template delimeters must be provided, comma separated")
+		} else if delims[0] == delims[1] {
+			return fmt.Errorf("template delimiters must be different")
+		}
+		leftDelim, rightDelim = strings.TrimSpace(delims[0]), strings.TrimSpace(delims[1])
+	}
+
 	outputTypes := strings.Split(ctx.String(outputTypesFlag), ",")
 	if len(outputTypes) == 0 {
 		return fmt.Errorf("no output types specified")
@@ -159,6 +191,11 @@ func initAction(ctx *cli.Context) error {
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 	if ctx.Bool(quietFlag) {
 		logger = log.New(io.Discard, "", log.LstdFlags)
+	}
+
+	collectionFormat := swag.TransToValidCollectionFormat(ctx.String(collectionFormatFlag))
+	if collectionFormat == "" {
+		return fmt.Errorf("not supported %s collectionFormat", ctx.String(collectionFormat))
 	}
 
 	return gen.New().Build(&gen.Config{
@@ -181,7 +218,11 @@ func initAction(ctx *cli.Context) error {
 		OverridesFile:       ctx.String(overridesFileFlag),
 		ParseGoList:         ctx.Bool(parseGoListFlag),
 		Tags:                ctx.String(tagsFlag),
+		LeftTemplateDelim:   leftDelim,
+		RightTemplateDelim:  rightDelim,
+		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
+		CollectionFormat:    collectionFormat,
 	})
 }
 

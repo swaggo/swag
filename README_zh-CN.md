@@ -50,7 +50,7 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
 
-从源码开始构建的话，需要有Go环境（1.16及以上版本）。
+从源码开始构建的话，需要有Go环境（1.17及以上版本）。
 
 或者从github的release页面下载预编译好的二进制文件。
 
@@ -119,7 +119,6 @@ OPTIONS:
 - [gin](http://github.com/swaggo/gin-swagger)
 - [echo](http://github.com/swaggo/echo-swagger)
 - [buffalo](https://github.com/swaggo/buffalo-swagger)
-- [net/http](https://github.com/swaggo/http-swagger)
 - [net/http](https://github.com/swaggo/http-swagger)
 - [gorilla/mux](https://github.com/swaggo/http-swagger)
 - [go-chi/chi](https://github.com/swaggo/http-swagger)

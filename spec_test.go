@@ -63,6 +63,8 @@ func TestSpec_ReadDoc(t *testing.T) {
 		Description      string
 		InfoInstanceName string
 		SwaggerTemplate  string
+		LeftDelim        string
+		RightDelim       string
 	}
 
 	tests := []struct {
@@ -132,6 +134,37 @@ func TestSpec_ReadDoc(t *testing.T) {
 			},
 			want: "{{ .Schemesa }}",
 		},
+		{
+			name: "TestReadDocCustomDelims",
+			fields: fields{
+				Version:          "1.0",
+				Host:             "localhost:8080",
+				BasePath:         "/",
+				InfoInstanceName: "TestInstanceName",
+				SwaggerTemplate: `{
+			"swagger": "2.0",
+			"info": {
+				"description": "{%escape .Description%}",
+				"title": "{%.Title%}",
+				"version": "{%.Version%}"
+			},
+			"host": "{%.Host%}",
+			"basePath": "{%.BasePath%}",
+		}`,
+				LeftDelim:  "{%",
+				RightDelim: "%}",
+			},
+			want: "{" +
+				"\n\t\t\t\"swagger\": \"2.0\"," +
+				"\n\t\t\t\"info\": {" +
+				"\n\t\t\t\t\"description\": \"\",\n\t\t\t\t\"" +
+				"title\": \"\"," +
+				"\n\t\t\t\t\"version\": \"1.0\"" +
+				"\n\t\t\t}," +
+				"\n\t\t\t\"host\": \"localhost:8080\"," +
+				"\n\t\t\t\"basePath\": \"/\"," +
+				"\n\t\t}",
+		},
 	}
 
 	for _, tt := range tests {
@@ -145,6 +178,8 @@ func TestSpec_ReadDoc(t *testing.T) {
 				Description:      tt.fields.Description,
 				InfoInstanceName: tt.fields.InfoInstanceName,
 				SwaggerTemplate:  tt.fields.SwaggerTemplate,
+				LeftDelim:        tt.fields.LeftDelim,
+				RightDelim:       tt.fields.RightDelim,
 			}
 
 			assert.Equal(t, tt.want, doc.ReadDoc())

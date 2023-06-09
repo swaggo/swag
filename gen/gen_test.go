@@ -261,6 +261,67 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 	assert.JSONEq(t, string(expectedJSON), jsonOutput)
 }
 
+func TestGen_BuildDocCustomDelims(t *testing.T) {
+	config := &Config{
+		SearchDir:          "../testdata/delims",
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/delims/docs",
+		OutputTypes:        outputTypes,
+		MarkdownFilesDir:   "../testdata/delims",
+		InstanceName:       "CustomDelims",
+		LeftTemplateDelim:  "{%",
+		RightTemplateDelim: "%}",
+	}
+
+	require.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "CustomDelims_docs.go"),
+		filepath.Join(config.OutputDir, "CustomDelims_swagger.json"),
+		filepath.Join(config.OutputDir, "CustomDelims_swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+	}
+
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/delims")
+
+	cmd.Dir = config.SearchDir
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		require.NoError(t, err, string(output))
+	}
+
+	p, err := plugin.Open(filepath.Join(config.SearchDir, "delims.so"))
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	defer os.Remove("delims.so")
+
+	readDoc, err := p.Lookup("ReadDoc")
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	jsonOutput := readDoc.(func() string)()
+
+	var jsonDoc interface{}
+	if err := json.Unmarshal([]byte(jsonOutput), &jsonDoc); err != nil {
+		require.NoError(t, err)
+	}
+
+	expectedJSON, err := os.ReadFile(filepath.Join(config.SearchDir, "expected.json"))
+	if err != nil {
+		require.NoError(t, err)
+	}
+
+	assert.JSONEq(t, string(expectedJSON), jsonOutput)
+}
+
 func TestGen_jsonIndent(t *testing.T) {
 	config := &Config{
 		SearchDir:          searchDir,
