@@ -126,7 +126,7 @@ type Parser struct {
 	// ParseVendor parse vendor folder
 	ParseVendor bool
 
-	// ParseDependencies whether swag should be parse outside dependency folder: 0 none, 1 operations, 2 models, 3 all
+	// ParseDependencies whether swag should be parse outside dependency folder: 0 none, 1 models, 2 operations, 3 all
 	ParseDependency ParseFlag
 
 	// ParseInternal whether swag should parse internal packages
