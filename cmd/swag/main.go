@@ -5,7 +5,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -16,29 +15,30 @@ import (
 )
 
 const (
-	searchDirFlag         = "dir"
-	excludeFlag           = "exclude"
-	generalInfoFlag       = "generalInfo"
-	propertyStrategyFlag  = "propertyStrategy"
-	outputFlag            = "output"
-	outputTypesFlag       = "outputTypes"
-	parseVendorFlag       = "parseVendor"
-	parseDependencyFlag   = "parseDependency"
-	markdownFilesFlag     = "markdownFiles"
-	codeExampleFilesFlag  = "codeExampleFiles"
-	parseInternalFlag     = "parseInternal"
-	generatedTimeFlag     = "generatedTime"
-	requiredByDefaultFlag = "requiredByDefault"
-	parseDepthFlag        = "parseDepth"
-	instanceNameFlag      = "instanceName"
-	overridesFileFlag     = "overridesFile"
-	parseGoListFlag       = "parseGoList"
-	quietFlag             = "quiet"
-	tagsFlag              = "tags"
-	parseExtensionFlag    = "parseExtension"
-	templateDelimsFlag    = "templateDelims"
-	packageName           = "packageName"
-	collectionFormatFlag  = "collectionFormat"
+	searchDirFlag            = "dir"
+	excludeFlag              = "exclude"
+	generalInfoFlag          = "generalInfo"
+	propertyStrategyFlag     = "propertyStrategy"
+	outputFlag               = "output"
+	outputTypesFlag          = "outputTypes"
+	parseVendorFlag          = "parseVendor"
+	parseDependencyFlag      = "parseDependency"
+	parseDependencyLevelFlag = "parseDependencyLevel"
+	markdownFilesFlag        = "markdownFiles"
+	codeExampleFilesFlag     = "codeExampleFiles"
+	parseInternalFlag        = "parseInternal"
+	generatedTimeFlag        = "generatedTime"
+	requiredByDefaultFlag    = "requiredByDefault"
+	parseDepthFlag           = "parseDepth"
+	instanceNameFlag         = "instanceName"
+	overridesFileFlag        = "overridesFile"
+	parseGoListFlag          = "parseGoList"
+	quietFlag                = "quiet"
+	tagsFlag                 = "tags"
+	parseExtensionFlag       = "parseExtension"
+	templateDelimsFlag       = "templateDelims"
+	packageName              = "packageName"
+	collectionFormatFlag     = "collectionFormat"
 )
 
 var initFlags = []cli.Flag{
@@ -84,6 +84,11 @@ var initFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:  parseVendorFlag,
 		Usage: "Parse go files in 'vendor' folder, disabled by default",
+	},
+	&cli.IntFlag{
+		Name:    parseDependencyLevelFlag,
+		Aliases: []string{"pdl"},
+		Usage:   "Parse go files inside dependency folder, disabled by default",
 	},
 	&cli.BoolFlag{
 		Name:    parseDependencyFlag,
@@ -199,17 +204,10 @@ func initAction(ctx *cli.Context) error {
 		return fmt.Errorf("not supported %s collectionFormat", ctx.String(collectionFormat))
 	}
 
-	var pdv = 0
-	pds := ctx.String(parseDependencyFlag)
-	bv, err := strconv.ParseBool(pds)
-	if err == nil {
-		if bv {
+	var pdv = ctx.Int(parseDependencyLevelFlag)
+	if pdv == 0 {
+		if ctx.Bool(parseDependencyFlag) {
 			pdv = 1
-		}
-	} else {
-		iv, err := strconv.ParseInt(pds, 10, 64)
-		if err == nil {
-			pdv = int(iv)
 		}
 	}
 	return gen.New().Build(&gen.Config{
