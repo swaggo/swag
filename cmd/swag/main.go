@@ -88,7 +88,7 @@ var initFlags = []cli.Flag{
 	&cli.IntFlag{
 		Name:    parseDependencyLevelFlag,
 		Aliases: []string{"pdl"},
-		Usage:   "Parse go files inside dependency folder, disabled by default",
+		Usage:   "Parse go files inside dependency folder, 0 disabled, 1 only parse models, 2 only parse operations, 3 parse all",
 	},
 	&cli.BoolFlag{
 		Name:    parseDependencyFlag,
