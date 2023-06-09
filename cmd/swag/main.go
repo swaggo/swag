@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/urfave/cli/v2"
@@ -198,6 +199,19 @@ func initAction(ctx *cli.Context) error {
 		return fmt.Errorf("not supported %s collectionFormat", ctx.String(collectionFormat))
 	}
 
+	var pdv = 0
+	pds := ctx.String(parseDependencyFlag)
+	bv, err := strconv.ParseBool(pds)
+	if err == nil {
+		if bv {
+			pdv = 1
+		}
+	} else {
+		iv, err := strconv.ParseInt(pds, 10, 64)
+		if err == nil {
+			pdv = int(iv)
+		}
+	}
 	return gen.New().Build(&gen.Config{
 		SearchDir:           ctx.String(searchDirFlag),
 		Excludes:            ctx.String(excludeFlag),
@@ -207,7 +221,7 @@ func initAction(ctx *cli.Context) error {
 		OutputDir:           ctx.String(outputFlag),
 		OutputTypes:         outputTypes,
 		ParseVendor:         ctx.Bool(parseVendorFlag),
-		ParseDependency:     ctx.Bool(parseDependencyFlag),
+		ParseDependency:     pdv,
 		MarkdownFilesDir:    ctx.String(markdownFilesFlag),
 		ParseInternal:       ctx.Bool(parseInternalFlag),
 		GeneratedTime:       ctx.Bool(generatedTimeFlag),

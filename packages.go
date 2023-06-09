@@ -19,7 +19,7 @@ type PackagesDefinitions struct {
 	files             map[*ast.File]*AstFileInfo
 	packages          map[string]*PackageDefinitions
 	uniqueDefinitions map[string]*TypeSpecDef
-	parseDependency   bool
+	parseDependency   ParseFlag
 	debug             Debugger
 }
 
@@ -324,7 +324,7 @@ func (pkgDefs *PackagesDefinitions) EvaluateConstValueByName(file *ast.File, pkg
 			}
 		}
 	}
-	if pkgDefs.parseDependency {
+	if pkgDefs.parseDependency > 0 {
 		for _, pkgPath := range externalPkgPaths {
 			if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
 				if pkg, ok := pkgDefs.packages[pkgPath]; ok {
@@ -513,7 +513,7 @@ func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths
 		}
 	}
 
-	if pkgDefs.parseDependency {
+	if pkgDefs.parseDependency > 0 {
 		for _, pkgPath := range externalPkgPaths {
 			if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
 				typeDef = pkgDefs.findTypeSpec(pkgPath, name)
