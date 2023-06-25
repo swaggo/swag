@@ -34,7 +34,7 @@ func (p *Parser) GetOpenAPI() *spec.OpenAPI {
 }
 
 var (
-	serversUrlPattern       = regexp.MustCompile(`\{([^}]+)\}`)
+	serversURLPattern       = regexp.MustCompile(`\{([^}]+)\}`)
 	serversVariablesPattern = regexp.MustCompile(`^(\w+)\s+(.+)$`)
 )
 
@@ -173,7 +173,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 		case "@servers.url":
 			server := spec.NewServer()
 			server.Spec.URL = value
-			matches := serversUrlPattern.FindAllStringSubmatch(value, -1)
+			matches := serversURLPattern.FindAllStringSubmatch(value, -1)
 			server.Spec.Variables = make(map[string]*spec.Extendable[spec.ServerVariable])
 			for _, match := range matches {
 				server.Spec.Variables[match[1]] = spec.NewServerVariable()
