@@ -1,0 +1,44 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Swagger Example API",
+    "contact": {},
+    "version": "1.0"
+  },
+  "paths": {
+    "/testapi/application": {
+      "get": {
+        "description": "test get application",
+        "summary": "Get application",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/testapi/nosec": {
+      "get": {
+        "security": [],
+        "description": "override global security",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "APIKeyAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  },
+  "security": [
+    {
+      "APIKeyAuth": []
+    }
+  ]
+}
