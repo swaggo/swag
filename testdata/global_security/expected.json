@@ -8,8 +8,22 @@
   "paths": {
     "/testapi/application": {
       "get": {
-        "description": "test get application",
-        "summary": "Get application",
+        "summary": "default security",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/testapi/basic": {
+      "get": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "summary": "basic security",
         "responses": {
           "200": {
             "description": "OK"
@@ -20,7 +34,41 @@
     "/testapi/nosec": {
       "get": {
         "security": [],
-        "description": "override global security",
+        "summary": "no security",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/testapi/oauth/admin": {
+      "get": {
+        "security": [
+          {
+            "OAuth2Application": [
+              "admin"
+            ]
+          }
+        ],
+        "summary": "oauth2 admin",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/testapi/oauth/write": {
+      "get": {
+        "security": [
+          {
+            "OAuth2Application": [
+              "write"
+            ]
+          }
+        ],
+        "summary": "oauth2 write",
         "responses": {
           "200": {
             "description": "OK"
@@ -34,11 +82,24 @@
       "type": "apiKey",
       "name": "Authorization",
       "in": "header"
+    },
+    "BasicAuth": {
+      "type": "basic"
+    },
+    "OAuth2Application": {
+      "type": "oauth2",
+      "flow": "application",
+      "tokenUrl": "https://example.com/oauth/token",
+      "scopes": {
+        "admin": " Grants read and write access to administrative information",
+        "write": " Grants write access"
+      }
     }
   },
   "security": [
     {
-      "APIKeyAuth": []
+      "APIKeyAuth": [],
+      "OAuth2Application": []
     }
   ]
 }
