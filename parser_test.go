@@ -2905,6 +2905,40 @@ func Test3(){
 	assert.NotNil(t, val.Delete)
 }
 
+func TestParser_ParseRouterApiMultiplePathsWithMultipleParams(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package test
+
+// @Success 200
+// @Param group_id path int true "Group ID"
+// @Param user_id  path int true "User ID"
+// @Router /examples/groups/{group_id}/user/{user_id}/address [get]
+// @Router /examples/user/{user_id}/address [get]
+func Test(){
+}
+`
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/examples/groups/{group_id}/user/{user_id}/address"]
+
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(val.Get.Parameters))
+
+	val, ok = ps["/examples/user/{user_id}/address"]
+
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(val.Get.Parameters))
+}
+
 // func TestParseDeterministic(t *testing.T) {
 // 	mainAPIFile := "main.go"
 // 	for _, searchDir := range []string{
