@@ -975,7 +975,21 @@ func processRouterOperation(parser *Parser, operation *Operation) error {
 			parser.debug.Printf("warning: %s\n", err)
 		}
 
-		*op = &operation.Operation
+		if len(operation.RouterProperties) > 1 {
+			newOp := *operation
+			var validParams []spec.Parameter
+			for _, param := range newOp.Operation.OperationProps.Parameters {
+				if param.In == "path" && !strings.Contains(routeProperties.Path, param.Name) {
+					// This path param is not actually contained in the path, skip adding it to the final params
+					continue
+				}
+				validParams = append(validParams, param)
+			}
+			newOp.Operation.OperationProps.Parameters = validParams
+			*op = &newOp.Operation
+		} else {
+			*op = &operation.Operation
+		}
 
 		parser.swagger.Paths.Paths[routeProperties.Path] = pathItem
 	}
