@@ -867,18 +867,29 @@ func getTagsFromComment(comment string) (tags []string) {
 }
 
 func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
-	if len(parser.tags) != 0 {
-		for _, comment := range comments {
-			for _, tag := range getTagsFromComment(comment.Text) {
-				if _, has := parser.tags["!"+tag]; has {
-					return false
-				}
-				if _, has := parser.tags[tag]; has {
-					match = true // keep iterating as it may contain a tag that is excluded
-				}
+	if len(parser.tags) == 0 {
+		return true
+	}
+
+	match = false
+	for _, comment := range comments {
+		for _, tag := range getTagsFromComment(comment.Text) {
+			if _, has := parser.tags["!"+tag]; has {
+				return false
+			}
+			if _, has := parser.tags[tag]; has {
+				match = true // keep iterating as it may contain a tag that is excluded
 			}
 		}
-		return
+	}
+
+	if !match {
+		// If all tags are negation then we should return true
+		for key, _ := range parser.tags {
+			if key[0] != '!' {
+				return false
+			}
+		}
 	}
 	return true
 }
