@@ -1383,6 +1383,36 @@ func TestParseParamCommentByBodyTextPlain(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+// TODO: fix this
+func TestParseParamCommentByBodyEnumsText(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param text body string true "description" Enums(ENUM1, ENUM2, ENUM3)`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "description": "description",
+        "name": "text",
+        "in": "body",
+        "required": true,
+        "schema": {
+            "type": "string",
+            "enum": [
+                "ENUM1",
+                "ENUM2",
+                "ENUM3"
+            ]
+        }
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByBodyTypeWithDeepNestedFields(t *testing.T) {
 	t.Parallel()
 
@@ -1968,6 +1998,7 @@ func TestParseAndExtractionParamAttribute(t *testing.T) {
 		" default(1) maximum(100) minimum(0) format(csv)",
 		"",
 		NUMBER,
+		"",
 		&numberParam,
 	)
 	assert.NoError(t, err)
@@ -1976,10 +2007,10 @@ func TestParseAndExtractionParamAttribute(t *testing.T) {
 	assert.Equal(t, "csv", numberParam.SimpleSchema.Format)
 	assert.Equal(t, float64(1), numberParam.Default)
 
-	err = op.parseParamAttribute(" minlength(1)", "", NUMBER, nil)
+	err = op.parseParamAttribute(" minlength(1)", "", NUMBER, "", nil)
 	assert.Error(t, err)
 
-	err = op.parseParamAttribute(" maxlength(1)", "", NUMBER, nil)
+	err = op.parseParamAttribute(" maxlength(1)", "", NUMBER, "", nil)
 	assert.Error(t, err)
 
 	stringParam := spec.Parameter{}
@@ -1987,27 +2018,28 @@ func TestParseAndExtractionParamAttribute(t *testing.T) {
 		" default(test) maxlength(100) minlength(0) format(csv)",
 		"",
 		STRING,
+		"",
 		&stringParam,
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(0), *stringParam.MinLength)
 	assert.Equal(t, int64(100), *stringParam.MaxLength)
 	assert.Equal(t, "csv", stringParam.SimpleSchema.Format)
-	err = op.parseParamAttribute(" minimum(0)", "", STRING, nil)
+	err = op.parseParamAttribute(" minimum(0)", "", STRING, "", nil)
 	assert.Error(t, err)
 
-	err = op.parseParamAttribute(" maximum(0)", "", STRING, nil)
+	err = op.parseParamAttribute(" maximum(0)", "", STRING, "", nil)
 	assert.Error(t, err)
 
 	arrayParram := spec.Parameter{}
-	err = op.parseParamAttribute(" collectionFormat(tsv)", ARRAY, STRING, &arrayParram)
+	err = op.parseParamAttribute(" collectionFormat(tsv)", ARRAY, STRING, "", &arrayParram)
 	assert.Equal(t, "tsv", arrayParram.CollectionFormat)
 	assert.NoError(t, err)
 
-	err = op.parseParamAttribute(" collectionFormat(tsv)", STRING, STRING, nil)
+	err = op.parseParamAttribute(" collectionFormat(tsv)", STRING, STRING, "", nil)
 	assert.Error(t, err)
 
-	err = op.parseParamAttribute(" default(0)", "", ARRAY, nil)
+	err = op.parseParamAttribute(" default(0)", "", ARRAY, "", nil)
 	assert.NoError(t, err)
 }
 
