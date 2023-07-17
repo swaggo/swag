@@ -885,7 +885,7 @@ func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
 
 	if !match {
 		// If all tags are negation then we should return true
-		for key, _ := range parser.tags {
+		for key := range parser.tags {
 			if key[0] != '!' {
 				return false
 			}
