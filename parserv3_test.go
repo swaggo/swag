@@ -386,8 +386,13 @@ func TestParserParseServers(t *testing.T) {
 	require.NotNil(t, servers)
 
 	assert.Equal(t, 2, len(servers))
-	assert.Equal(t, "https://test.petstore.com/v3", servers[0].Spec.URL)
+	assert.Equal(t, "{scheme}://{host}:{port}", servers[0].Spec.URL)
 	assert.Equal(t, "Test Petstore server.", servers[0].Spec.Description)
+
+	assert.Equal(t, "https", servers[0].Spec.Variables["scheme"].Spec.Default)
+	assert.Equal(t, []string{"http", "https"}, servers[0].Spec.Variables["scheme"].Spec.Enum)
+	assert.Equal(t, "test.petstore.com", servers[0].Spec.Variables["host"].Spec.Default)
+	assert.Equal(t, "443", servers[0].Spec.Variables["port"].Spec.Default)
 
 	assert.Equal(t, "https://petstore.com/v3", servers[1].Spec.URL)
 	assert.Equal(t, "Production Petstore server.", servers[1].Spec.Description)

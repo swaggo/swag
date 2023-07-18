@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"net/http"
 	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -31,6 +32,11 @@ type FieldParserV3 interface {
 func (p *Parser) GetOpenAPI() *spec.OpenAPI {
 	return p.openAPI
 }
+
+var (
+	serversURLPattern       = regexp.MustCompile(`\{([^}]+)\}`)
+	serversVariablesPattern = regexp.MustCompile(`^(\w+)\s+(.+)$`)
+)
 
 func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 	previousAttribute := ""
@@ -167,19 +173,64 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 		case "@servers.url":
 			server := spec.NewServer()
 			server.Spec.URL = value
+			matches := serversURLPattern.FindAllStringSubmatch(value, -1)
+			server.Spec.Variables = make(map[string]*spec.Extendable[spec.ServerVariable])
+			for _, match := range matches {
+				server.Spec.Variables[match[1]] = spec.NewServerVariable()
+			}
 
 			p.openAPI.Servers = append(p.openAPI.Servers, server)
 		case "@servers.description":
 			server := p.openAPI.Servers[len(p.openAPI.Servers)-1]
 			server.Spec.Description = value
 		case "@servers.variables.enum":
-			p.debug.Printf("not yet implemented: @servers.variables.enum")
+			server := p.openAPI.Servers[len(p.openAPI.Servers)-1]
+			matches := serversVariablesPattern.FindStringSubmatch(value)
+			if len(matches) > 0 {
+				variable, ok := server.Spec.Variables[matches[1]]
+				if !ok {
+					p.debug.Printf("Variables are not detected.")
+					continue
+				}
+				variable.Spec.Enum = append(variable.Spec.Enum, matches[2])
+			}
 		case "@servers.variables.default":
-			p.debug.Printf("not yet implemented: @servers.variables.default")
+			server := p.openAPI.Servers[len(p.openAPI.Servers)-1]
+			matches := serversVariablesPattern.FindStringSubmatch(value)
+			if len(matches) > 0 {
+				variable, ok := server.Spec.Variables[matches[1]]
+				if !ok {
+					p.debug.Printf("Variables are not detected.")
+					continue
+				}
+				variable.Spec.Default = matches[2]
+			}
 		case "@servers.variables.description":
-			p.debug.Printf("not yet implemented: @servers.variables.description")
+			server := p.openAPI.Servers[len(p.openAPI.Servers)-1]
+			matches := serversVariablesPattern.FindStringSubmatch(value)
+			if len(matches) > 0 {
+				variable, ok := server.Spec.Variables[matches[1]]
+				if !ok {
+					p.debug.Printf("Variables are not detected.")
+					continue
+				}
+				variable.Spec.Default = matches[2]
+			}
 		case "@servers.variables.description.markdown":
-			p.debug.Printf("not yet implemented: @servers.variables.description.markdown")
+			server := p.openAPI.Servers[len(p.openAPI.Servers)-1]
+			matches := serversVariablesPattern.FindStringSubmatch(value)
+			if len(matches) > 0 {
+				variable, ok := server.Spec.Variables[matches[1]]
+				if !ok {
+					p.debug.Printf("Variables are not detected.")
+					continue
+				}
+				commentInfo, err := getMarkdownForTag(matches[1], p.markdownFileDir)
+				if err != nil {
+					return err
+				}
+				variable.Spec.Description = string(commentInfo)
+			}
 		default:
 			if strings.HasPrefix(attribute, "@x-") {
 				err := p.parseExtensionsV3(value, attribute)
