@@ -1,0 +1,105 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Swagger Example API",
+    "contact": {},
+    "version": "1.0"
+  },
+  "paths": {
+    "/testapi/application": {
+      "get": {
+        "summary": "default security",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/testapi/basic": {
+      "get": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "summary": "basic security",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/testapi/nosec": {
+      "get": {
+        "security": [],
+        "summary": "no security",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/testapi/oauth/admin": {
+      "get": {
+        "security": [
+          {
+            "OAuth2Application": [
+              "admin"
+            ]
+          }
+        ],
+        "summary": "oauth2 admin",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/testapi/oauth/write": {
+      "get": {
+        "security": [
+          {
+            "OAuth2Application": [
+              "write"
+            ]
+          }
+        ],
+        "summary": "oauth2 write",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "APIKeyAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    },
+    "BasicAuth": {
+      "type": "basic"
+    },
+    "OAuth2Application": {
+      "type": "oauth2",
+      "flow": "application",
+      "tokenUrl": "https://example.com/oauth/token",
+      "scopes": {
+        "admin": " Grants read and write access to administrative information",
+        "write": " Grants write access"
+      }
+    }
+  },
+  "security": [
+    {
+      "APIKeyAuth": [],
+      "OAuth2Application": []
+    }
+  ]
+}

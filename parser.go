@@ -569,6 +569,9 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 
 			parser.swagger.SecurityDefinitions[value] = scheme
 
+		case securityAttr:
+			parser.swagger.Security = append(parser.swagger.Security, parseSecurity(value))
+
 		case "@query.collection.format":
 			parser.collectionFormatInQuery = TransToValidCollectionFormat(value)
 
@@ -766,6 +769,34 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 	}
 
 	return scheme, nil
+}
+
+func parseSecurity(commentLine string) map[string][]string {
+	securityMap := make(map[string][]string)
+
+	for _, securityOption := range strings.Split(commentLine, "||") {
+		securityOption = strings.TrimSpace(securityOption)
+
+		left, right := strings.Index(securityOption, "["), strings.Index(securityOption, "]")
+
+		if !(left == -1 && right == -1) {
+			scopes := securityOption[left+1 : right]
+
+			var options []string
+
+			for _, scope := range strings.Split(scopes, ",") {
+				options = append(options, strings.TrimSpace(scope))
+			}
+
+			securityKey := securityOption[0:left]
+			securityMap[securityKey] = append(securityMap[securityKey], options...)
+		} else {
+			securityKey := strings.TrimSpace(securityOption)
+			securityMap[securityKey] = []string{}
+		}
+	}
+
+	return securityMap
 }
 
 func initIfEmpty(license *spec.License) *spec.License {

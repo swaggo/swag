@@ -721,6 +721,11 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 // ParseSecurityComment parses comment for given `security` comment string.
 func (operation *Operation) ParseSecurityComment(commentLine string) error {
+	if len(commentLine) == 0 {
+		operation.Security = []map[string][]string{}
+		return nil
+	}
+
 	var (
 		securityMap    = make(map[string][]string)
 		securitySource = commentLine[strings.Index(commentLine, "@Security")+1:]
