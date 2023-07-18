@@ -661,7 +661,7 @@ func TestGen_cgoImports(t *testing.T) {
 		OutputDir:          "../testdata/simple_cgo/docs",
 		OutputTypes:        outputTypes,
 		PropNamingStrategy: "",
-		ParseDependency:    true,
+		ParseDependency:    1,
 	}
 
 	assert.NoError(t, New().Build(config))

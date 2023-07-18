@@ -105,7 +105,7 @@ func TestGetAllGoFileInfoFromDepsByList(t *testing.T) {
 				p.ParseInternal = false
 			}
 			c.buildPackage.Dir = filepath.Join(pwd, c.buildPackage.Dir)
-			err := p.getAllGoFileInfoFromDepsByList(c.buildPackage)
+			err := p.getAllGoFileInfoFromDepsByList(c.buildPackage, ParseModels)
 			if c.except != nil {
 				assert.NotNil(t, err)
 			} else {

@@ -127,7 +127,7 @@ func TestParseGenericsPackageAlias(t *testing.T) {
 	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")

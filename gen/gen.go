@@ -103,8 +103,8 @@ type Config struct {
 	// ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
 
-	// ParseDependencies whether swag should be parse outside dependency folder
-	ParseDependency bool
+	// ParseDependencies whether swag should be parse outside dependency folder: 0 none, 1 models, 2 operations, 3 all
+	ParseDependency int
 
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
