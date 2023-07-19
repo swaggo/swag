@@ -138,6 +138,9 @@ type Config struct {
 
 	// CollectionFormat set default collection format
 	CollectionFormat string
+
+	// Parse only packages whose import path match the given prefix, comma separated
+	PackagePrefix string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -197,6 +200,7 @@ func (g *Gen) Build(config *Config) error {
 		swag.ParseUsingGoList(config.ParseGoList),
 		swag.SetTags(config.Tags),
 		swag.SetCollectionFormat(config.CollectionFormat),
+		swag.SetPackagePrefix(config.PackagePrefix),
 	)
 
 	p.PropNamingStrategy = config.PropNamingStrategy

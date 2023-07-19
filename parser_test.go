@@ -4048,3 +4048,25 @@ func TestParser_collectionFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_skipPackageByPrefix(t *testing.T) {
+	t.Parallel()
+
+	parser := New()
+
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+
+	parser = New(SetPackagePrefix("github.com/swaggo/swag/cmd"))
+
+	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
+	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+
+	parser = New(SetPackagePrefix("github.com/swaggo/swag/cmd,github.com/swaggo/swag/gen"))
+
+	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+}

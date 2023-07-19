@@ -153,6 +153,10 @@ type Parser struct {
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
 
+	// packagePrefix is a list of package path prefixes, packages that do not
+	// match any one of them will be excluded when searching.
+	packagePrefix []string
+
 	// tells parser to include only specific extension
 	parseExtension string
 
@@ -273,6 +277,20 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 	}
 }
 
+// SetPackagePrefix sets a list of package path prefixes from a comma-separated
+// string, packages that do not match any one of them will be excluded when
+// searching.
+func SetPackagePrefix(packagePrefix string) func(*Parser) {
+	return func(p *Parser) {
+		for _, f := range strings.Split(packagePrefix, ",") {
+			f = strings.TrimSpace(f)
+			if f != "" {
+				p.packagePrefix = append(p.packagePrefix, f)
+			}
+		}
+	}
+}
+
 // SetTags sets the tags to be included
 func SetTags(include string) func(*Parser) {
 	return func(p *Parser) {
@@ -341,6 +359,20 @@ func ParseUsingGoList(enabled bool) func(parser *Parser) {
 // ParseAPI parses general api info for given searchDir and mainAPIFile.
 func (parser *Parser) ParseAPI(searchDir string, mainAPIFile string, parseDepth int) error {
 	return parser.ParseAPIMultiSearchDir([]string{searchDir}, mainAPIFile, parseDepth)
+}
+
+// skipPackageByPrefix returns true the given pkgpath does not match
+// any user-defined package path prefixes.
+func (parser *Parser) skipPackageByPrefix(pkgpath string) bool {
+	if len(parser.packagePrefix) == 0 {
+		return false
+	}
+	for _, prefix := range parser.packagePrefix {
+		if strings.HasPrefix(pkgpath, prefix) {
+			return false
+		}
+	}
+	return true
 }
 
 // ParseAPIMultiSearchDir is like ParseAPI but for multiple search dirs.
@@ -1623,6 +1655,9 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
 func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
+	if parser.skipPackageByPrefix(packageDir) {
+		return nil // ignored by user-defined package path prefixes
+	}
 	return filepath.Walk(searchDir, func(path string, f os.FileInfo, _ error) error {
 		err := parser.Skip(path, f)
 		if err != nil {
@@ -1646,6 +1681,10 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg, parseFlag ParseFl
 	ignoreInternal := pkg.Internal && !parser.ParseInternal
 	if ignoreInternal || !pkg.Resolved { // ignored internal and not resolved dependencies
 		return nil
+	}
+
+	if pkg.Raw != nil && parser.skipPackageByPrefix(pkg.Raw.ImportPath) {
+		return nil // ignored by user-defined package path prefixes
 	}
 
 	// Skip cgo
