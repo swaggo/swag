@@ -895,3 +895,81 @@ func TestGen_ErrorAndInterface(t *testing.T) {
 
 	assert.JSONEq(t, string(expectedJSON), string(jsonOutput))
 }
+
+func TestGen_StateAdmin(t *testing.T) {
+	config := &Config{
+		SearchDir:          "../testdata/state",
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/state/docs",
+		OutputTypes:        outputTypes,
+		PropNamingStrategy: "",
+		State:              "admin",
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "admin_docs.go"),
+		filepath.Join(config.OutputDir, "admin_swagger.json"),
+		filepath.Join(config.OutputDir, "admin_swagger.yaml"),
+	}
+	t.Cleanup(func() {
+		for _, expectedFile := range expectedFiles {
+			_ = os.Remove(expectedFile)
+		}
+	})
+
+	// check files
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+	}
+
+	// check content
+	jsonOutput, err := os.ReadFile(filepath.Join(config.OutputDir, "admin_swagger.json"))
+	require.NoError(t, err)
+	expectedJSON, err := os.ReadFile(filepath.Join(config.SearchDir, "admin_expected.json"))
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(expectedJSON), string(jsonOutput))
+}
+
+func TestGen_StateUser(t *testing.T) {
+	config := &Config{
+		SearchDir:          "../testdata/state",
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/state/docs",
+		OutputTypes:        outputTypes,
+		PropNamingStrategy: "",
+		State:              "user",
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "user_docs.go"),
+		filepath.Join(config.OutputDir, "user_swagger.json"),
+		filepath.Join(config.OutputDir, "user_swagger.yaml"),
+	}
+	t.Cleanup(func() {
+		for _, expectedFile := range expectedFiles {
+			_ = os.Remove(expectedFile)
+		}
+	})
+
+	// check files
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+	}
+
+	// check content
+	jsonOutput, err := os.ReadFile(filepath.Join(config.OutputDir, "user_swagger.json"))
+	require.NoError(t, err)
+	expectedJSON, err := os.ReadFile(filepath.Join(config.SearchDir, "user_expected.json"))
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(expectedJSON), string(jsonOutput))
+}

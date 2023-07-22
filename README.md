@@ -106,6 +106,7 @@ OPTIONS:
    --tags value, -t value                 A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded
    --templateDelims value, --td value     Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: "[[,]]"
    --collectionFormat value, --cf value   Set default collection format (default: "csv")
+   --state value                          Initial state for the state machine (default: ""), @HostState in root file, @State in other files
    --help, -h                             show help (default: false)
 ```
 
