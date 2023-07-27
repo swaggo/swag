@@ -989,6 +989,7 @@ func matchExtension(extensionToMatch string, comments []*ast.Comment) (match boo
 
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
+DeclsLoop:
 	for _, astDescription := range fileInfo.File.Decls {
 		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
 			continue
@@ -1004,9 +1005,9 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 					if err != nil {
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
 					}
-				}
-				if operation.State != "" && operation.State != parser.HostState {
-					continue
+					if operation.State != "" && operation.State != parser.HostState {
+						continue DeclsLoop
+					}
 				}
 				err := processRouterOperation(parser, operation)
 				if err != nil {
