@@ -1673,6 +1673,12 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 			return err
 		}
 
+		if parser.excludes != nil {
+			if _, ok := parser.excludes[relPath]; ok {
+				return nil
+			}
+		}
+
 		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil, ParseAll)
 	})
 }
