@@ -16,6 +16,19 @@ func TestFormat_Format(t *testing.T) {
 	assert.True(t, fx.isFormatted("api/api.go"))
 }
 
+func TestFormat_PermissionsPreserved(t *testing.T) {
+	fx := setup(t)
+
+	originalFileInfo, err := os.Stat(filepath.Join(fx.basedir, "main.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.NoError(t, New().Build(&Config{SearchDir: fx.basedir}))
+	assert.True(t, permissionsEqual(t, filepath.Join(fx.basedir, "main.go"), originalFileInfo.Mode()))
+	assert.True(t, permissionsEqual(t, filepath.Join(fx.basedir, "api/api.go"), originalFileInfo.Mode()))
+}
+
 func TestFormat_ExcludeDir(t *testing.T) {
 	fx := setup(t)
 	assert.NoError(t, New().Build(&Config{
@@ -94,6 +107,14 @@ func (fx *fixture) isFormatted(file string) bool {
 		fx.t.Fatal(err)
 	}
 	return !bytes.Equal(testFiles[file], contents)
+}
+
+func permissionsEqual(t *testing.T, path string, expectedMode os.FileMode) bool {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return expectedMode == fileInfo.Mode()
 }
 
 var testFiles = map[string][]byte{

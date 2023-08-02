@@ -102,6 +102,10 @@ func (f *Format) format(path string) error {
 }
 
 func write(path string, contents []byte) error {
+	originalFileInfo, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
 	f, err := os.CreateTemp(filepath.Dir(path), filepath.Base(path))
 	if err != nil {
 		return err
@@ -111,6 +115,9 @@ func write(path string, contents []byte) error {
 		return err
 	}
 	if err := f.Close(); err != nil {
+		return err
+	}
+	if err := os.Chmod(f.Name(), originalFileInfo.Mode()); err != nil {
 		return err
 	}
 	return os.Rename(f.Name(), path)
