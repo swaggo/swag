@@ -1,6 +1,7 @@
 package format
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -97,6 +98,10 @@ func (f *Format) format(path string) error {
 	formatted, err := f.formatter.Format(path, contents)
 	if err != nil {
 		return err
+	}
+	if bytes.Equal(contents, formatted) {
+		// Skip write if no change
+		return nil
 	}
 	return write(path, formatted)
 }
