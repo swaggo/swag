@@ -410,6 +410,7 @@ const (
 	readOnlyTag         = "readonly"
 	extensionsTag       = "extensions"
 	collectionFormatTag = "collectionFormat"
+	commentTag          = "comment"
 )
 
 var regexAttributes = map[string]*regexp.Regexp{

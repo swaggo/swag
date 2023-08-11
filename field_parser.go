@@ -168,6 +168,7 @@ type structField struct {
 	maxItems     *int64
 	minItems     *int64
 	exampleValue interface{}
+	comment      string
 	enums        []interface{}
 	enumVarNames []interface{}
 	unique       bool
@@ -269,6 +270,7 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	}
 
 	jsonTagValue := ps.tag.Get(jsonTag)
+	field.comment = ps.tag.Get(commentTag)
 
 	bindingTagValue := ps.tag.Get(bindingTag)
 	if bindingTagValue != "" {
@@ -449,6 +451,7 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	}
 
 	eleSchema.Maximum = field.maximum
+	eleSchema.Description = field.comment
 	eleSchema.Minimum = field.minimum
 	eleSchema.MultipleOf = field.multipleOf
 	eleSchema.MaxLength = field.maxLength
