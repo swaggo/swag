@@ -418,7 +418,7 @@ Quando uma pequena sequência na sua documentação é insuficiente, ou precisa 
 | success | resposta de sucesso que separou por espaços. `return code or default`,`{param type}`,`data type`,`comment` |.
 | failure | Resposta de falha que separou por espaços. `return code or default`,`{param type}`,`data type`,`comment` |
 | response | Igual ao `sucesso` e `falha` |
-| header | Cabeçalho em resposta que separou por espaços. `código de retorno`,`{{tipo de parâmetro}`,`tipo de dados`,`comentário` |.
+| header | Cabeçalho em resposta que separou por espaços. `código de retorno`,`{tipo de parâmetro}`,`tipo de dados`,`comentário` |.
 | router | Definição do caminho que separou por espaços. caminho",`path`,`[httpMethod]` |[httpMethod]` |
 | x-name | A chave de extensão, deve ser iniciada por x- e tomar apenas o valor json.                                                           |
 | x-codeSample | Optional Markdown use. tomar `file` como parâmetro. Isto irá então procurar um ficheiro nomeado como o resumo na pasta dada.                                      |
