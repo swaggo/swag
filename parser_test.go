@@ -2153,7 +2153,7 @@ func TestParseTypeOverrides(t *testing.T) {
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	//windows will fail: \r\n \n
+	// windows will fail: \r\n \n
 	assert.Equal(t, string(expected), string(b))
 }
 
@@ -2234,7 +2234,7 @@ func TestParseExternalModels(t *testing.T) {
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
-	//ioutil.WriteFile("./testdata/external_models/main/expected.json",b,0777)
+	// ioutil.WriteFile("./testdata/external_models/main/expected.json",b,0777)
 	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
@@ -3634,6 +3634,40 @@ func Fun()  {
 	childName, ok := teacher.Properties["childName"]
 	assert.False(t, ok)
 	assert.Empty(t, childName)
+}
+
+func TestParser_genVarDefinedFuncDoc(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+func f() {}
+
+// @Summary	generate var-defined functions' doc
+// @Router /test [get]
+var Func = f
+
+// @Summary generate indirectly pointing
+// @Router /test2 [get]
+var Func2 = Func
+`
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+	_, _ = p.packages.ParseTypes()
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	val, ok := p.swagger.Paths.Paths["/test"]
+	assert.True(t, ok)
+	assert.NotNil(t, val.Get)
+	assert.Equal(t, val.Get.OperationProps.Summary, "generate var-defined functions' doc")
+
+	val2, ok := p.swagger.Paths.Paths["/test2"]
+	assert.True(t, ok)
+	assert.NotNil(t, val2.Get)
+	assert.Equal(t, val2.Get.OperationProps.Summary, "generate indirectly pointing")
 }
 
 func TestDefineTypeOfExample(t *testing.T) {
