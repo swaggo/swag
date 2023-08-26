@@ -2314,21 +2314,28 @@ func TestParseSecurityCommentSimple(t *testing.T) {
 	})
 }
 
-func TestParseSecurityCommentOr(t *testing.T) {
+func TestParseSecurityCommentAnd(t *testing.T) {
 	t.Parallel()
 
-	comment := `@Security OAuth2Implicit[read, write] || Firebase[]`
+	comment := `@Security OAuth2Implicit[read, write] && Firebase[]`
 	operation := NewOperation(nil)
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	assert.Equal(t, operation.Security, []map[string][]string{
+	expect := []map[string][]string{
 		{
 			"OAuth2Implicit": {"read", "write"},
 			"Firebase":       {""},
 		},
-	})
+	}
+	assert.Equal(t, operation.Security, expect)
+
+	oldVersionComment := `@Security OAuth2Implicit[read, write] || Firebase[]`
+	operation = NewOperation(nil)
+	err = operation.ParseComment(oldVersionComment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, operation.Security, expect)
 }
 
 func TestParseMultiDescription(t *testing.T) {

@@ -732,8 +732,7 @@ type Resp struct {
 使用AND条件。
 
 ```go
-// @Security ApiKeyAuth
-// @Security OAuth2Application[write, admin]
+// @Security ApiKeyAuth && OAuth2Application[write, admin]
 ```
 
 ## 项目相关
