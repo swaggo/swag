@@ -48,6 +48,7 @@ var mimeTypeAliases = map[string]string{
 }
 
 var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
+var securityPairSepPattern = regexp.MustCompile(`\|\||&&`) // || for compatibility with old version, && for clarity
 
 // NewOperation creates a new Operation with default properties.
 // map[int]Response.
@@ -731,7 +732,7 @@ func (operation *Operation) ParseSecurityComment(commentLine string) error {
 		securitySource = commentLine[strings.Index(commentLine, "@Security")+1:]
 	)
 
-	for _, securityOption := range strings.Split(securitySource, "||") {
+	for _, securityOption := range securityPairSepPattern.Split(securitySource, -1) {
 		securityOption = strings.TrimSpace(securityOption)
 
 		left, right := strings.Index(securityOption, "["), strings.Index(securityOption, "]")

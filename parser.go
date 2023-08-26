@@ -806,7 +806,7 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 func parseSecurity(commentLine string) map[string][]string {
 	securityMap := make(map[string][]string)
 
-	for _, securityOption := range strings.Split(commentLine, "||") {
+	for _, securityOption := range securityPairSepPattern.Split(commentLine, -1) {
 		securityOption = strings.TrimSpace(securityOption)
 
 		left, right := strings.Index(securityOption, "["), strings.Index(securityOption, "]")
