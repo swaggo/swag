@@ -28,10 +28,10 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
+	gopkg.in/yaml.v3 v3.0.0 // indirect
 )
 
 retract (
-	v1.9.0 // published accidentally
 	v1.16.0 // published accidentally
+	v1.9.0 // published accidentally
 )
