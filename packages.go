@@ -506,13 +506,6 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 }
 
 func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths, externalPkgPaths []string, name string) (typeDef *TypeSpecDef) {
-	for _, pkgPath := range matchedPkgPaths {
-		typeDef = pkgDefs.findTypeSpec(pkgPath, name)
-		if typeDef != nil {
-			return typeDef
-		}
-	}
-
 	if pkgDefs.parseDependency > 0 {
 		for _, pkgPath := range externalPkgPaths {
 			if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
@@ -521,6 +514,13 @@ func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths
 					return typeDef
 				}
 			}
+		}
+	}
+
+	for _, pkgPath := range matchedPkgPaths {
+		typeDef = pkgDefs.findTypeSpec(pkgPath, name)
+		if typeDef != nil {
+			return typeDef
 		}
 	}
 
@@ -542,13 +542,14 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 
 	parts := strings.Split(strings.Split(typeName, "[")[0], ".")
 	if len(parts) > 1 {
-		typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
-		if ok {
-			return typeDef
-		}
-
 		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports(parts[0], file)
-		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
+		if len(externalPkgPaths) == 0 || pkgDefs.parseDependency == ParseNone {
+			typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
+			if ok {
+				return typeDef
+			}
+		}
+		typeDef := pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
 		return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 	}
 
