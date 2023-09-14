@@ -134,9 +134,10 @@ func (ps *tagBaseFieldParserV3) ComplementSchema(schema *spec.RefOrSpec[spec.Sch
 		if err != nil {
 			return err
 		}
-		// if !reflect.ValueOf(newSchema).IsZero() {
-		// 	*schema = *(newSchema.WithAllOf(*schema.Spec))
-		// }
+		if !reflect.ValueOf(newSchema).IsZero() {
+			newSchema.AllOf = []*spec.RefOrSpec[spec.Schema]{{Spec: schema.Spec}}
+			*schema = spec.RefOrSpec[spec.Schema]{Spec: &newSchema}
+		}
 		return nil
 	}
 
