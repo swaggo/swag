@@ -144,3 +144,9 @@ func GetPet6FunctionScopedResponse() {
 func FormData() {
 
 }
+
+// @Success 200 {object} web.OneOfTest
+// @Router /OneOf [get]
+func GetOneOf() {
+
+}
