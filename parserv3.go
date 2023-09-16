@@ -15,8 +15,8 @@ import (
 	"github.com/sv-tools/openapi/spec"
 )
 
-// FieldParserFactoryV3 func(ps *Parser, field *ast.Field) FieldParserV3 create FieldParser.
-type FieldParserFactoryV3 func(ps *Parser, field *ast.Field) FieldParserV3
+// FieldParserFactoryV3 create FieldParser.
+type FieldParserFactoryV3 func(ps *Parser, file *ast.File, field *ast.Field) FieldParserV3
 
 // FieldParserV3 parse struct field.
 type FieldParserV3 interface {
@@ -903,7 +903,7 @@ func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[strin
 		}
 	}
 
-	ps := p.fieldParserFactoryV3(p, field)
+	ps := p.fieldParserFactoryV3(p, file, field)
 
 	if ps.ShouldSkip() {
 		return nil, nil, nil

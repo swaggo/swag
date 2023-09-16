@@ -83,13 +83,15 @@ func (sf *structFieldV3) setMax(valValue string) {
 
 type tagBaseFieldParserV3 struct {
 	p     *Parser
+	file  *ast.File
 	field *ast.Field
 	tag   reflect.StructTag
 }
 
-func newTagBaseFieldParserV3(p *Parser, field *ast.Field) FieldParserV3 {
+func newTagBaseFieldParserV3(p *Parser, file *ast.File, field *ast.Field) FieldParserV3 {
 	fieldParser := tagBaseFieldParserV3{
 		p:     p,
+		file:  file,
 		field: field,
 		tag:   "",
 	}
@@ -340,6 +342,19 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 		}
 	}
 
+	var oneOfSchemas []*spec.RefOrSpec[spec.Schema]
+	oneOfTagValue := ps.tag.Get(oneOfTag)
+	if oneOfTagValue != "" {
+		oneOfTypes := strings.Split((oneOfTagValue), ",")
+		for _, oneOfType := range oneOfTypes {
+			oneOfSchema, err := ps.p.getTypeSchemaV3(oneOfType, ps.file, true)
+			if err != nil {
+				return fmt.Errorf("can't find oneOf type %q: %v", oneOfType, err)
+			}
+			oneOfSchemas = append(oneOfSchemas, oneOfSchema)
+		}
+	}
+
 	elemSchema := schema
 
 	if field.schemaType == ARRAY {
@@ -363,6 +378,7 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 	elemSchema.MinLength = field.minLength
 	elemSchema.Enum = field.enums
 	elemSchema.Pattern = field.pattern
+	elemSchema.OneOf = oneOfSchemas
 
 	return nil
 }

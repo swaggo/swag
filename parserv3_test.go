@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"encoding/json"
 	"go/ast"
 	"os"
 	"testing"
@@ -356,7 +357,7 @@ func TestParseSimpleApiV3(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := p.openAPI.Paths.Spec.Paths
-	assert.Equal(t, 15, len(paths))
+	assert.Equal(t, 16, len(paths))
 
 	path := paths["/testapi/get-string-by-int/{some_id}"].Spec.Spec.Get.Spec
 	assert.Equal(t, "get string by ID", path.Description)
@@ -370,6 +371,81 @@ func TestParseSimpleApiV3(t *testing.T) {
 	assert.NotNil(t, path)
 	assert.NotNil(t, path.RequestBody)
 	//TODO add asserts
+
+	t.Run("Test parse oneOf", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Contains(t, p.openAPI.Components.Spec.Schemas, "web.OneOfTest")
+		schema := p.openAPI.Components.Spec.Schemas["web.OneOfTest"].Spec
+		expected := `{
+    "properties": {
+        "big_int": {
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "integer"
+                }
+            ]
+        },
+        "pet_detail": {
+            "oneOf": [
+                {
+                    "$ref": "#/components/schemas/web.Cat"
+                },
+                {
+                    "$ref": "#/components/schemas/web.Dog"
+                }
+            ]
+        }
+    },
+    "type": "object"
+}`
+		out, err := json.MarshalIndent(schema, "", "    ")
+		assert.NoError(t, err)
+		assert.Equal(t, expected, string(out))
+
+		assert.Contains(t, p.openAPI.Components.Spec.Schemas, "web.Cat")
+		schema = p.openAPI.Components.Spec.Schemas["web.Cat"].Spec
+		expected = `{
+    "properties": {
+        "age": {
+            "type": "integer"
+        },
+        "hunts": {
+            "type": "boolean"
+        }
+    },
+    "type": "object"
+}`
+		out, err = json.MarshalIndent(schema, "", "    ")
+		assert.NoError(t, err)
+		assert.Equal(t, expected, string(out))
+
+		assert.Contains(t, p.openAPI.Components.Spec.Schemas, "web.Dog")
+		schema = p.openAPI.Components.Spec.Schemas["web.Dog"].Spec
+		expected = `{
+    "properties": {
+        "bark": {
+            "type": "boolean"
+        },
+        "breed": {
+            "enum": [
+                "Dingo",
+                "Husky",
+                "Retriever",
+                "Shepherd"
+            ],
+            "type": "string"
+        }
+    },
+    "type": "object"
+}`
+		out, err = json.MarshalIndent(schema, "", "    ")
+		assert.NoError(t, err)
+		assert.Equal(t, expected, string(out))
+	})
 }
 
 func TestParserParseServers(t *testing.T) {
