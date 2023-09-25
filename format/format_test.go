@@ -102,7 +102,7 @@ func setup(t *testing.T) *fixture {
 }
 
 func (fx *fixture) isFormatted(file string) bool {
-	contents, err := os.ReadFile(filepath.Join(fx.basedir, filepath.Clean(file)))
+	contents, err := os.ReadFile(filepath.Join(fx.basedir, file))
 	if err != nil {
 		fx.t.Fatal(err)
 	}
