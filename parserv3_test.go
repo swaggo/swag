@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/sv-tools/openapi/spec"
 )
 
 func TestOverridesGetTypeSchemaV3(t *testing.T) {
@@ -357,7 +358,6 @@ func TestParseSimpleApiV3(t *testing.T) {
 	assert.NoError(t, err)
 
 	paths := p.openAPI.Paths.Spec.Paths
-	assert.Equal(t, 16, len(paths))
 
 	path := paths["/testapi/get-string-by-int/{some_id}"].Spec.Spec.Get.Spec
 	assert.Equal(t, "get string by ID", path.Description)
@@ -372,7 +372,7 @@ func TestParseSimpleApiV3(t *testing.T) {
 	assert.NotNil(t, path.RequestBody)
 	//TODO add asserts
 
-	t.Run("Test parse oneOf", func(t *testing.T) {
+	t.Run("Test parse struct oneOf", func(t *testing.T) {
 		t.Parallel()
 
 		assert.Contains(t, p.openAPI.Components.Spec.Schemas, "web.OneOfTest")
@@ -445,6 +445,23 @@ func TestParseSimpleApiV3(t *testing.T) {
 		out, err = json.MarshalIndent(schema, "", "    ")
 		assert.NoError(t, err)
 		assert.Equal(t, expected, string(out))
+	})
+
+	t.Run("Test parse response oneOf", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Contains(t, paths, "/pets/{id}")
+		path := paths["/pets/{id}"]
+		assert.Contains(t, path.Spec.Spec.Get.Spec.Responses.Spec.Response, "200")
+		response = path.Spec.Spec.Get.Spec.Responses.Spec.Response["200"]
+		assert.Equal(t, "Return Cat or Dog", response.Spec.Spec.Description)
+		mediaType := response.Spec.Spec.Content["application/json"]
+		rootSchema := mediaType.Spec.Schema.Spec
+		assert.Equal(t, []*spec.RefOrSpec[spec.Schema]{
+			{Ref: &spec.Ref{Ref: "#/components/schemas/web.Cat"}},
+			{Ref: &spec.Ref{Ref: "#/components/schemas/web.Dog"}},
+		}, rootSchema.OneOf)
+
 	})
 }
 

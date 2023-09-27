@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/ast"
 	"log"
+	"maps"
 	"net/http"
 	"strconv"
 	"strings"
@@ -924,22 +925,15 @@ func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
 		if strings.EqualFold(codeStr, defaultTag) {
-			response := o.DefaultResponse()
-			response.Description = description
-
-			mimeType := "application/json" // TODO: set correct mimeType
-			setResponseSchema(response, mimeType, schema)
-
-			continue
-		}
-
-		code, err := strconv.Atoi(codeStr)
-		if err != nil {
-			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
-		}
-
-		if description == "" {
-			description = http.StatusText(code)
+			codeStr = ""
+		} else {
+			code, err := strconv.Atoi(codeStr)
+			if err != nil {
+				return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+			}
+			if description == "" {
+				description = http.StatusText(code)
+			}
 		}
 
 		response := spec.NewResponseSpec()
@@ -977,15 +971,12 @@ func (o *OperationV3) ParseEmptyResponseComment(commentLine string) error {
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
 		if strings.EqualFold(codeStr, defaultTag) {
-			response := o.DefaultResponse()
-			response.Description = description
-
-			continue
-		}
-
-		_, err := strconv.Atoi(codeStr)
-		if err != nil {
-			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+			codeStr = ""
+		} else {
+			_, err := strconv.Atoi(codeStr)
+			if err != nil {
+				return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+			}
 		}
 
 		o.AddResponse(codeStr, newResponseWithDescription(description))
@@ -994,21 +985,10 @@ func (o *OperationV3) ParseEmptyResponseComment(commentLine string) error {
 	return nil
 }
 
-// DefaultResponse return the default response member pointer.
-func (o *OperationV3) DefaultResponse() *spec.Response {
-	if o.Responses.Spec.Default == nil {
-		o.Responses.Spec.Default = spec.NewResponseSpec()
-		o.Responses.Spec.Default.Spec.Spec.Headers = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Header]])
-	}
-
-	if o.Responses.Spec.Default.Spec.Spec.Content == nil {
-		o.Responses.Spec.Default.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType])
-	}
-
-	return o.Responses.Spec.Default.Spec.Spec
-}
-
 // AddResponse add a response for a code.
+// If the code is already exist, it will merge with the old one:
+// 1. The description will be replaced by the new one if the new one is not empty.
+// 2. The content schema will be merged using `oneOf` if the new one is not empty.
 func (o *OperationV3) AddResponse(code string, response *spec.RefOrSpec[spec.Extendable[spec.Response]]) {
 	if response.Spec.Spec.Headers == nil {
 		response.Spec.Spec.Headers = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Header]])
@@ -1018,24 +998,74 @@ func (o *OperationV3) AddResponse(code string, response *spec.RefOrSpec[spec.Ext
 		o.Responses.Spec.Response = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Response]])
 	}
 
-	o.Responses.Spec.Response[code] = response
+	res := response
+	var prev *spec.RefOrSpec[spec.Extendable[spec.Response]]
+	if code != "" {
+		prev = o.Responses.Spec.Response[code]
+	} else {
+		prev = o.Responses.Spec.Default
+	}
+	if prev != nil { // merge into prev
+		res = prev
+		if response.Spec.Spec.Description != "" {
+			prev.Spec.Spec.Description = response.Spec.Spec.Description
+		}
+		if len(response.Spec.Spec.Content) > 0 {
+			// responses should only have one content type
+			singleKey := ""
+			for k := range response.Spec.Spec.Content {
+				singleKey = k
+				break
+			}
+			if prevMediaType := prev.Spec.Spec.Content[singleKey]; prevMediaType == nil {
+				prev.Spec.Spec.Content = response.Spec.Spec.Content
+			} else {
+				newMediaType := response.Spec.Spec.Content[singleKey]
+				if len(newMediaType.Extensions) > 0 {
+					if prevMediaType.Extensions == nil {
+						prevMediaType.Extensions = make(map[string]interface{})
+					}
+					maps.Copy(prevMediaType.Extensions, newMediaType.Extensions)
+				}
+				if len(newMediaType.Spec.Examples) > 0 {
+					if prevMediaType.Spec.Examples == nil {
+						prevMediaType.Spec.Examples = make(map[string]*spec.RefOrSpec[spec.Extendable[spec.Example]])
+					}
+					maps.Copy(prevMediaType.Spec.Examples, newMediaType.Spec.Examples)
+				}
+				if prevSchema := prevMediaType.Spec.Schema; prevSchema.Ref != nil || prevSchema.Spec.OneOf == nil {
+					oneOfSchema := spec.NewSchemaSpec()
+					oneOfSchema.Spec.OneOf = []*spec.RefOrSpec[spec.Schema]{prevSchema, newMediaType.Spec.Schema}
+					prevMediaType.Spec.Schema = oneOfSchema
+				} else {
+					prevSchema.Spec.OneOf = append(prevSchema.Spec.OneOf, newMediaType.Spec.Schema)
+				}
+			}
+		}
+	}
+
+	if code != "" {
+		o.Responses.Spec.Response[code] = res
+	} else {
+		o.Responses.Spec.Default = res
+	}
 }
 
 // ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200.
 func (o *OperationV3) ParseEmptyResponseOnly(commentLine string) error {
 	for _, codeStr := range strings.Split(commentLine, ",") {
+		var description string
 		if strings.EqualFold(codeStr, defaultTag) {
-			_ = o.DefaultResponse()
-
-			continue
+			codeStr = ""
+		} else {
+			code, err := strconv.Atoi(codeStr)
+			if err != nil {
+				return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
+			}
+			description = http.StatusText(code)
 		}
 
-		code, err := strconv.Atoi(codeStr)
-		if err != nil {
-			return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
-		}
-
-		o.AddResponse(codeStr, newResponseWithDescription(http.StatusText(code)))
+		o.AddResponse(codeStr, newResponseWithDescription(description))
 	}
 
 	return nil
