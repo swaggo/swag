@@ -918,6 +918,10 @@ func parseCombinedObjectSchema(parser *Parser, refType string, astFile *ast.File
 				return nil, err
 			}
 
+			if schema == nil {
+				schema = PrimitiveSchema(OBJECT)
+			}
+
 			props[keyVal[0]] = *schema
 		}
 	}
