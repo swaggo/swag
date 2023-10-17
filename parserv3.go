@@ -792,7 +792,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 
 	// type Foo Baz
 	case *ast.Ident:
-		result, err := p.getTypeSchemaV3(expr.Name, file, true)
+		result, err := p.getTypeSchemaV3(expr.Name, file, ref)
 		if err != nil {
 			return nil, errors.Wrap(err, errMessage)
 		}
