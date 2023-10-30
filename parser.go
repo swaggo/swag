@@ -153,6 +153,9 @@ type Parser struct {
 	// excludes excludes dirs and files in SearchDir
 	excludes map[string]struct{}
 
+	// onlyIncludes includes dirs and files in SearchDir
+	onlyIncludes map[string]struct{}
+
 	// packagePrefix is a list of package path prefixes, packages that do not
 	// match any one of them will be excluded when searching.
 	packagePrefix []string
@@ -226,6 +229,7 @@ func New(options ...func(*Parser)) *Parser {
 		parsedSchemas:      make(map[*TypeSpecDef]*Schema),
 		outputSchemas:      make(map[*TypeSpecDef]*Schema),
 		excludes:           make(map[string]struct{}),
+		onlyIncludes:       make(map[string]struct{}),
 		tags:               make(map[string]struct{}),
 		fieldParserFactory: newTagBaseFieldParser,
 		Overrides:          make(map[string]string),
@@ -272,6 +276,19 @@ func SetExcludedDirsAndFiles(excludes string) func(*Parser) {
 			if f != "" {
 				f = filepath.Clean(f)
 				p.excludes[f] = struct{}{}
+			}
+		}
+	}
+}
+
+// SetOnlyIncludedDirsAndFiles sets directories and files to be included when searching.
+func SetOnlyIncludedDirsAndFiles(includes string) func(*Parser) {
+	return func(p *Parser) {
+		for _, f := range strings.Split(includes, ",") {
+			f = strings.TrimSpace(f)
+			if f != "" {
+				f = filepath.Clean(f)
+				p.onlyIncludes[f] = struct{}{}
 			}
 		}
 	}
@@ -1673,6 +1690,16 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 			return err
 		}
 
+		if len(parser.onlyIncludes) != 0 {
+			if _, ok := parser.onlyIncludes[relPath]; !ok {
+				return nil
+			}
+		}
+		if parser.excludes != nil {
+			if _, ok := parser.excludes[relPath]; ok {
+				return nil
+			}
+		}
 		return parser.parseFile(filepath.ToSlash(filepath.Dir(filepath.Clean(filepath.Join(packageDir, relPath)))), path, nil, ParseAll)
 	})
 }

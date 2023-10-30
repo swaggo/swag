@@ -85,7 +85,8 @@ USAGE:
 OPTIONS:
    --generalInfo value, -g value          API通用信息所在的go源文件路径，如果是相对路径则基于API解析目录 (默认: "main.go")
    --dir value, -d value                  API解析目录 (默认: "./")
-   --exclude value                        解析扫描时排除的目录，多个目录可用逗号分隔（默认：空）
+   --exclude value                        解析扫描时排除的目录或文件，多个目录或文件可用逗号分隔（默认：空）
+   --onlyInclude value                    解析扫描时只扫描的文件，多个文件可用逗号分隔（默认：空）
    --propertyStrategy value, -p value     结构体字段命名规则，三种：snakecase,camelcase,pascalcase (默认: "camelcase")
    --output value, -o value               文件(swagger.json, swagger.yaml and doc.go)输出目录 (默认: "./docs")
    --parseVendor                          是否解析vendor目录里的go源文件，默认不
@@ -108,7 +109,8 @@ USAGE:
 
 OPTIONS:
    --dir value, -d value          API解析目录 (默认: "./")
-   --exclude value                解析扫描时排除的目录，多个目录可用逗号分隔（默认：空）
+   --exclude value                解析扫描时排除的目录或文件，多个目录或文件可用逗号分隔（默认：空）
+   --onlyInclude value            解析扫描时只包含的文件，多个文件可用逗号分隔（默认：空）
    --generalInfo value, -g value  API通用信息所在的go源文件路径，如果是相对路径则基于API解析目录 (默认: "main.go")
    --help, -h                     show help (default: false)
 

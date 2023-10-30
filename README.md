@@ -89,6 +89,7 @@ OPTIONS:
    --generalInfo value, -g value          Go file path in which 'swagger general API Info' is written (default: "main.go")
    --dir value, -d value                  Directories you want to parse,comma separated and general-info file must be in the first one (default: "./")
    --exclude value                        Exclude directories and files when searching, comma separated
+   --onlyInclude value                    Only Include directories and files when searching, comma separated
    --propertyStrategy value, -p value     Property Naming Strategy like snakecase,camelcase,pascalcase (default: "camelcase")
    --output value, -o value               Output directory for all the generated files(swagger.json, swagger.yaml and docs.go) (default: "./docs")
    --outputTypes value, --ot value        Output types of generated files (docs.go, swagger.json, swagger.yaml) like go,json,yaml (default: "go,json,yaml")
@@ -120,6 +121,7 @@ USAGE:
 OPTIONS:
    --dir value, -d value          Directories you want to parse,comma separated and general-info file must be in the first one (default: "./")
    --exclude value                Exclude directories and files when searching, comma separated
+   --onlyInclude value            Only Include directories and files when searching, comma separated
    --generalInfo value, -g value  Go file path in which 'swagger general API Info' is written (default: "main.go")
    --help, -h                     show help (default: false)
 

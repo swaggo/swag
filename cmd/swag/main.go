@@ -17,6 +17,7 @@ import (
 const (
 	searchDirFlag            = "dir"
 	excludeFlag              = "exclude"
+	onlyIncludeFlag          = "onlyInclude"
 	generalInfoFlag          = "generalInfo"
 	propertyStrategyFlag     = "propertyStrategy"
 	outputFlag               = "output"
@@ -63,6 +64,10 @@ var initFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  excludeFlag,
 		Usage: "Exclude directories and files when searching, comma separated",
+	},
+	&cli.StringFlag{
+		Name:  onlyIncludeFlag,
+		Usage: "Only include directories and files when searching, comma separated",
 	},
 	&cli.StringFlag{
 		Name:    propertyStrategyFlag,
@@ -219,6 +224,7 @@ func initAction(ctx *cli.Context) error {
 	return gen.New().Build(&gen.Config{
 		SearchDir:           ctx.String(searchDirFlag),
 		Excludes:            ctx.String(excludeFlag),
+		OnlyIncludes:        ctx.String(onlyIncludeFlag),
 		ParseExtension:      ctx.String(parseExtensionFlag),
 		MainAPIFile:         ctx.String(generalInfoFlag),
 		PropNamingStrategy:  strategy,
@@ -264,12 +270,14 @@ func main() {
 			Action: func(c *cli.Context) error {
 				searchDir := c.String(searchDirFlag)
 				excludeDir := c.String(excludeFlag)
+				onlyIncludeDir := c.String(onlyIncludeFlag)
 				mainFile := c.String(generalInfoFlag)
 
 				return format.New().Build(&format.Config{
-					SearchDir: searchDir,
-					Excludes:  excludeDir,
-					MainFile:  mainFile,
+					SearchDir:    searchDir,
+					Excludes:     excludeDir,
+					OnlyIncludes: onlyIncludeDir,
+					MainFile:     mainFile,
 				})
 			},
 			Flags: []cli.Flag{
@@ -282,6 +290,10 @@ func main() {
 				&cli.StringFlag{
 					Name:  excludeFlag,
 					Usage: "Exclude directories and files when searching, comma separated",
+				},
+				&cli.StringFlag{
+					Name:  onlyIncludeFlag,
+					Usage: "Only include directories and files when searching, comma separated",
 				},
 				&cli.StringFlag{
 					Name:    generalInfoFlag,
