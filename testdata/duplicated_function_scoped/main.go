@@ -3,8 +3,8 @@ package composition
 import (
 	"net/http"
 
-	"github.com/swaggo/swag/v2/testdata/duplicated_function_scoped/api"
-	otherapi "github.com/swaggo/swag/v2/testdata/duplicated_function_scoped/other_api"
+	"github.com/nguyennm96/swag/v2/testdata/duplicated_function_scoped/api"
+	otherapi "github.com/nguyennm96/swag/v2/testdata/duplicated_function_scoped/other_api"
 )
 
 // @title Swagger Example API

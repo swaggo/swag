@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/swag/v2/example/celler/httputil"
-	"github.com/swaggo/swag/v2/example/celler/model"
+	"github.com/nguyennm96/swag/v2/example/celler/httputil"
+	"github.com/nguyennm96/swag/v2/example/celler/model"
 )
 
 // Auth godoc

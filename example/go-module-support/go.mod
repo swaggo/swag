@@ -1,11 +1,11 @@
-module github.com/swaggo/swag/example/go-module-support
+module github.com/nguyennm96/swag/example/go-module-support
 
 go 1.17
 
 require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/swaggo/examples v0.0.0-20190624100559-f57286ab550c
-	github.com/swaggo/swag v1.8.1
+	github.com/nguyennm96/swag v1.8.1
 )
 
 require (

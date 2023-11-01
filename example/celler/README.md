@@ -3,7 +3,7 @@
 Gen doc
 
 ```console
-$ go get -u github.com/swaggo/swag/cmd/swag
+$ go get -u github.com/nguyennm96/swag/cmd/swag
 $ swag init
 ```
 

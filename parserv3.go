@@ -460,6 +460,10 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		scheme.Flows.Spec.AuthorizationCode = spec.NewOAuthFlow()
 		scheme.Flows.Spec.AuthorizationCode.Spec.AuthorizationURL = attrMap[authorizationURL]
 		scheme.Flows.Spec.AuthorizationCode.Spec.TokenURL = attrMap[tokenURL]
+	case "http":
+		scheme.Type = "http"
+		scheme.Scheme = "bearer"
+		scheme.BearerFormat = "JWT"
 	}
 
 	scheme.Description = description

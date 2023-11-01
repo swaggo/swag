@@ -21,7 +21,7 @@ import (
 	v2 "github.com/go-openapi/spec"
 	v3 "github.com/sv-tools/openapi/spec"
 
-	"github.com/swaggo/swag/v2"
+	"github.com/nguyennm96/swag/v2"
 	"sigs.k8s.io/yaml"
 )
 
