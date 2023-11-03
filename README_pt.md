@@ -43,6 +43,7 @@ Swag converte anotações Go para Documentação Swagger 2.0. Criámos uma varie
 	- [Como utilizar as anotações de segurança](#como-utilizar-as-anotações-de-segurança)
 	- [Adicionar uma descrição para enumerar artigos](#add-a-description-for-enum-items)
 	- [Gerar apenas tipos de ficheiros de documentos específicos](#generate-only-specific-docs-file-file-types)
+    - [Como usar tipos genéricos](#como-usar-tipos-genéricos)
 - [Sobre o projecto](#sobre-o-projecto)
 
 ## Começando
@@ -904,6 +905,18 @@ Por defeito, o comando `swag` gera especificação Swagger em três tipos difere
 - swagger.yaml
 
 Se desejar limitar um conjunto de tipos de ficheiros que devem ser gerados pode utilizar a bandeira `--outputTypes` (short `-ot`). O valor por defeito é `go,json,yaml` - tipos de saída separados por vírgula. Para limitar a saída apenas a ficheiros `go` e `yaml`, escrever-se-ia `go,yaml'. Com comando completo que seria `swag init --outputTypes go,yaml`.
+
+### Como usar tipos genéricos
+
+```go
+// @Success 200 {object} web.GenericNestedResponse[types.Post]
+// @Success 204 {object} web.GenericNestedResponse[types.Post, Types.AnotherOne]
+// @Success 201 {object} web.GenericNestedResponse[web.GenericInnerType[types.Post]]
+func GetPosts(w http.ResponseWriter, r *http.Request) {
+	_ = web.GenericNestedResponse[types.Post]{}
+}
+```
+Para mais detalhes e outros exemplos, veja [esse arquivo](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go)
 
 ### Alterar os delimitadores de acção padrão Go Template
 [#980](https://github.com/swaggo/swag/issues/980)
