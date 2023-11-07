@@ -388,27 +388,29 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 					continue
 				}
 
+				itemParam := param // Avoid shadowed variable which could cause side effects to o.Operation.Parameters
+
 				switch {
 				case prop.Type[0] == ARRAY &&
 					prop.Items.Schema != nil &&
 					len(prop.Items.Schema.Spec.Type) > 0 &&
 					IsSimplePrimitiveType(prop.Items.Schema.Spec.Type[0]):
 
-					param = createParameterV3(paramType, prop.Description, name, prop.Type[0], prop.Items.Schema.Spec.Type[0], findInSlice(schema.Spec.Required, name), enums, o.parser.collectionFormatInQuery)
+					itemParam = createParameterV3(paramType, prop.Description, name, prop.Type[0], prop.Items.Schema.Spec.Type[0], findInSlice(schema.Spec.Required, name), enums, o.parser.collectionFormatInQuery)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
-					param = createParameterV3(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Spec.Required, name), enums, o.parser.collectionFormatInQuery)
+					itemParam = createParameterV3(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Spec.Required, name), enums, o.parser.collectionFormatInQuery)
 				default:
 					o.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 
 					continue
 				}
 
-				param.Schema.Spec = prop
+				itemParam.Schema.Spec = prop
 
 				listItem := &spec.RefOrSpec[spec.Extendable[spec.Parameter]]{
 					Spec: &spec.Extendable[spec.Parameter]{
-						Spec: &param,
+						Spec: &itemParam,
 					},
 				}
 
@@ -710,7 +712,7 @@ func (o *OperationV3) parseAPIObjectSchema(commentLine, schemaType, refType stri
 
 		result := spec.NewSchemaSpec()
 		result.Spec.Type = spec.NewSingleOrArray("array")
-		result.Spec.Items = spec.NewBoolOrSchema(false, schema) //TODO: allowed?
+		result.Spec.Items = spec.NewBoolOrSchema(false, schema) // TODO: allowed?
 		return result, nil
 
 	default:

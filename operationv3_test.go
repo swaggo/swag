@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"go/ast"
 	goparser "go/parser"
 	"go/token"
 	"testing"
@@ -852,6 +853,95 @@ func TestOperation_ParseParamCommentV3(t *testing.T) {
 		}
 	})
 
+	t.Run("struct queries", func(t *testing.T) {
+		t.Parallel()
+		parser := New()
+		parser.packages.uniqueDefinitions["main.Object"] = &TypeSpecDef{
+			File: &ast.File{Name: &ast.Ident{Name: "test"}},
+			TypeSpec: &ast.TypeSpec{
+				Name:       &ast.Ident{Name: "Field"},
+				TypeParams: &ast.FieldList{List: []*ast.Field{{Names: []*ast.Ident{{Name: "T"}}}}},
+				Type: &ast.StructType{
+					Struct: 100,
+					Fields: &ast.FieldList{
+						List: []*ast.Field{
+							{
+								Names: []*ast.Ident{
+									{Name: "T"},
+								},
+								Type: ast.NewIdent("string"),
+							},
+							{
+								Names: []*ast.Ident{
+									{Name: "T2"},
+								},
+								Type: ast.NewIdent("string"),
+							},
+						},
+					},
+				},
+			},
+		}
+		o := NewOperationV3(parser)
+		err := o.ParseComment(`@Param some_object query main.Object true "Some Object"`,
+			nil)
+
+		assert.NoError(t, err)
+
+		expectedT := &spec.RefOrSpec[spec.Extendable[spec.Parameter]]{
+			Spec: &spec.Extendable[spec.Parameter]{
+				Spec: &spec.Parameter{
+					Name: "t",
+					In:   "query",
+					Schema: &spec.RefOrSpec[spec.Schema]{
+						Spec: &spec.Schema{
+							JsonSchema: spec.JsonSchema{
+								JsonSchemaCore: spec.JsonSchemaCore{
+									Type: typeString,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		expectedT2 := &spec.RefOrSpec[spec.Extendable[spec.Parameter]]{
+			Spec: &spec.Extendable[spec.Parameter]{
+				Spec: &spec.Parameter{
+					Name: "t2",
+					In:   "query",
+					Schema: &spec.RefOrSpec[spec.Schema]{
+						Spec: &spec.Schema{
+							JsonSchema: spec.JsonSchema{
+								JsonSchemaCore: spec.JsonSchemaCore{
+									Type: typeString,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		assert.Len(t, o.Parameters, 2)
+		tFound := false
+		t2Found := false
+		for _, param := range o.Parameters {
+			switch param.Spec.Spec.Name {
+			case "t":
+				assert.EqualValues(t, expectedT, param)
+				tFound = true
+			case "t2":
+				assert.EqualValues(t, expectedT2, param)
+				t2Found = true
+			default:
+				assert.Fail(t, "unexpected result")
+			}
+		}
+
+		assert.True(t, tFound, "results should contain t")
+		assert.True(t, t2Found, "results should contain t2")
+	})
 }
 
 // Test ParseParamComment Query Params
