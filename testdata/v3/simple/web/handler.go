@@ -112,3 +112,18 @@ type Request struct {
 	Password     string `json:"password"`
 	RefreshToken string `json:"refresh_token"`
 }
+
+type OneOfTest struct {
+	BigInt    any `json:"big_int" oneOf:"string,int64"`
+	PetDetail any `json:"pet_detail" oneOf:"Cat,Dog"`
+}
+
+type Dog struct {
+	Bark  bool   `json:"bark"`
+	Breed string `json:"breed" enums:"Dingo,Husky,Retriever,Shepherd"`
+}
+
+type Cat struct {
+	Hunts bool `json:"hunts"`
+	Age   int  `json:"age"`
+}
