@@ -44,6 +44,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [How to use security annotations](#how-to-use-security-annotations)
 	- [Add a description for enum items](#add-a-description-for-enum-items)
 	- [Generate only specific docs file types](#generate-only-specific-docs-file-types)
+    - [How to use Go generic types](#how-to-use-generics)
 - [About the Project](#about-the-project)
 
 ## Getting started
@@ -908,6 +909,19 @@ By default `swag` command generates Swagger specification in three different fil
 - swagger.yaml
 
 If you would like to limit a set of file types which should be generated you can use `--outputTypes` (short `-ot`) flag. Default value is `go,json,yaml` - output types separated with comma. To limit output only to `go` and `yaml` files, you would write `go,yaml`. With complete command that would be `swag init --outputTypes go,yaml`.
+
+### How to use Generics
+
+```go
+// @Success 200 {object} web.GenericNestedResponse[types.Post]
+// @Success 204 {object} web.GenericNestedResponse[types.Post, Types.AnotherOne]
+// @Success 201 {object} web.GenericNestedResponse[web.GenericInnerType[types.Post]]
+func GetPosts(w http.ResponseWriter, r *http.Request) {
+	_ = web.GenericNestedResponse[types.Post]{}
+}
+```
+See [this file](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go) for more details 
+and other examples.
 
 ### Change the default Go Template action delimiters
 [#980](https://github.com/swaggo/swag/issues/980)
