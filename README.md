@@ -64,6 +64,9 @@ swag init
 ```
 
   Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
+  ```go
+  import _ "example-module-name/docs"
+  ```
   ```sh
   swag init -g http/api.go
   ```
@@ -142,6 +145,7 @@ OPTIONS:
 
 Find the example source code [here](https://github.com/swaggo/swag/tree/master/example/celler).
 
+Finish the steps in [Getting started](#getting-started)
 1. After using `swag init` to generate Swagger 2.0 docs, import the following packages:
 ```go
 import "github.com/swaggo/gin-swagger" // gin-swagger middleware
