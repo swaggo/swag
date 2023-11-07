@@ -144,19 +144,3 @@ func GetPet6FunctionScopedResponse() {
 func FormData() {
 
 }
-
-// @Success 200 {object} web.OneOfTest
-// @Router /GetOneOfTypes [get]
-func GetOneOfTypes() {
-
-}
-
-// @Summary Get pet by ID
-// @Param id path string true "ID"
-// @Success 200 {object} web.Cat
-// @Success 200 {object} web.Dog
-// @Success 200 "Return Cat or Dog"
-// @Router /pets/{id} [get]
-func GetPetByID() {
-
-}
