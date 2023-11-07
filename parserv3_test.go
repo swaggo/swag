@@ -1,8 +1,10 @@
 package swag
 
 import (
+	"encoding/json"
 	"go/ast"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -397,4 +399,23 @@ func TestParserParseServers(t *testing.T) {
 	assert.Equal(t, "https://petstore.com/v3", servers[1].Spec.URL)
 	assert.Equal(t, "Production Petstore server.", servers[1].Spec.Description)
 
+}
+
+func TestParseTypeAlias(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/v3/type_alias_definition"
+
+	p := New(GenerateOpenAPI3Doc(true))
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	require.NoError(t, err)
+
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	require.NoError(t, err)
+
+	result, err := json.Marshal(p.openAPI)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(expected), string(result))
 }
