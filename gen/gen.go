@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/go-openapi/spec"
+	"github.com/mikefarah/yq/v4/pkg/yqlib"
 	"github.com/swaggo/swag"
-	"sigs.k8s.io/yaml"
 )
 
 var open = os.Open
@@ -41,6 +41,25 @@ type Debugger interface {
 	Printf(format string, v ...interface{})
 }
 
+func jsonToYAML(data []byte) ([]byte, error) {
+	dec := yqlib.NewJSONDecoder()
+	if err := dec.Init(bytes.NewReader(data)); err != nil {
+		return nil, err
+	}
+	cn, err := dec.Decode()
+	if err != nil {
+		return nil, err
+	}
+	const indent = 4
+	const colorise = false
+	enc := yqlib.NewYamlEncoder(indent, colorise, yqlib.ConfiguredYamlPreferences)
+	var buf bytes.Buffer
+	if err = enc.Encode(&buf, cn); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
 // New creates a new Gen.
 func New() *Gen {
 	gen := Gen{
@@ -48,7 +67,7 @@ func New() *Gen {
 		jsonIndent: func(data interface{}) ([]byte, error) {
 			return json.MarshalIndent(data, "", "    ")
 		},
-		jsonToYAML: yaml.JSONToYAML,
+		jsonToYAML: jsonToYAML,
 		debug:      log.New(os.Stdout, "", log.LstdFlags),
 	}
 
