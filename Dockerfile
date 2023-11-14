@@ -26,3 +26,5 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/swag /root/swag
+
+ENTRYPOINT ["/root/swag"]
