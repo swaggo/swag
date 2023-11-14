@@ -59,7 +59,7 @@ To build from source you need [Go](https://golang.org/dl/) (1.17 or newer).
 
 Alternatively you can run the docker image:
 ```sh
-docker run --rm -v $(pwd):/code -w /code ghcr.io/swaggo/swag:latest
+docker run --rm -v $(pwd):/code ghcr.io/swaggo/swag:latest
 ```
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).

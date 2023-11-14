@@ -22,7 +22,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -a -installsuffix cgo -o swag cmd/swag/
 ######## Start a new stage from scratch #######
 FROM scratch
 
-WORKDIR /root/
+WORKDIR /code/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/swag /bin/swag
