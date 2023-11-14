@@ -25,4 +25,4 @@ FROM scratch
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/swag .
+COPY --from=builder /app/swag /root/swag
