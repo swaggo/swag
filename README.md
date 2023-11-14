@@ -51,11 +51,16 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 
 1. Add comments to your API source code, See [Declarative Comments Format](#declarative-comments-format).
 
-2. Download swag by using:
+2. Install swag by using:
 ```sh
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
 To build from source you need [Go](https://golang.org/dl/) (1.17 or newer).
+
+Alternatively you can run the docker image:
+```sh
+docker run --rm -v $(pwd):/code -w /code ghcr.io/swaggo/swag:latest
+```
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
