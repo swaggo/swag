@@ -25,6 +25,6 @@ FROM scratch
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/swag /root/swag
+COPY --from=builder /app/swag /bin/swag
 
-ENTRYPOINT ["/root/swag"]
+ENTRYPOINT ["/bin/swag"]
