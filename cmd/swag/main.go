@@ -40,6 +40,7 @@ const (
 	packageName              = "packageName"
 	collectionFormatFlag     = "collectionFormat"
 	packagePrefixFlag        = "packagePrefix"
+	stateFlag                = "state"
 )
 
 var initFlags = []cli.Flag{
@@ -173,6 +174,11 @@ var initFlags = []cli.Flag{
 		Value: "",
 		Usage: "Parse only packages whose import path match the given prefix, comma separated",
 	},
+	&cli.StringFlag{
+		Name:  stateFlag,
+		Value: "",
+		Usage: "Set host state for swagger.json",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -242,6 +248,7 @@ func initAction(ctx *cli.Context) error {
 		Debugger:            logger,
 		CollectionFormat:    collectionFormat,
 		PackagePrefix:       ctx.String(packagePrefixFlag),
+		State:               ctx.String(stateFlag),
 	})
 }
 

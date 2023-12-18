@@ -1,6 +1,6 @@
 module github.com/swaggo/swag/example/celler
 
-go 1.17
+go 1.18
 
 require (
 	github.com/gin-gonic/gin v1.9.1
