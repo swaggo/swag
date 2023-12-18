@@ -10,7 +10,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go: [ '1.17.x', '1.18.x', '1.19.x', '1.20.x' ]
+        go: [ '1.18.x', '1.19.x', '1.20.x', '1.21.x' ]
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:

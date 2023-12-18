@@ -62,17 +62,21 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
   - [Sponsors](#sponsors)
   - [License](#license)
 
+
 ## Getting started
 
 1. Add comments to your API source code, See [Declarative Comments Format](#declarative-comments-format).
 
-2. Download swag by using:
-
+2. Install swag by using:
 ```sh
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
+To build from source you need [Go](https://golang.org/dl/) (1.18 or newer).
 
-To build from source you need [Go](https://golang.org/dl/) (1.17 or newer).
+Alternatively you can run the docker image:
+```sh
+docker run --rm -v $(pwd):/code ghcr.io/swaggo/swag:latest
+```
 
 Or download a pre-compiled binary from the [release page](https://github.com/swaggo/swag/releases).
 
@@ -83,7 +87,9 @@ swag init
 ```
 
 Make sure to import the generated `docs/docs.go` so that your specific configuration gets `init`'ed. If your General API annotations do not live in `main.go`, you can let swag know with `-g` flag.
-
+```go
+import _ "example-module-name/docs"
+```
 ```sh
 swag init -g http/api.go
 ```
@@ -162,6 +168,7 @@ OPTIONS:
 
 Find the example source code [here](https://github.com/swaggo/swag/tree/master/example/celler).
 
+Finish the steps in [Getting started](#getting-started)
 1. After using `swag init` to generate Swagger 2.0 docs, import the following packages:
 
 ```go
@@ -937,6 +944,19 @@ By default `swag` command generates Swagger specification in three different fil
 -   swagger.yaml
 
 If you would like to limit a set of file types which should be generated you can use `--outputTypes` (short `-ot`) flag. Default value is `go,json,yaml` - output types separated with comma. To limit output only to `go` and `yaml` files, you would write `go,yaml`. With complete command that would be `swag init --outputTypes go,yaml`.
+
+### How to use Generics
+
+```go
+// @Success 200 {object} web.GenericNestedResponse[types.Post]
+// @Success 204 {object} web.GenericNestedResponse[types.Post, Types.AnotherOne]
+// @Success 201 {object} web.GenericNestedResponse[web.GenericInnerType[types.Post]]
+func GetPosts(w http.ResponseWriter, r *http.Request) {
+	_ = web.GenericNestedResponse[types.Post]{}
+}
+```
+See [this file](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go) for more details 
+and other examples.
 
 ### Change the default Go Template action delimiters
 

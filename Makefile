@@ -6,6 +6,7 @@ GOBUILD:=$(GOCMD) build
 GOINSTALL:=$(GOCMD) install
 GOCLEAN:=$(GOCMD) clean
 GOTEST:=$(GOCMD) test
+GOMODTIDY:=$(GOCMD) mod tidy
 GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
@@ -54,13 +55,7 @@ clean:
 
 .PHONY: deps
 deps:
-	$(GOGET) github.com/swaggo/cli
-	$(GOGET) sigs.k8s.io/yaml
-	$(GOGET) github.com/KyleBanks/depth
-	$(GOGET) github.com/go-openapi/jsonreference
-	$(GOGET) github.com/go-openapi/spec
-	$(GOGET) github.com/stretchr/testify/assert
-	$(GOGET) golang.org/x/tools/go/loader
+	$(GOMODTIDY)
 
 .PHONY: devel-deps
 devel-deps:
