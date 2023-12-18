@@ -55,7 +55,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 ```sh
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
-To build from source you need [Go](https://golang.org/dl/) (1.17 or newer).
+To build from source you need [Go](https://golang.org/dl/) (1.18 or newer).
 
 Alternatively you can run the docker image:
 ```sh
