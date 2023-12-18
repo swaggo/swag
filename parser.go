@@ -66,6 +66,7 @@ const (
 	extDocsURLAttr          = "@externaldocs.url"
 	xCodeSamplesAttr        = "@x-codesamples"
 	scopeAttrPrefix         = "@scope."
+	stateAttr               = "@state"
 )
 
 // ParseFlag determine what to parse
@@ -174,6 +175,9 @@ type Parser struct {
 
 	// tags to filter the APIs after
 	tags map[string]struct{}
+
+	// HostState is the state of the host
+	HostState string
 }
 
 // FieldParserFactory create FieldParser.
@@ -541,6 +545,14 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 
 		case "@host":
 			parser.swagger.Host = value
+		case "@hoststate":
+			fields = FieldsByAnySpace(commentLine, 3)
+			if len(fields) != 3 {
+				return fmt.Errorf("%s needs 3 arguments", attribute)
+			}
+			if parser.HostState == fields[1] {
+				parser.swagger.Host = fields[2]
+			}
 		case "@basepath":
 			parser.swagger.BasePath = value
 
@@ -977,6 +989,7 @@ func matchExtension(extensionToMatch string, comments []*ast.Comment) (match boo
 
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
+DeclsLoop:
 	for _, astDescription := range fileInfo.File.Decls {
 		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
 			continue
@@ -991,6 +1004,9 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 					err := operation.ParseComment(comment.Text, fileInfo.File)
 					if err != nil {
 						return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
+					}
+					if operation.State != "" && operation.State != parser.HostState {
+						continue DeclsLoop
 					}
 				}
 				err := processRouterOperation(parser, operation)

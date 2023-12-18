@@ -30,6 +30,7 @@ type Operation struct {
 	codeExampleFilesDir string
 	spec.Operation
 	RouterProperties []RouteProperties
+	State            string
 }
 
 var mimeTypeAliases = map[string]string{
@@ -118,6 +119,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		lineRemainder = fields[1]
 	}
 	switch lowerAttribute {
+	case stateAttr:
+		operation.ParseStateComment(lineRemainder)
 	case descriptionAttr:
 		operation.ParseDescriptionComment(lineRemainder)
 	case descriptionMarkdownAttr:
@@ -181,6 +184,11 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 
 	// Fallback into existing logic
 	return operation.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
+}
+
+// ParseDescriptionComment godoc.
+func (operation *Operation) ParseStateComment(lineRemainder string) {
+	operation.State = lineRemainder
 }
 
 // ParseDescriptionComment godoc.
