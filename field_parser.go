@@ -62,6 +62,12 @@ func (ps *tagBaseFieldParser) ShouldSkip() bool {
 		return true
 	}
 
+	// xml:"tag,hoge"
+	nameXML := strings.TrimSpace(strings.Split(ps.tag.Get(xmlTag), ",")[0])
+	if nameXML == "-" {
+		return true
+	}
+
 	return false
 }
 
@@ -71,6 +77,12 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 	if ps.field.Tag != nil {
 		// json:"tag,hoge"
 		name = strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
+		if name != "" {
+			return name, nil
+		}
+
+		// xml:"tag,hoge"
+		name = strings.TrimSpace(strings.Split(ps.tag.Get(xmlTag), ",")[0])
 		if name != "" {
 			return name, nil
 		}
@@ -94,6 +106,19 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 	default:
 		return toLowerCamelCase(ps.field.Names[0].Name), nil
 	}
+}
+
+func (ps *tagBaseFieldParser) IsXmlAttr() (bool, error) {
+	xmlTagValue := ps.tag.Get(xmlTag)
+	if xmlTagValue != "" {
+		arr := strings.Split(xmlTagValue, ",")
+
+		if len(arr) >= 2 {
+			return strings.TrimSpace(arr[1]) == "attr", nil
+		}
+	}
+
+	return false, nil
 }
 
 func (ps *tagBaseFieldParser) FormName() string {
@@ -401,6 +426,11 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 
 	if field.schemaType != ARRAY {
 		schema.Format = field.formatType
+	}
+
+	isXmlAttr, _ := ps.IsXmlAttr()
+	if isXmlAttr {
+		schema.AsXMLAttribute()
 	}
 
 	extensionsTagValue := ps.tag.Get(extensionsTag)
