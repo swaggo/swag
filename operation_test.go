@@ -5,6 +5,8 @@ import (
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/go-openapi/spec"
@@ -2415,4 +2417,17 @@ func TestParseCodeSamples(t *testing.T) {
 		err := operation.ParseComment(comment, nil)
 		assert.Error(t, err, "no error should be thrown")
 	})
+}
+
+func TestParseDeprecatedRouter(t *testing.T) {
+	p := New()
+	searchDir := "./testdata/deprecated_router"
+	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
+		t.Error("Failed to parse api: " + err.Error())
+	}
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+	assert.Equal(t, expected, b)
 }
