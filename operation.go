@@ -21,6 +21,7 @@ import (
 type RouteProperties struct {
 	HTTPMethod string
 	Path       string
+	Deprecated bool
 }
 
 // Operation describes a single API operation on a path.
@@ -147,7 +148,9 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	case headerAttr:
 		return operation.ParseResponseHeaderComment(lineRemainder, astFile)
 	case routerAttr:
-		return operation.ParseRouterComment(lineRemainder)
+		return operation.ParseRouterComment(lineRemainder, false)
+	case deprecatedRouterAttr:
+		return operation.ParseRouterComment(lineRemainder, true)
 	case securityAttr:
 		return operation.ParseSecurityComment(lineRemainder)
 	case deprecatedAttr:
@@ -707,7 +710,7 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 var routerPattern = regexp.MustCompile(`^(/[\w./\-{}+:$]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for given `router` comment string.
-func (operation *Operation) ParseRouterComment(commentLine string) error {
+func (operation *Operation) ParseRouterComment(commentLine string, deprecated bool) error {
 	matches := routerPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 3 {
 		return fmt.Errorf("can not parse router comment \"%s\"", commentLine)
@@ -716,6 +719,7 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	signature := RouteProperties{
 		Path:       matches[1],
 		HTTPMethod: strings.ToUpper(matches[2]),
+		Deprecated: deprecated,
 	}
 
 	if _, ok := allMethod[signature.HTTPMethod]; !ok {

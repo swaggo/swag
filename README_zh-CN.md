@@ -378,23 +378,25 @@ swag fmt -d ./ --exclude ./internal
 
 Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
 
-| 注释                 | 描述                                                                                                    |
-| -------------------- | ------------------------------------------------------------------------------------------------------- |
-| description          | 操作行为的详细说明。                                                                                    |
-| description.markdown | 应用程序的简短描述。该描述将从名为`endpointname.md`的文件中读取。                                       |
-| id                   | 用于标识操作的唯一字符串。在所有API操作中必须唯一。                                                     |
-| tags                 | 每个API操作的标签列表，以逗号分隔。                                                                     |
+| 注释                   | 描述                                                                                             |
+|----------------------|------------------------------------------------------------------------------------------------|
+| description          | 操作行为的详细说明。                                                                                     |
+| description.markdown | 应用程序的简短描述。该描述将从名为`endpointname.md`的文件中读取。                                                      |
+| id                   | 用于标识操作的唯一字符串。在所有API操作中必须唯一。                                                                    |
+| tags                 | 每个API操作的标签列表，以逗号分隔。                                                                            |
 | summary              | 该操作的简短摘要。                                                                                      |
-| accept               | API 可以使用的 MIME 类型列表。 请注意，Accept 仅影响具有请求正文的操作，例如 POST、PUT 和 PATCH。 值必须如“[Mime类型](#mime类型)”中所述。                                  |
-| produce              | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime类型)”中所述。                                  |
+| accept               | API 可以使用的 MIME 类型列表。 请注意，Accept 仅影响具有请求正文的操作，例如 POST、PUT 和 PATCH。 值必须如“[Mime类型](#mime类型)”中所述。  |
+| produce              | API可以生成的MIME类型的列表。值必须如“[Mime类型](#mime类型)”中所述。                                                  |
 | param                | 用空格分隔的参数。`param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)` |
-| security             | 每个API操作的[安全性](#安全性)。                                                                      |
-| success              | 以空格分隔的成功响应。`return code`,`{param type}`,`data type`,`comment`                                |
-| failure              | 以空格分隔的故障响应。`return code`,`{param type}`,`data type`,`comment`                                |
-| response             | 与success、failure作用相同                                                                               |
-| header               | 以空格分隔的头字段。 `return code`,`{param type}`,`data type`,`comment`                                 |
-| router               | 以空格分隔的路径定义。 `path`,`[httpMethod]`                                                            |
-| x-name               | 扩展字段必须以`x-`开头，并且只能使用json值。                                                            |
+| security             | 每个API操作的[安全性](#安全性)。                                                                           |
+| success              | 以空格分隔的成功响应。`return code`,`{param type}`,`data type`,`comment`                                  |
+| failure              | 以空格分隔的故障响应。`return code`,`{param type}`,`data type`,`comment`                                  |
+| response             | 与success、failure作用相同                                                                           |
+| header               | 以空格分隔的头字段。 `return code`,`{param type}`,`data type`,`comment`                                  |
+| router               | 以空格分隔的路径定义。 `path`,`[httpMethod]`                                                              |
+| deprecatedrouter     | 与router相同，但是是deprecated的。                                                                      |
+| x-name               | 扩展字段必须以`x-`开头，并且只能使用json值。                                                                     |
+| deprecated           | 将当前API操作的所有路径设置为deprecated                                                                     |
 
 ## Mime类型
 

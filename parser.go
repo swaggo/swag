@@ -43,6 +43,7 @@ const (
 	headerAttr              = "@header"
 	tagsAttr                = "@tags"
 	routerAttr              = "@router"
+	deprecatedRouterAttr    = "@deprecatedrouter"
 	summaryAttr             = "@summary"
 	deprecatedAttr          = "@deprecated"
 	securityAttr            = "@security"
@@ -1079,6 +1080,10 @@ func processRouterOperation(parser *Parser, operation *Operation) error {
 			*op = &newOp.Operation
 		} else {
 			*op = &operation.Operation
+		}
+
+		if routeProperties.Deprecated {
+			(*op).Deprecated = routeProperties.Deprecated
 		}
 
 		parser.swagger.Paths.Paths[routeProperties.Path] = pathItem

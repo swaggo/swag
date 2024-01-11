@@ -425,25 +425,26 @@ When a short string in your documentation is insufficient, or you need images, c
 [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
 
 
-| annotation  | description                                                                                                                |
-|-------------|----------------------------------------------------------------------------------------------------------------------------|
-| description | A verbose explanation of the operation behavior.                                                                           |
-| description.markdown     |  A short description of the application. The description will be read from a file.  E.g. `@description.markdown details` will load `details.md`| // @description.file endpoint.description.markdown  |
-| id          | A unique string used to identify the operation. Must be unique among all API operations.                                   |
-| tags        | A list of tags to each API operation that separated by commas.                                                             |
-| summary     | A short summary of what the operation does.                                                                                |
-| accept      | A list of MIME types the APIs can consume. Note that Accept only affects operations with a request body, such as POST, PUT and PATCH.  Value MUST be as described under [Mime Types](#mime-types).                     |
-| produce     | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                     |
-| param       | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)` |
-| security    | [Security](#security) to each API operation.                                                                               |
-| success     | Success response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                   |
-| failure     | Failure response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                    |
-| response    | As same as `success` and `failure` |
-| header      | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                            |
-| router      | Path definition that separated by spaces. `path`,`[httpMethod]`                                                            |
-| x-name      | The extension key, must be start by x- and take only json value.                                                           |
-| x-codeSample      | Optional Markdown usage. take `file` as parameter. This will then search for a file named like the summary in the given folder.                                      |
-| deprecated  | Mark endpoint as deprecated.                                                                                               |
+| annotation           | description                                                                                                                                                                                       |
+|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| description          | A verbose explanation of the operation behavior.                                                                                                                                                  |
+| description.markdown | A short description of the application. The description will be read from a file.  E.g. `@description.markdown details` will load `details.md`                                                    | // @description.file endpoint.description.markdown  |
+| id                   | A unique string used to identify the operation. Must be unique among all API operations.                                                                                                          |
+| tags                 | A list of tags to each API operation that separated by commas.                                                                                                                                    |
+| summary              | A short summary of what the operation does.                                                                                                                                                       |
+| accept               | A list of MIME types the APIs can consume. Note that Accept only affects operations with a request body, such as POST, PUT and PATCH.  Value MUST be as described under [Mime Types](#mime-types). |
+| produce              | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                                                                                            |
+| param                | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)`                                                                        |
+| security             | [Security](#security) to each API operation.                                                                                                                                                      |
+| success              | Success response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                                                                                          |
+| failure              | Failure response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                                                                                          |
+| response             | As same as `success` and `failure`                                                                                                                                                                |
+| header               | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                                                                                                   |
+| router               | Path definition that separated by spaces. `path`,`[httpMethod]`                                                                                                                                   |
+| deprecatedrouter     | As same as router, but deprecated.                                                                                                                                                     |
+| x-name               | The extension key, must be start by x- and take only json value.                                                                                                                                  |
+| x-codeSample         | Optional Markdown usage. take `file` as parameter. This will then search for a file named like the summary in the given folder.                                                                   |
+| deprecated           | Mark endpoint as deprecated.                                                                                                                                                                      |
 
 
 
