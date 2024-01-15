@@ -2098,6 +2098,7 @@ func TestParseParamStructCodeExample(t *testing.T) {
 				if p.Name == param.Name {
 					assert.Equal(t, param.ParamProps, p.ParamProps)
 					assert.Equal(t, param.CommonValidations, p.CommonValidations)
+					assert.Equal(t, param.SimpleSchema, p.SimpleSchema)
 					found = true
 					break
 				}
@@ -2130,12 +2131,18 @@ func TestParseParamStructCodeExample(t *testing.T) {
 					CommonValidations: spec.CommonValidations{
 						MaxLength: &maxLen,
 					},
+					SimpleSchema: spec.SimpleSchema{
+						Type: "string",
+					},
 				},
 				spec.Parameter{
 					ParamProps: spec.ParamProps{
 						Name:        "b",
 						Description: "B is another field",
 						In:          param,
+					},
+					SimpleSchema: spec.SimpleSchema{
+						Type: "boolean",
 					},
 				})
 		})
@@ -2155,6 +2162,9 @@ func TestParseParamStructCodeExample(t *testing.T) {
 					In:          "header",
 					Required:    true,
 				},
+				SimpleSchema: spec.SimpleSchema{
+					Type: "string",
+				},
 			}, spec.Parameter{
 				ParamProps: spec.ParamProps{
 					Name:        "anotherHeader",
@@ -2164,6 +2174,41 @@ func TestParseParamStructCodeExample(t *testing.T) {
 				CommonValidations: spec.CommonValidations{
 					Maximum: &max,
 					Minimum: &min,
+				},
+				SimpleSchema: spec.SimpleSchema{
+					Type: "integer",
+				},
+			})
+	})
+
+	t.Run("path struct", func(t *testing.T) {
+		operation := NewOperation(parser)
+		comment := `@Param path path structs.PathModel true "path params"`
+		err = operation.ParseComment(comment, ast)
+		assert.NoError(t, err)
+
+		validateParameters(operation,
+			spec.Parameter{
+				ParamProps: spec.ParamProps{
+					Name:        "id",
+					Description: "ID is the id",
+					In:          "path",
+					Required:    true,
+				},
+				SimpleSchema: spec.SimpleSchema{
+					Type: "integer",
+				},
+			}, spec.Parameter{
+				ParamProps: spec.ParamProps{
+					Name:        "name",
+					Description: "",
+					In:          "path",
+				},
+				CommonValidations: spec.CommonValidations{
+					MaxLength: &maxLen,
+				},
+				SimpleSchema: spec.SimpleSchema{
+					Type: "string",
 				},
 			})
 	})
