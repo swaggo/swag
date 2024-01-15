@@ -315,8 +315,13 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					}
 				}
 
+				nameOverrideType := paramType
+				// query also uses formData tags
+				if paramType == "query" {
+					nameOverrideType = "formData"
+				}
 				// load overridden type specific name from extensions if exists
-				if nameVal, ok := item.Schema.Extensions[paramType]; ok {
+				if nameVal, ok := item.Schema.Extensions[nameOverrideType]; ok {
 					name = nameVal.(string)
 				}
 

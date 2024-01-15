@@ -2,6 +2,7 @@ package swag
 
 import (
 	"encoding/json"
+	"fmt"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -2107,9 +2108,40 @@ func TestParseParamStructCodeExample(t *testing.T) {
 
 	// values used in validation checks
 	max := float64(10)
+	maxLen := int64(10)
 	min := float64(0)
 
-	t.Run("Header struct", func(t *testing.T) {
+	// query and form behave the same
+	for _, param := range []string{"query", "formData"} {
+		t.Run(param+" struct", func(t *testing.T) {
+			operation := NewOperation(parser)
+			comment := fmt.Sprintf(`@Param model %s structs.FormModel true "query params"`, param)
+			err = operation.ParseComment(comment, ast)
+			assert.NoError(t, err)
+
+			validateParameters(operation,
+				spec.Parameter{
+					ParamProps: spec.ParamProps{
+						Name:        "f",
+						Description: "",
+						In:          param,
+						Required:    true,
+					},
+					CommonValidations: spec.CommonValidations{
+						MaxLength: &maxLen,
+					},
+				},
+				spec.Parameter{
+					ParamProps: spec.ParamProps{
+						Name:        "b",
+						Description: "B is another field",
+						In:          param,
+					},
+				})
+		})
+	}
+
+	t.Run("header struct", func(t *testing.T) {
 		operation := NewOperation(parser)
 		comment := `@Param auth header structs.AuthHeader true "auth header"`
 		err = operation.ParseComment(comment, ast)
@@ -2128,7 +2160,6 @@ func TestParseParamStructCodeExample(t *testing.T) {
 					Name:        "anotherHeader",
 					Description: "AnotherHeader is another header",
 					In:          "header",
-					Required:    false,
 				},
 				CommonValidations: spec.CommonValidations{
 					Maximum: &max,
