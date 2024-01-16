@@ -98,7 +98,7 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 
 func (ps *tagBaseFieldParser) FormName() string {
 	if ps.field.Tag != nil {
-		return strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0])
+		return strings.TrimRight(strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0]), "[]")
 	}
 	return ""
 }

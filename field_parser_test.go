@@ -668,4 +668,26 @@ func TestValidTags(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, schema.Enum)
 	})
+
+	t.Run("Form Filed Name", func(t *testing.T) {
+		t.Parallel()
+
+		filedname, err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `form:"test[]"`,
+			}},
+		).FieldName()
+		assert.NoError(t, err)
+		assert.Equal(t, "test", filedname)
+
+		filedname, err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `form:"test"`,
+			}},
+		).FieldName()
+		assert.NoError(t, err)
+		assert.Equal(t, "test", filedname)
+	})
 }
