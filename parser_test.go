@@ -248,7 +248,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": "Grants read and write access to administrative information",
-                "read": " Grants read access",
+                "read": "Grants read access",
                 "write": "Grants write access"
             }
         }
@@ -337,7 +337,7 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": "Grants read and write access to administrative information",
-                "read": " Grants read access",
+                "read": "Grants read access",
                 "write": "Grants write access"
             }
         }
@@ -1363,7 +1363,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": "Grants read and write access to administrative information",
-                "read": " Grants read access",
+                "read": "Grants read access",
                 "write": "Grants write access"
             }
         }
@@ -1819,7 +1819,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
                 "admin": "Grants read and write access to administrative information",
-                "read": " Grants read access",
+                "read": "Grants read access",
                 "write": "Grants write access"
             }
         }

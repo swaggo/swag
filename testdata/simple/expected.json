@@ -808,7 +808,7 @@
       "tokenUrl": "https://example.com/oauth/token",
       "scopes": {
         "admin": "Grants read and write access to administrative information",
-        "read": " Grants read access",
+        "read": "Grants read access",
         "write": "Grants write access"
       }
     }
