@@ -354,7 +354,7 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 			}
 
 			//delete it from parsed schemas, and will parse it again
-			if _, ok := parsedSchemas[typeDef]; ok {
+			if _, ok = parsedSchemas[typeDef]; ok {
 				delete(parsedSchemas, typeDef)
 			}
 
@@ -363,7 +363,7 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 			}
 
 			name := constVar.Name.Name
-			if _, ok := constVar.Value.(ast.Expr); ok {
+			if _, ok = constVar.Value.(ast.Expr); ok {
 				continue
 			}
 

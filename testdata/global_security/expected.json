@@ -91,8 +91,8 @@
       "flow": "application",
       "tokenUrl": "https://example.com/oauth/token",
       "scopes": {
-        "admin": " Grants read and write access to administrative information",
-        "write": " Grants write access"
+        "admin": "Grants read and write access to administrative information",
+        "write": "Grants write access"
       }
     }
   },
