@@ -30,6 +30,10 @@ func (t *genericTypeSpec) TypeName() string {
 	return t.Name
 }
 
+func normalizeGenericTypeName(name string) string {
+	return strings.Replace(name, ".", "_", -1)
+}
+
 func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string, file *ast.File) (typeSpecDef *TypeSpecDef) {
 	if strings.HasPrefix(genericParam, "[]") {
 		typeSpecDef = pkgDefs.getTypeFromGenericParam(genericParam[2:], file)
@@ -41,11 +45,15 @@ func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string,
 		case *ast.ArrayType, *ast.MapType:
 			expr = typeSpecDef.TypeSpec.Type
 		default:
-			expr = ast.NewIdent(typeSpecDef.TypeName())
+			name := typeSpecDef.TypeName()
+			expr = ast.NewIdent(name)
+			if _, ok := pkgDefs.uniqueDefinitions[name]; !ok {
+				pkgDefs.uniqueDefinitions[name] = typeSpecDef
+			}
 		}
 		return &TypeSpecDef{
 			TypeSpec: &ast.TypeSpec{
-				Name: ast.NewIdent("array_" + typeSpecDef.TypeName()),
+				Name: ast.NewIdent(string(IgnoreNameOverridePrefix) + "array_" + typeSpecDef.TypeName()),
 				Type: &ast.ArrayType{
 					Elt: expr,
 				},
@@ -71,11 +79,15 @@ func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string,
 		case *ast.ArrayType, *ast.MapType:
 			expr = typeSpecDef.TypeSpec.Type
 		default:
-			expr = ast.NewIdent(typeSpecDef.TypeName())
+			name := typeSpecDef.TypeName()
+			expr = ast.NewIdent(name)
+			if _, ok := pkgDefs.uniqueDefinitions[name]; !ok {
+				pkgDefs.uniqueDefinitions[name] = typeSpecDef
+			}
 		}
 		return &TypeSpecDef{
 			TypeSpec: &ast.TypeSpec{
-				Name: ast.NewIdent("map_" + parts[0] + "_" + typeSpecDef.TypeName()),
+				Name: ast.NewIdent(string(IgnoreNameOverridePrefix) + "map_" + parts[0] + "_" + typeSpecDef.TypeName()),
 				Type: &ast.MapType{
 					Key:   ast.NewIdent(parts[0]), //assume key is string or integer
 					Value: expr,
@@ -86,6 +98,7 @@ func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string,
 			ParentSpec: typeSpecDef.ParentSpec,
 			NotUnique:  false,
 		}
+
 	}
 	if IsGolangPrimitiveType(genericParam) {
 		return &TypeSpecDef{
@@ -149,7 +162,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 		}
 	}
 
-	name += strings.Replace(strings.Join(nameParts, "-"), ".", "_", -1)
+	name += normalizeGenericTypeName(strings.Join(nameParts, "-"))
 
 	if typeSpec, ok := pkgDefs.uniqueDefinitions[name]; ok {
 		return typeSpec
