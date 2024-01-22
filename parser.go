@@ -189,6 +189,8 @@ type FieldParser interface {
 	ShouldSkip() bool
 	FieldName() (string, error)
 	FormName() string
+	HeaderName() string
+	PathName() string
 	CustomSchema() (*spec.Schema, error)
 	ComplementSchema(schema *spec.Schema) error
 	IsRequired() (bool, error)
@@ -1506,11 +1508,17 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		tagRequired = append(tagRequired, fieldName)
 	}
 
+	if schema.Extensions == nil {
+		schema.Extensions = make(spec.Extensions)
+	}
 	if formName := ps.FormName(); len(formName) > 0 {
-		if schema.Extensions == nil {
-			schema.Extensions = make(spec.Extensions)
-		}
-		schema.Extensions[formTag] = formName
+		schema.Extensions["formData"] = formName
+	}
+	if headerName := ps.HeaderName(); len(headerName) > 0 {
+		schema.Extensions["header"] = headerName
+	}
+	if pathName := ps.PathName(); len(pathName) > 0 {
+		schema.Extensions["path"] = pathName
 	}
 
 	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil

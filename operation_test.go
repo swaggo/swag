@@ -2,6 +2,7 @@ package swag
 
 import (
 	"encoding/json"
+	"fmt"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -1177,11 +1178,17 @@ func TestOperation_ParseParamComment(t *testing.T) {
 		t.Parallel()
 		for _, paramType := range []string{"header", "path", "query", "formData"} {
 			t.Run(paramType, func(t *testing.T) {
+				// unknown object returns error
 				assert.Error(t, NewOperation(nil).ParseComment(`@Param some_object `+paramType+` main.Object true "Some Object"`, nil))
+
+				// verify objects are supported here
+				o := NewOperation(nil)
+				o.parser.addTestType("main.TestObject")
+				err := o.ParseComment(`@Param some_object `+paramType+` main.TestObject true "Some Object"`, nil)
+				assert.NoError(t, err)
 			})
 		}
 	})
-
 }
 
 // Test ParseParamComment Query Params
@@ -2065,6 +2072,146 @@ func TestParseParamCommentByExtensions(t *testing.T) {
     }
 ]`
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamStructCodeExample(t *testing.T) {
+	t.Parallel()
+
+	fset := token.NewFileSet()
+	ast, err := goparser.ParseFile(fset, "operation_test.go", `package swag
+	import structs "github.com/swaggo/swag/testdata/param_structs"
+	`, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	parser := New()
+	err = parser.parseFile("github.com/swaggo/swag/testdata/param_structs", "testdata/param_structs/structs.go", nil, ParseModels)
+	assert.NoError(t, err)
+	_, err = parser.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	validateParameters := func(operation *Operation, params ...spec.Parameter) {
+		assert.Equal(t, len(params), len(operation.Parameters))
+
+		for _, param := range params {
+			found := false
+			for _, p := range operation.Parameters {
+				if p.Name == param.Name {
+					assert.Equal(t, param.ParamProps, p.ParamProps)
+					assert.Equal(t, param.CommonValidations, p.CommonValidations)
+					assert.Equal(t, param.SimpleSchema, p.SimpleSchema)
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, "found parameter %s", param.Name)
+		}
+	}
+
+	// values used in validation checks
+	max := float64(10)
+	maxLen := int64(10)
+	min := float64(0)
+
+	// query and form behave the same
+	for _, param := range []string{"query", "formData"} {
+		t.Run(param+" struct", func(t *testing.T) {
+			operation := NewOperation(parser)
+			comment := fmt.Sprintf(`@Param model %s structs.FormModel true "query params"`, param)
+			err = operation.ParseComment(comment, ast)
+			assert.NoError(t, err)
+
+			validateParameters(operation,
+				spec.Parameter{
+					ParamProps: spec.ParamProps{
+						Name:        "f",
+						Description: "",
+						In:          param,
+						Required:    true,
+					},
+					CommonValidations: spec.CommonValidations{
+						MaxLength: &maxLen,
+					},
+					SimpleSchema: spec.SimpleSchema{
+						Type: "string",
+					},
+				},
+				spec.Parameter{
+					ParamProps: spec.ParamProps{
+						Name:        "b",
+						Description: "B is another field",
+						In:          param,
+					},
+					SimpleSchema: spec.SimpleSchema{
+						Type: "boolean",
+					},
+				})
+		})
+	}
+
+	t.Run("header struct", func(t *testing.T) {
+		operation := NewOperation(parser)
+		comment := `@Param auth header structs.AuthHeader true "auth header"`
+		err = operation.ParseComment(comment, ast)
+		assert.NoError(t, err)
+
+		validateParameters(operation,
+			spec.Parameter{
+				ParamProps: spec.ParamProps{
+					Name:        "X-Auth-Token",
+					Description: "Token is the auth token",
+					In:          "header",
+					Required:    true,
+				},
+				SimpleSchema: spec.SimpleSchema{
+					Type: "string",
+				},
+			}, spec.Parameter{
+				ParamProps: spec.ParamProps{
+					Name:        "anotherHeader",
+					Description: "AnotherHeader is another header",
+					In:          "header",
+				},
+				CommonValidations: spec.CommonValidations{
+					Maximum: &max,
+					Minimum: &min,
+				},
+				SimpleSchema: spec.SimpleSchema{
+					Type: "integer",
+				},
+			})
+	})
+
+	t.Run("path struct", func(t *testing.T) {
+		operation := NewOperation(parser)
+		comment := `@Param path path structs.PathModel true "path params"`
+		err = operation.ParseComment(comment, ast)
+		assert.NoError(t, err)
+
+		validateParameters(operation,
+			spec.Parameter{
+				ParamProps: spec.ParamProps{
+					Name:        "id",
+					Description: "ID is the id",
+					In:          "path",
+					Required:    true,
+				},
+				SimpleSchema: spec.SimpleSchema{
+					Type: "integer",
+				},
+			}, spec.Parameter{
+				ParamProps: spec.ParamProps{
+					Name:        "name",
+					Description: "",
+					In:          "path",
+				},
+				CommonValidations: spec.CommonValidations{
+					MaxLength: &maxLen,
+				},
+				SimpleSchema: spec.SimpleSchema{
+					Type: "string",
+				},
+			})
+	})
 }
 
 func TestParseIdComment(t *testing.T) {

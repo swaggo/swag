@@ -286,16 +286,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	param := createParameter(paramType, description, name, objectType, refType, required, enums, operation.parser.collectionFormatInQuery)
 
 	switch paramType {
-	case "path", "header":
-		switch objectType {
-		case ARRAY:
-			if !IsPrimitiveType(refType) {
-				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
-			}
-		case OBJECT:
-			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
-		}
-	case "query", "formData":
+	case "path", "header", "query", "formData":
 		switch objectType {
 		case ARRAY:
 			if !IsPrimitiveType(refType) && !(refType == "file" && paramType == "formData") {
@@ -324,11 +315,14 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					}
 				}
 
-				var formName = name
-				if item.Schema.Extensions != nil {
-					if nameVal, ok := item.Schema.Extensions[formTag]; ok {
-						formName = nameVal.(string)
-					}
+				nameOverrideType := paramType
+				// query also uses formData tags
+				if paramType == "query" {
+					nameOverrideType = "formData"
+				}
+				// load overridden type specific name from extensions if exists
+				if nameVal, ok := item.Schema.Extensions[nameOverrideType]; ok {
+					name = nameVal.(string)
 				}
 
 				switch {
@@ -346,10 +340,10 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					if !IsSimplePrimitiveType(itemSchema.Type[0]) {
 						continue
 					}
-					param = createParameter(paramType, prop.Description, formName, prop.Type[0], itemSchema.Type[0], findInSlice(schema.Required, name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], findInSlice(schema.Required, item.Name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
-					param = createParameter(paramType, prop.Description, formName, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, name), nil, operation.parser.collectionFormatInQuery)
+					param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, item.Name), nil, operation.parser.collectionFormatInQuery)
 				default:
 					operation.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 					continue
@@ -406,6 +400,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 const (
 	formTag             = "form"
 	jsonTag             = "json"
+	uriTag              = "uri"
+	headerTag           = "header"
 	bindingTag          = "binding"
 	defaultTag          = "default"
 	enumsTag            = "enums"

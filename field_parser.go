@@ -96,11 +96,23 @@ func (ps *tagBaseFieldParser) FieldName() (string, error) {
 	}
 }
 
-func (ps *tagBaseFieldParser) FormName() string {
+func (ps *tagBaseFieldParser) firstTagValue(tag string) string {
 	if ps.field.Tag != nil {
-		return strings.TrimRight(strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0]), "[]")
+		return strings.TrimRight(strings.TrimSpace(strings.Split(ps.tag.Get(tag), ",")[0]), "[]")
 	}
 	return ""
+}
+
+func (ps *tagBaseFieldParser) FormName() string {
+	return ps.firstTagValue(formTag)
+}
+
+func (ps *tagBaseFieldParser) HeaderName() string {
+	return ps.firstTagValue(headerTag)
+}
+
+func (ps *tagBaseFieldParser) PathName() string {
+	return ps.firstTagValue(uriTag)
 }
 
 func toSnakeCase(in string) string {
