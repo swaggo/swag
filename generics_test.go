@@ -4,10 +4,10 @@
 package swag
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"go/ast"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -40,6 +40,8 @@ func TestParseGenericsBasic(t *testing.T) {
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	b = bytes.Replace(b, []byte{'\n'}, []byte{'\r', '\n'}, -1)
+	os.WriteFile(filepath.Join(searchDir, "expected.json"), b, os.ModePerm)
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
@@ -55,6 +57,7 @@ func TestParseGenericsArrays(t *testing.T) {
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
+
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
@@ -100,7 +103,6 @@ func TestParseGenericsProperty(t *testing.T) {
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
-	os.WriteFile(searchDir+"/expected.json", b, fs.ModePerm)
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }

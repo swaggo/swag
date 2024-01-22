@@ -39,6 +39,7 @@ type Foo = web.GenericResponseMulti[types.Post, types.Post]
 // @Success 204 {object} Response[string, types.Field[int]]
 // @Success 205 {object} Response[StringStruct, types.Field[int]]
 // @Success 206 {object} Response2[string, types.Field[int],string]
+// @Success 207 {object} Response[[]map[string]string, map[string][]types.Field[int]]
 // @Success 222 {object} web.GenericResponseMulti[types.Post, types.Post]
 // @Failure 400 {object} web.APIError "We need ID!!"
 // @Failure 404 {object} web.APIError "Can not find ID"
