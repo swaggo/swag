@@ -737,6 +737,7 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 	attrMap, scopes := make(map[string]string), make(map[string]string)
 	extensions, description := make(map[string]interface{}), ""
 
+loopline:
 	for ; *index < len(lines); *index++ {
 		v := strings.TrimSpace(lines[*index])
 		if len(v) == 0 {
@@ -753,23 +754,21 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 		for _, findterm := range search {
 			if securityAttr == findterm {
 				attrMap[securityAttr] = value
-
-				break
+				continue loopline
 			}
 		}
 
-		isExists, err := isExistsScope(securityAttr)
-		if err != nil {
+		if isExists, err := isExistsScope(securityAttr); err != nil {
 			return nil, err
-		}
-
-		if isExists {
-			scopes[securityAttr[len(scopeAttrPrefix):]] = v[len(securityAttr):]
+		} else if isExists {
+			scopes[securityAttr[len(scopeAttrPrefix):]] = value
+			continue
 		}
 
 		if strings.HasPrefix(securityAttr, "@x-") {
 			// Add the custom attribute without the @
 			extensions[securityAttr[1:]] = value
+			continue
 		}
 
 		// Not mandatory field
@@ -916,14 +915,14 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 func isExistsScope(scope string) (bool, error) {
 	s := strings.Fields(scope)
 	for _, v := range s {
-		if strings.Contains(v, scopeAttrPrefix) {
+		if strings.HasPrefix(v, scopeAttrPrefix) {
 			if strings.Contains(v, ",") {
 				return false, fmt.Errorf("@scope can't use comma(,) get=" + v)
 			}
 		}
 	}
 
-	return strings.Contains(scope, scopeAttrPrefix), nil
+	return strings.HasPrefix(scope, scopeAttrPrefix), nil
 }
 
 func getTagsFromComment(comment string) (tags []string) {
