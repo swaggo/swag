@@ -2,6 +2,7 @@ GOCMD:=$(shell which go)
 GOLINT:=$(shell which golint)
 GOIMPORT:=$(shell which goimports)
 GOFMT:=$(shell which gofmt)
+GIT:=$(shell which git)
 GOBUILD:=$(GOCMD) build
 GOINSTALL:=$(GOCMD) install
 GOCLEAN:=$(GOCMD) clean
@@ -11,6 +12,11 @@ GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
 GOPATH:=$(shell $(GOCMD) env GOPATH)
+LDFLAGS:="-w -s"
+VERSION:= $(shell $(GIT) describe --tags --exact-match)
+ifneq ($(VERSION),)
+	LDFLAGS="$(LDFLAGS) -X 'swag.version=$(VERSION)'"
+endif
 u := $(if $(update),-u)
 
 BINARY_NAME:=swag
@@ -23,7 +29,7 @@ all: test build
 
 .PHONY: build
 build: deps
-	$(GOBUILD) -o $(BINARY_NAME) ./cmd/swag
+	$(GOBUILD) -ldflags $(LDFLAGS) -o $(BINARY_NAME) ./cmd/swag
 
 .PHONY: install
 install: deps
