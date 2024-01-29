@@ -119,7 +119,7 @@
                     "205": {
                         "description": "Reset Content",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-array_web_GenericInnerType-array2_types_Post"
+                            "$ref": "#/definitions/web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-array_web_GenericInnerType-array_array_types_Post"
                         }
                     },
                     "222": {
@@ -203,7 +203,7 @@
                 }
             }
         },
-        "web.GenericInnerMultiType-types_Post-array_web_GenericInnerType-array2_types_Post": {
+        "web.GenericInnerMultiType-types_Post-array_web_GenericInnerType-array_array_types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -220,7 +220,7 @@
                     "items": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/definitions/web.GenericInnerType-array2_types_Post"
+                            "$ref": "#/definitions/web.GenericInnerType-array_array_types_Post"
                         }
                     }
                 }
@@ -266,7 +266,7 @@
                 }
             }
         },
-        "web.GenericInnerType-array2_types_Post": {
+        "web.GenericInnerType-array_array_types_Post": {
             "type": "object",
             "properties": {
                 "items": {
@@ -478,7 +478,7 @@
                 }
             }
         },
-        "web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-array_web_GenericInnerType-array2_types_Post": {
+        "web.GenericNestedResponseMulti-types_Post-web_GenericInnerMultiType-types_Post-array_web_GenericInnerType-array_array_types_Post": {
             "type": "object",
             "properties": {
                 "itemOne": {
@@ -493,7 +493,7 @@
                     "description": "ItemsTwo is the second thing",
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/web.GenericInnerMultiType-types_Post-array_web_GenericInnerType-array2_types_Post"
+                        "$ref": "#/definitions/web.GenericInnerMultiType-types_Post-array_web_GenericInnerType-array_array_types_Post"
                     }
                 },
                 "status": {

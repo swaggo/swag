@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -55,6 +54,7 @@ func TestParseGenericsArrays(t *testing.T) {
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
+
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
@@ -100,7 +100,6 @@ func TestParseGenericsProperty(t *testing.T) {
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
-	os.WriteFile(searchDir+"/expected.json", b, fs.ModePerm)
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }

@@ -35,7 +35,7 @@ type TypeSpecDef struct {
 
 // Name the name of the typeSpec.
 func (t *TypeSpecDef) Name() string {
-	if t.TypeSpec != nil {
+	if t.TypeSpec != nil && t.TypeSpec.Name != nil {
 		return t.TypeSpec.Name.Name
 	}
 
@@ -71,7 +71,7 @@ func (t *TypeSpecDef) TypeName() string {
 			return r
 		}, t.PkgPath)
 		names = append(names, pkgPath)
-	} else {
+	} else if t.File != nil {
 		names = append(names, t.File.Name.Name)
 	}
 	if parentFun, ok := (t.ParentSpec).(*ast.FuncDecl); ok && parentFun != nil {
