@@ -334,6 +334,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					if len(itemSchema.Type) == 0 {
 						itemSchema = operation.parser.getUnderlyingSchema(prop.Items.Schema)
 					}
+					if itemSchema == nil {
+						continue
+					}
 					if len(itemSchema.Type) == 0 {
 						continue
 					}
