@@ -978,7 +978,15 @@ func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refTyp
 
 		return spec.ArrayProperty(schema), nil
 	default:
-		return PrimitiveSchema(schemaType), nil
+		schema := PrimitiveSchema(schemaType)
+		if refType != schemaType {
+			//refer to https://swagger.io/specification/v2/#dataTypeFormat
+			if !validPrimitiveFormat[schemaType][refType] {
+				return nil, fmt.Errorf("invalid format %s of type %s", refType, schemaType)
+			}
+			schema.Format = refType
+		}
+		return schema, nil
 	}
 }
 

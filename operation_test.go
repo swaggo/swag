@@ -244,6 +244,33 @@ func TestOperation_ParseResponseWithDefault(t *testing.T) {
 	assert.Equal(t, "A response", operation.Responses.StatusCodeResponses[200].Description)
 }
 
+func TestParseResponsePrimitiveTypeWithFormat(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {integer} int16 "response with format"`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.Error(t, err)
+
+	comment = `@Success 200 {integer} int32 "response with format"`
+	operation = NewOperation(nil)
+	err = operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation, "", "    ")
+	expected := `{
+    "responses": {
+        "200": {
+            "description": "response with format",
+            "schema": {
+                "type": "integer",
+                "format": "int32"
+            }
+        }
+    }
+}`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseResponseSuccessCommentWithEmptyResponse(t *testing.T) {
 	t.Parallel()
 
