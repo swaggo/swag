@@ -234,7 +234,7 @@ func TestOperation_ParseResponseWithDefault(t *testing.T) {
 
 	assert.Equal(t, "An empty response", operation.Responses.Default.Description)
 
-	comment = `@Success 200,default {string} Response "A response"`
+	comment = `@Success 200,default {string} string "A response"`
 	operation = NewOperation(nil)
 
 	err = operation.ParseComment(comment, nil)
