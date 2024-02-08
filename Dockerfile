@@ -1,7 +1,7 @@
 # Dockerfile References: https://docs.docker.com/engine/reference/builder/
 
 # Start from the latest golang base image
-FROM golang:1.21-alpine as builder
+FROM --platform=$BUILDPLATFORM golang:1.21-alpine as builder
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -14,6 +14,11 @@ RUN go mod download
 
 # Copy the source from the current directory to the Working Directory inside the container
 COPY . .
+
+# Configure go compiler target platform
+ARG TARGETARCH TARGETOS
+ENV GOARCH=$TARGETARCH \
+    GOOS=$TARGETOS
 
 # Build the Go app
 RUN CGO_ENABLED=0 GOOS=linux go build -v -a -installsuffix cgo -o swag cmd/swag/main.go
