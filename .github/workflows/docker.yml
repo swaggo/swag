@@ -36,8 +36,8 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/swaggo/swag:latest
-            ghcr.io/swaggo/swag:${{github.ref_name}}
+            ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{github.ref_name}}
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Image digest
