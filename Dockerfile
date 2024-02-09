@@ -16,7 +16,8 @@ RUN go mod download
 COPY . .
 
 # Configure go compiler target platform
-ARG TARGETARCH TARGETOS
+ARG TARGETOS
+ARG TARGETARCH
 ENV GOARCH=$TARGETARCH \
     GOOS=$TARGETOS
 
