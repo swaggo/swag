@@ -411,6 +411,7 @@ const (
 	exampleTag          = "example"
 	schemaExampleTag    = "schemaExample"
 	formatTag           = "format"
+	titleTag            = "title"
 	validateTag         = "validate"
 	minimumTag          = "minimum"
 	maximumTag          = "maximum"

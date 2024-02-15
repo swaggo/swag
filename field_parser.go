@@ -169,6 +169,7 @@ func (ps *tagBaseFieldParser) CustomSchema() (*spec.Schema, error) {
 }
 
 type structField struct {
+	title        string
 	schemaType   string
 	arrayType    string
 	formatType   string
@@ -274,6 +275,7 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	field := &structField{
 		schemaType: types[0],
 		formatType: ps.tag.Get(formatTag),
+		title:      ps.tag.Get(titleTag),
 	}
 
 	if len(types) > 1 && (types[0] == ARRAY || types[0] == OBJECT) {
@@ -414,6 +416,7 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	if field.schemaType != ARRAY {
 		schema.Format = field.formatType
 	}
+	schema.Title = field.title
 
 	extensionsTagValue := ps.tag.Get(extensionsTag)
 	if extensionsTagValue != "" {
