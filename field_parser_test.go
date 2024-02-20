@@ -60,6 +60,21 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Equal(t, "csv", schema.Format)
 	})
 
+	t.Run("Title tag", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"string"}
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" title:"myfield"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "myfield", schema.Title)
+	})
+
 	t.Run("Required tag", func(t *testing.T) {
 		t.Parallel()
 
