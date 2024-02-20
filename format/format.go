@@ -17,13 +17,16 @@ type Format struct {
 
 	// exclude exclude dirs and files in SearchDir
 	exclude map[string]bool
+	// onlyInclude include dirs and files in SearchDir
+	onlyInclude map[string]bool
 }
 
 // New creates a new Format instance
 func New() *Format {
 	return &Format{
-		exclude:   map[string]bool{},
-		formatter: swag.NewFormatter(),
+		exclude:     map[string]bool{},
+		onlyInclude: map[string]bool{},
+		formatter:   swag.NewFormatter(),
 	}
 }
 
@@ -34,6 +37,9 @@ type Config struct {
 
 	// excludes dirs and files in SearchDir,comma separated
 	Excludes string
+
+	// OnlyIncludes dirs and files in SearchDir,comma separated
+	OnlyIncludes string
 
 	// MainFile (DEPRECATED)
 	MainFile string
@@ -55,6 +61,11 @@ func (f *Format) Build(config *Config) error {
 	for _, fi := range strings.Split(config.Excludes, ",") {
 		if fi = strings.TrimSpace(fi); fi != "" {
 			f.exclude[filepath.Clean(fi)] = true
+		}
+	}
+	for _, fi := range strings.Split(config.OnlyIncludes, ",") {
+		if fi = strings.TrimSpace(fi); fi != "" {
+			f.onlyInclude[filepath.Clean(fi)] = true
 		}
 	}
 	for _, searchDir := range searchDirs {
