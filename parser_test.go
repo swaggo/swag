@@ -596,8 +596,9 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
 func TestParser_ParseGeneralAPITagDocsWithTagFilters(t *testing.T) {
 	t.Parallel()
 
-	parser := New(SetTags("!test2"))
-	err := parseGeneralAPIInfo(parser, []string{
+	filterTags := []string{"test1", "!test2"}
+
+	comments := []string{
 		"@tag.name test1",
 		"@tag.description A test1 Tag",
 		"@tag.docs.url https://example1.com",
@@ -605,10 +606,8 @@ func TestParser_ParseGeneralAPITagDocsWithTagFilters(t *testing.T) {
 		"@tag.name test2",
 		"@tag.description A test2 Tag",
 		"@tag.docs.url https://example2.com",
-		"@tag.docs.description Best example2 documentation"})
-	assert.NoError(t, err)
+		"@tag.docs.description Best example2 documentation"}
 
-	b, _ := json.MarshalIndent(parser.GetSwagger().Tags, "", "    ")
 	expected := `[
     {
         "description": "A test1 Tag",
@@ -619,7 +618,14 @@ func TestParser_ParseGeneralAPITagDocsWithTagFilters(t *testing.T) {
         }
     }
 ]`
-	assert.Equal(t, expected, string(b))
+
+	for _, tag := range filterTags {
+		parser := New(SetTags(tag))
+		err := parseGeneralAPIInfo(parser, comments)
+		assert.NoError(t, err)
+		b, _ := json.MarshalIndent(parser.GetSwagger().Tags, "", "    ")
+		assert.Equal(t, expected, string(b))
+	}
 }
 
 func TestParser_ParseGeneralAPISecurity(t *testing.T) {
