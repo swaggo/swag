@@ -14,5 +14,5 @@ package global_security
 // @scope.write Grants write access
 // @scope.admin Grants read and write access to administrative information
 
-// @security APIKeyAuth || OAuth2Application
+// @security APIKeyAuth && OAuth2Application
 func main() {}
