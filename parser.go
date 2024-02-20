@@ -511,7 +511,7 @@ func (parser *Parser) ParseGeneralAPIInfo(mainAPIFile string) error {
 
 func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 	previousAttribute := ""
-
+	var tag *spec.Tag
 	// parsing classic meta data model
 	for line := 0; line < len(comments); line++ {
 		commentLine := comments[line]
@@ -572,42 +572,43 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 		case "@schemes":
 			parser.swagger.Schemes = strings.Split(value, " ")
 		case "@tag.name":
-			parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
-				TagProps: spec.TagProps{
-					Name: value,
-				},
-			})
+			if parser.matchTag(value) {
+				parser.swagger.Tags = append(parser.swagger.Tags, spec.Tag{
+					TagProps: spec.TagProps{
+						Name: value,
+					},
+				})
+				tag = &parser.swagger.Tags[len(parser.swagger.Tags)-1]
+			} else {
+				tag = nil
+			}
 		case "@tag.description":
-			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
-			tag.TagProps.Description = value
-			replaceLastTag(parser.swagger.Tags, tag)
+			if tag != nil {
+				tag.TagProps.Description = value
+			}
 		case "@tag.description.markdown":
-			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
+			if tag != nil {
+				commentInfo, err := getMarkdownForTag(tag.TagProps.Name, parser.markdownFileDir)
+				if err != nil {
+					return err
+				}
 
-			commentInfo, err := getMarkdownForTag(tag.TagProps.Name, parser.markdownFileDir)
-			if err != nil {
-				return err
+				tag.TagProps.Description = string(commentInfo)
 			}
-
-			tag.TagProps.Description = string(commentInfo)
-			replaceLastTag(parser.swagger.Tags, tag)
 		case "@tag.docs.url":
-			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
-			tag.TagProps.ExternalDocs = &spec.ExternalDocumentation{
-				URL:         value,
-				Description: "",
+			if tag != nil {
+				tag.TagProps.ExternalDocs = &spec.ExternalDocumentation{
+					URL: value,
+				}
 			}
-
-			replaceLastTag(parser.swagger.Tags, tag)
 		case "@tag.docs.description":
-			tag := parser.swagger.Tags[len(parser.swagger.Tags)-1]
-			if tag.TagProps.ExternalDocs == nil {
-				return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
+			if tag != nil {
+				if tag.TagProps.ExternalDocs == nil {
+					return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
+				}
+
+				tag.TagProps.ExternalDocs.Description = value
 			}
-
-			tag.TagProps.ExternalDocs.Description = value
-			replaceLastTag(parser.swagger.Tags, tag)
-
 		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr:
 			scheme, err := parseSecAttributes(attribute, comments, &line)
 			if err != nil {
@@ -941,6 +942,27 @@ func getTagsFromComment(comment string) (tags []string) {
 	}
 	return
 
+}
+
+func (parser *Parser) matchTag(tag string) bool {
+	if len(parser.tags) == 0 {
+		return true
+	}
+
+	if _, has := parser.tags["!"+tag]; has {
+		return false
+	}
+	if _, has := parser.tags[tag]; has {
+		return true
+	}
+
+	// If all tags are negation then we should return true
+	for key := range parser.tags {
+		if key[0] != '!' {
+			return false
+		}
+	}
+	return true
 }
 
 func (parser *Parser) matchTags(comments []*ast.Comment) (match bool) {
@@ -1607,10 +1629,6 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 	}
 
 	return []string{ANY}
-}
-
-func replaceLastTag(slice []spec.Tag, element spec.Tag) {
-	slice = append(slice[:len(slice)-1], element)
 }
 
 // defineTypeOfExample example value define the type (object and array unsupported).
