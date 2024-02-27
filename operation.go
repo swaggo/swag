@@ -417,6 +417,7 @@ const (
 	maximumTag          = "maximum"
 	minLengthTag        = "minLength"
 	maxLengthTag        = "maxLength"
+	patternTag          = "pattern"
 	multipleOfTag       = "multipleOf"
 	readOnlyTag         = "readonly"
 	extensionsTag       = "extensions"

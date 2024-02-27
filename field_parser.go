@@ -184,6 +184,7 @@ type structField struct {
 	enums        []interface{}
 	enumVarNames []interface{}
 	unique       bool
+	pattern      string
 }
 
 // splitNotWrapped slices s into all substrings separated by sep if sep is not
@@ -348,6 +349,10 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 
 		if minLength != nil {
 			field.minLength = minLength
+		}
+		patternTagValue, ok := ps.tag.Lookup(patternTag)
+		if ok {
+			field.pattern = patternTagValue
 		}
 	}
 
