@@ -250,7 +250,14 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			return err
 		}
 		if !reflect.ValueOf(newSchema).IsZero() {
-			*schema = *(newSchema.WithAllOf(*schema))
+			// set oneOf, not allOf
+			if len(newSchema.Enum) > 0 && schema.Ref.String() != "" {
+				newSchema.OneOf = []spec.Schema{*schema}
+				*schema = newSchema
+			} else {
+				*schema = *(newSchema.WithAllOf(*schema))
+			}
+			fmt.Println(newSchema.Enum)
 		}
 		return nil
 	}
