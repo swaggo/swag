@@ -257,7 +257,6 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 			} else {
 				*schema = *(newSchema.WithAllOf(*schema))
 			}
-			fmt.Println(newSchema.Enum)
 		}
 		return nil
 	}
