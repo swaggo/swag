@@ -63,3 +63,11 @@ type PersonWithArrayEnum struct {
 	Mask  []Mask
 	Type  Type
 }
+
+type Difficulty string
+
+const (
+	DifficultyEasy   Difficulty = "easy"   // @name Easy
+	DifficultyMedium Difficulty = "medium" // @Name Medium This one also has a comment
+	DifficultyHard   Difficulty = "hard"   // This means really hard
+)
