@@ -774,7 +774,10 @@ loopline:
 
 		// Not mandatory field
 		if securityAttr == descriptionAttr {
-			description = value
+			if description != "" {
+				description += "\n"
+			}
+			description += value
 		}
 
 		// next securityDefinitions
