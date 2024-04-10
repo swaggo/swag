@@ -673,6 +673,21 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 
 					parser.swagger.Extensions[attribute[1:]] = valueJSON
 				}
+			} else if strings.HasPrefix(attribute, "@tag.x-") {
+				extensionName := attribute[5:]
+
+				if len(value) == 0 {
+					return fmt.Errorf("annotation %s need a value", attribute)
+				}
+
+				if tag.Extensions == nil {
+					tag.Extensions = make(map[string]interface{})
+				}
+
+				// tag.Extensions.Add(extensionName, value) works wrong (transforms extensionName to lower case)
+				// needed to save case for ReDoc
+				// https://redocly.com/docs/api-reference-docs/specification-extensions/x-display-name/
+				tag.Extensions[extensionName] = value
 			}
 		}
 
