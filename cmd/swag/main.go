@@ -156,7 +156,7 @@ var initFlags = []cli.Flag{
 		Name:    templateDelimsFlag,
 		Aliases: []string{"td"},
 		Value:   "",
-		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
+		Usage:   "Provide custom delimiters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
 	},
 	&cli.StringFlag{
 		Name:  packageName,
@@ -195,7 +195,7 @@ func initAction(ctx *cli.Context) error {
 	if ctx.IsSet(templateDelimsFlag) {
 		delims := strings.Split(ctx.String(templateDelimsFlag), ",")
 		if len(delims) != 2 {
-			return fmt.Errorf("exactly two template delimeters must be provided, comma separated")
+			return fmt.Errorf("exactly two template delimiters must be provided, comma separated")
 		} else if delims[0] == delims[1] {
 			return fmt.Errorf("template delimiters must be different")
 		}
