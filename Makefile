@@ -17,8 +17,6 @@ BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) github.com/swaggo/swag github.com/swaggo/swag/cmd/swag github.com/swaggo/swag/gen github.com/swaggo/swag/format)
 GOFILES:=$(shell find . -name "*.go" -type f)
 
-export GO111MODULE := on
-
 all: test build
 
 .PHONY: build
@@ -59,8 +57,7 @@ deps:
 
 .PHONY: devel-deps
 devel-deps:
-	$(GOGET) -v -u \
-		golang.org/x/lint/golint
+	$(GOINSTALL) golang.org/x/lint/golint
 
 .PHONY: lint
 lint: devel-deps
