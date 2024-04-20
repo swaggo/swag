@@ -25,7 +25,7 @@ jobs:
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin # https://github.com/actions/setup-go/issues/14
           echo "PATH: $PATH"
-          echo "GOPATH: $GOPATH"
+          echo "GOPATH: $(go env GOPATH)/bin "
           make fmt-check lint vet
       - name: build
         run: make build
