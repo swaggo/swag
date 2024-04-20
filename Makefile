@@ -17,8 +17,6 @@ BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) github.com/swaggo/swag github.com/swaggo/swag/cmd/swag github.com/swaggo/swag/gen github.com/swaggo/swag/format)
 GOFILES:=$(shell find . -name "*.go" -type f)
 
-export GO111MODULE := on
-
 all: test build
 
 .PHONY: build
@@ -57,17 +55,8 @@ clean:
 deps:
 	$(GOMODTIDY)
 
-.PHONY: devel-deps
-devel-deps:
-	GO111MODULE=off $(GOGET) -v -u \
-		golang.org/x/lint/golint
-
-.PHONY: lint
-lint: devel-deps
-	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
-
 .PHONY: vet
-vet: deps devel-deps
+vet: deps
 	$(GOVET) $(PACKAGES)
 
 .PHONY: fmt
