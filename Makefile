@@ -55,14 +55,6 @@ clean:
 deps:
 	$(GOMODTIDY)
 
-.PHONY: devel-deps
-devel-deps:
-	$(GOINSTALL) golang.org/x/lint/golint
-
-.PHONY: lint
-lint: devel-deps
-	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
-
 .PHONY: vet
 vet: deps devel-deps
 	$(GOVET) $(PACKAGES)

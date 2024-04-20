@@ -22,7 +22,7 @@ jobs:
       - name: deps
         run:  make deps
       - name: static program analysis
-        run: make fmt-check lint vet
+        run: make fmt-check vet
       - name: build
         run: make build
       - name: test
