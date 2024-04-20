@@ -27,8 +27,6 @@ jobs:
           echo "PATH: $PATH"
           echo "GOPATH: $GOPATH"
           make fmt-check lint vet
-        env:
-          GOPATH: ${{ runner.workspace }}
       - name: build
         run: make build
       - name: test
