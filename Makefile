@@ -56,7 +56,7 @@ deps:
 	$(GOMODTIDY)
 
 .PHONY: vet
-vet: deps devel-deps
+vet: deps
 	$(GOVET) $(PACKAGES)
 
 .PHONY: fmt
