@@ -59,7 +59,7 @@ deps:
 
 .PHONY: devel-deps
 devel-deps:
-	GO111MODULE=off $(GOGET) -v -u \
+	$(GOGET) -v -u \
 		golang.org/x/lint/golint
 
 .PHONY: lint
