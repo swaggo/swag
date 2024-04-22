@@ -3865,6 +3865,24 @@ func TestTryAddDescription(t *testing.T) {
 			},
 		},
 		{
+			name: "added description with multiline",
+			lines: []string{
+				"\t@securitydefinitions.apikey test",
+				"\t@in header",
+				"\t@name x-api-key",
+				"\t@description line1",
+				"\t@description line2",
+			},
+			want: &spec.SecurityScheme{
+				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Name:        "x-api-key",
+					Type:        "apiKey",
+					In:          "header",
+					Description: "line1\nline2",
+				},
+			},
+		},
+		{
 			name: "no description",
 			lines: []string{
 				" @securitydefinitions.oauth2.application swagger",
