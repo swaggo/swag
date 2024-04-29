@@ -45,7 +45,9 @@ func (t *TypeSpecDef) Name() string {
 func (t *TypeSpecDef) TypeName() string {
 	if ignoreNameOverride(t.TypeSpec.Name.Name) {
 		return t.TypeSpec.Name.Name[1:]
-	} else if overriddenName := nameOverride(t.TypeSpec.Comment); overriddenName != "" {
+	}
+
+	if overriddenName := nameOverride(t.TypeSpec.Comment); overriddenName != "" {
 		return overriddenName
 	}
 

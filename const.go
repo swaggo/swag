@@ -19,10 +19,13 @@ type ConstVariable struct {
 	Pkg     *PackageDefinitions
 }
 
+// VariableName gets the bane for this const variable, taking into account comment overrides.
 func (cv *ConstVariable) VariableName() string {
 	if ignoreNameOverride(cv.Name.Name) {
 		return cv.Name.Name[1:]
-	} else if overriddenName := nameOverride(cv.Comment); overriddenName != "" {
+	}
+
+	if overriddenName := nameOverride(cv.Comment); overriddenName != "" {
 		return overriddenName
 	}
 
