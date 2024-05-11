@@ -41,6 +41,7 @@ const (
 	collectionFormatFlag     = "collectionFormat"
 	packagePrefixFlag        = "packagePrefix"
 	stateFlag                = "state"
+	parseFuncBodyFlag        = "parseFuncBody"
 )
 
 var initFlags = []cli.Flag{
@@ -179,6 +180,11 @@ var initFlags = []cli.Flag{
 		Value: "",
 		Usage: "Set host state for swagger.json",
 	},
+	&cli.BoolFlag{
+		Name: parseFuncBodyFlag,
+		// Value: false,
+		Usage: "Parse API info within body of functions in go files, disabled by default (default: false)",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -249,6 +255,7 @@ func initAction(ctx *cli.Context) error {
 		CollectionFormat:    collectionFormat,
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
+		ParseFuncBody:       ctx.Bool(parseFuncBodyFlag),
 	})
 }
 
