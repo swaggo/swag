@@ -63,6 +63,7 @@ const (
 	secImplicitAttr          = "@securitydefinitions.oauth2.implicit"
 	secPasswordAttr          = "@securitydefinitions.oauth2.password"
 	secAccessCodeAttr        = "@securitydefinitions.oauth2.accesscode"
+	secBearerAttr            = "@securitydefinitions.bearer"
 	tosAttr                  = "@termsofservice"
 	extDocsDescAttr          = "@externaldocs.description"
 	extDocsURLAttr           = "@externaldocs.url"
