@@ -128,7 +128,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			}
 
 			tag.Spec.ExternalDocs.Spec.Description = value
-		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr:
+		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr, secBearerAttr:
 			key, scheme, err := parseSecAttributesV3(attribute, comments, &line)
 			if err != nil {
 				return err
@@ -331,9 +331,11 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		descriptionAttr  = "@description"
 		tokenURL         = "@tokenurl"
 		authorizationURL = "@authorizationurl"
+		bearerFormat     = "@bearerformat"
 	)
 
 	var search []string
+	var optionalSearсh []string
 
 	attribute := strings.ToLower(FieldsByAnySpace(lines[*index], 2)[0])
 	switch attribute {
@@ -351,6 +353,8 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		search = []string{authorizationURL, in}
 	case secAccessCodeAttr:
 		search = []string{tokenURL, authorizationURL, in}
+	case secBearerAttr:
+		optionalSearсh = []string{bearerFormat}
 	}
 
 	// For the first line we get the attributes in the context parameter, so we skip to the next one
@@ -376,6 +380,13 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 			if securityAttr == findTerm {
 				attrMap[securityAttr] = value
 
+				break
+			}
+		}
+
+		for _, optFindTerm := range optionalSearсh {
+			if securityAttr == optFindTerm {
+				attrMap[securityAttr] = value
 				break
 			}
 		}
@@ -408,7 +419,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		}
 	}
 
-	if len(attrMap) != len(search) {
+	if len(attrMap) < len(search) {
 		return "", nil, fmt.Errorf("%s is %v required", context, search)
 	}
 
@@ -460,6 +471,11 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		scheme.Flows.Spec.AuthorizationCode = spec.NewOAuthFlow()
 		scheme.Flows.Spec.AuthorizationCode.Spec.AuthorizationURL = attrMap[authorizationURL]
 		scheme.Flows.Spec.AuthorizationCode.Spec.TokenURL = attrMap[tokenURL]
+
+	case secBearerAttr:
+		scheme.Type = "http"
+		scheme.Scheme = "bearer"
+		scheme.BearerFormat = attrMap[bearerFormat]
 	}
 
 	scheme.Description = description

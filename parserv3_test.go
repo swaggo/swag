@@ -136,7 +136,7 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	assert.Equal(t, "OpenAPI", p.openAPI.ExternalDocs.Spec.Description)
 	assert.Equal(t, "https://swagger.io/resources/open-api", p.openAPI.ExternalDocs.Spec.URL)
 
-	assert.Equal(t, 6, len(p.openAPI.Components.Spec.SecuritySchemes))
+	assert.Equal(t, 7, len(p.openAPI.Components.Spec.SecuritySchemes))
 
 	security := p.openAPI.Components.Spec.SecuritySchemes
 	assert.Equal(t, "basic", security["basic"].Spec.Spec.Scheme)
@@ -164,6 +164,10 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	assert.Equal(t, "oauth2", security["OAuth2AccessCode"].Spec.Spec.Type)
 	assert.Equal(t, "header", security["OAuth2AccessCode"].Spec.Spec.In)
 	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2AccessCode"].Spec.Spec.Flows.Spec.AuthorizationCode.Spec.TokenURL)
+
+	assert.Equal(t, "http", security["BearerToken"].Spec.Spec.Type)
+	assert.Equal(t, "bearer", security["BearerToken"].Spec.Spec.Scheme)
+	assert.Equal(t, "JWT", security["BearerToken"].Spec.Spec.BearerFormat)
 }
 
 func TestParser_ParseGeneralApiInfoExtensionsV3(t *testing.T) {
