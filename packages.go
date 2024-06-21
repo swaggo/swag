@@ -93,7 +93,7 @@ func (pkgDefs *PackagesDefinitions) RangeFiles(handle func(info *AstFileInfo) er
 	for _, info := range pkgDefs.files {
 		// ignore package path prefix with 'vendor' or $GOROOT,
 		// because the router info of api will not be included these files.
-		if strings.HasPrefix(info.PackagePath, "vendor") || (runtime.GOROOT() != "" && strings.HasPrefix(info.Path, runtime.GOROOT())) {
+		if strings.HasPrefix(info.PackagePath, "vendor") || (runtime.GOROOT() != "" && strings.HasPrefix(info.Path, runtime.GOROOT()+string(filepath.Separator))) {
 			continue
 		}
 		sortedFiles = append(sortedFiles, info)
