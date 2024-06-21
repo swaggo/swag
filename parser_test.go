@@ -3363,14 +3363,14 @@ func TestParseFunctionScopedStructDefinition(t *testing.T) {
 	src := `
 package main
 
-// @Param request body main.Fun.request true "query params" 
+// @Param request body main.Fun.request true "query params"
 // @Success 200 {object} main.Fun.response
 // @Router /test [post]
 func Fun()  {
 	type request struct {
 		Name string
 	}
-	
+
 	type response struct {
 		Name string
 		Child string
@@ -3395,14 +3395,14 @@ func TestParseFunctionScopedStructRequestResponseJSON(t *testing.T) {
 	src := `
 package main
 
-// @Param request body main.Fun.request true "query params" 
+// @Param request body main.Fun.request true "query params"
 // @Success 200 {object} main.Fun.response
 // @Router /test [post]
 func Fun()  {
 	type request struct {
 		Name string
 	}
-	
+
 	type response struct {
 		Name string
 		Child string
@@ -4122,4 +4122,67 @@ func TestParser_skipPackageByPrefix(t *testing.T) {
 	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
 	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
 	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+}
+
+func TestParser_ParseRouterApiInFuncBody(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package test
+
+func Test(){
+    // @Router /api/{id} [get]
+    _ = func() {
+	}
+}
+`
+	p := New()
+	p.ParseFuncBody = true
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Get)
+}
+
+func TestParser_ParseRouterApiInfoInAndOutFuncBody(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package test
+
+// @Router /api/outside [get]
+func otherRoute(){
+}
+
+func Test(){
+    // @Router /api/inside [get]
+    _ = func() {
+	}
+}
+`
+	p := New()
+	p.ParseFuncBody = true
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	ps := p.swagger.Paths.Paths
+
+	val1, ok := ps["/api/outside"]
+	assert.True(t, ok)
+	assert.NotNil(t, val1.Get)
+
+	val2, ok := ps["/api/inside"]
+	assert.True(t, ok)
+	assert.NotNil(t, val2.Get)
 }

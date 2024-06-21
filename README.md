@@ -116,6 +116,7 @@ OPTIONS:
    --templateDelims value, --td value     Provide custom delimiters for Go template generation. The format is leftDelim,rightDelim. For example: "[[,]]"
    --collectionFormat value, --cf value   Set default collection format (default: "csv")
    --state value                          Initial state for the state machine (default: ""), @HostState in root file, @State in other files
+   --parseFuncBody                        Parse API info within body of functions in go files, disabled by default (default: false)
    --help, -h                             show help (default: false)
 ```
 
@@ -931,7 +932,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	_ = web.GenericNestedResponse[types.Post]{}
 }
 ```
-See [this file](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go) for more details 
+See [this file](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go) for more details
 and other examples.
 
 ### Change the default Go Template action delimiters
