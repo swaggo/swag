@@ -576,7 +576,8 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
 		"@tag.name test",
 		"@tag.description A test Tag",
 		"@tag.docs.url https://example.com",
-		"@tag.docs.description Best example documentation"})
+		"@tag.docs.description Best example documentation",
+		"@tag.x-displayName Test group"})
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(parser.GetSwagger().Tags, "", "    ")
@@ -587,7 +588,8 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
         "externalDocs": {
             "description": "Best example documentation",
             "url": "https://example.com"
-        }
+        },
+        "x-displayName": "Test group"
     }
 ]`
 	assert.Equal(t, expected, string(b))
