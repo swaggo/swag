@@ -192,6 +192,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 	for _, astDeclaration := range astFile.Decls {
 		funcDeclaration, ok := astDeclaration.(*ast.FuncDecl)
 		if ok && funcDeclaration.Body != nil {
+			functionScopedTypes := make(map[string]*TypeSpecDef)
 			for _, stmt := range funcDeclaration.Body.List {
 				if declStmt, ok := (stmt).(*ast.DeclStmt); ok {
 					if genDecl, ok := (declStmt.Decl).(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
@@ -212,11 +213,27 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									}
 								}
 
+								fullName := typeSpecDef.TypeName()
+								if structType, ok := typeSpecDef.TypeSpec.Type.(*ast.StructType); ok {
+									for _, field := range structType.Fields.List {
+										if idt, ok := field.Type.(*ast.Ident); ok && !IsGolangPrimitiveType(idt.Name) {
+											if functype, ok := functionScopedTypes[idt.Name]; ok {
+												idt.Name = functype.TypeName()
+											}
+										}
+										if art, ok := field.Type.(*ast.ArrayType); ok {
+											if idt, ok := art.Elt.(*ast.Ident); ok && !IsGolangPrimitiveType(idt.Name) {
+												if functype, ok := functionScopedTypes[idt.Name]; ok {
+													idt.Name = functype.TypeName()
+												}
+											}
+										}
+									}
+								}
+
 								if pkgDefs.uniqueDefinitions == nil {
 									pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
 								}
-
-								fullName := typeSpecDef.TypeName()
 
 								anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 								if ok {
@@ -234,6 +251,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									}
 								} else {
 									pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
+									functionScopedTypes[typeSpec.Name.Name] = typeSpecDef
 								}
 
 								if pkgDefs.packages[typeSpecDef.PkgPath] == nil {

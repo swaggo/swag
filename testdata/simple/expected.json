@@ -113,6 +113,18 @@
         }
       }
     },
+    "/GetPet6FunctionScopedComplexResponse": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/api.GetPet6FunctionScopedComplexResponse.response"
+            }
+          }
+        }
+      }
+    },
     "/GetPet6MapString": {
       "get": {
         "responses": {
@@ -401,6 +413,25 @@
     }
   },
   "definitions": {
+    "api.GetPet6FunctionScopedComplexResponse.pet": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "api.GetPet6FunctionScopedComplexResponse.response": {
+      "type": "object",
+      "properties": {
+        "Pets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/api.GetPet6FunctionScopedComplexResponse.pet"
+          }
+        }
+      }
+    },
     "api.GetPet6FunctionScopedResponse.response": {
       "type": "object",
       "properties": {
