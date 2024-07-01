@@ -101,18 +101,6 @@
         }
       }
     },
-    "/GetPet6FunctionScopedResponse": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/api.GetPet6FunctionScopedResponse.response"
-            }
-          }
-        }
-      }
-    },
     "/GetPet6FunctionScopedComplexResponse": {
       "get": {
         "responses": {
@@ -120,6 +108,18 @@
             "description": "ok",
             "schema": {
               "$ref": "#/definitions/api.GetPet6FunctionScopedComplexResponse.response"
+            }
+          }
+        }
+      }
+    },
+    "/GetPet6FunctionScopedResponse": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "ok",
+            "schema": {
+              "$ref": "#/definitions/api.GetPet6FunctionScopedResponse.response"
             }
           }
         }
@@ -416,7 +416,7 @@
     "api.GetPet6FunctionScopedComplexResponse.pet": {
       "type": "object",
       "properties": {
-        "name": {
+        "Name": {
           "type": "string"
         }
       }

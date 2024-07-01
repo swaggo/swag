@@ -142,11 +142,11 @@ func GetPet6FunctionScopedResponse() {
 // @Success 200 {object}  api.GetPet6FunctionScopedComplexResponse.response "ok"
 // @Router /GetPet6FunctionScopedComplexResponse [get]
 func GetPet6FunctionScopedComplexResponse() {
-	type child struct {
+	type pet struct {
 		Name string
 	}
 
 	type response struct {
-		Child child
+		Pets []pet
 	}
 }
