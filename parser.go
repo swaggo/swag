@@ -904,7 +904,10 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 
 		fileName := entry.Name()
 
-		expectedFileName := tagName + ".md"
+		expectedFileName := tagName
+		if !strings.HasSuffix(tagName, ".md") {
+			expectedFileName = tagName + ".md"
+		}
 
 		if fileName == expectedFileName {
 			fullPath := filepath.Join(dirPath, fileName)
