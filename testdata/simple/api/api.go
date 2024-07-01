@@ -146,7 +146,12 @@ func GetPet6FunctionScopedComplexResponse() {
 		Name string
 	}
 
+	type pointerPet struct {
+		Name string
+	}
+
 	type response struct {
-		Pets []pet
+		Pets       []pet
+		PointerPet *pointerPet
 	}
 }

@@ -3407,8 +3407,18 @@ func Fun()  {
 		Name string
 	}
 
+	type pointerChild struct {
+		Name string
+	}
+
+	type arrayChild struct {
+		Name string
+	}
+
 	type child struct {
-		GrandChild grandChild
+		GrandChild 		grandChild
+		PointerChild 	*pointerChild
+		ArrayChildren   []arrayChild
 	}
 
 	type response struct {
@@ -3429,6 +3439,10 @@ func Fun()  {
 	_, ok = p.swagger.Definitions["main.Fun.child"]
 	assert.True(t, ok)
 	_, ok = p.swagger.Definitions["main.Fun.grandChild"]
+	assert.True(t, ok)
+	_, ok = p.swagger.Definitions["main.Fun.pointerChild"]
+	assert.True(t, ok)
+	_, ok = p.swagger.Definitions["main.Fun.arrayChild"]
 	assert.True(t, ok)
 }
 

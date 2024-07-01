@@ -421,6 +421,14 @@
         }
       }
     },
+    "api.GetPet6FunctionScopedComplexResponse.pointerPet": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "type": "string"
+        }
+      }
+    },
     "api.GetPet6FunctionScopedComplexResponse.response": {
       "type": "object",
       "properties": {
@@ -429,6 +437,9 @@
           "items": {
             "$ref": "#/definitions/api.GetPet6FunctionScopedComplexResponse.pet"
           }
+        },
+        "PointerPet": {
+          "$ref": "#/definitions/api.GetPet6FunctionScopedComplexResponse.pointerPet"
         }
       }
     },
