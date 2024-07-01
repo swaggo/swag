@@ -888,6 +888,13 @@ func isGeneralAPIComment(comments []string) bool {
 }
 
 func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
+	if tagName == "" {
+		// this happens when parsing the @description.markdown attribute
+		// it will be called properly another time with tagName="api"
+		// so we can safely return an empty byte slice here
+		return make([]byte, 0), nil
+	}
+
 	dirEntries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, err
@@ -900,11 +907,12 @@ func getMarkdownForTag(tagName string, dirPath string) ([]byte, error) {
 
 		fileName := entry.Name()
 
-		if !strings.Contains(fileName, ".md") {
-			continue
+		expectedFileName := tagName
+		if !strings.HasSuffix(tagName, ".md") {
+			expectedFileName = tagName + ".md"
 		}
 
-		if strings.Contains(fileName, tagName) {
+		if fileName == expectedFileName {
 			fullPath := filepath.Join(dirPath, fileName)
 
 			commentInfo, err := os.ReadFile(fullPath)
