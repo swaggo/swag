@@ -216,16 +216,19 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 								fullName := typeSpecDef.TypeName()
 								if structType, ok := typeSpecDef.TypeSpec.Type.(*ast.StructType); ok {
 									for _, field := range structType.Fields.List {
-										if idt, ok := field.Type.(*ast.Ident); ok && !IsGolangPrimitiveType(idt.Name) {
+										var idt *ast.Ident
+										var ok bool
+										switch field.Type.(type) {
+										case *ast.Ident:
+											idt, ok = field.Type.(*ast.Ident)
+										case *ast.StarExpr:
+											idt, ok = field.Type.(*ast.StarExpr).X.(*ast.Ident)
+										case *ast.ArrayType:
+											idt, ok = field.Type.(*ast.ArrayType).Elt.(*ast.Ident)
+										}
+										if ok && !IsGolangPrimitiveType(idt.Name) {
 											if functype, ok := functionScopedTypes[idt.Name]; ok {
 												idt.Name = functype.TypeName()
-											}
-										}
-										if art, ok := field.Type.(*ast.ArrayType); ok {
-											if idt, ok := art.Elt.(*ast.Ident); ok && !IsGolangPrimitiveType(idt.Name) {
-												if functype, ok := functionScopedTypes[idt.Name]; ok {
-													idt.Name = functype.TypeName()
-												}
 											}
 										}
 									}
