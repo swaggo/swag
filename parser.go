@@ -182,6 +182,9 @@ type Parser struct {
 
 	// ParseFuncBody whether swag should parse api info inside of funcs
 	ParseFuncBody bool
+
+	// NullablePointers sets the x-nullable extension to pointers
+	NullablePointers bool
 }
 
 // FieldParserFactory create FieldParser.
@@ -356,6 +359,13 @@ func SetOverrides(overrides map[string]string) func(parser *Parser) {
 func SetCollectionFormat(collectionFormat string) func(*Parser) {
 	return func(p *Parser) {
 		p.collectionFormatInQuery = collectionFormat
+	}
+}
+
+// SetNullablePointers sets nullable pointers
+func SetNullablePointers(nullablePointers bool) func(*Parser) {
+	return func(p *Parser) {
+		p.NullablePointers = nullablePointers
 	}
 }
 
@@ -1569,6 +1579,23 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	if schema.Extensions == nil {
 		schema.Extensions = make(spec.Extensions)
 	}
+
+	if parser.NullablePointers {
+		if _, ok := field.Type.(*ast.StarExpr); ok {
+			schema.Extensions["x-nullable"] = true
+			if schema.SchemaProps.Ref.HasFragmentOnly {
+				schema = schema.AddToAllOf(spec.Schema{
+					SchemaProps: spec.SchemaProps{
+						Ref: spec.Ref{
+							Ref: schema.SchemaProps.Ref.Ref,
+						},
+					},
+				})
+				schema.Ref = spec.Ref{}
+			}
+		}
+	}
+
 	if formName := ps.FormName(); len(formName) > 0 {
 		schema.Extensions["formData"] = formName
 	}
