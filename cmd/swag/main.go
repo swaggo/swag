@@ -43,6 +43,7 @@ const (
 	packagePrefixFlag        = "packagePrefix"
 	stateFlag                = "state"
 	parseFuncBodyFlag        = "parseFuncBody"
+	nullablePointers         = "nullablePointers"
 )
 
 var initFlags = []cli.Flag{
@@ -186,6 +187,10 @@ var initFlags = []cli.Flag{
 		// Value: false,
 		Usage: "Parse API info within body of functions in go files, disabled by default (default: false)",
 	},
+	&cli.BoolFlag{
+		Name:  nullablePointers,
+		Usage: "Set the x-nullable extension to pointers",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -268,6 +273,7 @@ func initAction(ctx *cli.Context) error {
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
 		ParseFuncBody:       ctx.Bool(parseFuncBodyFlag),
+		NullablePointers:    ctx.Bool(nullablePointers),
 	})
 }
 

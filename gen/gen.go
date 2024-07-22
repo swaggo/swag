@@ -149,6 +149,9 @@ type Config struct {
 
 	// ParseFuncBody whether swag should parse api info inside of funcs
 	ParseFuncBody bool
+
+	// NullablePointers set the x-nullable extension to pointers
+	NullablePointers bool
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -217,6 +220,7 @@ func (g *Gen) Build(config *Config) error {
 	p.RequiredByDefault = config.RequiredByDefault
 	p.HostState = config.State
 	p.ParseFuncBody = config.ParseFuncBody
+	p.NullablePointers = config.NullablePointers
 
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
