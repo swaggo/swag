@@ -59,6 +59,7 @@ const (
 	descriptionMarkdownAttr  = "@description.markdown"
 	secBasicAttr             = "@securitydefinitions.basic"
 	secAPIKeyAttr            = "@securitydefinitions.apikey"
+	secBearerAuthAttr        = "@securitydefinitions.bearerauth"
 	secApplicationAttr       = "@securitydefinitions.oauth2.application"
 	secImplicitAttr          = "@securitydefinitions.oauth2.implicit"
 	secPasswordAttr          = "@securitydefinitions.oauth2.password"

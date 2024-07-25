@@ -3,6 +3,7 @@ package swag
 import (
 	"errors"
 	"fmt"
+
 	"github.com/go-openapi/spec"
 )
 

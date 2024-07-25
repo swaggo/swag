@@ -128,7 +128,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			}
 
 			tag.Spec.ExternalDocs.Spec.Description = value
-		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr:
+		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr, secBearerAuthAttr:
 			key, scheme, err := parseSecAttributesV3(attribute, comments, &line)
 			if err != nil {
 				return err
@@ -351,6 +351,13 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		search = []string{authorizationURL, in}
 	case secAccessCodeAttr:
 		search = []string{tokenURL, authorizationURL, in}
+	case secBearerAuthAttr:
+		scheme := spec.SecurityScheme{
+			Type:         "http",
+			Scheme:       "bearer",
+			BearerFormat: "JWT",
+		}
+		return "bearerauth", &scheme, nil
 	}
 
 	// For the first line we get the attributes in the context parameter, so we skip to the next one
