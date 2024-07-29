@@ -90,6 +90,7 @@ OPTIONS:
    --output value, -o value               文件(swagger.json, swagger.yaml and doc.go)输出目录 (默认: "./docs")
    --parseVendor                          是否解析vendor目录里的go源文件，默认不
    --parseDependency                      是否解析依赖目录中的go源文件，默认不
+   --parseDependencyLevel, --pdl          对'--parseDependency'参数进行增强, 是否解析依赖目录中的go源文件, 0 不解析, 1 只解析对象模型, 2 只解析API, 3 对象模型和API都解析 (default: 0)
    --markdownFiles value, --md value      指定API的描述信息所使用的markdown文件所在的目录
    --generatedTime                        是否输出时间到输出文件docs.go的顶部，默认是
    --codeExampleFiles value, --cef value  解析包含用于 x-codeSamples 扩展的代码示例文件的文件夹，默认禁用
