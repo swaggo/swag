@@ -175,6 +175,18 @@ func TestParseRouterCommentWithDollarSign(t *testing.T) {
 	assert.Equal(t, "POST", operation.RouterProperties[0].HTTPMethod)
 }
 
+func TestParseRouterCommentWithParens(t *testing.T) {
+	t.Parallel()
+
+	comment := `/@Router /customer({id}) [get]`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Len(t, operation.RouterProperties, 1)
+	assert.Equal(t, "/Resource({id})", operation.RouterProperties[0].Path)
+	assert.Equal(t, "GET", operation.RouterProperties[0].HTTPMethod)
+}
+
 func TestParseRouterCommentNoDollarSignAtPathStartErr(t *testing.T) {
 	t.Parallel()
 
