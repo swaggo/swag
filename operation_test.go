@@ -183,7 +183,7 @@ func TestParseRouterCommentWithParens(t *testing.T) {
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 	assert.Len(t, operation.RouterProperties, 1)
-	assert.Equal(t, "/Resource({id})", operation.RouterProperties[0].Path)
+	assert.Equal(t, "/customer({id})", operation.RouterProperties[0].Path)
 	assert.Equal(t, "GET", operation.RouterProperties[0].HTTPMethod)
 }
 
