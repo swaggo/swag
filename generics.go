@@ -61,6 +61,7 @@ func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string,
 			Enums:      typeSpecDef.Enums,
 			PkgPath:    typeSpecDef.PkgPath,
 			ParentSpec: typeSpecDef.ParentSpec,
+			SchemaName: "array_" + typeSpecDef.SchemaName,
 			NotUnique:  false,
 		}
 	}
@@ -96,9 +97,9 @@ func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string,
 			Enums:      typeSpecDef.Enums,
 			PkgPath:    typeSpecDef.PkgPath,
 			ParentSpec: typeSpecDef.ParentSpec,
+			SchemaName: "map_" + parts[0] + "_" + typeSpecDef.SchemaName,
 			NotUnique:  false,
 		}
-
 	}
 	if IsGolangPrimitiveType(genericParam) {
 		return &TypeSpecDef{
@@ -106,6 +107,7 @@ func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string,
 				Name: ast.NewIdent(genericParam),
 				Type: ast.NewIdent(genericParam),
 			},
+			SchemaName: genericParam,
 		}
 	}
 	return pkgDefs.FindTypeSpec(genericParam, file)
@@ -155,14 +157,27 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 	}
 
 	name = fmt.Sprintf("%s%s-", string(IgnoreNameOverridePrefix), original.TypeName())
+	schemaName := fmt.Sprintf("%s-", original.SchemaName)
+
 	var nameParts []string
+	var schemaNameParts []string
+
 	for _, def := range formals {
 		if specDef, ok := genericParamTypeDefs[def.Name]; ok {
-			nameParts = append(nameParts, specDef.TypeName())
+			nameParts = append(nameParts, specDef.Name)
+
+			schemaNamePart := specDef.Name
+
+			if specDef.TypeSpec != nil {
+				schemaNamePart = specDef.TypeSpec.SchemaName
+			}
+
+			schemaNameParts = append(schemaNameParts, schemaNamePart)
 		}
 	}
 
 	name += normalizeGenericTypeName(strings.Join(nameParts, "-"))
+	schemaName += normalizeGenericTypeName(strings.Join(schemaNameParts, "-"))
 
 	if typeSpec, ok := pkgDefs.uniqueDefinitions[name]; ok {
 		return typeSpec
@@ -180,6 +195,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 			Doc:    original.TypeSpec.Doc,
 			Assign: original.TypeSpec.Assign,
 		},
+		SchemaName: schemaName,
 	}
 	pkgDefs.uniqueDefinitions[name] = parametrizedTypeSpec
 

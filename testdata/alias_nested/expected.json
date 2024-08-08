@@ -1,0 +1,38 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/api": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Gen"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Gen": {
+            "type": "object",
+            "properties": {
+                "emb": {
+                    "$ref": "#/definitions/github_com_swaggo_swag_testdata_alias_nested_pkg_good.Emb"
+                }
+            }
+        },
+        "github_com_swaggo_swag_testdata_alias_nested_pkg_good.Emb": {
+            "type": "object",
+            "properties": {
+                "good": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
+}

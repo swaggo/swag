@@ -4367,3 +4367,22 @@ func Test(){
 	assert.True(t, ok)
 	assert.NotNil(t, val2.Get)
 }
+
+func TestParser_EmbeddedStructAsOtherAliasGoListNested(t *testing.T) {
+	t.Parallel()
+
+	p := New(SetParseDependency(1), ParseUsingGoList(true))
+
+	p.parseGoList = true
+
+	searchDir := "testdata/alias_nested"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	err = p.ParseAPI(searchDir, "cmd/main/main.go", 0)
+	assert.NoError(t, err)
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+}
