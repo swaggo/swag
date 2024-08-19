@@ -190,7 +190,7 @@ type FieldParserFactory func(ps *Parser, field *ast.Field) FieldParser
 // FieldParser parse struct field.
 type FieldParser interface {
 	ShouldSkip() bool
-	FieldName() (string, error)
+	FieldNames() ([]string, error)
 	FormName() string
 	HeaderName() string
 	PathName() string
@@ -1497,20 +1497,20 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		return nil, nil, nil
 	}
 
-	fieldName, err := ps.FieldName()
+	fieldNames, err := ps.FieldNames()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if fieldName == "" {
+	if len(fieldNames) == 0 {
 		typeName, err := getFieldType(file, field.Type, nil)
 		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
+			return nil, nil, err
 		}
 
 		schema, err := parser.getTypeSchema(typeName, file, false)
 		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
+			return nil, nil, err
 		}
 
 		if len(schema.Type) > 0 && schema.Type[0] == OBJECT {
@@ -1532,7 +1532,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 
 	schema, err := ps.CustomSchema()
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
+		return nil, nil, fmt.Errorf("%v: %w", fieldNames, err)
 	}
 
 	if schema == nil {
@@ -1546,24 +1546,24 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		}
 
 		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
+			return nil, nil, fmt.Errorf("%v: %w", fieldNames, err)
 		}
 	}
 
 	err = ps.ComplementSchema(schema)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
+		return nil, nil, fmt.Errorf("%v: %w", fieldNames, err)
 	}
 
 	var tagRequired []string
 
 	required, err := ps.IsRequired()
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", fieldName, err)
+		return nil, nil, fmt.Errorf("%v: %w", fieldNames, err)
 	}
 
 	if required {
-		tagRequired = append(tagRequired, fieldName)
+		tagRequired = append(tagRequired, fieldNames...)
 	}
 
 	if schema.Extensions == nil {
@@ -1578,8 +1578,11 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 	if pathName := ps.PathName(); len(pathName) > 0 {
 		schema.Extensions["path"] = pathName
 	}
-
-	return map[string]spec.Schema{fieldName: *schema}, tagRequired, nil
+	fields := make(map[string]spec.Schema)
+	for _, name := range fieldNames {
+		fields[name] = *schema
+	}
+	return fields, tagRequired, nil
 }
 
 func getFieldType(file *ast.File, field ast.Expr, genericParamTypeDefs map[string]*genericTypeSpec) (string, error) {
