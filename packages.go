@@ -252,6 +252,8 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 										pkgDefs.uniqueDefinitions[fullName] = nil
 										anotherTypeDef.NotUnique = true
 										pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
+										anotherTypeDef.SetSchemaName()
+
 										typeSpecDef.NotUnique = true
 										fullName = typeSpecDef.TypeName()
 										pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
@@ -260,6 +262,8 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 									functionScopedTypes[typeSpec.Name.Name] = typeSpecDef
 								}
+
+								typeSpecDef.SetSchemaName()
 
 								if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
 									pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name, typeSpecDef.PkgPath).AddTypeSpec(fullName, typeSpecDef)
