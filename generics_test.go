@@ -134,6 +134,22 @@ func TestParseGenericsPackageAlias(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseGenericsFunctionScoped(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/generics_function_scoped"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	p := New()
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParametrizeStruct(t *testing.T) {
 	pd := PackagesDefinitions{
 		packages:          make(map[string]*PackageDefinitions),
