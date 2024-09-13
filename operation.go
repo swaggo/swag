@@ -281,7 +281,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 	requiredText := strings.ToLower(matches[4])
 	required := requiredText == "true" || requiredText == requiredLabel
-	description := matches[5]
+	description := strings.Join(strings.Split(matches[5], "\\n"), "\n")
 
 	param := createParameter(paramType, description, name, objectType, refType, required, enums, operation.parser.collectionFormatInQuery)
 

@@ -1322,6 +1322,27 @@ func TestParseParamCommentByID(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentWithMultilineDescriptions(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "First line\nSecond line\nThird line"`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "description": "First line\nSecond line\nThird line",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByQueryType(t *testing.T) {
 	t.Parallel()
 
