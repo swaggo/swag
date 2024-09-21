@@ -382,7 +382,7 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 				continue
 			}
 
-			//delete it from parsed schemas, and will parse it again
+			// delete it from parsed schemas, and will parse it again
 			if _, ok = parsedSchemas[typeDef]; ok {
 				delete(parsedSchemas, typeDef)
 			}
@@ -498,7 +498,7 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 				}
 				break
 			} else if imp.Name.Name == "_" && len(pkg) > 0 {
-				//for unused types
+				// for unused types
 				pd, ok := pkgDefs.packages[path]
 				if ok {
 					if pd.Name == pkg {
@@ -598,8 +598,12 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 	}
 
-	//in case that comment //@name renamed the type with a name without a dot
-	for _, v := range pkgDefs.uniqueDefinitions {
+	// in case that comment //@name renamed the type with a name without a dot
+	for k, v := range pkgDefs.uniqueDefinitions {
+		if v == nil {
+			pkgDefs.debug.Printf("%s TypeSpecDef is nil", k)
+			continue
+		}
 		if v.SchemaName == typeName {
 			return v
 		}
