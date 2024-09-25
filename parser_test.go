@@ -2568,6 +2568,67 @@ func Test(){
 	assert.Equal(t, expected, string(out))
 }
 
+func TestParser_ParseStructNullablePointerMembers(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package api
+
+type Child struct {
+	Name string
+}
+
+type Parent struct {
+	Test1 *string  //test1
+	Test2 *Child   //test2
+}
+
+// @Success 200 {object} Parent
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+
+	expected := `{
+        "api.Child": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.Parent": {
+            "type": "object",
+            "properties": {
+                "test1": {
+                    "description": "test1",
+                    "type": "string",
+                    "x-nullable": true
+                },
+                "test2": {
+                    "description": "test2",
+                    "allOf": [
+                        {"$ref": "#/definitions/api.Child"}
+                    ],
+                    "x-nullable": true
+                }
+            }
+        }
+    }`
+	p := New(SetNullablePointers(true))
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
+	assert.NoError(t, err)
+	assert.JSONEq(t, expected, string(out))
+}
+
 func TestParser_ParseStructMapMember(t *testing.T) {
 	t.Parallel()
 
