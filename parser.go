@@ -1294,7 +1294,10 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	}
 
 	if definition.Description == "" {
-		fillDefinitionDescription(definition, typeSpecDef.File, typeSpecDef)
+		err = parser.fillDefinitionDescription(definition, typeSpecDef.File, typeSpecDef)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if len(typeSpecDef.Enums) > 0 {
@@ -1344,7 +1347,7 @@ func fullTypeName(parts ...string) string {
 
 // fillDefinitionDescription additionally fills fields in definition (spec.Schema)
 // TODO: If .go file contains many types, it may work for a long time
-func fillDefinitionDescription(definition *spec.Schema, file *ast.File, typeSpecDef *TypeSpecDef) {
+func (parser *Parser) fillDefinitionDescription(definition *spec.Schema, file *ast.File, typeSpecDef *TypeSpecDef) (err error) {
 	if file == nil {
 		return
 	}
@@ -1359,16 +1362,23 @@ func fillDefinitionDescription(definition *spec.Schema, file *ast.File, typeSpec
 			if !ok || typeSpec != typeSpecDef.TypeSpec {
 				continue
 			}
-
-			definition.Description =
-				extractDeclarationDescription(typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
+			var typeName string
+			if typeSpec.Name != nil {
+				typeName = typeSpec.Name.Name
+			}
+			definition.Description, err =
+				parser.extractDeclarationDescription(typeName, typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
+			if err != nil {
+				return
+			}
 		}
 	}
+	return nil
 }
 
 // extractDeclarationDescription gets first description
 // from attribute descriptionAttr in commentGroups (ast.CommentGroup)
-func extractDeclarationDescription(commentGroups ...*ast.CommentGroup) string {
+func (parser *Parser) extractDeclarationDescription(typeName string, commentGroups ...*ast.CommentGroup) (string, error) {
 	var description string
 
 	for _, commentGroup := range commentGroups {
@@ -1383,9 +1393,23 @@ func extractDeclarationDescription(commentGroups ...*ast.CommentGroup) string {
 			if len(commentText) == 0 {
 				continue
 			}
-			attribute := FieldsByAnySpace(commentText, 2)[0]
+			fields := FieldsByAnySpace(commentText, 2)
+			attribute := fields[0]
 
-			if strings.ToLower(attribute) != descriptionAttr {
+			if attr := strings.ToLower(attribute); attr == descriptionMarkdownAttr {
+				if len(fields) > 1 {
+					typeName = fields[1]
+				}
+				if typeName == "" {
+					continue
+				}
+				desc, err := getMarkdownForTag(typeName, parser.markdownFileDir)
+				if err != nil {
+					return "", err
+				}
+				// if found markdown description, we will only use the markdown file content
+				return string(desc), nil
+			} else if attr != descriptionAttr {
 				if !isHandlingDescription {
 					continue
 				}
@@ -1398,7 +1422,7 @@ func extractDeclarationDescription(commentGroups ...*ast.CommentGroup) string {
 		}
 	}
 
-	return strings.TrimLeft(description, " ")
+	return strings.TrimLeft(description, " "), nil
 }
 
 // parseTypeExpr parses given type expression that corresponds to the type under
