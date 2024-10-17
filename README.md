@@ -69,7 +69,7 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 
 2. Download swag by using:
 ```sh
-go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/swaggo/swag/v2/cmd/swag@latest
 ```
 To build from source you need [Go](https://golang.org/dl/) (1.18 or newer).
 
@@ -95,6 +95,7 @@ swag init
 
 ```sh
 swag init -h
+Swag version:  v2.0.0
 NAME:
    swag init - Create docs.go
 
@@ -120,10 +121,13 @@ OPTIONS:
    --instanceName value                   This parameter can be used to name different swagger document instances. It is optional.
    --overridesFile value                  File to read global type overrides from. (default: ".swaggo")
    --parseGoList                          Parse dependency via 'go list' (default: true)
+   --parseExtension value                 Parse only those operations that match given extension
    --tags value, -t value                 A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded
+   --v3.1                                 Generate OpenAPI V3.1 spec (default: false)
    --templateDelims value, --td value     Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: "[[,]]"
+   --packageName --output                 A package name of docs.go, using output directory name by default (check --output option)
    --collectionFormat value, --cf value   Set default collection format (default: "csv")
-   --help, -h                             show help (default: false)
+   --help, -h                             show help
 ```
 
 ```bash
