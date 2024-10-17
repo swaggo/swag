@@ -54,6 +54,8 @@ package main
 // @in header
 // @name name
 
+// @securitydefinitions.bearerauth BearerAuth
+
 // @externalDocs.description OpenAPI
 // @externalDocs.url https://swagger.io/resources/open-api
 
