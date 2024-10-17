@@ -956,6 +956,17 @@ swag init -g http/api.go -td "[[,]]"
 ```
 The new delimiter is a string with the format "`<left delimiter>`,`<right delimiter>`".
 
+### Parse Internal and Dependency Packages
+
+If the struct is defined in a dependency package, use `--parseDependency`.
+
+If the struct is defined in your main project, use `--parseInternal`.
+
+if you want to include both internal and from dependencies use both flags 
+```
+swag init --parseDependency --parseInternal
+```
+
 ## About the Project
 This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks). Gopher image source is [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). It has licenses [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).
 ## Contributors
