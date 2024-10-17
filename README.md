@@ -31,7 +31,8 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
 	- [Function scoped struct declaration](#function-scoped-struct-declaration)
 	- [Model composition in response](#model-composition-in-response)
-	- [Add a headers in response](#add-a-headers-in-response)
+        - [Add request headers](#add-request-headers)
+	- [Add response headers](#add-response-headers)
 	- [Use multiple path params](#use-multiple-path-params)
 	- [Example value of struct](#example-value-of-struct)
 	- [SchemaExample of body](#schemaexample-of-body)
@@ -647,7 +648,14 @@ type DeepObject struct { //in `proto` package
 }
 @success 200 {object} jsonresult.JSONResult{data1=proto.Order{data=proto.DeepObject},data2=[]proto.Order{data=[]proto.DeepObject}} "desc"
 ```
-### Add a headers in response
+### Add response request
+
+```go
+// @Param        X-MyHeader	  header    string    true   	"MyHeader must be set for valid response"
+// @Param        X-API-VERSION    header    string    true   	"API version eg.: 1.0"
+```
+
+### Add response headers
 
 ```go
 // @Success      200              {string}  string    "ok"
