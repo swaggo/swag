@@ -725,8 +725,9 @@ func TestValidTags(t *testing.T) {
 		assert.Equal(t, 2, len(fieldnames))
 		assert.Equal(t, "x", fieldnames[0])
 		assert.Equal(t, "y", fieldnames[1])
+	})
 
-   t.Run("Pattern tag", func(t *testing.T) {
+	t.Run("Pattern tag", func(t *testing.T) {
 		t.Parallel()
 
 		schema := spec.Schema{}

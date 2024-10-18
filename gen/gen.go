@@ -16,13 +16,14 @@ import (
 	"text/template"
 	"time"
 
-
 	jsoniter "github.com/json-iterator/go"
 
 	v2 "github.com/go-openapi/spec"
 	v3 "github.com/sv-tools/openapi/spec"
 
 	"github.com/swaggo/swag/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"sigs.k8s.io/yaml"
 )
 
@@ -538,7 +539,6 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *v2.Swagg
 	return err
 }
 
-
 func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.OpenAPI, config *Config) error {
 	generator, err := template.New("oas3.tmpl").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
@@ -610,7 +610,6 @@ func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.Ope
 	if err != nil {
 		return err
 	}
-
 
 	code := g.formatSource(buffer.Bytes())
 

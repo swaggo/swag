@@ -35,42 +35,44 @@ const (
 	// SnakeCase indicates using SnakeCase strategy for struct field.
 	SnakeCase = "snakecase"
 
-	idAttr                  = "@id"
-	acceptAttr              = "@accept"
-	produceAttr             = "@produce"
-	paramAttr               = "@param"
-	successAttr             = "@success"
-	failureAttr             = "@failure"
-	responseAttr            = "@response"
-	headerAttr              = "@header"
-	tagsAttr                = "@tags"
-	routerAttr              = "@router"
-	deprecatedRouterAttr    = "@deprecatedrouter"
-  
-	summaryAttr             = "@summary"
-	deprecatedAttr          = "@deprecated"
-	securityAttr            = "@security"
-	titleAttr               = "@title"
-	conNameAttr             = "@contact.name"
-	conURLAttr              = "@contact.url"
-	conEmailAttr            = "@contact.email"
-	licNameAttr             = "@license.name"
-	licURLAttr              = "@license.url"
-	versionAttr             = "@version"
-	descriptionAttr         = "@description"
-	descriptionMarkdownAttr = "@description.markdown"
-	secBasicAttr            = "@securitydefinitions.basic"
-	secAPIKeyAttr           = "@securitydefinitions.apikey"
-	secApplicationAttr      = "@securitydefinitions.oauth2.application"
-	secImplicitAttr         = "@securitydefinitions.oauth2.implicit"
-	secPasswordAttr         = "@securitydefinitions.oauth2.password"
-	secAccessCodeAttr       = "@securitydefinitions.oauth2.accesscode"
-	tosAttr                 = "@termsofservice"
-	extDocsDescAttr         = "@externaldocs.description"
-	extDocsURLAttr          = "@externaldocs.url"
-	xCodeSamplesAttr        = "@x-codesamples"
-	scopeAttrPrefix         = "@scope."
-	stateAttr               = "@state"
+	idAttr               = "@id"
+	acceptAttr           = "@accept"
+	produceAttr          = "@produce"
+	paramAttr            = "@param"
+	successAttr          = "@success"
+	failureAttr          = "@failure"
+	responseAttr         = "@response"
+	headerAttr           = "@header"
+	tagsAttr             = "@tags"
+	routerAttr           = "@router"
+	deprecatedRouterAttr = "@deprecatedrouter"
+
+	summaryAttr              = "@summary"
+	deprecatedAttr           = "@deprecated"
+	securityAttr             = "@security"
+	titleAttr                = "@title"
+	conNameAttr              = "@contact.name"
+	conURLAttr               = "@contact.url"
+	conEmailAttr             = "@contact.email"
+	licNameAttr              = "@license.name"
+	licURLAttr               = "@license.url"
+	versionAttr              = "@version"
+	descriptionAttr          = "@description"
+	descriptionMarkdownAttr  = "@description.markdown"
+	secBasicAttr             = "@securitydefinitions.basic"
+	secAPIKeyAttr            = "@securitydefinitions.apikey"
+	secBearerAuthAttr        = "@securitydefinitions.bearerauth"
+	secApplicationAttr       = "@securitydefinitions.oauth2.application"
+	secImplicitAttr          = "@securitydefinitions.oauth2.implicit"
+	secPasswordAttr          = "@securitydefinitions.oauth2.password"
+	secAccessCodeAttr        = "@securitydefinitions.oauth2.accesscode"
+	tosAttr                  = "@termsofservice"
+	extDocsDescAttr          = "@externaldocs.description"
+	extDocsURLAttr           = "@externaldocs.url"
+	xCodeSamplesAttr         = "@x-codesamples"
+	xCodeSamplesAttrOriginal = "@x-codeSamples"
+	scopeAttrPrefix          = "@scope."
+	stateAttr                = "@state"
 )
 
 // ParseFlag determine what to parse
@@ -198,7 +200,7 @@ type Parser struct {
 	// ParseFuncBody whether swag should parse api info inside of funcs
 	ParseFuncBody bool
 
-  // use new openAPI version
+	// use new openAPI version
 	openAPIVersion bool
 }
 
@@ -517,7 +519,7 @@ func (parser *Parser) parseDeps(absMainAPIFilePath string, parseDepth int) error
 
 		length := len(pkgs)
 		for i := 0; i < length; i++ {
-			err := parser.getAllGoFileInfoFromDepsByList(pkgs[i])
+			err := parser.getAllGoFileInfoFromDepsByList(pkgs[i], parser.ParseDependency)
 			if err != nil {
 				return err
 			}
@@ -537,7 +539,7 @@ func (parser *Parser) parseDeps(absMainAPIFilePath string, parseDepth int) error
 		}
 
 		for i := 0; i < len(t.Root.Deps); i++ {
-			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i]); err != nil {
+			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i], parser.ParseDependency); err != nil {
 				return errors.Wrap(err, "could not parse dependencies")
 			}
 		}
