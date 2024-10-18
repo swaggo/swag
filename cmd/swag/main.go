@@ -7,11 +7,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/urfave/cli/v2"
+	"github.com/swaggo/swag/v2"
+	"github.com/swaggo/swag/v2/format"
+	"github.com/swaggo/swag/v2/gen"
 
-	"github.com/swaggo/swag"
-	"github.com/swaggo/swag/format"
-	"github.com/swaggo/swag/gen"
+	"github.com/urfave/cli/v2"
 )
 
 const (
@@ -38,6 +38,7 @@ const (
 	tagsFlag                 = "tags"
 	parseExtensionFlag       = "parseExtension"
 	templateDelimsFlag       = "templateDelims"
+ 	openAPIVersionFlag       = "v3.1"
 	packageName              = "packageName"
 	collectionFormatFlag     = "collectionFormat"
 	packagePrefixFlag        = "packagePrefix"
@@ -154,6 +155,17 @@ var initFlags = []cli.Flag{
 		Value:   "",
 		Usage:   "A comma-separated list of tags to filter the APIs for which the documentation is generated.Special case if the tag is prefixed with the '!' character then the APIs with that tag will be excluded",
 	},
+	&cli.BoolFlag{
+		Name:  openAPIVersionFlag,
+		Value: false,
+		Usage: "Generate OpenAPI V3.1 spec",
+	},
+	&cli.StringFlag{
+		Name:    templateDelimsFlag,
+		Aliases: []string{"td"},
+		Value:   "",
+		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
+	},
 	&cli.StringFlag{
 		Name:    templateDelimsFlag,
 		Aliases: []string{"td"},
@@ -264,6 +276,7 @@ func initAction(ctx *cli.Context) error {
 		RightTemplateDelim:  rightDelim,
 		PackageName:         ctx.String(packageName),
 		Debugger:            logger,
+		GenerateOpenAPI3Doc: ctx.Bool(openAPIVersionFlag),
 		CollectionFormat:    collectionFormat,
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
@@ -272,6 +285,7 @@ func initAction(ctx *cli.Context) error {
 }
 
 func main() {
+	fmt.Println("Swag version: ", swag.Version)
 	app := cli.NewApp()
 	app.Version = swag.Version
 	app.Usage = "Automatically generate RESTful API documentation with Swagger 2.0 for Go."

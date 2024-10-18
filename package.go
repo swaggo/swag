@@ -99,6 +99,16 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 			if strings.ContainsRune(valueExpr.Value, '_') {
 				valueExpr.Value = strings.Replace(valueExpr.Value, "_", "", -1)
 			}
+			// hexadecimal
+			if len(valueExpr.Value) > 2 && valueExpr.Value[0] == '0' && valueExpr.Value[1] == 'x' {
+				if x, err := strconv.ParseInt(valueExpr.Value[2:], 16, 64); err == nil {
+					return int(x), nil
+				} else if x, err := strconv.ParseUint(valueExpr.Value[2:], 16, 64); err == nil {
+					return x, nil
+				} else {
+					panic(err)
+				}
+			}
 			if len(valueExpr.Value) >= 2 && valueExpr.Value[0] == '0' {
 				var start, base = 2, 8
 				switch valueExpr.Value[1] {

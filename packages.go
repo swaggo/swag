@@ -133,6 +133,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 		if !ok {
 			continue
 		}
+
 		if generalDeclaration.Tok == token.TYPE {
 			for _, astSpec := range generalDeclaration.Specs {
 				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
@@ -274,6 +275,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 						}
 
 					}
+
 				}
 			}
 		}
@@ -579,6 +581,20 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 			}
 		}
 		typeDef := pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
+/*
+    TODO : remove
+		if len(pkgPaths) == 0 && len(externalPkgPaths) == 0 {
+			pkgDefinition := pkgDefs.packages["pkg/"+parts[0]]
+			if pkgDefinition == nil {
+				return pkgDefs.findTypeSpec("", parts[1])
+			}
+
+			typeDef = pkgDefinition.TypeDefinitions[parts[1]]
+		} else {
+			typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
+		}
+
+*/
 		return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 	}
 
@@ -591,7 +607,17 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 	typeDef, ok = pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, name)]
 	if !ok {
 		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports("", file)
-		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name)
+
+		if len(pkgPaths) == 0 {
+			pkgDefinition := pkgDefs.packages["pkg/"+parts[0]]
+			if pkgDefinition == nil {
+				return pkgDefs.findTypeSpec("", parts[1])
+			}
+
+			typeDef = pkgDefinition.TypeDefinitions[parts[0]]
+		} else {
+			typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name)
+		}
 	}
 
 	if typeDef != nil {
@@ -610,4 +636,18 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 	}
 
 	return nil
+}
+
+func isAliasPkgName(file *ast.File, pkgName string) bool {
+	if file == nil && file.Imports == nil {
+		return false
+	}
+
+	for _, pkg := range file.Imports {
+		if pkg.Name != nil && pkg.Name.Name == pkgName {
+			return true
+		}
+	}
+
+	return false
 }

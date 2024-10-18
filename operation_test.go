@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseEmptyComment(t *testing.T) {
@@ -2416,7 +2417,7 @@ func TestParseExtentions(t *testing.T) {
 		operation := NewOperation(nil)
 
 		err := operation.ParseComment(comment, nil)
-		assert.EqualError(t, err, "annotation @x-amazon-apigateway-integration need a valid json value")
+		assert.EqualError(t, err, "annotation @x-amazon-apigateway-integration need a valid json value. error: invalid character '}' after array element")
 	}
 
 	// OK
@@ -2560,10 +2561,12 @@ func TestParseCodeSamples(t *testing.T) {
 		operation.Summary = "example"
 
 		err := operation.ParseComment(comment, nil)
-		assert.NoError(t, err, "no error should be thrown")
-		assert.Equal(t, operation.Summary, "example")
-		assert.Equal(t, operation.Extensions["x-codeSamples"],
-			map[string]interface{}{"lang": "JavaScript", "source": "console.log('Hello World');"})
+		require.NoError(t, err, "no error should be thrown")
+
+		assert.Equal(t, "example", operation.Summary)
+		assert.Equal(t, []interface{}([]interface{}{map[string]interface{}{"lang": "JavaScript", "source": "console.log('Hello World');"}}),
+			operation.Extensions["x-codeSamples"],
+		)
 	})
 
 	t.Run("With broken file sample", func(t *testing.T) {

@@ -1,0 +1,110 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Swagger Example API",
+    "version": "1.0"
+  },
+  "externalDocs": {
+    "description": "",
+    "url": ""
+  },
+  "components": {
+    "schemas": {
+      "types.NestedStruct": {
+        "type": "object",
+        "properties": {
+          "int": {
+            "type": "integer"
+          }
+        }
+      },
+      "types.Struct": {
+        "type": "object",
+        "properties": {
+          "string": {
+            "type": "string"
+          },
+          "nestedStruct": {
+            "$ref": "#/components/schemas/types.NestedStruct"
+          }
+        }
+      },
+      "types.StructAlias": {
+        "type": "object",
+        "properties": {
+          "string": {
+            "type": "string"
+          },
+          "nestedStruct": {
+            "$ref": "#/components/schemas/types.NestedStruct"
+          }
+        }
+      },
+      "types.StructSubtype": {
+        "type": "object",
+        "properties": {
+          "string": {
+            "type": "string"
+          },
+          "nestedStruct": {
+            "$ref": "#/components/schemas/types.NestedStruct"
+          }
+        }
+      },
+      "types.OtherStructAlias": {
+        "type": "object",
+        "properties": {
+          "float": {
+            "type": "number"
+          }
+        }
+      },
+      "types.OtherStructSubtype": {
+        "type": "object",
+        "properties": {
+          "float": {
+            "type": "number"
+          }
+        }
+      },
+      "types.Response": {
+        "type": "object",
+        "properties": {
+          "struct": {
+            "$ref": "#/components/schemas/types.Struct"
+          },
+          "structAlias": {
+            "$ref": "#/components/schemas/types.StructAlias"
+          },
+          "structSubtype": {
+            "$ref": "#/components/schemas/types.StructSubtype"
+          },
+          "otherStructAlias": {
+            "$ref": "#/components/schemas/types.OtherStructAlias"
+          },
+          "otherStructSubtype": {
+            "$ref": "#/components/schemas/types.OtherStructSubtype"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/test": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/types.Response"
+                }
+              }
+            },
+            "description": "Success"
+          }
+        }
+      }
+    }
+  }
+}
