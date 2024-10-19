@@ -22,11 +22,11 @@
             "type": "object",
             "properties": {
                 "emb": {
-                    "$ref": "#/definitions/github_com_swaggo_swag_testdata_alias_nested_pkg_good.Emb"
+                    "$ref": "#/definitions/github_com_swaggo_swag_v2_testdata_alias_nested_pkg_good.Emb"
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_alias_nested_pkg_good.Emb": {
+        "github_com_swaggo_swag_v2_testdata_alias_nested_pkg_good.Emb": {
             "type": "object",
             "properties": {
                 "good": {
