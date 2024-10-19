@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 // ConstVariable a model to record a const variable
@@ -61,7 +60,7 @@ func EvaluateEscapedString(text string) string {
 				i++
 				char, err := strconv.ParseInt(text[i:i+4], 16, 32)
 				if err == nil {
-					result = utf8.AppendRune(result, rune(char))
+					result = AppendUtf8Rune(result, rune(char))
 				}
 				i += 3
 			} else if c, ok := escapedChars[text[i]]; ok {
@@ -405,7 +404,7 @@ func EvaluateUnary(x interface{}, operator token.Token, xtype ast.Expr) (interfa
 func EvaluateBinary(x, y interface{}, operator token.Token, xtype, ytype ast.Expr) (interface{}, ast.Expr) {
 	if operator == token.SHR || operator == token.SHL {
 		var rightOperand uint64
-		yValue := reflect.ValueOf(y)
+		yValue := CanIntegerValue{reflect.ValueOf(y)}
 		if yValue.CanUint() {
 			rightOperand = yValue.Uint()
 		} else if yValue.CanInt() {
@@ -468,8 +467,8 @@ func EvaluateBinary(x, y interface{}, operator token.Token, xtype, ytype ast.Exp
 		evalType = ytype
 	}
 
-	xValue := reflect.ValueOf(x)
-	yValue := reflect.ValueOf(y)
+	xValue := CanIntegerValue{reflect.ValueOf(x)}
+	yValue := CanIntegerValue{reflect.ValueOf(y)}
 	if xValue.Kind() == reflect.String && yValue.Kind() == reflect.String {
 		return xValue.String() + yValue.String(), evalType
 	}

@@ -15,35 +15,30 @@ import (
 )
 
 const (
-	searchDirFlag            = "dir"
-	excludeFlag              = "exclude"
-	generalInfoFlag          = "generalInfo"
-	pipeFlag                 = "pipe"
-	propertyStrategyFlag     = "propertyStrategy"
-	outputFlag               = "output"
-	outputTypesFlag          = "outputTypes"
-	parseVendorFlag          = "parseVendor"
-	parseDependencyFlag      = "parseDependency"
-	parseDependencyLevelFlag = "parseDependencyLevel"
-	markdownFilesFlag        = "markdownFiles"
-	codeExampleFilesFlag     = "codeExampleFiles"
-	parseInternalFlag        = "parseInternal"
-	generatedTimeFlag        = "generatedTime"
-	requiredByDefaultFlag    = "requiredByDefault"
-	parseDepthFlag           = "parseDepth"
-	instanceNameFlag         = "instanceName"
-	overridesFileFlag        = "overridesFile"
-	parseGoListFlag          = "parseGoList"
-	quietFlag                = "quiet"
-	tagsFlag                 = "tags"
-	parseExtensionFlag       = "parseExtension"
-	templateDelimsFlag       = "templateDelims"
-	openAPIVersionFlag       = "v3.1"
-	packageName              = "packageName"
-	collectionFormatFlag     = "collectionFormat"
-	packagePrefixFlag        = "packagePrefix"
-	stateFlag                = "state"
-	parseFuncBodyFlag        = "parseFuncBody"
+	searchDirFlag         = "dir"
+	excludeFlag           = "exclude"
+	generalInfoFlag       = "generalInfo"
+	propertyStrategyFlag  = "propertyStrategy"
+	outputFlag            = "output"
+	outputTypesFlag       = "outputTypes"
+	parseVendorFlag       = "parseVendor"
+	parseDependencyFlag   = "parseDependency"
+	markdownFilesFlag     = "markdownFiles"
+	codeExampleFilesFlag  = "codeExampleFiles"
+	parseInternalFlag     = "parseInternal"
+	generatedTimeFlag     = "generatedTime"
+	requiredByDefaultFlag = "requiredByDefault"
+	parseDepthFlag        = "parseDepth"
+	instanceNameFlag      = "instanceName"
+	overridesFileFlag     = "overridesFile"
+	parseGoListFlag       = "parseGoList"
+	quietFlag             = "quiet"
+	tagsFlag              = "tags"
+	parseExtensionFlag    = "parseExtension"
+	templateDelimsFlag    = "templateDelims"
+	openAPIVersionFlag    = "v3.1"
+	packageName           = "packageName"
+	collectionFormatFlag  = "collectionFormat"
 )
 
 var initFlags = []cli.Flag{
@@ -89,11 +84,6 @@ var initFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:  parseVendorFlag,
 		Usage: "Parse go files in 'vendor' folder, disabled by default",
-	},
-	&cli.IntFlag{
-		Name:    parseDependencyLevelFlag,
-		Aliases: []string{"pdl"},
-		Usage:   "Parse go files inside dependency folder, 0 disabled, 1 only parse models, 2 only parse operations, 3 parse all",
 	},
 	&cli.BoolFlag{
 		Name:    parseDependencyFlag,
@@ -167,12 +157,6 @@ var initFlags = []cli.Flag{
 		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
 	},
 	&cli.StringFlag{
-		Name:    templateDelimsFlag,
-		Aliases: []string{"td"},
-		Value:   "",
-		Usage:   "Provide custom delimiters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
-	},
-	&cli.StringFlag{
 		Name:  packageName,
 		Value: "",
 		Usage: "A package name of docs.go, using output directory name by default (check `--output` option)",
@@ -182,21 +166,6 @@ var initFlags = []cli.Flag{
 		Aliases: []string{"cf"},
 		Value:   "csv",
 		Usage:   "Set default collection format",
-	},
-	&cli.StringFlag{
-		Name:  packagePrefixFlag,
-		Value: "",
-		Usage: "Parse only packages whose import path match the given prefix, comma separated",
-	},
-	&cli.StringFlag{
-		Name:  stateFlag,
-		Value: "",
-		Usage: "Set host state for swagger.json",
-	},
-	&cli.BoolFlag{
-		Name: parseFuncBodyFlag,
-		// Value: false,
-		Usage: "Parse API info within body of functions in go files, disabled by default (default: false)",
 	},
 }
 
@@ -214,17 +183,11 @@ func initAction(ctx *cli.Context) error {
 	if ctx.IsSet(templateDelimsFlag) {
 		delims := strings.Split(ctx.String(templateDelimsFlag), ",")
 		if len(delims) != 2 {
-			return fmt.Errorf(
-				"exactly two template delimiters must be provided, comma separated",
-			)
+			return fmt.Errorf("exactly two template delimeters must be provided, comma separated")
 		} else if delims[0] == delims[1] {
 			return fmt.Errorf("template delimiters must be different")
 		}
-		leftDelim, rightDelim = strings.TrimSpace(
-			delims[0],
-		), strings.TrimSpace(
-			delims[1],
-		)
+		leftDelim, rightDelim = strings.TrimSpace(delims[0]), strings.TrimSpace(delims[1])
 	}
 
 	outputTypes := strings.Split(ctx.String(outputTypesFlag), ",")
@@ -236,22 +199,11 @@ func initAction(ctx *cli.Context) error {
 		logger = log.New(io.Discard, "", log.LstdFlags)
 	}
 
-	collectionFormat := swag.TransToValidCollectionFormat(
-		ctx.String(collectionFormatFlag),
-	)
+	collectionFormat := swag.TransToValidCollectionFormat(ctx.String(collectionFormatFlag))
 	if collectionFormat == "" {
-		return fmt.Errorf(
-			"not supported %s collectionFormat",
-			ctx.String(collectionFormat),
-		)
+		return fmt.Errorf("not supported %s collectionFormat", ctx.String(collectionFormat))
 	}
 
-	var pdv = ctx.Int(parseDependencyLevelFlag)
-	if pdv == 0 {
-		if ctx.Bool(parseDependencyFlag) {
-			pdv = 1
-		}
-	}
 	return gen.New().Build(&gen.Config{
 		SearchDir:           ctx.String(searchDirFlag),
 		Excludes:            ctx.String(excludeFlag),
@@ -261,7 +213,7 @@ func initAction(ctx *cli.Context) error {
 		OutputDir:           ctx.String(outputFlag),
 		OutputTypes:         outputTypes,
 		ParseVendor:         ctx.Bool(parseVendorFlag),
-		ParseDependency:     pdv,
+		ParseDependency:     ctx.Bool(parseDependencyFlag),
 		MarkdownFilesDir:    ctx.String(markdownFilesFlag),
 		ParseInternal:       ctx.Bool(parseInternalFlag),
 		GeneratedTime:       ctx.Bool(generatedTimeFlag),
@@ -278,9 +230,6 @@ func initAction(ctx *cli.Context) error {
 		Debugger:            logger,
 		GenerateOpenAPI3Doc: ctx.Bool(openAPIVersionFlag),
 		CollectionFormat:    collectionFormat,
-		PackagePrefix:       ctx.String(packagePrefixFlag),
-		State:               ctx.String(stateFlag),
-		ParseFuncBody:       ctx.Bool(parseFuncBodyFlag),
 	})
 }
 
@@ -302,11 +251,6 @@ func main() {
 			Aliases: []string{"f"},
 			Usage:   "format swag comments",
 			Action: func(c *cli.Context) error {
-
-				if c.Bool(pipeFlag) {
-					return format.New().Run(os.Stdin, os.Stdout)
-				}
-
 				searchDir := c.String(searchDirFlag)
 				excludeDir := c.String(excludeFlag)
 				mainFile := c.String(generalInfoFlag)
@@ -333,12 +277,6 @@ func main() {
 					Aliases: []string{"g"},
 					Value:   "main.go",
 					Usage:   "Go file path in which 'swagger general API Info' is written",
-				},
-				&cli.BoolFlag{
-					Name:    "pipe",
-					Aliases: []string{"p"},
-					Value:   false,
-					Usage:   "Read from stdin, write to stdout.",
 				},
 			},
 		},

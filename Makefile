@@ -6,7 +6,6 @@ GOBUILD:=$(GOCMD) build
 GOINSTALL:=$(GOCMD) install
 GOCLEAN:=$(GOCMD) clean
 GOTEST:=$(GOCMD) test
-GOMODTIDY:=$(GOCMD) mod tidy
 GOGET:=$(GOCMD) get
 GOLIST:=$(GOCMD) list
 GOVET:=$(GOCMD) vet
@@ -16,6 +15,8 @@ u := $(if $(update),-u)
 BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) github.com/swaggo/swag/v2 github.com/swaggo/swag/v2/cmd/swag github.com/swaggo/swag/v2/gen github.com/swaggo/swag/v2/format)
 GOFILES:=$(shell find . -name "*.go" -type f)
+
+export GO111MODULE := on
 
 all: test build
 
@@ -53,10 +54,25 @@ clean:
 
 .PHONY: deps
 deps:
-	$(GOMODTIDY)
+	$(GOGET) github.com/swaggo/cli
+	$(GOGET) sigs.k8s.io/yaml
+	$(GOGET) github.com/KyleBanks/depth
+	$(GOGET) github.com/go-openapi/jsonreference
+	$(GOGET) github.com/go-openapi/spec
+	$(GOGET) github.com/stretchr/testify/assert
+	$(GOGET) golang.org/x/tools/go/loader
+
+.PHONY: devel-deps
+devel-deps:
+	GO111MODULE=off $(GOGET) -v -u \
+		golang.org/x/lint/golint
+
+.PHONY: lint
+lint: devel-deps
+	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
 
 .PHONY: vet
-vet: deps
+vet: deps devel-deps
 	$(GOVET) $(PACKAGES)
 
 .PHONY: fmt
