@@ -602,17 +602,6 @@ func setSchemaExampleV3(param *spec.Schema, schemaType string, value string) err
 	return nil
 }
 
-func setExampleParameterV3(param *spec.Parameter, schemaType string, value string) error {
-	val, err := defineType(schemaType, value)
-	if err != nil {
-		return nil // Don't set a example value if it's not valid
-	}
-
-	param.Example = val
-
-	return nil
-}
-
 func setStringParamV3(param *spec.Schema, name, schemaType, attr, commentLine string) error {
 	if schemaType != STRING {
 		return fmt.Errorf("%s is attribute to set to a number. comment=%s got=%s", name, commentLine, schemaType)

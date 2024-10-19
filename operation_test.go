@@ -1870,17 +1870,20 @@ func TestParseParamCommentByExampleUnsupportedType(t *testing.T) {
 	t.Parallel()
 	var param spec.Parameter
 
-	setExample(&param, "something", "random value")
+	err := setExample(&param, "something", "random value")
 	assert.Equal(t, param.Example, nil)
 
-	setExample(&param, STRING, "string value")
+	err = setExample(&param, STRING, "string value")
 	assert.Equal(t, param.Example, "string value")
+	assert.Empty(t, err)
 
-	setExample(&param, INTEGER, "10")
+	err = setExample(&param, INTEGER, "10")
 	assert.Equal(t, param.Example, 10)
+	assert.Empty(t, err)
 
-	setExample(&param, NUMBER, "10")
+	err = setExample(&param, NUMBER, "10")
 	assert.Equal(t, param.Example, float64(10))
+	assert.Empty(t, err)
 }
 
 func TestParseParamCommentBySchemaExampleString(t *testing.T) {
@@ -1911,24 +1914,30 @@ func TestParseParamCommentBySchemaExampleUnsupportedType(t *testing.T) {
 	t.Parallel()
 	var param spec.Parameter
 
-	setSchemaExample(&param, "something", "random value")
+	err := setSchemaExample(&param, "something", "random value")
 	assert.Nil(t, param.Schema)
+	assert.Empty(t, err)
 
-	setSchemaExample(&param, STRING, "string value")
+	err = setSchemaExample(&param, STRING, "string value")
 	assert.Nil(t, param.Schema)
+	assert.Empty(t, err)
 
 	param.Schema = &spec.Schema{}
-	setSchemaExample(&param, STRING, "string value")
+	err = setSchemaExample(&param, STRING, "string value")
 	assert.Equal(t, "string value", param.Schema.Example)
+	assert.Empty(t, err)
 
-	setSchemaExample(&param, INTEGER, "10")
+	err = setSchemaExample(&param, INTEGER, "10")
 	assert.Equal(t, 10, param.Schema.Example)
+	assert.Empty(t, err)
 
-	setSchemaExample(&param, NUMBER, "10")
+	err = setSchemaExample(&param, NUMBER, "10")
 	assert.Equal(t, float64(10), param.Schema.Example)
+	assert.Empty(t, err)
 
-	setSchemaExample(&param, STRING, "string \\r\\nvalue")
+	err = setSchemaExample(&param, STRING, "string \\r\\nvalue")
 	assert.Equal(t, "string \r\nvalue", param.Schema.Example)
+	assert.Empty(t, err)
 }
 
 func TestParseParamArrayWithEnums(t *testing.T) {

@@ -64,12 +64,11 @@ deps:
 
 .PHONY: devel-deps
 devel-deps:
-	GO111MODULE=off $(GOGET) -v -u \
-		golang.org/x/lint/golint
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.48
 
 .PHONY: lint
 lint: devel-deps
-	for PKG in $(PACKAGES); do golint -set_exit_status $$PKG || exit 1; done;
+	golangci-lint run .
 
 .PHONY: vet
 vet: deps devel-deps

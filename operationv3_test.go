@@ -1571,24 +1571,30 @@ func TestParseParamCommentBySchemaExampleUnsupportedTypeV3(t *testing.T) {
 	t.Parallel()
 	var param spec.Parameter
 
-	setSchemaExampleV3(nil, "something", "random value")
+	err := setSchemaExampleV3(nil, "something", "random value")
 	assert.Nil(t, param.Schema)
+	assert.Empty(t, err)
 
-	setSchemaExampleV3(nil, STRING, "string value")
+	err = setSchemaExampleV3(nil, STRING, "string value")
 	assert.Nil(t, param.Schema)
+	assert.Empty(t, err)
 
 	param.Schema = spec.NewSchemaSpec()
-	setSchemaExampleV3(param.Schema.Spec, STRING, "string value")
+	err = setSchemaExampleV3(param.Schema.Spec, STRING, "string value")
 	assert.Equal(t, "string value", param.Schema.Spec.Example)
+	assert.Empty(t, err)
 
-	setSchemaExampleV3(param.Schema.Spec, INTEGER, "10")
+	err = setSchemaExampleV3(param.Schema.Spec, INTEGER, "10")
 	assert.Equal(t, 10, param.Schema.Spec.Example)
+	assert.Empty(t, err)
 
-	setSchemaExampleV3(param.Schema.Spec, NUMBER, "10")
+	err = setSchemaExampleV3(param.Schema.Spec, NUMBER, "10")
 	assert.Equal(t, float64(10), param.Schema.Spec.Example)
+	assert.Empty(t, err)
 
-	setSchemaExampleV3(param.Schema.Spec, STRING, "string \\r\\nvalue")
+	err = setSchemaExampleV3(param.Schema.Spec, STRING, "string \\r\\nvalue")
 	assert.Equal(t, "string \r\nvalue", param.Schema.Spec.Example)
+	assert.Empty(t, err)
 }
 
 func TestParseParamArrayWithEnumsV3(t *testing.T) {

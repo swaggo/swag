@@ -3729,14 +3729,9 @@ func TestGetFieldType(t *testing.T) {
 }
 
 func TestTryAddDescription(t *testing.T) {
-	type args struct {
-		spec       *spec.SecurityScheme
-		extensions map[string]interface{}
-	}
 	tests := []struct {
 		name  string
 		lines []string
-		args  args
 		want  *spec.SecurityScheme
 	}{
 		{

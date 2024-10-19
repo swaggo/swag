@@ -595,17 +595,3 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 
 	return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 }
-
-func isAliasPkgName(file *ast.File, pkgName string) bool {
-	if file == nil && file.Imports == nil {
-		return false
-	}
-
-	for _, pkg := range file.Imports {
-		if pkg.Name != nil && pkg.Name.Name == pkgName {
-			return true
-		}
-	}
-
-	return false
-}

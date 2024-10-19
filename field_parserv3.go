@@ -380,48 +380,6 @@ func getIntTagV3(structTag reflect.StructTag, tagName string) (*int, error) {
 	return &value, nil
 }
 
-func parseValidTagsV3(validTag string, sf *structFieldV3) {
-
-	// `validate:"required,max=10,min=1"`
-	// ps. required checked by IsRequired().
-	for _, val := range strings.Split(validTag, ",") {
-		var (
-			valValue string
-			keyVal   = strings.Split(val, "=")
-		)
-
-		switch len(keyVal) {
-		case 1:
-		case 2:
-			valValue = strings.ReplaceAll(strings.ReplaceAll(keyVal[1], utf8HexComma, ","), utf8Pipe, "|")
-		default:
-			continue
-		}
-
-		switch keyVal[0] {
-		case "max", "lte":
-			sf.setMax(valValue)
-		case "min", "gte":
-			sf.setMin(valValue)
-		case "oneof":
-			if strings.Contains(validTag, "swaggerIgnore") {
-				continue
-			}
-
-			sf.setOneOf(valValue)
-		case "unique":
-			if sf.schemaType == ARRAY {
-				sf.unique = true
-			}
-		case "dive":
-			// ignore dive
-			return
-		default:
-			continue
-		}
-	}
-}
-
 func (sf *structFieldV3) parseValidTags(validTag string) {
 
 	// `validate:"required,max=10,min=1"`

@@ -95,9 +95,10 @@ func TestParseGenericsProperty(t *testing.T) {
 
 	p := New()
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.Empty(t, err)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
-	os.WriteFile(searchDir+"/expected.json", b, fs.ModePerm)
+	err = os.WriteFile(searchDir+"/expected.json", b, fs.ModePerm)
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }

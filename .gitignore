@@ -25,3 +25,5 @@ cover.out
 cmd/swag/docs/*
 
 .vscode/launch.json
+
+vendor/
