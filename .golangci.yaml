@@ -1,0 +1,10 @@
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - typecheck
+    - unused
+    - goimports
+    - misspell
+  fast: true
