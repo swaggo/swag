@@ -213,7 +213,7 @@
                     }
                 },
                 "value4": {
-                    "$ref": "#/definitions/types.SubField1-api_Person-string"
+                    "$ref": "#/definitions/types.SubField1-array_api_Person-string"
                 }
             }
         },
@@ -242,7 +242,7 @@
                     }
                 },
                 "value4": {
-                    "$ref": "#/definitions/types.SubField1-types_Post-string"
+                    "$ref": "#/definitions/types.SubField1-array_types_Post-string"
                 }
             }
         },
@@ -348,6 +348,34 @@
                 }
             }
         },
+        "types.SubField1-array_api_Person-string": {
+            "type": "object",
+            "properties": {
+                "subValue1": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/api.Person"
+                    }
+                },
+                "subValue2": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.SubField1-array_types_Post-string": {
+            "type": "object",
+            "properties": {
+                "subValue1": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/types.Post"
+                    }
+                },
+                "subValue2": {
+                    "type": "string"
+                }
+            }
+        },
         "types.SubField1-string-string": {
             "type": "object",
             "properties": {
@@ -375,17 +403,6 @@
             "properties": {
                 "subValue1": {
                     "$ref": "#/definitions/types.Field-string"
-                },
-                "subValue2": {
-                    "type": "string"
-                }
-            }
-        },
-        "types.SubField1-types_Post-string": {
-            "type": "object",
-            "properties": {
-                "subValue1": {
-                    "$ref": "#/definitions/types.Post"
                 },
                 "subValue2": {
                     "type": "string"

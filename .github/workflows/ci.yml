@@ -10,7 +10,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go: [ '1.18.x', '1.19.x', '1.20.x' ]
+        go: [ '1.19.x', '1.20.x', '1.21.x', '1.22.x' ]
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -22,8 +22,7 @@ jobs:
       - name: deps
         run:  make deps
       - name: static program analysis
-        run: |
-          make fmt-check lint vet
+        run: make fmt-check vet
       - name: build
         run: make build
       - name: test

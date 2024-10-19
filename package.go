@@ -109,12 +109,22 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 					panic(err)
 				}
 			}
-
-			//octet
-			if len(valueExpr.Value) > 1 && valueExpr.Value[0] == '0' {
-				if x, err := strconv.ParseInt(valueExpr.Value[1:], 8, 64); err == nil {
+			if len(valueExpr.Value) >= 2 && valueExpr.Value[0] == '0' {
+				var start, base = 2, 8
+				switch valueExpr.Value[1] {
+				case 'x', 'X':
+					//hex
+					base = 16
+				case 'b', 'B':
+					//binary
+					base = 2
+				default:
+					//octet
+					start = 1
+				}
+				if x, err := strconv.ParseInt(valueExpr.Value[start:], base, 64); err == nil {
 					return int(x), nil
-				} else if x, err := strconv.ParseUint(valueExpr.Value[1:], 8, 64); err == nil {
+				} else if x, err := strconv.ParseUint(valueExpr.Value[start:], base, 64); err == nil {
 					return x, nil
 				} else {
 					panic(err)

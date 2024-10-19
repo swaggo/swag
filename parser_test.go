@@ -219,7 +219,7 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "authorizationUrl": "https://example.com/oauth/authorize",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information"
+                "admin": "Grants read and write access to administrative information"
             },
             "x-tokenname": "id_token"
         },
@@ -228,8 +228,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "flow": "application",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Implicit": {
@@ -237,8 +237,8 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "flow": "implicit",
             "authorizationUrl": "https://example.com/oauth/authorize",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             },
             "x-google-audiences": "some_audience.google.com"
         },
@@ -247,9 +247,9 @@ func TestParser_ParseGeneralApiInfo(t *testing.T) {
             "flow": "password",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "read": " Grants read access",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "read": "Grants read access",
+                "write": "Grants write access"
             }
         }
     },
@@ -310,7 +310,7 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
             "authorizationUrl": "https://example.com/oauth/authorize",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information"
+                "admin": "Grants read and write access to administrative information"
             }
         },
         "OAuth2Application": {
@@ -318,8 +318,8 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
             "flow": "application",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Implicit": {
@@ -327,8 +327,8 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
             "flow": "implicit",
             "authorizationUrl": "https://example.com/oauth/authorize",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Password": {
@@ -336,9 +336,9 @@ func TestParser_ParseGeneralApiInfoTemplated(t *testing.T) {
             "flow": "password",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "read": " Grants read access",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "read": "Grants read access",
+                "write": "Grants write access"
             }
         }
     },
@@ -593,6 +593,41 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParser_ParseGeneralAPITagDocsWithTagFilters(t *testing.T) {
+	t.Parallel()
+
+	filterTags := []string{"test1", "!test2"}
+
+	comments := []string{
+		"@tag.name test1",
+		"@tag.description A test1 Tag",
+		"@tag.docs.url https://example1.com",
+		"@tag.docs.description Best example1 documentation",
+		"@tag.name test2",
+		"@tag.description A test2 Tag",
+		"@tag.docs.url https://example2.com",
+		"@tag.docs.description Best example2 documentation"}
+
+	expected := `[
+    {
+        "description": "A test1 Tag",
+        "name": "test1",
+        "externalDocs": {
+            "description": "Best example1 documentation",
+            "url": "https://example1.com"
+        }
+    }
+]`
+
+	for _, tag := range filterTags {
+		parser := New(SetTags(tag))
+		err := parseGeneralAPIInfo(parser, comments)
+		assert.NoError(t, err)
+		b, _ := json.MarshalIndent(parser.GetSwagger().Tags, "", "    ")
+		assert.Equal(t, expected, string(b))
+	}
+}
+
 func TestParser_ParseGeneralAPISecurity(t *testing.T) {
 	t.Run("ApiKey", func(t *testing.T) {
 		t.Parallel()
@@ -635,7 +670,7 @@ func TestParser_ParseGeneralAPISecurity(t *testing.T) {
         "authorizationUrl": "https://example.com/oauth/authorize",
         "tokenUrl": "https://example.com/oauth/token",
         "scopes": {
-            "admin": " foo"
+            "admin": "foo"
         }
     }
 }`
@@ -1336,7 +1371,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
             "authorizationUrl": "https://example.com/oauth/authorize",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information"
+                "admin": "Grants read and write access to administrative information"
             }
         },
         "OAuth2Application": {
@@ -1344,8 +1379,8 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
             "flow": "application",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Implicit": {
@@ -1353,8 +1388,8 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
             "flow": "implicit",
             "authorizationUrl": "https://example.com/oauth/authorize",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Password": {
@@ -1362,9 +1397,9 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
             "flow": "password",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "read": " Grants read access",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "read": "Grants read access",
+                "write": "Grants write access"
             }
         }
     }
@@ -1792,7 +1827,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
             "authorizationUrl": "https://example.com/oauth/authorize",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information"
+                "admin": "Grants read and write access to administrative information"
             }
         },
         "OAuth2Application": {
@@ -1800,8 +1835,8 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
             "flow": "application",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Implicit": {
@@ -1809,8 +1844,8 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
             "flow": "implicit",
             "authorizationUrl": "https://example.com/oauth/authorize",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Password": {
@@ -1818,9 +1853,9 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
             "flow": "password",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": " Grants read and write access to administrative information",
-                "read": " Grants read access",
-                "write": " Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "read": "Grants read access",
+                "write": "Grants write access"
             }
         }
     }
@@ -2157,11 +2192,26 @@ func TestParseTypeOverrides(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestGlobalSecurity(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/global_security"
+	p := New()
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "  ")
+	assert.Equal(t, string(expected), string(b))
+}
+
 func TestParseNested(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/nested"
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 
@@ -2176,7 +2226,7 @@ func TestParseDuplicated(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/duplicated"
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
@@ -2185,7 +2235,7 @@ func TestParseDuplicatedOtherMethods(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/duplicated2"
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
@@ -2194,7 +2244,7 @@ func TestParseDuplicatedFunctionScoped(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/duplicated_function_scoped"
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.Errorf(t, err, "duplicated @id declarations successfully found")
 }
@@ -2203,7 +2253,7 @@ func TestParseConflictSchemaName(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/conflict_name"
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2215,7 +2265,7 @@ func TestParseConflictSchemaName(t *testing.T) {
 func TestParseExternalModels(t *testing.T) {
 	searchDir := "testdata/external_models/main"
 	mainAPIFile := "main.go"
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
@@ -2227,7 +2277,7 @@ func TestParseExternalModels(t *testing.T) {
 
 func TestParseGoList(t *testing.T) {
 	mainAPIFile := "main.go"
-	p := New(ParseUsingGoList(true), SetParseDependency(true))
+	p := New(ParseUsingGoList(true), SetParseDependency(1))
 	go111moduleEnv := os.Getenv("GO111MODULE")
 
 	cases := []struct {
@@ -2439,7 +2489,7 @@ type ResponseWrapper struct {
       }
    }
 }`
-	parser := New(SetParseDependency(true))
+	parser := New(SetParseDependency(1))
 
 	_ = parser.packages.ParseFile("api", "api/api.go", src, ParseAll)
 
@@ -2905,6 +2955,40 @@ func Test3(){
 	assert.NotNil(t, val.Delete)
 }
 
+func TestParser_ParseRouterApiMultiplePathsWithMultipleParams(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package test
+
+// @Success 200
+// @Param group_id path int true "Group ID"
+// @Param user_id  path int true "User ID"
+// @Router /examples/groups/{group_id}/user/{user_id}/address [get]
+// @Router /examples/user/{user_id}/address [get]
+func Test(){
+}
+`
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/examples/groups/{group_id}/user/{user_id}/address"]
+
+	assert.True(t, ok)
+	assert.Equal(t, 2, len(val.Get.Parameters))
+
+	val, ok = ps["/examples/user/{user_id}/address"]
+
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(val.Get.Parameters))
+}
+
 // func TestParseDeterministic(t *testing.T) {
 // 	mainAPIFile := "main.go"
 // 	for _, searchDir := range []string{
@@ -3073,7 +3157,7 @@ func TestParseOutsideDependencies(t *testing.T) {
 	searchDir := "testdata/pare_outside_dependencies"
 	mainAPIFile := "cmd/main.go"
 
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	if err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth); err != nil {
 		t.Error("Failed to parse api: " + err.Error())
 	}
@@ -3249,20 +3333,44 @@ func Fun()  {
 	assert.Equal(t, "#/definitions/Teacher", ref.String())
 }
 
+func TestParseTabFormattedRenamedStructDefinition(t *testing.T) {
+	t.Parallel()
+
+	src := "package main\n" +
+		"\n" +
+		"type Child struct {\n" +
+		"\tName string\n" +
+		"}\t//\t@name\tPupil\n" +
+		"\n" +
+		"// @Success 200 {object} Pupil\n" +
+		"func Fun()  { }"
+
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	_, ok := p.swagger.Definitions["Pupil"]
+	assert.True(t, ok)
+}
+
 func TestParseFunctionScopedStructDefinition(t *testing.T) {
 	t.Parallel()
 
 	src := `
 package main
 
-// @Param request body main.Fun.request true "query params" 
+// @Param request body main.Fun.request true "query params"
 // @Success 200 {object} main.Fun.response
 // @Router /test [post]
 func Fun()  {
 	type request struct {
 		Name string
 	}
-	
+
 	type response struct {
 		Name string
 		Child string
@@ -3281,7 +3389,7 @@ func Fun()  {
 	assert.True(t, ok)
 }
 
-func TestParseFunctionScopedStructRequestResponseJSON(t *testing.T) {
+func TestParseFunctionScopedComplexStructDefinition(t *testing.T) {
 	t.Parallel()
 
 	src := `
@@ -3295,6 +3403,63 @@ func Fun()  {
 		Name string
 	}
 	
+	type grandChild struct {
+		Name string
+	}
+
+	type pointerChild struct {
+		Name string
+	}
+
+	type arrayChild struct {
+		Name string
+	}
+
+	type child struct {
+		GrandChild 		grandChild
+		PointerChild 	*pointerChild
+		ArrayChildren   []arrayChild
+	}
+
+	type response struct {
+		Children 	[]child
+	}
+}
+`
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	_, ok := p.swagger.Definitions["main.Fun.response"]
+	assert.True(t, ok)
+	_, ok = p.swagger.Definitions["main.Fun.child"]
+	assert.True(t, ok)
+	_, ok = p.swagger.Definitions["main.Fun.grandChild"]
+	assert.True(t, ok)
+	_, ok = p.swagger.Definitions["main.Fun.pointerChild"]
+	assert.True(t, ok)
+	_, ok = p.swagger.Definitions["main.Fun.arrayChild"]
+	assert.True(t, ok)
+}
+
+func TestParseFunctionScopedStructRequestResponseJSON(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+// @Param request body main.Fun.request true "query params"
+// @Success 200 {object} main.Fun.response
+// @Router /test [post]
+func Fun()  {
+	type request struct {
+		Name string
+	}
+
 	type response struct {
 		Name string
 		Child string
@@ -3345,6 +3510,130 @@ func Fun()  {
                 "child": {
                     "type": "string"
                 },
+                "name": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}`
+
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseFunctionScopedComplexStructRequestResponseJSON(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+type PublicChild struct {
+	Name string
+}	
+
+// @Param request body main.Fun.request true "query params" 
+// @Success 200 {object} main.Fun.response
+// @Router /test [post]
+func Fun()  {
+	type request struct {
+		Name string
+	}
+	
+	type grandChild struct {
+		Name string
+	}
+
+	type child struct {
+		GrandChild grandChild
+	}
+
+	type response struct {
+		Children 	[]child
+	    PublicChild PublicChild
+	}
+}
+`
+	expected := `{
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/test": {
+            "post": {
+                "parameters": [
+                    {
+                        "description": "query params",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/main.Fun.request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/main.Fun.response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "main.Fun.child": {
+            "type": "object",
+            "properties": {
+                "grandChild": {
+                    "$ref": "#/definitions/main.Fun.grandChild"
+                }
+            }
+        },
+        "main.Fun.grandChild": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Fun.request": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "main.Fun.response": {
+            "type": "object",
+            "properties": {
+                "children": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/main.Fun.child"
+                    }
+                },
+                "publicChild": {
+                    "$ref": "#/definitions/main.PublicChild"
+                }
+            }
+        },
+        "main.PublicChild": {
+            "type": "object",
+            "properties": {
                 "name": {
                     "type": "string"
                 }
@@ -3757,6 +4046,24 @@ func TestTryAddDescription(t *testing.T) {
 			},
 		},
 		{
+			name: "added description with multiline",
+			lines: []string{
+				"\t@securitydefinitions.apikey test",
+				"\t@in header",
+				"\t@name x-api-key",
+				"\t@description line1",
+				"\t@description line2",
+			},
+			want: &spec.SecurityScheme{
+				SecuritySchemeProps: spec.SecuritySchemeProps{
+					Name:        "x-api-key",
+					Type:        "apiKey",
+					In:          "header",
+					Description: "line1\nline2",
+				},
+			},
+		},
+		{
 			name: "no description",
 			lines: []string{
 				" @securitydefinitions.oauth2.application swagger",
@@ -3974,4 +4281,108 @@ func TestParser_collectionFormat(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestParser_skipPackageByPrefix(t *testing.T) {
+	t.Parallel()
+
+	parser := New()
+
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+
+	parser = New(SetPackagePrefix("github.com/swaggo/swag/cmd"))
+
+	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
+	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+
+	parser = New(SetPackagePrefix("github.com/swaggo/swag/cmd,github.com/swaggo/swag/gen"))
+
+	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+}
+
+func TestParser_ParseRouterApiInFuncBody(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package test
+
+func Test(){
+    // @Router /api/{id} [get]
+    _ = func() {
+	}
+}
+`
+	p := New()
+	p.ParseFuncBody = true
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	ps := p.swagger.Paths.Paths
+
+	val, ok := ps["/api/{id}"]
+
+	assert.True(t, ok)
+	assert.NotNil(t, val.Get)
+}
+
+func TestParser_ParseRouterApiInfoInAndOutFuncBody(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package test
+
+// @Router /api/outside [get]
+func otherRoute(){
+}
+
+func Test(){
+    // @Router /api/inside [get]
+    _ = func() {
+	}
+}
+`
+	p := New()
+	p.ParseFuncBody = true
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	ps := p.swagger.Paths.Paths
+
+	val1, ok := ps["/api/outside"]
+	assert.True(t, ok)
+	assert.NotNil(t, val1.Get)
+
+	val2, ok := ps["/api/inside"]
+	assert.True(t, ok)
+	assert.NotNil(t, val2.Get)
+}
+
+func TestParser_EmbeddedStructAsOtherAliasGoListNested(t *testing.T) {
+	t.Parallel()
+
+	p := New(SetParseDependency(1), ParseUsingGoList(true))
+
+	p.parseGoList = true
+
+	searchDir := "testdata/alias_nested"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	err = p.ParseAPI(searchDir, "cmd/main/main.go", 0)
+	assert.NoError(t, err)
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
 }

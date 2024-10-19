@@ -22,6 +22,8 @@ import (
 	v3 "github.com/sv-tools/openapi/spec"
 
 	"github.com/swaggo/swag/v2"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"sigs.k8s.io/yaml"
 )
 
@@ -111,8 +113,8 @@ type Config struct {
 	// ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
 
-	// ParseDependencies whether swag should be parse outside dependency folder
-	ParseDependency bool
+	// ParseDependencies whether swag should be parse outside dependency folder: 0 none, 1 models, 2 operations, 3 all
+	ParseDependency int
 
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
@@ -149,6 +151,15 @@ type Config struct {
 
 	// CollectionFormat set default collection format
 	CollectionFormat string
+
+	// Parse only packages whose import path match the given prefix, comma separated
+	PackagePrefix string
+
+	// State set host state
+	State string
+
+	// ParseFuncBody whether swag should parse api info inside of funcs
+	ParseFuncBody bool
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -209,12 +220,15 @@ func (g *Gen) Build(config *Config) error {
 		swag.SetTags(config.Tags),
 		swag.GenerateOpenAPI3Doc(config.GenerateOpenAPI3Doc),
 		swag.SetCollectionFormat(config.CollectionFormat),
+		swag.SetPackagePrefix(config.PackagePrefix),
 	)
 
 	p.PropNamingStrategy = config.PropNamingStrategy
 	p.ParseVendor = config.ParseVendor
 	p.ParseInternal = config.ParseInternal
 	p.RequiredByDefault = config.RequiredByDefault
+	p.HostState = config.State
+	p.ParseFuncBody = config.ParseFuncBody
 
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err
@@ -248,6 +262,10 @@ func (g *Gen) writeOpenAPI(config *Config, doc interface{}) error {
 
 func (g *Gen) writeDoc(config *Config, doc interface{}) error {
 	var filename = "docs.go"
+
+	if config.State != "" {
+		filename = config.State + "_" + filename
+	}
 
 	if config.InstanceName != swag.Name {
 		filename = config.InstanceName + "_" + filename
@@ -296,6 +314,10 @@ func (g *Gen) writeDoc(config *Config, doc interface{}) error {
 func (g *Gen) writeJSON(config *Config, spec interface{}) error {
 	var filename = "swagger.json"
 
+	if config.State != "" {
+		filename = config.State + "_" + filename
+	}
+
 	if config.InstanceName != swag.Name {
 		filename = config.InstanceName + "_" + filename
 	}
@@ -319,6 +341,10 @@ func (g *Gen) writeJSON(config *Config, spec interface{}) error {
 
 func (g *Gen) writeYAML(config *Config, swagger interface{}) error {
 	var filename = "swagger.yaml"
+
+	if config.State != "" {
+		filename = config.State + "_" + filename
+	}
 
 	if config.InstanceName != swag.Name {
 		filename = config.InstanceName + "_" + filename
@@ -463,6 +489,11 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *v2.Swagg
 		return err
 	}
 
+	state := ""
+	if len(config.State) > 0 {
+		state = cases.Title(language.English).String(strings.ToLower(config.State))
+	}
+
 	buffer := &bytes.Buffer{}
 
 	err = generator.Execute(buffer, struct {
@@ -474,6 +505,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *v2.Swagg
 		Title              string
 		Description        string
 		Version            string
+		State              string
 		InstanceName       string
 		Schemes            []string
 		GeneratedTime      bool
@@ -490,6 +522,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *v2.Swagg
 		Title:              swagger.Info.Title,
 		Description:        swagger.Info.Description,
 		Version:            swagger.Info.Version,
+		State:              state,
 		InstanceName:       config.InstanceName,
 		LeftTemplateDelim:  config.LeftTemplateDelim,
 		RightTemplateDelim: config.RightTemplateDelim,

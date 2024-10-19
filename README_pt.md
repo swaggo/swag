@@ -43,6 +43,7 @@ Swag converte anotações Go para Documentação Swagger 2.0. Criámos uma varie
 	- [Como utilizar as anotações de segurança](#como-utilizar-as-anotações-de-segurança)
 	- [Adicionar uma descrição para enumerar artigos](#add-a-description-for-enum-items)
 	- [Gerar apenas tipos de ficheiros de documentos específicos](#generate-only-specific-docs-file-file-types)
+    - [Como usar tipos genéricos](#como-usar-tipos-genéricos)
 - [Sobre o projecto](#sobre-o-projecto)
 
 ## Começando
@@ -53,7 +54,7 @@ Swag converte anotações Go para Documentação Swagger 2.0. Criámos uma varie
 ```sh
 go install github.com/swaggo/swag/cmd/swag@latest
 ```
-Para construir a partir da fonte é necessário [Go](https://golang.org/dl/) (1.17 ou mais recente).
+Para construir a partir da fonte é necessário [Go](https://golang.org/dl/) (1.19 ou mais recente).
 
 Ou descarregar um binário pré-compilado a partir da [página de lançamento](https://github.com/swaggo/swag/releases).
 
@@ -95,7 +96,7 @@ OPÇÕES:
    --parseInternal Parse go ficheiros em pacotes internos, desactivados por padrão (padrão: falso)
    --generatedTime Gerar timestamp no topo dos docs.go, desactivado por padrão (padrão: falso)
    --parteDepth value Dependência profundidade parse (por padrão: 100)
-
+   --templateDelims value, --td value fornecem delimitadores personalizados para a geração de modelos Go. O formato é leftDelim,rightDelim. Por exemplo: "[[,]]"
    ...
 
    --help, -h mostrar ajuda (por padrão: falso)
@@ -418,7 +419,7 @@ Quando uma pequena sequência na sua documentação é insuficiente, ou precisa 
 | success | resposta de sucesso que separou por espaços. `return code or default`,`{param type}`,`data type`,`comment` |.
 | failure | Resposta de falha que separou por espaços. `return code or default`,`{param type}`,`data type`,`comment` |
 | response | Igual ao `sucesso` e `falha` |
-| header | Cabeçalho em resposta que separou por espaços. `código de retorno`,`{{tipo de parâmetro}`,`tipo de dados`,`comentário` |.
+| header | Cabeçalho em resposta que separou por espaços. `código de retorno`,`{tipo de parâmetro}`,`tipo de dados`,`comentário` |.
 | router | Definição do caminho que separou por espaços. caminho",`path`,`[httpMethod]` |[httpMethod]` |
 | x-name | A chave de extensão, deve ser iniciada por x- e tomar apenas o valor json.                                                           |
 | x-codeSample | Optional Markdown use. tomar `file` como parâmetro. Isto irá então procurar um ficheiro nomeado como o resumo na pasta dada.                                      |
@@ -905,6 +906,30 @@ Por defeito, o comando `swag` gera especificação Swagger em três tipos difere
 
 Se desejar limitar um conjunto de tipos de ficheiros que devem ser gerados pode utilizar a bandeira `--outputTypes` (short `-ot`). O valor por defeito é `go,json,yaml` - tipos de saída separados por vírgula. Para limitar a saída apenas a ficheiros `go` e `yaml`, escrever-se-ia `go,yaml'. Com comando completo que seria `swag init --outputTypes go,yaml`.
 
+### Como usar tipos genéricos
+
+```go
+// @Success 200 {object} web.GenericNestedResponse[types.Post]
+// @Success 204 {object} web.GenericNestedResponse[types.Post, Types.AnotherOne]
+// @Success 201 {object} web.GenericNestedResponse[web.GenericInnerType[types.Post]]
+func GetPosts(w http.ResponseWriter, r *http.Request) {
+	_ = web.GenericNestedResponse[types.Post]{}
+}
+```
+Para mais detalhes e outros exemplos, veja [esse arquivo](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go)
+
+### Alterar os delimitadores de acção padrão Go Template
+[#980](https://github.com/swaggo/swag/issues/980)
+[#1177](https://github.com/swaggo/swag/issues/1177)
+
+Se as suas anotações ou campos estruturantes contêm "{{" or "}}", a geração de modelos irá muito provavelmente falhar, uma vez que estes são os delimitadores por defeito para [go templates](https://pkg.go.dev/text/template#Template.Delims).
+
+Para que a geração funcione correctamente, pode alterar os delimitadores por defeito com `-td'. Por exemplo:
+``console
+swag init -g http/api.go -td "[[,]"
+```
+
+O novo delimitador é um fio com o formato "`<left delimiter>`,`<right delimiter>`".
 
 ## Sobre o projecto
 Este projecto foi inspirado por [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) mas simplificámos a utilização e acrescentámos apoio a uma variedade de [frameworks web](#estruturas-web-suportadas). A fonte de imagem Gopher é [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). Tem licenças [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).

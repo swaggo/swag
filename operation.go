@@ -23,6 +23,7 @@ import (
 type RouteProperties struct {
 	HTTPMethod string
 	Path       string
+	Deprecated bool
 }
 
 // Operation describes a single API operation on a path.
@@ -32,6 +33,7 @@ type Operation struct {
 	codeExampleFilesDir string
 	spec.Operation
 	RouterProperties []RouteProperties
+	State            string
 }
 
 var mimeTypeAliases = map[string]string{
@@ -120,6 +122,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		lineRemainder = fields[1]
 	}
 	switch lowerAttribute {
+	case stateAttr:
+		operation.ParseStateComment(lineRemainder)
 	case descriptionAttr:
 		operation.ParseDescriptionComment(lineRemainder)
 	case descriptionMarkdownAttr:
@@ -146,7 +150,9 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	case headerAttr:
 		return operation.ParseResponseHeaderComment(lineRemainder, astFile)
 	case routerAttr:
-		return operation.ParseRouterComment(lineRemainder)
+		return operation.ParseRouterComment(lineRemainder, false)
+	case deprecatedRouterAttr:
+		return operation.ParseRouterComment(lineRemainder, true)
 	case securityAttr:
 		return operation.ParseSecurityComment(lineRemainder)
 	case deprecatedAttr:
@@ -160,7 +166,7 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 	return nil
 }
 
-// ParseCodeSample godoc.
+// ParseCodeSample parse code sample.
 func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) error {
 	log.Println("line remainder:", lineRemainder)
 
@@ -196,7 +202,12 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 	return operation.ParseMetadata(attribute, strings.ToLower(attribute), lineRemainder)
 }
 
-// ParseDescriptionComment godoc.
+// ParseStateComment parse state comment.
+func (operation *Operation) ParseStateComment(lineRemainder string) {
+	operation.State = lineRemainder
+}
+
+// ParseDescriptionComment parse description comment.
 func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 	if operation.Description == "" {
 		operation.Description = lineRemainder
@@ -207,7 +218,7 @@ func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 	operation.Description += "\n" + lineRemainder
 }
 
-// ParseMetadata godoc.
+// ParseMetadata parse metadata.
 func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemainder string) error {
 	// parsing specific meta data extensions
 	if strings.HasPrefix(lowerAttribute, "@x-") {
@@ -283,21 +294,12 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 	requiredText := strings.ToLower(matches[4])
 	required := requiredText == "true" || requiredText == requiredLabel
-	description := matches[5]
+	description := strings.Join(strings.Split(matches[5], "\\n"), "\n")
 
 	param := createParameter(paramType, description, name, objectType, refType, required, enums, operation.parser.collectionFormatInQuery)
 
 	switch paramType {
-	case "path", "header":
-		switch objectType {
-		case ARRAY:
-			if !IsPrimitiveType(refType) {
-				return fmt.Errorf("%s is not supported array type for %s", refType, paramType)
-			}
-		case OBJECT:
-			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
-		}
-	case "query", "formData":
+	case "path", "header", "query", "formData":
 		switch objectType {
 		case ARRAY:
 			if !IsPrimitiveType(refType) && !(refType == "file" && paramType == "formData") {
@@ -326,11 +328,14 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					}
 				}
 
-				var formName = name
-				if item.Schema.Extensions != nil {
-					if nameVal, ok := item.Schema.Extensions[formTag]; ok {
-						formName = nameVal.(string)
-					}
+				nameOverrideType := paramType
+				// query also uses formData tags
+				if paramType == "query" {
+					nameOverrideType = "formData"
+				}
+				// load overridden type specific name from extensions if exists
+				if nameVal, ok := item.Schema.Extensions[nameOverrideType]; ok {
+					name = nameVal.(string)
 				}
 
 				switch {
@@ -342,16 +347,19 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					if len(itemSchema.Type) == 0 {
 						itemSchema = operation.parser.getUnderlyingSchema(prop.Items.Schema)
 					}
+					if itemSchema == nil {
+						continue
+					}
 					if len(itemSchema.Type) == 0 {
 						continue
 					}
 					if !IsSimplePrimitiveType(itemSchema.Type[0]) {
 						continue
 					}
-					param = createParameter(paramType, prop.Description, formName, prop.Type[0], itemSchema.Type[0], findInSlice(schema.Required, name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], findInSlice(schema.Required, item.Name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
-					param = createParameter(paramType, prop.Description, formName, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, name), nil, operation.parser.collectionFormatInQuery)
+					param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, item.Name), nil, operation.parser.collectionFormatInQuery)
 				default:
 					operation.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 					continue
@@ -394,7 +402,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		return fmt.Errorf("%s is not supported paramType", paramType)
 	}
 
-	err := operation.parseParamAttribute(commentLine, objectType, refType, &param)
+	err := operation.parseParamAttribute(commentLine, objectType, refType, paramType, &param)
+
 	if err != nil {
 		return err
 	}
@@ -407,12 +416,15 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 const (
 	formTag             = "form"
 	jsonTag             = "json"
+	uriTag              = "uri"
+	headerTag           = "header"
 	bindingTag          = "binding"
 	defaultTag          = "default"
 	enumsTag            = "enums"
 	exampleTag          = "example"
 	schemaExampleTag    = "schemaExample"
 	formatTag           = "format"
+	titleTag            = "title"
 	validateTag         = "validate"
 	minimumTag          = "minimum"
 	maximumTag          = "maximum"
@@ -450,7 +462,7 @@ var regexAttributes = map[string]*regexp.Regexp{
 	schemaExampleTag: regexp.MustCompile(`(?i)\s+schemaExample\(.*\)`),
 }
 
-func (operation *Operation) parseParamAttribute(comment, objectType, schemaType string, param *spec.Parameter) error {
+func (operation *Operation) parseParamAttribute(comment, objectType, schemaType, paramType string, param *spec.Parameter) error {
 	schemaType = TransToValidSchemeType(schemaType)
 
 	for attrKey, re := range regexAttributes {
@@ -461,7 +473,7 @@ func (operation *Operation) parseParamAttribute(comment, objectType, schemaType 
 
 		switch attrKey {
 		case enumsTag:
-			err = setEnumParam(param, attr, objectType, schemaType)
+			err = setEnumParam(param, attr, objectType, schemaType, paramType)
 		case minimumTag, maximumTag:
 			err = setNumberParam(param, attrKey, schemaType, attr, comment)
 		case defaultTag:
@@ -540,7 +552,7 @@ func setNumberParam(param *spec.Parameter, name, schemaType, attr, commentLine s
 	}
 }
 
-func setEnumParam(param *spec.Parameter, attr, objectType, schemaType string) error {
+func setEnumParam(param *spec.Parameter, attr, objectType, schemaType, paramType string) error {
 	for _, e := range strings.Split(attr, ",") {
 		e = strings.TrimSpace(e)
 
@@ -553,7 +565,12 @@ func setEnumParam(param *spec.Parameter, attr, objectType, schemaType string) er
 		case ARRAY:
 			param.Items.Enum = append(param.Items.Enum, value)
 		default:
-			param.Enum = append(param.Enum, value)
+			switch paramType {
+			case "body":
+				param.Schema.Enum = append(param.Schema.Enum, value)
+			default:
+				param.Enum = append(param.Enum, value)
+			}
 		}
 	}
 
@@ -704,10 +721,10 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w./\-{}+:$]*)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w./\-{}\(\)+:$]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for given `router` comment string.
-func (operation *Operation) ParseRouterComment(commentLine string) error {
+func (operation *Operation) ParseRouterComment(commentLine string, deprecated bool) error {
 	matches := routerPattern.FindStringSubmatch(commentLine)
 	if len(matches) != 3 {
 		return fmt.Errorf("can not parse router comment \"%s\"", commentLine)
@@ -716,6 +733,7 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 	signature := RouteProperties{
 		Path:       matches[1],
 		HTTPMethod: strings.ToUpper(matches[2]),
+		Deprecated: deprecated,
 	}
 
 	if _, ok := allMethod[signature.HTTPMethod]; !ok {
@@ -729,6 +747,11 @@ func (operation *Operation) ParseRouterComment(commentLine string) error {
 
 // ParseSecurityComment parses comment for given `security` comment string.
 func (operation *Operation) ParseSecurityComment(commentLine string) error {
+	if len(commentLine) == 0 {
+		operation.Security = []map[string][]string{}
+		return nil
+	}
+
 	var (
 		securityMap    = make(map[string][]string)
 		securitySource = commentLine[strings.Index(commentLine, "@Security")+1:]
@@ -832,9 +855,9 @@ func parseObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec
 	case refType == NIL:
 		return nil, nil
 	case refType == INTERFACE:
-		return PrimitiveSchema(OBJECT), nil
+		return &spec.Schema{}, nil
 	case refType == ANY:
-		return PrimitiveSchema(OBJECT), nil
+		return &spec.Schema{}, nil
 	case IsGolangPrimitiveType(refType):
 		refType = TransToValidSchemeType(refType)
 
@@ -919,6 +942,10 @@ func parseCombinedObjectSchema(parser *Parser, refType string, astFile *ast.File
 			schema, err := parseObjectSchema(parser, keyVal[1], astFile)
 			if err != nil {
 				return nil, err
+			}
+
+			if schema == nil {
+				schema = PrimitiveSchema(OBJECT)
 			}
 
 			props[keyVal[0]] = *schema

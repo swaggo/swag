@@ -63,7 +63,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/MultiBody-array_Post-array2_Post"
+                            "$ref": "#/definitions/MultiBody-array_Post-array_array_Post"
                         }
                     }
                 ],
@@ -77,7 +77,7 @@
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/MultiResponse-array_Post-array2_Post"
+                            "$ref": "#/definitions/MultiResponse-array_Post-array_array_Post"
                         }
                     }
                 }
@@ -173,7 +173,7 @@
                 }
             }
         },
-        "MultiBody-array_Post-array2_Post": {
+        "MultiBody-array_Post-array_array_Post": {
             "type": "object",
             "properties": {
                 "data": {
@@ -207,7 +207,7 @@
                 }
             }
         },
-        "MultiResponse-array_Post-array2_Post": {
+        "MultiResponse-array_Post-array_array_Post": {
             "type": "object",
             "properties": {
                 "data": {

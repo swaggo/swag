@@ -722,7 +722,7 @@ func (p *Parser) ParseDefinitionV3(typeSpecDef *TypeSpecDef) (*SchemaV3, error) 
 	}
 
 	if definition.Spec.Description == "" {
-		fillDefinitionDescriptionV3(definition.Spec, typeSpecDef.File, typeSpecDef)
+		fillDefinitionDescriptionV3(p, definition.Spec, typeSpecDef.File, typeSpecDef)
 	}
 
 	if len(typeSpecDef.Enums) > 0 {
@@ -764,7 +764,7 @@ func (p *Parser) ParseDefinitionV3(typeSpecDef *TypeSpecDef) (*SchemaV3, error) 
 
 // fillDefinitionDescription additionally fills fields in definition (spec.Schema)
 // TODO: If .go file contains many types, it may work for a long time
-func fillDefinitionDescriptionV3(definition *spec.Schema, file *ast.File, typeSpecDef *TypeSpecDef) {
+func fillDefinitionDescriptionV3(parser *Parser, definition *spec.Schema, file *ast.File, typeSpecDef *TypeSpecDef) {
 	for _, astDeclaration := range file.Decls {
 		generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
 		if !ok || generalDeclaration.Tok != token.TYPE {
@@ -777,8 +777,18 @@ func fillDefinitionDescriptionV3(definition *spec.Schema, file *ast.File, typeSp
 				continue
 			}
 
-			definition.Description =
-				extractDeclarationDescription(typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
+			var typeName string
+			if typeSpec.Name != nil {
+				typeName = typeSpec.Name.Name
+			}
+
+			text, err := parser.extractDeclarationDescription(typeName, typeSpec.Comment, generalDeclaration.Doc)
+			if err != nil {
+				parser.debug.Printf("Error extracting declaration description: %s", err)
+				continue
+			}
+
+			definition.Description = text
 		}
 	}
 }

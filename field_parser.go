@@ -69,42 +69,57 @@ func (ps *tagBaseFieldParser) ShouldSkip() bool {
 	return false
 }
 
-func (ps *tagBaseFieldParser) FieldName() (string, error) {
-	var name string
+func (ps *tagBaseFieldParser) FieldNames() ([]string, error) {
+	if len(ps.field.Names) <= 1 {
+		// if embedded but with a json/form name ??
+		if ps.field.Tag != nil {
+			// json:"tag,hoge"
+			name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
+			if name != "" {
+				return []string{name}, nil
+			}
 
+			// use "form" tag over json tag
+			name = ps.FormName()
+			if name != "" {
+				return []string{name}, nil
+			}
+		}
+		if len(ps.field.Names) == 0 {
+			return nil, nil
+		}
+	}
+	var names = make([]string, 0, len(ps.field.Names))
+	for _, name := range ps.field.Names {
+		switch ps.p.PropNamingStrategy {
+		case SnakeCase:
+			names = append(names, toSnakeCase(name.Name))
+		case PascalCase:
+			names = append(names, name.Name)
+		default:
+			names = append(names, toLowerCamelCase(name.Name))
+		}
+	}
+	return names, nil
+}
+
+func (ps *tagBaseFieldParser) firstTagValue(tag string) string {
 	if ps.field.Tag != nil {
-		// json:"tag,hoge"
-		name = strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
-		if name != "" {
-			return name, nil
-		}
-
-		// use "form" tag over json tag
-		name = ps.FormName()
-		if name != "" {
-			return name, nil
-		}
+		return strings.TrimRight(strings.TrimSpace(strings.Split(ps.tag.Get(tag), ",")[0]), "[]")
 	}
-
-	if ps.field.Names == nil {
-		return "", nil
-	}
-
-	switch ps.p.PropNamingStrategy {
-	case SnakeCase:
-		return toSnakeCase(ps.field.Names[0].Name), nil
-	case PascalCase:
-		return ps.field.Names[0].Name, nil
-	default:
-		return toLowerCamelCase(ps.field.Names[0].Name), nil
-	}
+	return ""
 }
 
 func (ps *tagBaseFieldParser) FormName() string {
-	if ps.field.Tag != nil {
-		return strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0])
-	}
-	return ""
+	return ps.firstTagValue(formTag)
+}
+
+func (ps *tagBaseFieldParser) HeaderName() string {
+	return ps.firstTagValue(headerTag)
+}
+
+func (ps *tagBaseFieldParser) PathName() string {
+	return ps.firstTagValue(uriTag)
 }
 
 func toSnakeCase(in string) string {
@@ -161,6 +176,7 @@ func (ps *tagBaseFieldParser) CustomSchema() (*spec.Schema, error) {
 }
 
 type structField struct {
+	title        string
 	schemaType   string
 	arrayType    string
 	formatType   string
@@ -267,6 +283,7 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	field := &structField{
 		schemaType: types[0],
 		formatType: ps.tag.Get(formatTag),
+		title:      ps.tag.Get(titleTag),
 	}
 
 	if len(types) > 1 && (types[0] == ARRAY || types[0] == OBJECT) {
@@ -412,6 +429,7 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	if field.schemaType != ARRAY {
 		schema.Format = field.formatType
 	}
+	schema.Title = field.title
 
 	extensionsTagValue := ps.tag.Get(extensionsTag)
 	if extensionsTagValue != "" {
