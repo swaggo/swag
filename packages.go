@@ -19,7 +19,7 @@ type PackagesDefinitions struct {
 	files             map[*ast.File]*AstFileInfo
 	packages          map[string]*PackageDefinitions
 	uniqueDefinitions map[string]*TypeSpecDef
-	parseDependency   ParseFlag
+	parseDependency   bool
 	debug             Debugger
 }
 
@@ -93,7 +93,7 @@ func (pkgDefs *PackagesDefinitions) RangeFiles(handle func(info *AstFileInfo) er
 	for _, info := range pkgDefs.files {
 		// ignore package path prefix with 'vendor' or $GOROOT,
 		// because the router info of api will not be included these files.
-		if strings.HasPrefix(info.PackagePath, "vendor") || (runtime.GOROOT() != "" && strings.HasPrefix(info.Path, runtime.GOROOT()+string(filepath.Separator))) {
+		if strings.HasPrefix(info.PackagePath, "vendor") || strings.HasPrefix(info.Path, runtime.GOROOT()) {
 			continue
 		}
 		sortedFiles = append(sortedFiles, info)
@@ -133,6 +133,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 		if !ok {
 			continue
 		}
+
 		if generalDeclaration.Tok == token.TYPE {
 			for _, astSpec := range generalDeclaration.Specs {
 				if typeSpec, ok := astSpec.(*ast.TypeSpec); ok {
@@ -166,8 +167,6 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 							pkgDefs.uniqueDefinitions[fullName] = nil
 							anotherTypeDef.NotUnique = true
 							pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
-							anotherTypeDef.SetSchemaName()
-
 							typeSpecDef.NotUnique = true
 							fullName = typeSpecDef.TypeName()
 							pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
@@ -175,8 +174,6 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 					} else {
 						pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 					}
-
-					typeSpecDef.SetSchemaName()
 
 					if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
 						pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name, typeSpecDef.PkgPath).AddTypeSpec(typeSpecDef.Name(), typeSpecDef)
@@ -196,7 +193,6 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 	for _, astDeclaration := range astFile.Decls {
 		funcDeclaration, ok := astDeclaration.(*ast.FuncDecl)
 		if ok && funcDeclaration.Body != nil {
-			functionScopedTypes := make(map[string]*TypeSpecDef)
 			for _, stmt := range funcDeclaration.Body.List {
 				if declStmt, ok := (stmt).(*ast.DeclStmt); ok {
 					if genDecl, ok := (declStmt.Decl).(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
@@ -217,30 +213,11 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									}
 								}
 
-								fullName := typeSpecDef.TypeName()
-								if structType, ok := typeSpecDef.TypeSpec.Type.(*ast.StructType); ok {
-									for _, field := range structType.Fields.List {
-										var idt *ast.Ident
-										var ok bool
-										switch field.Type.(type) {
-										case *ast.Ident:
-											idt, ok = field.Type.(*ast.Ident)
-										case *ast.StarExpr:
-											idt, ok = field.Type.(*ast.StarExpr).X.(*ast.Ident)
-										case *ast.ArrayType:
-											idt, ok = field.Type.(*ast.ArrayType).Elt.(*ast.Ident)
-										}
-										if ok && !IsGolangPrimitiveType(idt.Name) {
-											if functype, ok := functionScopedTypes[idt.Name]; ok {
-												idt.Name = functype.TypeName()
-											}
-										}
-									}
-								}
-
 								if pkgDefs.uniqueDefinitions == nil {
 									pkgDefs.uniqueDefinitions = make(map[string]*TypeSpecDef)
 								}
+
+								fullName := typeSpecDef.TypeName()
 
 								anotherTypeDef, ok := pkgDefs.uniqueDefinitions[fullName]
 								if ok {
@@ -252,18 +229,13 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 										pkgDefs.uniqueDefinitions[fullName] = nil
 										anotherTypeDef.NotUnique = true
 										pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
-										anotherTypeDef.SetSchemaName()
-
 										typeSpecDef.NotUnique = true
 										fullName = typeSpecDef.TypeName()
 										pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 									}
 								} else {
 									pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
-									functionScopedTypes[typeSpec.Name.Name] = typeSpecDef
 								}
-
-								typeSpecDef.SetSchemaName()
 
 								if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
 									pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name, typeSpecDef.PkgPath).AddTypeSpec(fullName, typeSpecDef)
@@ -354,7 +326,7 @@ func (pkgDefs *PackagesDefinitions) EvaluateConstValueByName(file *ast.File, pkg
 			}
 		}
 	}
-	if pkgDefs.parseDependency > 0 {
+	if pkgDefs.parseDependency {
 		for _, pkgPath := range externalPkgPaths {
 			if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
 				if pkg, ok := pkgDefs.packages[pkgPath]; ok {
@@ -383,8 +355,8 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 				continue
 			}
 
-			// delete it from parsed schemas, and will parse it again
-			if _, ok = parsedSchemas[typeDef]; ok {
+			//delete it from parsed schemas, and will parse it again
+			if _, ok := parsedSchemas[typeDef]; ok {
 				delete(parsedSchemas, typeDef)
 			}
 
@@ -393,7 +365,7 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 			}
 
 			name := constVar.Name.Name
-			if _, ok = constVar.Value.(ast.Expr); ok {
+			if _, ok := constVar.Value.(ast.Expr); ok {
 				continue
 			}
 
@@ -499,7 +471,7 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 				}
 				break
 			} else if imp.Name.Name == "_" && len(pkg) > 0 {
-				// for unused types
+				//for unused types
 				pd, ok := pkgDefs.packages[path]
 				if ok {
 					if pd.Name == pkg {
@@ -536,7 +508,14 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 }
 
 func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths, externalPkgPaths []string, name string) (typeDef *TypeSpecDef) {
-	if pkgDefs.parseDependency > 0 {
+	for _, pkgPath := range matchedPkgPaths {
+		typeDef = pkgDefs.findTypeSpec(pkgPath, name)
+		if typeDef != nil {
+			return typeDef
+		}
+	}
+
+	if pkgDefs.parseDependency {
 		for _, pkgPath := range externalPkgPaths {
 			if err := pkgDefs.loadExternalPackage(pkgPath); err == nil {
 				typeDef = pkgDefs.findTypeSpec(pkgPath, name)
@@ -544,13 +523,6 @@ func (pkgDefs *PackagesDefinitions) findTypeSpecFromPackagePaths(matchedPkgPaths
 					return typeDef
 				}
 			}
-		}
-	}
-
-	for _, pkgPath := range matchedPkgPaths {
-		typeDef = pkgDefs.findTypeSpec(pkgPath, name)
-		if typeDef != nil {
-			return typeDef
 		}
 	}
 
@@ -572,32 +544,34 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 
 	parts := strings.Split(strings.Split(typeName, "[")[0], ".")
 	if len(parts) > 1 {
-		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports(parts[0], file)
-		if len(externalPkgPaths) == 0 || pkgDefs.parseDependency == ParseNone {
-			typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
-			if ok {
-				return typeDef
-			}
+		typeDef, ok := pkgDefs.uniqueDefinitions[typeName]
+		if ok {
+			return typeDef
 		}
-		typeDef := pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
-		/*
-		       TODO : remove
-		   		if len(pkgPaths) == 0 && len(externalPkgPaths) == 0 {
-		   			pkgDefinition := pkgDefs.packages["pkg/"+parts[0]]
-		   			if pkgDefinition == nil {
-		   				return pkgDefs.findTypeSpec("", parts[1])
-		   			}
 
-		   			typeDef = pkgDefinition.TypeDefinitions[parts[1]]
-		   		} else {
-		   			typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
-		   		}
+		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports(parts[0], file)
 
-		*/
+		if len(pkgPaths) == 0 && len(externalPkgPaths) == 0 {
+			pkgDefinition := pkgDefs.packages["pkg/"+parts[0]]
+			if pkgDefinition == nil {
+				return pkgDefs.findTypeSpec("", parts[1])
+			}
+
+			typeDef = pkgDefinition.TypeDefinitions[parts[1]]
+		} else {
+			typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, parts[1])
+		}
+
 		return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 	}
 
 	typeDef, ok := pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, typeName)]
+	if ok {
+		return typeDef
+	}
+
+	//in case that comment //@name renamed the type with a name without a dot
+	typeDef, ok = pkgDefs.uniqueDefinitions[typeName]
 	if ok {
 		return typeDef
 	}
@@ -619,22 +593,7 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		}
 	}
 
-	if typeDef != nil {
-		return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
-	}
-
-	// in case that comment //@name renamed the type with a name without a dot
-	for k, v := range pkgDefs.uniqueDefinitions {
-		if v == nil {
-			pkgDefs.debug.Printf("%s TypeSpecDef is nil", k)
-			continue
-		}
-		if v.SchemaName == typeName {
-			return v
-		}
-	}
-
-	return nil
+	return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
 }
 
 func isAliasPkgName(file *ast.File, pkgName string) bool {

@@ -60,21 +60,6 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Equal(t, "csv", schema.Format)
 	})
 
-	t.Run("Title tag", func(t *testing.T) {
-		t.Parallel()
-
-		schema := spec.Schema{}
-		schema.Type = []string{"string"}
-		err := newTagBaseFieldParser(
-			&Parser{},
-			&ast.Field{Tag: &ast.BasicLit{
-				Value: `json:"test" title:"myfield"`,
-			}},
-		).ComplementSchema(&schema)
-		assert.NoError(t, err)
-		assert.Equal(t, "myfield", schema.Title)
-	})
-
 	t.Run("Required tag", func(t *testing.T) {
 		t.Parallel()
 
@@ -676,55 +661,12 @@ func TestValidTags(t *testing.T) {
 		schema.Type = []string{"integer"}
 		err = newTagBaseFieldParser(
 			&Parser{},
-			&ast.Field{
-				Names: []*ast.Ident{{Name: "Test"}},
-				Tag: &ast.BasicLit{
-					Value: `json:"test" validate:"required,oneof=one two"`,
-				}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" validate:"required,oneof=one two"`,
+			}},
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
 		assert.Empty(t, schema.Enum)
-	})
-
-	t.Run("Form Filed Name", func(t *testing.T) {
-		t.Parallel()
-
-		filednames, err := newTagBaseFieldParser(
-			&Parser{},
-			&ast.Field{
-				Names: []*ast.Ident{{Name: "Test"}},
-				Tag: &ast.BasicLit{
-					Value: `form:"test[]"`,
-				}},
-		).FieldNames()
-		assert.NoError(t, err)
-		assert.Equal(t, "test", filednames[0])
-
-		filednames, err = newTagBaseFieldParser(
-			&Parser{},
-			&ast.Field{
-				Names: []*ast.Ident{{Name: "Test"}},
-				Tag: &ast.BasicLit{
-					Value: `form:"test"`,
-				}},
-		).FieldNames()
-		assert.NoError(t, err)
-		assert.Equal(t, "test", filednames[0])
-	})
-
-	t.Run("Two Names", func(t *testing.T) {
-		t.Parallel()
-
-		fieldnames, err := newTagBaseFieldParser(
-			&Parser{},
-			&ast.Field{
-				Names: []*ast.Ident{{Name: "X"}, {Name: "Y"}},
-			},
-		).FieldNames()
-		assert.NoError(t, err)
-		assert.Equal(t, 2, len(fieldnames))
-		assert.Equal(t, "x", fieldnames[0])
-		assert.Equal(t, "y", fieldnames[1])
 	})
 
 	t.Run("Pattern tag", func(t *testing.T) {

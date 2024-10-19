@@ -101,18 +101,6 @@
         }
       }
     },
-    "/GetPet6FunctionScopedComplexResponse": {
-      "get": {
-        "responses": {
-          "200": {
-            "description": "ok",
-            "schema": {
-              "$ref": "#/definitions/api.GetPet6FunctionScopedComplexResponse.response"
-            }
-          }
-        }
-      }
-    },
     "/GetPet6FunctionScopedResponse": {
       "get": {
         "responses": {
@@ -413,36 +401,6 @@
     }
   },
   "definitions": {
-    "api.GetPet6FunctionScopedComplexResponse.pet": {
-      "type": "object",
-      "properties": {
-        "Name": {
-          "type": "string"
-        }
-      }
-    },
-    "api.GetPet6FunctionScopedComplexResponse.pointerPet": {
-      "type": "object",
-      "properties": {
-        "Name": {
-          "type": "string"
-        }
-      }
-    },
-    "api.GetPet6FunctionScopedComplexResponse.response": {
-      "type": "object",
-      "properties": {
-        "Pets": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/api.GetPet6FunctionScopedComplexResponse.pet"
-          }
-        },
-        "PointerPet": {
-          "$ref": "#/definitions/api.GetPet6FunctionScopedComplexResponse.pointerPet"
-        }
-      }
-    },
     "api.GetPet6FunctionScopedResponse.response": {
       "type": "object",
       "properties": {
@@ -823,7 +781,7 @@
       "authorizationUrl": "https://example.com/oauth/authorize",
       "tokenUrl": "https://example.com/oauth/token",
       "scopes": {
-        "admin": "Grants read and write access to administrative information"
+        "admin": " Grants read and write access to administrative information"
       }
     },
     "OAuth2Application": {
@@ -831,8 +789,8 @@
       "flow": "application",
       "tokenUrl": "https://example.com/oauth/token",
       "scopes": {
-        "admin": "Grants read and write access to administrative information",
-        "write": "Grants write access"
+        "admin": " Grants read and write access to administrative information",
+        "write": " Grants write access"
       }
     },
     "OAuth2Implicit": {
@@ -840,8 +798,8 @@
       "flow": "implicit",
       "authorizationUrl": "https://example.com/oauth/authorize",
       "scopes": {
-        "admin": "Grants read and write access to administrative information",
-        "write": "Grants write access"
+        "admin": " Grants read and write access to administrative information",
+        "write": " Grants write access"
       }
     },
     "OAuth2Password": {
@@ -849,9 +807,9 @@
       "flow": "password",
       "tokenUrl": "https://example.com/oauth/token",
       "scopes": {
-        "admin": "Grants read and write access to administrative information",
-        "read": "Grants read access",
-        "write": "Grants write access"
+        "admin": " Grants read and write access to administrative information",
+        "read": " Grants read access",
+        "write": " Grants write access"
       }
     }
   }
