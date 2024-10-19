@@ -997,7 +997,7 @@ const docTemplate = `{
             "authorizationUrl": "https://example.com/oauth/authorize",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": "                            Grants read and write access to administrative information"
+                "admin": "Grants read and write access to administrative information"
             }
         },
         "OAuth2Application": {
@@ -1005,8 +1005,8 @@ const docTemplate = `{
             "flow": "application",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": "                             Grants read and write access to administrative information",
-                "write": "                             Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Implicit": {
@@ -1014,8 +1014,8 @@ const docTemplate = `{
             "flow": "implicit",
             "authorizationUrl": "https://example.com/oauth/authorize",
             "scopes": {
-                "admin": "                          Grants read and write access to administrative information",
-                "write": "                          Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "write": "Grants write access"
             }
         },
         "OAuth2Password": {
@@ -1023,9 +1023,9 @@ const docTemplate = `{
             "flow": "password",
             "tokenUrl": "https://example.com/oauth/token",
             "scopes": {
-                "admin": "                          Grants read and write access to administrative information",
-                "read": "                           Grants read access",
-                "write": "                          Grants write access"
+                "admin": "Grants read and write access to administrative information",
+                "read": "Grants read access",
+                "write": "Grants write access"
             }
         }
     }

@@ -11,9 +11,8 @@ import (
 )
 
 type genericTypeSpec struct {
-	ArrayDepth int
-	TypeSpec   *TypeSpecDef
-	Name       string
+	TypeSpec *TypeSpecDef
+	Name     string
 }
 
 type formalParamType struct {
@@ -26,6 +25,89 @@ func (t *genericTypeSpec) TypeName() string {
 		return t.TypeSpec.TypeName()
 	}
 	return t.Name
+}
+
+func normalizeGenericTypeName(name string) string {
+	return strings.Replace(name, ".", "_", -1)
+}
+
+func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string, file *ast.File) (typeSpecDef *TypeSpecDef) {
+	if strings.HasPrefix(genericParam, "[]") {
+		typeSpecDef = pkgDefs.getTypeFromGenericParam(genericParam[2:], file)
+		if typeSpecDef == nil {
+			return nil
+		}
+		var expr ast.Expr
+		switch typeSpecDef.TypeSpec.Type.(type) {
+		case *ast.ArrayType, *ast.MapType:
+			expr = typeSpecDef.TypeSpec.Type
+		default:
+			name := typeSpecDef.TypeName()
+			expr = ast.NewIdent(name)
+			if _, ok := pkgDefs.uniqueDefinitions[name]; !ok {
+				pkgDefs.uniqueDefinitions[name] = typeSpecDef
+			}
+		}
+		return &TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name: ast.NewIdent(string(IgnoreNameOverridePrefix) + "array_" + typeSpecDef.TypeName()),
+				Type: &ast.ArrayType{
+					Elt: expr,
+				},
+			},
+			Enums:      typeSpecDef.Enums,
+			PkgPath:    typeSpecDef.PkgPath,
+			ParentSpec: typeSpecDef.ParentSpec,
+			SchemaName: "array_" + typeSpecDef.SchemaName,
+			NotUnique:  false,
+		}
+	}
+
+	if strings.HasPrefix(genericParam, "map[") {
+		parts := strings.SplitN(genericParam[4:], "]", 2)
+		if len(parts) != 2 {
+			return nil
+		}
+		typeSpecDef = pkgDefs.getTypeFromGenericParam(parts[1], file)
+		if typeSpecDef == nil {
+			return nil
+		}
+		var expr ast.Expr
+		switch typeSpecDef.TypeSpec.Type.(type) {
+		case *ast.ArrayType, *ast.MapType:
+			expr = typeSpecDef.TypeSpec.Type
+		default:
+			name := typeSpecDef.TypeName()
+			expr = ast.NewIdent(name)
+			if _, ok := pkgDefs.uniqueDefinitions[name]; !ok {
+				pkgDefs.uniqueDefinitions[name] = typeSpecDef
+			}
+		}
+		return &TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name: ast.NewIdent(string(IgnoreNameOverridePrefix) + "map_" + parts[0] + "_" + typeSpecDef.TypeName()),
+				Type: &ast.MapType{
+					Key:   ast.NewIdent(parts[0]), //assume key is string or integer
+					Value: expr,
+				},
+			},
+			Enums:      typeSpecDef.Enums,
+			PkgPath:    typeSpecDef.PkgPath,
+			ParentSpec: typeSpecDef.ParentSpec,
+			SchemaName: "map_" + parts[0] + "_" + typeSpecDef.SchemaName,
+			NotUnique:  false,
+		}
+	}
+	if IsGolangPrimitiveType(genericParam) {
+		return &TypeSpecDef{
+			TypeSpec: &ast.TypeSpec{
+				Name: ast.NewIdent(genericParam),
+				Type: ast.NewIdent(genericParam),
+			},
+			SchemaName: genericParam,
+		}
+	}
+	return pkgDefs.FindTypeSpec(genericParam, file)
 }
 
 func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, original *TypeSpecDef, fullGenericForm string) *TypeSpecDef {
@@ -55,45 +137,44 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 	genericParamTypeDefs := map[string]*genericTypeSpec{}
 
 	for i, genericParam := range genericParams {
-		arrayDepth := 0
-		for {
-			if len(genericParam) <= 2 || genericParam[:2] != "[]" {
-				break
-			}
-			genericParam = genericParam[2:]
-			arrayDepth++
-		}
-
-		typeDef := pkgDefs.FindTypeSpec(genericParam, file)
-		if typeDef != nil {
-			genericParam = typeDef.TypeName()
-			if _, ok := pkgDefs.uniqueDefinitions[genericParam]; !ok {
-				pkgDefs.uniqueDefinitions[genericParam] = typeDef
+		var typeDef *TypeSpecDef
+		if !IsGolangPrimitiveType(genericParam) {
+			typeDef = pkgDefs.getTypeFromGenericParam(genericParam, file)
+			if typeDef != nil {
+				genericParam = typeDef.TypeName()
+				if _, ok := pkgDefs.uniqueDefinitions[genericParam]; !ok {
+					pkgDefs.uniqueDefinitions[genericParam] = typeDef
+				}
 			}
 		}
-
 		genericParamTypeDefs[formals[i].Name] = &genericTypeSpec{
-			ArrayDepth: arrayDepth,
-			TypeSpec:   typeDef,
-			Name:       genericParam,
+			TypeSpec: typeDef,
+			Name:     genericParam,
 		}
 	}
 
 	name = fmt.Sprintf("%s%s-", string(IgnoreNameOverridePrefix), original.TypeName())
+	schemaName := fmt.Sprintf("%s-", original.SchemaName)
+
 	var nameParts []string
+	var schemaNameParts []string
+
 	for _, def := range formals {
 		if specDef, ok := genericParamTypeDefs[def.Name]; ok {
-			var prefix = ""
-			if specDef.ArrayDepth == 1 {
-				prefix = "array_"
-			} else if specDef.ArrayDepth > 1 {
-				prefix = fmt.Sprintf("array%d_", specDef.ArrayDepth)
+			nameParts = append(nameParts, specDef.Name)
+
+			schemaNamePart := specDef.Name
+
+			if specDef.TypeSpec != nil {
+				schemaNamePart = specDef.TypeSpec.SchemaName
 			}
-			nameParts = append(nameParts, prefix+specDef.TypeName())
+
+			schemaNameParts = append(schemaNameParts, schemaNamePart)
 		}
 	}
 
-	name += strings.Replace(strings.Join(nameParts, "-"), ".", "_", -1)
+	name += normalizeGenericTypeName(strings.Join(nameParts, "-"))
+	schemaName += normalizeGenericTypeName(strings.Join(schemaNameParts, "-"))
 
 	if typeSpec, ok := pkgDefs.uniqueDefinitions[name]; ok {
 		return typeSpec
@@ -111,6 +192,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 			Doc:    original.TypeSpec.Doc,
 			Assign: original.TypeSpec.Assign,
 		},
+		SchemaName: schemaName,
 	}
 	pkgDefs.uniqueDefinitions[name] = parametrizedTypeSpec
 
@@ -177,11 +259,7 @@ func (pkgDefs *PackagesDefinitions) resolveGenericType(file *ast.File, expr ast.
 	switch astExpr := expr.(type) {
 	case *ast.Ident:
 		if genTypeSpec, ok := genericParamTypeDefs[astExpr.Name]; ok {
-			retType := pkgDefs.getParametrizedType(genTypeSpec)
-			for i := 0; i < genTypeSpec.ArrayDepth; i++ {
-				retType = &ast.ArrayType{Elt: retType}
-			}
-			return retType
+			return pkgDefs.getParametrizedType(genTypeSpec)
 		}
 	case *ast.ArrayType:
 		return &ast.ArrayType{

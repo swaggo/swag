@@ -81,7 +81,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/web.GenericBodyMulti-array_types_Post-array2_types_Post"
+                            "$ref": "#/definitions/web.GenericBodyMulti-array_types_Post-array_array_types_Post"
                         }
                     }
                 ],
@@ -101,7 +101,7 @@
                     "222": {
                         "description": "",
                         "schema": {
-                            "$ref": "#/definitions/web.GenericResponseMulti-array_types_Post-array2_types_Post"
+                            "$ref": "#/definitions/web.GenericResponseMulti-array_types_Post-array_array_types_Post"
                         }
                     }
                 }
@@ -171,6 +171,12 @@
                             "$ref": "#/definitions/api.Response2-string-types_Field-int-string"
                         }
                     },
+                    "207": {
+                        "description": "Multi-Status",
+                        "schema": {
+                            "$ref": "#/definitions/api.Response-array_map_string_string-map_string_array_types_Field-int"
+                        }
+                    },
                     "222": {
                         "description": "",
                         "schema": {
@@ -222,6 +228,26 @@
                 }
             }
         },
+        "api.Response-array_map_string_string-map_string_array_types_Field-int": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/map_string_array_types.Field-int"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "api.Response-string-types_Field-int": {
             "type": "object",
             "properties": {
@@ -255,6 +281,15 @@
             "properties": {
                 "data": {
                     "type": "string"
+                }
+            }
+        },
+        "map_string_array_types.Field-int": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/types.Field-int"
                 }
             }
         },
@@ -408,7 +443,7 @@
                 }
             }
         },
-        "web.GenericBodyMulti-array_types_Post-array2_types_Post": {
+        "web.GenericBodyMulti-array_types_Post-array_array_types_Post": {
             "type": "object",
             "properties": {
                 "data": {
@@ -511,7 +546,7 @@
                 }
             }
         },
-        "web.GenericResponseMulti-array_types_Post-array2_types_Post": {
+        "web.GenericResponseMulti-array_types_Post-array_array_types_Post": {
             "type": "object",
             "properties": {
                 "data": {

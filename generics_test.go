@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -52,6 +51,7 @@ func TestParseGenericsArrays(t *testing.T) {
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
+
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
@@ -97,7 +97,6 @@ func TestParseGenericsProperty(t *testing.T) {
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
-	os.WriteFile(searchDir+"/expected.json", b, fs.ModePerm)
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
@@ -124,10 +123,26 @@ func TestParseGenericsPackageAlias(t *testing.T) {
 	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
-	p := New(SetParseDependency(true))
+	p := New(SetParseDependency(1))
 	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+}
+
+func TestParseGenericsFunctionScoped(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/generics_function_scoped"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	p := New()
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
