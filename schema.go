@@ -36,6 +36,12 @@ const (
 	IgnoreNameOverridePrefix = '$'
 )
 
+var validPrimitiveFormat = map[string]map[string]bool{
+	INTEGER: {"int32": true, "int64": true},
+	NUMBER:  {"float": true, "double": true},
+	STRING:  {"byte": true, "binary": true, "date": true, "date-time": true, "password": true},
+}
+
 // CheckSchemaType checks if typeName is not a name of primitive type.
 func CheckSchemaType(typeName string) error {
 	if !IsPrimitiveType(typeName) {
