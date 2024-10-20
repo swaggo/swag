@@ -420,6 +420,7 @@ When a short string in your documentation is insufficient, or you need images, c
 | description.markdown  | A short description of the application. Parsed from the api.md file. This is an alternative to @description    |// @description.markdown No value needed, this parses the description from api.md         																 |
 | tag.name    | Name of a tag.| // @tag.name This is the name of the tag                     |
 | tag.description.markdown   | Description of the tag this is an alternative to tag.description. The description will be read from a file named like tagname.md  | // @tag.description.markdown         |
+| tag.x-name  | The extension key, must be start by x- and take only string value | // @x-example-key value |
 
 
 ## API Operation
