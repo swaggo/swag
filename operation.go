@@ -386,7 +386,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			param.Schema = schema
 		}
 	default:
-		return fmt.Errorf("%s is not supported paramType", paramType)
+		return fmt.Errorf("not supported paramType: %s", paramType)
 	}
 
 	err := operation.parseParamAttribute(commentLine, objectType, refType, paramType, &param)
