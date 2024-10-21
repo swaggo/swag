@@ -1078,7 +1078,7 @@ func (parser *Parser) parseRouterAPIInfoComment(comments []*ast.Comment, fileInf
 		for _, comment := range comments {
 			err := operation.ParseComment(comment.Text, fileInfo.File)
 			if err != nil {
-				return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)
+				return fmt.Errorf("ParseComment error in file %s for comment: '%s': %+v", fileInfo.Path, comment.Text, err)
 			}
 			if operation.State != "" && operation.State != parser.HostState {
 				return nil
