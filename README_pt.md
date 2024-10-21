@@ -870,18 +870,18 @@ Cada operação API.
 // @Security ApiKeyAuth
 ```
 
-Faça-o AND condicione-o
+Faça-o OR condicione-o
 
 ```go
 // @Security ApiKeyAuth
 // @Security OAuth2Application[write, admin]
 ```
 
-Faça-o OR condição
+Faça-o AND condição
 
 ```go
-// @Security ApiKeyAuth || firebase
-// @Security OAuth2Application[write, admin] || APIKeyAuth
+// @Security ApiKeyAuth && firebase
+// @Security OAuth2Application[write, admin] && APIKeyAuth
 ```
 
 
