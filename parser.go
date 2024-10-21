@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -385,6 +386,47 @@ func (parser *Parser) skipPackageByPrefix(pkgpath string) bool {
 	return true
 }
 
+func parseAnnotations(packageDir, searchDir string) error {
+	// Combine the packageDir and searchDir to locate the files
+	files, err := filepath.Glob(filepath.Join(packageDir, searchDir, "*.go"))
+	if err != nil {
+		return fmt.Errorf("error finding files in directory %s: %w", searchDir, err)
+	}
+
+	for _, file := range files {
+		f, err := os.Open(file)
+		if err != nil {
+			return fmt.Errorf("error opening file %s: %w", file, err)
+		}
+		defer f.Close()
+
+		scanner := bufio.NewScanner(f)
+		previousLineWasAnnotation := false
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			trimmed := strings.TrimSpace(line)
+
+			if strings.HasPrefix(trimmed, "//") {
+				// This is an annotation
+				if previousLineWasAnnotation && len(trimmed) == 2 {
+					// The previous line was an annotation, and this line is a newline
+					return fmt.Errorf("newline detected between annotations in file %s, which is not allowed", file)
+				}
+				previousLineWasAnnotation = true
+			} else {
+				previousLineWasAnnotation = false
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("error reading annotations in file %s: %w", file, err)
+		}
+	}
+
+	return nil
+}
+
 // ParseAPIMultiSearchDir is like ParseAPI but for multiple search dirs.
 func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile string, parseDepth int) error {
 	for _, searchDir := range searchDirs {
@@ -397,6 +439,10 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 
 		err = parser.getAllGoFileInfo(packageDir, searchDir)
 		if err != nil {
+			return err
+		}
+
+		if err := parseAnnotations(packageDir, searchDir); err != nil {
 			return err
 		}
 	}
