@@ -1040,6 +1040,31 @@ func matchExtension(extensionToMatch string, comments []*ast.Comment) (match boo
 	return true
 }
 
+func getFuncDoc(decl any) (*ast.CommentGroup, bool) {
+	switch astDecl := decl.(type) {
+	case *ast.FuncDecl: // func name() {}
+		return astDecl.Doc, true
+	case *ast.GenDecl: // var name = namePointToFuncDirectlyOrIndirectly
+		if astDecl.Tok != token.VAR {
+			return nil, false
+		}
+		varSpec, ok := astDecl.Specs[0].(*ast.ValueSpec)
+		if !ok || len(varSpec.Values) != 1 {
+			return nil, false
+		}
+		_, ok = getFuncDoc(varSpec)
+		return astDecl.Doc, ok
+	case *ast.ValueSpec:
+		value, ok := astDecl.Values[0].(*ast.Ident)
+		if !ok || value == nil {
+			return nil, false
+		}
+		_, ok = getFuncDoc(value.Obj.Decl)
+		return astDecl.Doc, ok
+	}
+	return nil, false
+}
+
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 	if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
@@ -1059,10 +1084,10 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 		return nil
 	}
 
-	for _, astDescription := range fileInfo.File.Decls {
-		astDeclaration, ok := astDescription.(*ast.FuncDecl)
-		if ok && astDeclaration.Doc != nil && astDeclaration.Doc.List != nil {
-			if err := parser.parseRouterAPIInfoComment(astDeclaration.Doc.List, fileInfo); err != nil {
+	for _, decl := range fileInfo.File.Decls {
+		funcDoc, ok := getFuncDoc(decl)
+		if ok && funcDoc != nil && funcDoc.List != nil {
+			if err := parser.parseRouterAPIInfoComment(funcDoc.List, fileInfo); err != nil {
 				return err
 			}
 		}
