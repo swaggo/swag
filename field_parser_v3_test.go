@@ -16,6 +16,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" example:"one"`,
 			}},
@@ -27,6 +28,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" example:""`,
 			}},
@@ -38,6 +40,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"float"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" example:"one"`,
 			}},
@@ -52,6 +55,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" format:"csv"`,
 			}},
@@ -65,6 +69,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 
 		got, err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" binding:"required"`,
 			}},
@@ -74,6 +79,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 
 		got, err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required"`,
 			}},
@@ -89,6 +95,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 			&Parser{
 				RequiredByDefault: true,
 			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test"`,
 			}},
@@ -104,6 +111,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 			&Parser{
 				RequiredByDefault: true,
 			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" binding:"optional"`,
 			}},
@@ -115,6 +123,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 			&Parser{
 				RequiredByDefault: true,
 			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"optional"`,
 			}},
@@ -131,6 +140,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Extensions = map[string]interface{}{}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" extensions:"x-nullable,x-abc=def,!x-omitempty,x-example=[0, 9],x-example2={çãíœ, (bar=(abc, def)), [0,9]}"`,
 			}},
@@ -150,6 +160,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"a,b,c"`,
 			}},
@@ -161,6 +172,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"float"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"a,b,c"`,
 			}},
@@ -177,6 +189,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Enum = []interface{}{}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"0,1,2" x-enum-varnames:"Daily,Weekly,Monthly"`,
 			}},
@@ -188,6 +201,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"int"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"0,1,2,3" x-enum-varnames:"Daily,Weekly,Monthly"`,
 			}},
@@ -204,6 +218,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Enum = []interface{}{}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" enums:"0,1,2" x-enum-varnames:"Daily,Weekly,Monthly"`,
 			}},
@@ -220,6 +235,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" default:"pass"`,
 			}},
@@ -231,6 +247,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"float"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" default:"pass"`,
 			}},
@@ -245,6 +262,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"integer"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maximum:"1"`,
 			}},
@@ -257,6 +275,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"integer"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maximum:"one"`,
 			}},
@@ -267,6 +286,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"number"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maximum:"1"`,
 			}},
@@ -279,6 +299,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"number"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maximum:"one"`,
 			}},
@@ -289,6 +310,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"number"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" multipleOf:"1"`,
 			}},
@@ -301,6 +323,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"number"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" multipleOf:"one"`,
 			}},
@@ -311,6 +334,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"integer"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" minimum:"1"`,
 			}},
@@ -323,6 +347,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"integer"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" minimum:"one"`,
 			}},
@@ -337,6 +362,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maxLength:"1"`,
 			}},
@@ -349,6 +375,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" maxLength:"one"`,
 			}},
@@ -359,6 +386,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" minLength:"1"`,
 			}},
@@ -371,6 +399,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" minLength:"one"`,
 			}},
@@ -385,12 +414,31 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" readonly:"true"`,
 			}},
 		).ComplementSchema(schema)
 		assert.NoError(t, err)
 		assert.Equal(t, true, schema.Spec.ReadOnly)
+	})
+
+	t.Run("OneOf tag", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.NewSchemaSpec()
+		schema.Spec.Type = []string{ANY}
+		err := newTagBaseFieldParserV3(
+			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" oneOf:"string,float64"`,
+			}},
+		).ComplementSchema(schema)
+		assert.NoError(t, err)
+		assert.Len(t, schema.Spec.OneOf, 2)
+		assert.Equal(t, spec.NewSingleOrArray("string"), schema.Spec.OneOf[0].Spec.Type)
+		assert.Equal(t, spec.NewSingleOrArray("number"), schema.Spec.OneOf[1].Spec.Type)
 	})
 }
 
@@ -402,6 +450,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,min=1"`,
 			}},
@@ -416,6 +465,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,gte=1"`,
 			}},
@@ -428,6 +478,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"integer"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,min=1"`,
 			}},
@@ -446,6 +497,7 @@ func TestValidTagsV3(t *testing.T) {
 
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,min=1"`,
 			}},
@@ -457,6 +509,7 @@ func TestValidTagsV3(t *testing.T) {
 		// wrong validate tag will be ignored.
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=ten,min=1"`,
 			}},
@@ -473,6 +526,7 @@ func TestValidTagsV3(t *testing.T) {
 
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof='red book' 'green book'"`,
 			}},
@@ -484,6 +538,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"integer"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof=1 2 3"`,
 			}},
@@ -499,6 +554,7 @@ func TestValidTagsV3(t *testing.T) {
 
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof=red green yellow"`,
 			}},
@@ -510,6 +566,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof='red green' blue 'c0x2Cc' 'd0x7Cd'"`,
 			}},
@@ -521,6 +578,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof='c0x9Ab' book"`,
 			}},
@@ -532,6 +590,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" binding:"oneof=foo bar" validate:"required,oneof=foo bar" enums:"a,b,c"`,
 			}},
@@ -543,6 +602,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" binding:"oneof=aa bb" validate:"required,oneof=foo bar"`,
 			}},
@@ -560,6 +620,7 @@ func TestValidTagsV3(t *testing.T) {
 
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,unique"`,
 			}},
@@ -577,6 +638,7 @@ func TestValidTagsV3(t *testing.T) {
 
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,unique,max=10,min=1,oneof=a0x2Cc 'c0x7Cd book',omitempty,dive,max=1"`,
 			}},
@@ -597,6 +659,7 @@ func TestValidTagsV3(t *testing.T) {
 
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof=,max=10=90,min=1"`,
 			}},
@@ -612,6 +675,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Items.Schema.Spec.Type = []string{"string"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,max=10,min=one"`,
 			}},
@@ -624,6 +688,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = []string{"integer"}
 		err = newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" validate:"required,oneof=one two"`,
 			}},
@@ -641,6 +706,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Items.Schema.Spec.Type = []string{"string"}
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" pattern:"^[a-zA-Z0-9_]*$"`,
 			}},
@@ -656,6 +722,7 @@ func TestValidTagsV3(t *testing.T) {
 		schema.Spec.Type = typeString
 		err := newTagBaseFieldParserV3(
 			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"test" pattern:"^[a-zA-Z0-9_]*$"`,
 			}},
