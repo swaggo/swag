@@ -122,8 +122,8 @@ var testFiles = map[string][]byte{
 
 		import "net/http"
 
-		// @Summary Add a new pet to the store
-		// @Description get string by ID
+		// @Summary		Add a new pet to the store
+		// @Description	get string by ID
 		func GetStringByInt(w http.ResponseWriter, r *http.Request) {
 			//write your code
 		}`),

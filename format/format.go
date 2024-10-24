@@ -93,15 +93,17 @@ func (f *Format) excludeFile(path string) bool {
 }
 
 func (f *Format) format(path string) error {
-	contents, err := os.ReadFile(path)
+	original, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
+	contents := make([]byte, len(original))
+	copy(contents, original)
 	formatted, err := f.formatter.Format(path, contents)
 	if err != nil {
 		return err
 	}
-	if bytes.Equal(contents, formatted) {
+	if bytes.Equal(original, formatted) {
 		// Skip write if no change
 		return nil
 	}
