@@ -574,7 +574,7 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 			}
 		}
 	}
-	if len(pkg) == 0 || file.Name.Name == pkg {
+	if (len(pkg) == 0 || file.Name.Name == pkg) && pkgDefs.files[file] != nil {
 		matchedPkgPaths = append(matchedPkgPaths, pkgDefs.files[file].PackagePath)
 	}
 
