@@ -1,9 +1,11 @@
 package swag
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -4366,4 +4368,53 @@ func Test(){
 	val2, ok := ps["/api/inside"]
 	assert.True(t, ok)
 	assert.NotNil(t, val2.Get)
+}
+
+// Test function for parser
+func TestParser_ParseAnnotations(t *testing.T) {
+	t.Run("NoNewlineBetweenAnnotations", func(t *testing.T) {
+		content := `// @annotation1
+// @annotation2`
+		err := testParseAnnotations(content)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("NewlineBetweenAnnotations", func(t *testing.T) {
+		content := `// @annotation1
+
+// @annotation2`
+		err := testParseAnnotations(content)
+		if err == nil {
+			t.Fatalf("expected an error due to newline between annotations, but got nil")
+		}
+	})
+}
+
+// Helper function to simulate annotation parsing and detect newline issues
+func testParseAnnotations(content string) error {
+	scanner := bufio.NewScanner(strings.NewReader(content))
+	previousLineWasAnnotation := false
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+
+		if strings.HasPrefix(trimmed, "//") {
+			// Detected an annotation
+			if previousLineWasAnnotation && len(trimmed) == 2 {
+				// Newline detected between annotations
+				return fmt.Errorf("newline detected between annotations, which is not allowed")
+			}
+			previousLineWasAnnotation = true
+		} else if trimmed == "" && previousLineWasAnnotation {
+			// Newline following an annotation
+			return fmt.Errorf("newline detected between annotations")
+		} else {
+			previousLineWasAnnotation = false
+		}
+	}
+
+	return scanner.Err()
 }
