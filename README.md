@@ -478,7 +478,8 @@ The following annotations are only available if you set the -v3.1 flag in the CL
 | x-name               | The extension key, must be start by x- and take only json value.                                                                                                                                  |
 | x-codeSample         | Optional Markdown usage. take `file` as parameter. This will then search for a file named like the summary in the given folder.                                                                   |
 | deprecated           | Mark endpoint as deprecated.                                                                                                                                                                      |
-
+| servers.url          | (Only for -v3.1 on the CLI) The URL of a server that will override the base one for this operation                                                                                                |
+| servers.description  | (Only for -v3.1 on the CLI) The description of a server that will override the base one for this operation                                                                                        |
 
 
 ## Mime Types
@@ -993,7 +994,7 @@ If the struct is defined in a dependency package, use `--parseDependency`.
 
 If the struct is defined in your main project, use `--parseInternal`.
 
-if you want to include both internal and from dependencies use both flags 
+if you want to include both internal and from dependencies use both flags
 ```
 swag init --parseDependency --parseInternal
 ```

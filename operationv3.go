@@ -96,6 +96,10 @@ func (o *OperationV3) ParseComment(comment string, astFile *ast.File) error {
 		o.Deprecated = true
 	case xCodeSamplesAttr, xCodeSamplesAttrOriginal:
 		return o.ParseCodeSample(attribute, commentLine, lineRemainder)
+	case "@servers.url":
+		return o.ParseServerURLComment(lineRemainder)
+	case "@servers.description":
+		return o.ParseServerDescriptionComment(lineRemainder)
 	default:
 		return o.ParseMetadata(attribute, lowerAttribute, lineRemainder)
 	}
@@ -738,6 +742,19 @@ func (o *OperationV3) ParseRouterComment(commentLine string) error {
 
 	o.RouterProperties = append(o.RouterProperties, signature)
 
+	return nil
+}
+
+func (o *OperationV3) ParseServerURLComment(commentLine string) error {
+	server := spec.NewServer()
+	server.Spec.URL = commentLine
+	o.Servers = append(o.Servers, server)
+	return nil
+}
+
+func (o *OperationV3) ParseServerDescriptionComment(commentLine string) error {
+	lastAddedServer := o.Servers[len(o.Servers)-1]
+	lastAddedServer.Spec.Description = commentLine
 	return nil
 }
 
