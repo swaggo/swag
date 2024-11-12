@@ -405,6 +405,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 			operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 		}
+
+		param.ParamProps.In = "body"
 		fallthrough
 	case "body":
 		if objectType == PRIMITIVE {
