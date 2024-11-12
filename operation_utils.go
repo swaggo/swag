@@ -42,11 +42,11 @@ func (operation *Operation) getStructFields(refType string, astFile *ast.File) (
 }
 
 type TagValue struct {
-	Param    string
-	Validate string
+	ParamValue string
+	Validate   string
 }
 
-func (operation *Operation) parseStructTag(tag string) (*TagValue, error) {
+func (operation *Operation) parseNonJsonStructTag(tag string) (*TagValue, error) {
 	paramPattern := regexp.MustCompile(`(?:param|query):"([^"]+)"`)
 	validatePattern := regexp.MustCompile(`validate:"([^"]+)"`)
 
@@ -56,7 +56,7 @@ func (operation *Operation) parseStructTag(tag string) (*TagValue, error) {
 	result := &TagValue{}
 
 	if len(paramMatch) > 1 {
-		result.Param = paramMatch[1]
+		result.ParamValue = paramMatch[1]
 	}
 
 	if len(validateMatch) > 1 {
@@ -99,7 +99,7 @@ func (operation *Operation) findStructFields(file *ast.File, refType string) ([]
 				fieldInfo.Name = field.Names[0].Name
 			}
 
-			fieldInfo.Type = operation.typeExprToString(field.Type)
+			fieldInfo.Type = operation.typeToString(field.Type)
 
 			if field.Tag != nil {
 				fieldInfo.Tag = field.Tag.Value
@@ -120,10 +120,14 @@ func (operation *Operation) findStructFields(file *ast.File, refType string) ([]
 	return fields, nil
 }
 
-func (operation *Operation) typeExprToString(expr ast.Expr) string {
+func (operation *Operation) typeToString(expr ast.Expr) string {
 	switch t := expr.(type) {
 	case *ast.Ident:
 		return t.Name
+	case *ast.StarExpr:
+		return "" + operation.typeToString(t.X)
+	case *ast.SelectorExpr:
+		return operation.typeToString(t.X) + "." + t.Sel.Name
 	default:
 		return fmt.Sprintf("%T", expr)
 	}

@@ -386,10 +386,10 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			paramType := ""
 
 			if strings.Contains(field.Tag, "param") {
-				tag, _ = operation.parseStructTag(field.Tag)
+				tag, _ = operation.parseNonJsonStructTag(field.Tag)
 				paramType = "path"
 			} else if strings.Contains(field.Tag, "query") {
-				tag, _ = operation.parseStructTag(field.Tag)
+				tag, _ = operation.parseNonJsonStructTag(field.Tag)
 				paramType = "query"
 			} else {
 				continue
@@ -400,7 +400,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				required = true
 			}
 
-			param := createParameter(paramType, tag.Param, tag.Param, PRIMITIVE, field.Type, required, nil, operation.parser.collectionFormatInQuery)
+			param := createParameter(paramType, tag.ParamValue, tag.ParamValue, PRIMITIVE, field.Type, required, nil, operation.parser.collectionFormatInQuery)
 
 			operation.Operation.Parameters = append(operation.Operation.Parameters, param)
 		}
