@@ -375,6 +375,36 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 			return nil
 		}
+	case "requestBody":
+		fields, err := operation.getStructFields(refType, astFile)
+		if err != nil {
+			return err
+		}
+
+		for _, field := range fields {
+			tag := &TagValue{}
+			paramType := ""
+
+			if strings.Contains(field.Tag, "param") {
+				tag, _ = operation.parseStructTag(field.Tag)
+				paramType = "path"
+			} else if strings.Contains(field.Tag, "query") {
+				tag, _ = operation.parseStructTag(field.Tag)
+				paramType = "query"
+			} else {
+				continue
+			}
+
+			required := false
+			if tag.Validate == "required" {
+				required = true
+			}
+
+			param := createParameter(paramType, tag.Param, tag.Param, PRIMITIVE, field.Type, required, nil, operation.parser.collectionFormatInQuery)
+
+			operation.Operation.Parameters = append(operation.Operation.Parameters, param)
+		}
+		fallthrough
 	case "body":
 		if objectType == PRIMITIVE {
 			param.Schema = PrimitiveSchema(refType)
