@@ -376,20 +376,21 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			return nil
 		}
 	case "requestBody":
-		fields, err := operation.getStructFields(refType, astFile)
+		pkgDefs := operation.parser.packages.FindTypeSpec(refType, astFile)
+		fields, err := getStructFields(refType, pkgDefs)
 		if err != nil {
 			return err
 		}
 
 		for _, field := range fields {
-			tag := &TagValue{}
+			tag := &StructTagValue{}
 			paramType := ""
 
 			if strings.Contains(field.Tag, "param") {
-				tag, _ = operation.parseNonJsonStructTag(field.Tag)
+				tag, _ = parseNonJsonStructTag(field.Tag)
 				paramType = "path"
 			} else if strings.Contains(field.Tag, "query") {
-				tag, _ = operation.parseNonJsonStructTag(field.Tag)
+				tag, _ = parseNonJsonStructTag(field.Tag)
 				paramType = "query"
 			} else {
 				continue

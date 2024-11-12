@@ -10,8 +10,7 @@ import (
 	"regexp"
 )
 
-func (operation *Operation) getStructFields(refType string, astFile *ast.File) ([]StructFieldInfo, error) {
-	pkgDefs := operation.parser.packages.FindTypeSpec(refType, astFile)
+func getStructFields(refType string, pkgDefs *TypeSpecDef) ([]StructFieldInfo, error) {
 	files, err := os.ReadDir(pkgDefs.PkgPath)
 	if err != nil {
 		return nil, err
@@ -26,7 +25,7 @@ func (operation *Operation) getStructFields(refType string, astFile *ast.File) (
 			return nil, err
 		}
 
-		fields, err := operation.findStructFields(astFile, refType)
+		fields, err := findStructFields(astFile, refType)
 		if err != nil {
 			return nil, err
 		}
@@ -41,19 +40,14 @@ func (operation *Operation) getStructFields(refType string, astFile *ast.File) (
 	return nil, nil
 }
 
-type TagValue struct {
-	ParamValue string
-	Validate   string
-}
-
-func (operation *Operation) parseNonJsonStructTag(tag string) (*TagValue, error) {
+func parseNonJsonStructTag(tag string) (*StructTagValue, error) {
 	paramPattern := regexp.MustCompile(`(?:param|query):"([^"]+)"`)
 	validatePattern := regexp.MustCompile(`validate:"([^"]+)"`)
 
 	paramMatch := paramPattern.FindStringSubmatch(tag)
 	validateMatch := validatePattern.FindStringSubmatch(tag)
 
-	result := &TagValue{}
+	result := &StructTagValue{}
 
 	if len(paramMatch) > 1 {
 		result.ParamValue = paramMatch[1]
@@ -66,14 +60,7 @@ func (operation *Operation) parseNonJsonStructTag(tag string) (*TagValue, error)
 	return result, nil
 }
 
-type StructFieldInfo struct {
-	Name     string
-	Type     string
-	Tag      string
-	Comments []string
-}
-
-func (operation *Operation) findStructFields(file *ast.File, refType string) ([]StructFieldInfo, error) {
+func findStructFields(file *ast.File, refType string) ([]StructFieldInfo, error) {
 	structName := refType
 	var fields []StructFieldInfo
 
@@ -99,7 +86,7 @@ func (operation *Operation) findStructFields(file *ast.File, refType string) ([]
 				fieldInfo.Name = field.Names[0].Name
 			}
 
-			fieldInfo.Type = operation.typeToString(field.Type)
+			fieldInfo.Type = typeToString(field.Type)
 
 			if field.Tag != nil {
 				fieldInfo.Tag = field.Tag.Value
@@ -120,14 +107,14 @@ func (operation *Operation) findStructFields(file *ast.File, refType string) ([]
 	return fields, nil
 }
 
-func (operation *Operation) typeToString(expr ast.Expr) string {
+func typeToString(expr ast.Expr) string {
 	switch t := expr.(type) {
 	case *ast.Ident:
 		return t.Name
 	case *ast.StarExpr:
-		return "" + operation.typeToString(t.X)
+		return "" + typeToString(t.X)
 	case *ast.SelectorExpr:
-		return operation.typeToString(t.X) + "." + t.Sel.Name
+		return typeToString(t.X) + "." + t.Sel.Name
 	default:
 		return fmt.Sprintf("%T", expr)
 	}
