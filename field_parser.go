@@ -473,6 +473,16 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	eleSchema.MinLength = field.minLength
 	eleSchema.Enum = field.enums
 
+	if schema.Extensions == nil {
+		schema.Extensions = map[string]interface{}{}
+	}
+	if ps.firstTagValue(paramTag) != "" {
+		schema.Extensions[paramTag] = ps.firstTagValue(paramTag)
+	}
+	if ps.firstTagValue(queryTag) != "" {
+		schema.Extensions[queryTag] = ps.firstTagValue(queryTag)
+	}
+
 	return nil
 }
 

@@ -375,44 +375,18 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 			return nil
 		}
-	case "requestBody":
-		pkgDefs := operation.parser.packages.FindTypeSpec(refType, astFile)
-		fields, err := getStructFields(refType, pkgDefs)
-		if err != nil {
-			return err
-		}
-
-		for _, field := range fields {
-			tag := &StructTagValue{}
-			paramType := ""
-
-			if strings.Contains(field.Tag, "param") {
-				tag, _ = parseNonJsonStructTag(field.Tag)
-				paramType = "path"
-			} else if strings.Contains(field.Tag, "query") {
-				tag, _ = parseNonJsonStructTag(field.Tag)
-				paramType = "query"
-			} else {
-				continue
-			}
-
-			required := false
-			if tag.Validate == "required" {
-				required = true
-			}
-
-			param := createParameter(paramType, tag.ParamValue, tag.ParamValue, PRIMITIVE, field.Type, required, nil, operation.parser.collectionFormatInQuery)
-
-			operation.Operation.Parameters = append(operation.Operation.Parameters, param)
-		}
-
-		param.ParamProps.In = "body"
-		fallthrough
 	case "body":
 		if objectType == PRIMITIVE {
 			param.Schema = PrimitiveSchema(refType)
 		} else {
-			schema, err := operation.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
+			schema, err := operation.parser.getTypeSchema(refType, astFile, false)
+			if err != nil {
+				return err
+			}
+
+			operation.populateBodyParams(schema)
+
+			schema, err = operation.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
 			if err != nil {
 				return err
 			}
@@ -434,9 +408,88 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	return nil
 }
 
+func (operation *Operation) populateBodyParams(schema *spec.Schema) {
+	queryProperties, pathProperties := make(spec.SchemaProperties), make(spec.SchemaProperties)
+	for _, properties := range schema.Properties {
+		if paramName, ok := properties.Extensions[paramTag].(string); ok {
+			pathProperties[paramName] = properties
+			delete(schema.Properties, paramName)
+
+		} else if paramName, ok := properties.Extensions[queryTag].(string); ok {
+			queryProperties[paramName] = properties
+			delete(schema.Properties, paramName)
+
+		}
+	}
+
+	operation.populateParams(queryProperties, schema, "query")
+	operation.populateParams(pathProperties, schema, "path")
+}
+
+func (operation *Operation) populateParams(properties spec.SchemaProperties, schema *spec.Schema, paramType string) {
+	var param spec.Parameter
+
+	for _, item := range properties.ToOrderedSchemaItems() {
+		name, prop := item.Name, &item.Schema
+		if len(prop.Type) == 0 {
+			prop = operation.parser.getUnderlyingSchema(prop)
+			if len(prop.Type) == 0 {
+				continue
+			}
+		}
+
+		switch {
+		case prop.Type[0] == ARRAY:
+			if prop.Items.Schema == nil {
+				continue
+			}
+			itemSchema := prop.Items.Schema
+			if len(itemSchema.Type) == 0 {
+				itemSchema = operation.parser.getUnderlyingSchema(prop.Items.Schema)
+			}
+
+			if itemSchema == nil || len(itemSchema.Type) == 0 {
+				continue
+			}
+
+			if !IsSimplePrimitiveType(itemSchema.Type[0]) {
+				continue
+			}
+			param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], findInSlice(schema.Required, item.Name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
+
+		case IsSimplePrimitiveType(prop.Type[0]):
+			param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, item.Name), nil, operation.parser.collectionFormatInQuery)
+		default:
+			operation.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, schema.Ref.String, paramType)
+			continue
+		}
+
+		param.Nullable = prop.Nullable
+		param.Format = prop.Format
+		param.Default = prop.Default
+		param.Example = prop.Example
+		param.Extensions = prop.Extensions
+		param.CommonValidations.Maximum = prop.Maximum
+		param.CommonValidations.Minimum = prop.Minimum
+		param.CommonValidations.ExclusiveMaximum = prop.ExclusiveMaximum
+		param.CommonValidations.ExclusiveMinimum = prop.ExclusiveMinimum
+		param.CommonValidations.MaxLength = prop.MaxLength
+		param.CommonValidations.MinLength = prop.MinLength
+		param.CommonValidations.Pattern = prop.Pattern
+		param.CommonValidations.MaxItems = prop.MaxItems
+		param.CommonValidations.MinItems = prop.MinItems
+		param.CommonValidations.UniqueItems = prop.UniqueItems
+		param.CommonValidations.MultipleOf = prop.MultipleOf
+		param.CommonValidations.Enum = prop.Enum
+		operation.Operation.Parameters = append(operation.Operation.Parameters, param)
+	}
+}
+
 const (
 	formTag             = "form"
 	jsonTag             = "json"
+	queryTag            = "query"
+	paramTag            = "path"
 	uriTag              = "uri"
 	headerTag           = "header"
 	bindingTag          = "binding"
