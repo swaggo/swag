@@ -385,6 +385,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			}
 
 			operation.populateBodyParams(schema)
+			if len(schema.Properties) == 0 {
+				return nil
+			}
 
 			schema, err = operation.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
 			if err != nil {
