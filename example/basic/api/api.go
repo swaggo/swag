@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/swaggo/swag/example/basic/web"
+	"github.com/rampnow-io/swag/example/basic/web"
 )
 
 // GetStringByInt example

@@ -1,7 +1,7 @@
 package api
 
 import (
-	myv1 "github.com/swaggo/swag/testdata/generics_package_alias/internal/path1/v1"
+	myv1 "github.com/rampnow-io/swag/testdata/generics_package_alias/internal/path1/v1"
 )
 
 // @Summary Create movie

@@ -3,7 +3,7 @@ package global_override
 import (
 	"net/http"
 
-	"github.com/swaggo/swag/testdata/global_override/api"
+	"github.com/rampnow-io/swag/testdata/global_override/api"
 )
 
 // @title Swagger Example API

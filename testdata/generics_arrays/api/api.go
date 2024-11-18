@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/swaggo/swag/testdata/generics_arrays/types"
-	"github.com/swaggo/swag/testdata/generics_arrays/web"
+	"github.com/rampnow-io/swag/testdata/generics_arrays/types"
+	"github.com/rampnow-io/swag/testdata/generics_arrays/web"
 )
 
 // @Summary List Posts

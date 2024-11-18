@@ -1,8 +1,9 @@
 package data
 
 import (
-	"github.com/swaggo/swag/testdata/alias_type/types"
 	"time"
+
+	"github.com/rampnow-io/swag/testdata/alias_type/types"
 )
 
 type TimeContainer struct {

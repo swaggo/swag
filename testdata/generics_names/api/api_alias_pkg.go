@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	mytypes "github.com/swaggo/swag/testdata/generics_names/types"
-	myweb "github.com/swaggo/swag/testdata/generics_names/web"
+	mytypes "github.com/rampnow-io/swag/testdata/generics_names/types"
+	myweb "github.com/rampnow-io/swag/testdata/generics_names/web"
 )
 
 // @Summary Add a new pet to the store

@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	_ "github.com/swaggo/swag/testdata/simple/web"
+	_ "github.com/rampnow-io/swag/testdata/simple/web"
 )
 
 // @Summary      Add a new pet to the store

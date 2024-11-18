@@ -1,4 +1,4 @@
-module github.com/swaggo/swag
+module github.com/rampnow-io/swag
 
 go 1.18
 

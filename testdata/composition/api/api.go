@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/swaggo/swag/testdata/composition/common"
+	"github.com/rampnow-io/swag/testdata/composition/common"
 )
 
 type Foo struct {

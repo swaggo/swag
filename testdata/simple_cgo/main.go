@@ -12,7 +12,7 @@ import "C"
 import (
 	"net/http"
 
-	"github.com/swaggo/swag/testdata/simple_cgo/api"
+	"github.com/rampnow-io/swag/testdata/simple_cgo/api"
 )
 
 // @title Swagger Example API

@@ -1,9 +1,10 @@
 package api
 
 import (
-	"github.com/swaggo/swag/testdata/generics_property/types"
-	"github.com/swaggo/swag/testdata/generics_property/web"
 	"net/http"
+
+	"github.com/rampnow-io/swag/testdata/generics_property/types"
+	"github.com/rampnow-io/swag/testdata/generics_property/web"
 )
 
 type NestedResponse struct {

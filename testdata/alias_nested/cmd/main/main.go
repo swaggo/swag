@@ -1,6 +1,6 @@
 package main
 
-import "github.com/swaggo/swag/testdata/alias_nested/pkg/good"
+import "github.com/rampnow-io/swag/testdata/alias_nested/pkg/good"
 
 // @Success 200 {object} good.Gen
 // @Router /api [get].

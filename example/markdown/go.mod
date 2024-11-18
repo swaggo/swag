@@ -1,11 +1,11 @@
-module github.com/swaggo/swag/example/markdown
+module github.com/rampnow-io/swag/example/markdown
 
 go 1.18
 
 require (
 	github.com/gorilla/mux v1.8.0
 	github.com/swaggo/http-swagger v1.2.6
-	github.com/swaggo/swag v1.8.1
+	github.com/rampnow-io/swag v1.8.1
 )
 
 require (
