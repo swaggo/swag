@@ -2054,3 +2054,31 @@ func TestProcessProduceComment(t *testing.T) {
 	content = operation.Responses.Spec.Response["500"].Spec.Spec.Content
 	assert.Nil(t, content)
 }
+
+func TestParseServerCommentV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(nil)
+
+	comment := `/@servers.url https://api.example.com/v1`
+	err := operation.ParseComment(comment, nil)
+	require.NoError(t, err)
+
+	comment = `/@servers.description override path 1`
+	err = operation.ParseComment(comment, nil)
+	require.NoError(t, err)
+
+	comment = `/@servers.url https://api.example.com/v2`
+	err = operation.ParseComment(comment, nil)
+	require.NoError(t, err)
+
+	comment = `/@servers.description override path 2`
+	err = operation.ParseComment(comment, nil)
+	require.NoError(t, err)
+
+	assert.Len(t, operation.Servers, 2)
+	assert.Equal(t, "https://api.example.com/v1", operation.Servers[0].Spec.URL)
+	assert.Equal(t, "override path 1", operation.Servers[0].Spec.Description)
+	assert.Equal(t, "https://api.example.com/v2", operation.Servers[1].Spec.URL)
+	assert.Equal(t, "override path 2", operation.Servers[1].Spec.Description)
+}
