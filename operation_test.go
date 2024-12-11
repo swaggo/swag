@@ -1619,6 +1619,7 @@ func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
 	expected := `[
     {
         "type": "integer",
+        "format": "int64",
         "description": "this is a test file",
         "name": "file",
         "in": "formData",

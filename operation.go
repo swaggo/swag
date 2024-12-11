@@ -254,7 +254,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 	name := matches[1]
 	paramType := matches[2]
-	refType := TransToValidSchemeType(matches[3])
+	refType, format := TransToValidSchemeTypeWithFormat(matches[3])
 
 	// Detect refType
 	objectType := OBJECT
@@ -262,7 +262,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	if strings.HasPrefix(refType, "[]") {
 		objectType = ARRAY
 		refType = strings.TrimPrefix(refType, "[]")
-		refType = TransToValidSchemeType(refType)
+		refType, format = TransToValidSchemeTypeWithFormat(refType)
 	} else if IsPrimitiveType(refType) ||
 		paramType == "formData" && refType == "file" {
 		objectType = PRIMITIVE
@@ -275,7 +275,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 			if objectType == OBJECT {
 				objectType = PRIMITIVE
 			}
-			refType = TransToValidSchemeType(schema.Type[0])
+			refType, format = TransToValidSchemeTypeWithFormat(schema.Type[0])
 			enums = schema.Enum
 		}
 	}
@@ -284,7 +284,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	required := requiredText == "true" || requiredText == requiredLabel
 	description := strings.Join(strings.Split(matches[5], "\\n"), "\n")
 
-	param := createParameter(paramType, description, name, objectType, refType, required, enums, operation.parser.collectionFormatInQuery)
+	param := createParameter(paramType, description, name, objectType, refType, format, required, enums, operation.parser.collectionFormatInQuery)
 
 	switch paramType {
 	case "path", "header", "query", "formData":
@@ -344,10 +344,10 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					if !IsSimplePrimitiveType(itemSchema.Type[0]) {
 						continue
 					}
-					param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], findInSlice(schema.Required, item.Name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], format, findInSlice(schema.Required, item.Name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
-					param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], findInSlice(schema.Required, item.Name), nil, operation.parser.collectionFormatInQuery)
+					param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], format, findInSlice(schema.Required, item.Name), nil, operation.parser.collectionFormatInQuery)
 				default:
 					operation.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 					continue
@@ -846,9 +846,7 @@ func parseObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec
 	case refType == ANY:
 		return &spec.Schema{}, nil
 	case IsGolangPrimitiveType(refType):
-		refType = TransToValidSchemeType(refType)
-
-		return PrimitiveSchema(refType), nil
+		return TransToValidPrimitiveSchema(refType), nil
 	case IsPrimitiveType(refType):
 		return PrimitiveSchema(refType), nil
 	case strings.HasPrefix(refType, "[]"):
@@ -1183,7 +1181,7 @@ func (operation *Operation) AddResponse(code int, response *spec.Response) {
 }
 
 // createParameter returns swagger spec.Parameter for given  paramType, description, paramName, schemaType, required.
-func createParameter(paramType, description, paramName, objectType, schemaType string, required bool, enums []interface{}, collectionFormat string) spec.Parameter {
+func createParameter(paramType, description, paramName, objectType, schemaType string, format string, required bool, enums []interface{}, collectionFormat string) spec.Parameter {
 	// //five possible parameter types. 	query, path, body, header, form
 	result := spec.Parameter{
 		ParamProps: spec.ParamProps{
@@ -1207,12 +1205,14 @@ func createParameter(paramType, description, paramName, objectType, schemaType s
 				Enum: enums,
 			},
 			SimpleSchema: spec.SimpleSchema{
-				Type: schemaType,
+				Type:   schemaType,
+				Format: format,
 			},
 		}
 	case PRIMITIVE, OBJECT:
 		result.Type = schemaType
 		result.Enum = enums
+		result.Format = format
 	}
 	return result
 }

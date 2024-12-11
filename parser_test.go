@@ -1332,7 +1332,8 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     "type": "integer"
                 },
                 "err": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int32"
                 },
                 "status": {
                     "type": "boolean"
@@ -1788,7 +1789,8 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     "type": "integer"
                 },
                 "err": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int32"
                 },
                 "status": {
                     "type": "boolean"
@@ -1947,7 +1949,8 @@ func TestParseStructComment(t *testing.T) {
                 },
                 "errorNo": {
                     "description": "Error ` + "`" + `number` + "`" + ` tick comment",
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         }

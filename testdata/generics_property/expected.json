@@ -153,7 +153,8 @@
                     }
                 },
                 "items2": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int32"
                 },
                 "post": {
                     "$ref": "#/definitions/types.Field-array_types_Post"
@@ -444,7 +445,8 @@
                     }
                 },
                 "items2": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int32"
                 }
             }
         }

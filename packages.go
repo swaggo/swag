@@ -146,7 +146,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						parsedSchemas[typeSpecDef] = &Schema{
 							PkgPath: typeSpecDef.PkgPath,
 							Name:    astFile.Name.Name,
-							Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
+							Schema:  TransToValidPrimitiveSchema(idt.Name),
 						}
 					}
 
@@ -213,7 +213,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									parsedSchemas[typeSpecDef] = &Schema{
 										PkgPath: typeSpecDef.PkgPath,
 										Name:    astFile.Name.Name,
-										Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
+										Schema:  TransToValidPrimitiveSchema(idt.Name),
 									}
 								}
 
