@@ -78,9 +78,11 @@ func IsNumericType(typeName string) bool {
 // TransToValidPrimitiveSchema transfer golang basic type to swagger schema with format considered.
 func TransToValidPrimitiveSchema(typeName string) *spec.Schema {
 	switch typeName {
-	case "uint", "int", "uint8", "int8", "uint16", "int16", "byte", "int32", "rune":
+	case "int", "uint":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{INTEGER}}}
+	case "uint8", "int8", "uint16", "int16", "byte", "int32", "uint32", "rune":
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{INTEGER}, Format: "int32"}}
-	case "uint64", "int64", "uint32":
+	case "uint64", "int64":
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{INTEGER}, Format: "int64"}}
 	case "float32", "float64":
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{NUMBER}, Format: typeName}}
@@ -95,9 +97,11 @@ func TransToValidPrimitiveSchema(typeName string) *spec.Schema {
 // TransToValidSchemeTypeWithFormat indicates type will transfer golang basic type to swagger supported type with format.
 func TransToValidSchemeTypeWithFormat(typeName string) (string, string) {
 	switch typeName {
-	case "uint", "int", "uint8", "int8", "uint16", "int16", "byte", "int32", "rune":
+	case "int", "uint":
+		return INTEGER, ""
+	case "uint8", "int8", "uint16", "int16", "byte", "int32", "uint32", "rune":
 		return INTEGER, "int32"
-	case "uint64", "int64", "uint32":
+	case "uint64", "int64":
 		return INTEGER, "int64"
 	case "float32", "float64":
 		return NUMBER, typeName
