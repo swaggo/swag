@@ -1215,7 +1215,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return &spec.Schema{}, nil
 	}
 	if IsGolangPrimitiveType(typeName) {
-		return PrimitiveSchema(TransToValidSchemeType(typeName)), nil
+		return TransToValidPrimitiveSchema(typeName), nil
 	}
 
 	schemaType, err := convertFromSpecificToPrimitive(typeName)
