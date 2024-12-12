@@ -12,6 +12,8 @@ import (
 	"sort"
 	"strings"
 	"text/tabwriter"
+
+	"golang.org/x/tools/imports"
 )
 
 // Check of @Param @Success @Failure @Response @Header
@@ -68,8 +70,11 @@ func (f *Formatter) Format(fileName string, contents []byte) ([]byte, error) {
 	for _, comment := range ast.Comments {
 		formatFuncDoc(fileSet, comment.List, &edits)
 	}
-
-	return edits.apply(contents), nil
+	formatted, err := imports.Process(fileName, edits.apply(contents), nil)
+	if err != nil {
+		return nil, err
+	}
+	return formatted, nil
 }
 
 type edit struct {
