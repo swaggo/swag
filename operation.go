@@ -407,7 +407,7 @@ const (
 	uriTag              = "uri"
 	headerTag           = "header"
 	bindingTag          = "binding"
-	defaultTag          = "default"
+	defaultTag          = "swag_default"
 	enumsTag            = "enums"
 	exampleTag          = "example"
 	schemaExampleTag    = "schemaExample"

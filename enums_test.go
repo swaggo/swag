@@ -21,7 +21,7 @@ func TestParseGlobalEnums(t *testing.T) {
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
-	constsPath := "github.com/swaggo/swag/testdata/enums/consts"
+	constsPath := "github.com/griffnb/swag/testdata/enums/consts"
 	assert.Equal(t, bits.UintSize, p.packages.packages[constsPath].ConstTable["uintSize"].Value)
 	assert.Equal(t, int32(62), p.packages.packages[constsPath].ConstTable["maxBase"].Value)
 	assert.Equal(t, 8, p.packages.packages[constsPath].ConstTable["shlByLen"].Value)

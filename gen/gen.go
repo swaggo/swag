@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/spec"
-	"github.com/swaggo/swag"
+	"github.com/griffnb/swag"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"sigs.k8s.io/yaml"

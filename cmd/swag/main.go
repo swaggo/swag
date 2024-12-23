@@ -9,9 +9,9 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/swaggo/swag"
-	"github.com/swaggo/swag/format"
-	"github.com/swaggo/swag/gen"
+	"github.com/griffnb/swag"
+	"github.com/griffnb/swag/format"
+	"github.com/griffnb/swag/gen"
 )
 
 const (
@@ -274,7 +274,7 @@ func initAction(ctx *cli.Context) error {
 func main() {
 	app := cli.NewApp()
 	app.Version = swag.Version
-	app.Usage = "Automatically generate RESTful API documentation with Swagger 2.0 for Go."
+	app.Usage = "Automatically generate RESTful API documentation with Swagger 2.0 for Go. Forked"
 	app.Commands = []*cli.Command{
 		{
 			Name:    "init",
