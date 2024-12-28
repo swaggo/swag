@@ -649,7 +649,7 @@ type DeepObject struct { //in `proto` package
 }
 @success 200 {object} jsonresult.JSONResult{data1=proto.Order{data=proto.DeepObject},data2=[]proto.Order{data=[]proto.DeepObject}} "desc"
 ```
-### Add response request
+### Add request headers
 
 ```go
 // @Param        X-MyHeader	  header    string    true   	"MyHeader must be set for valid response"
