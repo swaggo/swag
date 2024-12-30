@@ -1768,18 +1768,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 		return v, nil
 	case ARRAY:
-		values := strings.Split(exampleValue, ",")
-		result := make([]interface{}, 0)
-		for _, value := range values {
-			v, err := defineTypeOfExample(arrayType, "", value)
-			if err != nil {
-				return nil, err
-			}
-
-			result = append(result, v)
-		}
-
-		return result, nil
+		return parseNestedArrays(exampleValue, arrayType)
 	case OBJECT:
 		if arrayType == "" {
 			return nil, fmt.Errorf("%s is unsupported type in example value `%s`", schemaType, exampleValue)
@@ -1810,6 +1799,96 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 	}
 
 	return nil, fmt.Errorf("%s is unsupported type in example value %s", schemaType, exampleValue)
+}
+
+const (
+	nestedArrayStart = "{"
+	nestedArrayEnd   = "}"
+)
+
+func parseNestedArrays(input string, arrayType string) (interface{}, error) {
+	if strings.HasPrefix(input, nestedArrayStart) && strings.HasSuffix(input, nestedArrayEnd) {
+		input = strings.TrimPrefix(strings.TrimSuffix(input, nestedArrayEnd), nestedArrayStart)
+	}
+	tree, err := parseStringToTree(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return treeToNestedArrays(tree, arrayType)
+}
+
+type Node struct {
+	Value    string
+	Children []*Node
+}
+
+func parseStringToTree(input string) (*Node, error) {
+	root := &Node{}
+	stack := []*Node{root}
+	currentNode := root
+
+	startLen := len(nestedArrayStart)
+	endLen := len(nestedArrayEnd)
+
+	i := 0
+	for i < len(input) {
+		if i+startLen <= len(input) && input[i:i+startLen] == nestedArrayStart {
+			// Start of a new array
+			newNode := &Node{}
+			currentNode.Children = append(currentNode.Children, newNode)
+			stack = append(stack, newNode)
+			currentNode = newNode
+			i += startLen
+		} else if i+endLen <= len(input) && input[i:i+endLen] == nestedArrayEnd {
+			// End of the current array
+			stack = stack[:len(stack)-1]
+			if len(stack) > 0 {
+				currentNode = stack[len(stack)-1]
+			}
+			i += endLen
+		} else if input[i] == ',' {
+			// Skip commas outside nested arrays
+			i++
+		} else {
+			// Parse the value
+			j := i
+			for j < len(input) && input[j] != ',' && (j+startLen > len(input) || input[j:j+startLen] != nestedArrayStart) && (j+endLen > len(input) || input[j:j+endLen] != nestedArrayEnd) {
+				j++
+			}
+			value := strings.TrimSpace(input[i:j])
+			if value != "" {
+				currentNode.Children = append(currentNode.Children, &Node{Value: value})
+			}
+			i = j
+		}
+	}
+
+	return root, nil
+}
+
+func treeToNestedArrays(node *Node, arrayType string) ([]interface{}, error) {
+	if len(node.Children) == 0 {
+		return []interface{}{node.Value}, nil
+	}
+
+	result := make([]interface{}, 0)
+	for _, child := range node.Children {
+		if len(child.Children) > 0 {
+			a, err := treeToNestedArrays(child, arrayType)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, a)
+		} else {
+			v, err := defineTypeOfExample(arrayType, "", child.Value)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, v)
+		}
+	}
+	return result, nil
 }
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
