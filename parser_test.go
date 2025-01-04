@@ -578,7 +578,8 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
 		"@tag.name test",
 		"@tag.description A test Tag",
 		"@tag.docs.url https://example.com",
-		"@tag.docs.description Best example documentation"})
+		"@tag.docs.description Best example documentation",
+		"@tag.x-displayName Test group"})
 	assert.NoError(t, err)
 
 	b, _ := json.MarshalIndent(parser.GetSwagger().Tags, "", "    ")
@@ -589,7 +590,8 @@ func TestParser_ParseGeneralAPITagDocs(t *testing.T) {
         "externalDocs": {
             "description": "Best example documentation",
             "url": "https://example.com"
-        }
+        },
+        "x-displayName": "Test group"
     }
 ]`
 	assert.Equal(t, expected, string(b))
@@ -1332,7 +1334,8 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                     "type": "integer"
                 },
                 "err": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int32"
                 },
                 "status": {
                     "type": "boolean"
@@ -1788,7 +1791,8 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                     "type": "integer"
                 },
                 "err": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int32"
                 },
                 "status": {
                     "type": "boolean"
@@ -1947,7 +1951,8 @@ func TestParseStructComment(t *testing.T) {
                 },
                 "errorNo": {
                     "description": "Error ` + "`" + `number` + "`" + ` tick comment",
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         }
@@ -4417,4 +4422,54 @@ func testParseAnnotations(content string) error {
 	}
 
 	return scanner.Err()
+}
+
+func TestParser_EmbeddedStructAsOtherAliasGoListNested(t *testing.T) {
+	t.Parallel()
+
+	p := New(SetParseDependency(1), ParseUsingGoList(true))
+
+	p.parseGoList = true
+
+	searchDir := "testdata/alias_nested"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	err = p.ParseAPI(searchDir, "cmd/main/main.go", 0)
+	assert.NoError(t, err)
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+}
+
+func TestParser_genVarDefinedFuncDoc(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+func f() {}
+// @Summary	generate var-defined functions' doc
+// @Router /test [get]
+var Func = f
+// @Summary generate indirectly pointing
+// @Router /test2 [get]
+var Func2 = Func
+`
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+	_, _ = p.packages.ParseTypes()
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	val, ok := p.swagger.Paths.Paths["/test"]
+	assert.True(t, ok)
+	assert.NotNil(t, val.Get)
+	assert.Equal(t, val.Get.OperationProps.Summary, "generate var-defined functions' doc")
+
+	val2, ok := p.swagger.Paths.Paths["/test2"]
+	assert.True(t, ok)
+	assert.NotNil(t, val2.Get)
+	assert.Equal(t, val2.Get.OperationProps.Summary, "generate indirectly pointing")
 }

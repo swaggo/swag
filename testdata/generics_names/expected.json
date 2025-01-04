@@ -304,7 +304,8 @@
                 },
                 "errorNo": {
                     "description": "Error `number` tick comment",
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         },

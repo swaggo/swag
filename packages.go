@@ -146,7 +146,7 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 						parsedSchemas[typeSpecDef] = &Schema{
 							PkgPath: typeSpecDef.PkgPath,
 							Name:    astFile.Name.Name,
-							Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
+							Schema:  TransToValidPrimitiveSchema(idt.Name),
 						}
 					}
 
@@ -166,6 +166,8 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 							pkgDefs.uniqueDefinitions[fullName] = nil
 							anotherTypeDef.NotUnique = true
 							pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
+							anotherTypeDef.SetSchemaName()
+
 							typeSpecDef.NotUnique = true
 							fullName = typeSpecDef.TypeName()
 							pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
@@ -173,6 +175,8 @@ func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packag
 					} else {
 						pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 					}
+
+					typeSpecDef.SetSchemaName()
 
 					if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
 						pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name, typeSpecDef.PkgPath).AddTypeSpec(typeSpecDef.Name(), typeSpecDef)
@@ -209,7 +213,7 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									parsedSchemas[typeSpecDef] = &Schema{
 										PkgPath: typeSpecDef.PkgPath,
 										Name:    astFile.Name.Name,
-										Schema:  PrimitiveSchema(TransToValidSchemeType(idt.Name)),
+										Schema:  TransToValidPrimitiveSchema(idt.Name),
 									}
 								}
 
@@ -248,6 +252,8 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 										pkgDefs.uniqueDefinitions[fullName] = nil
 										anotherTypeDef.NotUnique = true
 										pkgDefs.uniqueDefinitions[anotherTypeDef.TypeName()] = anotherTypeDef
+										anotherTypeDef.SetSchemaName()
+
 										typeSpecDef.NotUnique = true
 										fullName = typeSpecDef.TypeName()
 										pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
@@ -256,6 +262,8 @@ func (pkgDefs *PackagesDefinitions) parseFunctionScopedTypesFromFile(astFile *as
 									pkgDefs.uniqueDefinitions[fullName] = typeSpecDef
 									functionScopedTypes[typeSpec.Name.Name] = typeSpecDef
 								}
+
+								typeSpecDef.SetSchemaName()
 
 								if pkgDefs.packages[typeSpecDef.PkgPath] == nil {
 									pkgDefs.packages[typeSpecDef.PkgPath] = NewPackageDefinitions(astFile.Name.Name, typeSpecDef.PkgPath).AddTypeSpec(fullName, typeSpecDef)
@@ -374,7 +382,7 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 				continue
 			}
 
-			//delete it from parsed schemas, and will parse it again
+			// delete it from parsed schemas, and will parse it again
 			if _, ok = parsedSchemas[typeDef]; ok {
 				delete(parsedSchemas, typeDef)
 			}
@@ -490,7 +498,7 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 				}
 				break
 			} else if imp.Name.Name == "_" && len(pkg) > 0 {
-				//for unused types
+				// for unused types
 				pd, ok := pkgDefs.packages[path]
 				if ok {
 					if pd.Name == pkg {
@@ -579,17 +587,27 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 		return typeDef
 	}
 
-	//in case that comment //@name renamed the type with a name without a dot
-	typeDef, ok = pkgDefs.uniqueDefinitions[typeName]
-	if ok {
-		return typeDef
-	}
-
 	name := parts[0]
 	typeDef, ok = pkgDefs.uniqueDefinitions[fullTypeName(file.Name.Name, name)]
 	if !ok {
 		pkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports("", file)
 		typeDef = pkgDefs.findTypeSpecFromPackagePaths(pkgPaths, externalPkgPaths, name)
 	}
-	return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
+
+	if typeDef != nil {
+		return pkgDefs.parametrizeGenericType(file, typeDef, typeName)
+	}
+
+	// in case that comment //@name renamed the type with a name without a dot
+	for k, v := range pkgDefs.uniqueDefinitions {
+		if v == nil {
+			pkgDefs.debug.Printf("%s TypeSpecDef is nil", k)
+			continue
+		}
+		if v.SchemaName == typeName {
+			return v
+		}
+	}
+
+	return nil
 }

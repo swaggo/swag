@@ -102,6 +102,10 @@
                             "A": "AAA",
                             "B": "BBB"
                         },
+                        "x-enum-descriptions": [
+                            "AAA",
+                            "BBB"
+                        ],
                         "x-enum-varnames": [
                             "None",
                             "A",
@@ -128,6 +132,12 @@
                             "Mask3": "Mask3",
                             "Mask4": "Mask4"
                         },
+                        "x-enum-descriptions": [
+                            "Mask1",
+                            "Mask2",
+                            "Mask3",
+                            "Mask4"
+                        ],
                         "x-enum-varnames": [
                             "Mask1",
                             "Mask2",
@@ -155,6 +165,11 @@
                             "Student": "student",
                             "Teacher": "teacher"
                         },
+                        "x-enum-descriptions": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
                         "x-enum-varnames": [
                             "Teacher",
                             "Student",
@@ -224,6 +239,11 @@
                             "Student": "student",
                             "Teacher": "teacher"
                         },
+                        "x-enum-descriptions": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
                         "x-enum-varnames": [
                             "Teacher",
                             "Student",
@@ -256,6 +276,10 @@
                 "A": "AAA",
                 "B": "BBB"
             },
+            "x-enum-descriptions": [
+                "AAA",
+                "BBB"
+            ],
             "x-enum-varnames": [
                 "None",
                 "A",
@@ -280,6 +304,12 @@
                 "Mask3": "Mask3",
                 "Mask4": "Mask4"
             },
+            "x-enum-descriptions": [
+                "Mask1",
+                "Mask2",
+                "Mask3",
+                "Mask4"
+            ],
             "x-enum-varnames": [
                 "Mask1",
                 "Mask2",
@@ -317,6 +347,11 @@
                 "Student": "student",
                 "Teacher": "teacher"
             },
+            "x-enum-descriptions": [
+                "teacher",
+                "student",
+                "Other"
+            ],
             "x-enum-varnames": [
                 "Teacher",
                 "Student",

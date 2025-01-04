@@ -65,35 +65,38 @@ func (ps *tagBaseFieldParser) ShouldSkip() bool {
 	return false
 }
 
-func (ps *tagBaseFieldParser) FieldName() (string, error) {
-	var name string
+func (ps *tagBaseFieldParser) FieldNames() ([]string, error) {
+	if len(ps.field.Names) <= 1 {
+		// if embedded but with a json/form name ??
+		if ps.field.Tag != nil {
+			// json:"tag,hoge"
+			name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
+			if name != "" {
+				return []string{name}, nil
+			}
 
-	if ps.field.Tag != nil {
-		// json:"tag,hoge"
-		name = strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
-		if name != "" {
-			return name, nil
+			// use "form" tag over json tag
+			name = ps.FormName()
+			if name != "" {
+				return []string{name}, nil
+			}
 		}
-
-		// use "form" tag over json tag
-		name = ps.FormName()
-		if name != "" {
-			return name, nil
+		if len(ps.field.Names) == 0 {
+			return nil, nil
 		}
 	}
-
-	if ps.field.Names == nil {
-		return "", nil
+	var names = make([]string, 0, len(ps.field.Names))
+	for _, name := range ps.field.Names {
+		switch ps.p.PropNamingStrategy {
+		case SnakeCase:
+			names = append(names, toSnakeCase(name.Name))
+		case PascalCase:
+			names = append(names, name.Name)
+		default:
+			names = append(names, toLowerCamelCase(name.Name))
+		}
 	}
-
-	switch ps.p.PropNamingStrategy {
-	case SnakeCase:
-		return toSnakeCase(ps.field.Names[0].Name), nil
-	case PascalCase:
-		return ps.field.Names[0].Name, nil
-	default:
-		return toLowerCamelCase(ps.field.Names[0].Name), nil
-	}
+	return names, nil
 }
 
 func (ps *tagBaseFieldParser) firstTagValue(tag string) string {

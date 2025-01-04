@@ -354,7 +354,8 @@
                 "originMapField": {
                     "type": "object",
                     "additionalProperties": {
-                        "type": "number"
+                        "type": "number",
+                        "format": "float64"
                     }
                 }
             }
@@ -362,7 +363,8 @@
         "types.MapField-string-float64": {
             "type": "object",
             "additionalProperties": {
-                "type": "number"
+                "type": "number",
+                "format": "float64"
             }
         },
         "types.MapFieldNestedStruct-string": {
@@ -375,7 +377,8 @@
             "type": "object",
             "properties": {
                 "f": {
-                    "type": "number"
+                    "type": "number",
+                    "format": "float64"
                 },
                 "s": {
                     "type": "string"
@@ -431,7 +434,8 @@
                 },
                 "errorNo": {
                     "description": "Error `number` tick comment",
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         },

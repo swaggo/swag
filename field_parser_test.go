@@ -676,9 +676,11 @@ func TestValidTags(t *testing.T) {
 		schema.Type = []string{"integer"}
 		err = newTagBaseFieldParser(
 			&Parser{},
-			&ast.Field{Tag: &ast.BasicLit{
-				Value: `json:"test" validate:"required,oneof=one two"`,
-			}},
+			&ast.Field{
+				Names: []*ast.Ident{{Name: "Test"}},
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required,oneof=one two"`,
+				}},
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
 		assert.Empty(t, schema.Enum)
@@ -687,22 +689,41 @@ func TestValidTags(t *testing.T) {
 	t.Run("Form Filed Name", func(t *testing.T) {
 		t.Parallel()
 
-		filedname, err := newTagBaseFieldParser(
+		filednames, err := newTagBaseFieldParser(
 			&Parser{},
-			&ast.Field{Tag: &ast.BasicLit{
-				Value: `form:"test[]"`,
-			}},
-		).FieldName()
+			&ast.Field{
+				Names: []*ast.Ident{{Name: "Test"}},
+				Tag: &ast.BasicLit{
+					Value: `form:"test[]"`,
+				}},
+		).FieldNames()
 		assert.NoError(t, err)
-		assert.Equal(t, "test", filedname)
+		assert.Equal(t, "test", filednames[0])
 
-		filedname, err = newTagBaseFieldParser(
+		filednames, err = newTagBaseFieldParser(
 			&Parser{},
-			&ast.Field{Tag: &ast.BasicLit{
-				Value: `form:"test"`,
-			}},
-		).FieldName()
+			&ast.Field{
+				Names: []*ast.Ident{{Name: "Test"}},
+				Tag: &ast.BasicLit{
+					Value: `form:"test"`,
+				}},
+		).FieldNames()
 		assert.NoError(t, err)
-		assert.Equal(t, "test", filedname)
+		assert.Equal(t, "test", filednames[0])
+	})
+
+	t.Run("Two Names", func(t *testing.T) {
+		t.Parallel()
+
+		fieldnames, err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{
+				Names: []*ast.Ident{{Name: "X"}, {Name: "Y"}},
+			},
+		).FieldNames()
+		assert.NoError(t, err)
+		assert.Equal(t, 2, len(fieldnames))
+		assert.Equal(t, "x", fieldnames[0])
+		assert.Equal(t, "y", fieldnames[1])
 	})
 }

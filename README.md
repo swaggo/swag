@@ -31,7 +31,8 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
 	- [Function scoped struct declaration](#function-scoped-struct-declaration)
 	- [Model composition in response](#model-composition-in-response)
-	- [Add a headers in response](#add-a-headers-in-response)
+        - [Add request headers](#add-request-headers)
+	- [Add response headers](#add-response-headers)
 	- [Use multiple path params](#use-multiple-path-params)
 	- [Example value of struct](#example-value-of-struct)
 	- [SchemaExample of body](#schemaexample-of-body)
@@ -103,6 +104,7 @@ OPTIONS:
    --outputTypes value, --ot value        Output types of generated files (docs.go, swagger.json, swagger.yaml) like go,json,yaml (default: "go,json,yaml")
    --parseVendor                          Parse go files in 'vendor' folder, disabled by default (default: false)
    --parseDependency, --pd                Parse go files inside dependency folder, disabled by default (default: false)
+   --parseDependencyLevel, --pdl          Enhancement of '--parseDependency', parse go files inside dependency folder, 0 disabled, 1 only parse models, 2 only parse operations, 3 parse all (default: 0)
    --markdownFiles value, --md value      Parse folder containing markdown files to use as description, disabled by default
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
@@ -418,6 +420,7 @@ When a short string in your documentation is insufficient, or you need images, c
 | description.markdown  | A short description of the application. Parsed from the api.md file. This is an alternative to @description    |// @description.markdown No value needed, this parses the description from api.md         																 |
 | tag.name    | Name of a tag.| // @tag.name This is the name of the tag                     |
 | tag.description.markdown   | Description of the tag this is an alternative to tag.description. The description will be read from a file named like tagname.md  | // @tag.description.markdown         |
+| tag.x-name  | The extension key, must be start by x- and take only string value | // @x-example-key value |
 
 
 ## API Operation
@@ -646,7 +649,14 @@ type DeepObject struct { //in `proto` package
 }
 @success 200 {object} jsonresult.JSONResult{data1=proto.Order{data=proto.DeepObject},data2=[]proto.Order{data=[]proto.DeepObject}} "desc"
 ```
-### Add a headers in response
+### Add request headers
+
+```go
+// @Param        X-MyHeader	  header    string    true   	"MyHeader must be set for valid response"
+// @Param        X-API-VERSION    header    string    true   	"API version eg.: 1.0"
+```
+
+### Add response headers
 
 ```go
 // @Success      200              {string}  string    "ok"
@@ -887,18 +897,18 @@ Each API operation.
 // @Security ApiKeyAuth
 ```
 
-Make it AND condition
+Make it OR condition
 
 ```go
 // @Security ApiKeyAuth
 // @Security OAuth2Application[write, admin]
 ```
 
-Make it OR condition
+Make it AND condition
 
 ```go
-// @Security ApiKeyAuth || firebase
-// @Security OAuth2Application[write, admin] || APIKeyAuth
+// @Security ApiKeyAuth && firebase
+// @Security OAuth2Application[write, admin] && APIKeyAuth
 ```
 
 
@@ -946,6 +956,17 @@ To make the generation work properly, you can change the default delimiters with
 swag init -g http/api.go -td "[[,]]"
 ```
 The new delimiter is a string with the format "`<left delimiter>`,`<right delimiter>`".
+
+### Parse Internal and Dependency Packages
+
+If the struct is defined in a dependency package, use `--parseDependency`.
+
+If the struct is defined in your main project, use `--parseInternal`.
+
+if you want to include both internal and from dependencies use both flags 
+```
+swag init --parseDependency --parseInternal
+```
 
 ## About the Project
 This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks). Gopher image source is [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). It has licenses [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).
