@@ -490,7 +490,7 @@ func (operation *Operation) parseParamAttribute(comment, objectType, schemaType,
 func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	attr := re.FindString(commentLine)
 
-	l, r := strings.Index(attr, "("), strings.Index(attr, ")")
+	l, r := strings.Index(attr, "("), strings.LastIndex(attr, ")")
 	if l == -1 || r == -1 {
 		return "", fmt.Errorf("can not find regex=%s, comment=%s", re.String(), commentLine)
 	}
