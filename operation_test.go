@@ -1919,7 +1919,7 @@ func TestParseParamCommentByExampleInt(t *testing.T) {
 func TestParseParamCommentByExampleString(t *testing.T) {
 	t.Parallel()
 
-	comment := `@Param some_id query string true "Some ID" Example(True feelings)`
+	comment := `@Param some_id query string true "Some ID" Example(True feelings (maybe))`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 
@@ -1928,7 +1928,7 @@ func TestParseParamCommentByExampleString(t *testing.T) {
 	expected := `[
     {
         "type": "string",
-        "example": "True feelings",
+        "example": "True feelings (maybe)",
         "description": "Some ID",
         "name": "some_id",
         "in": "query",
@@ -1958,7 +1958,7 @@ func TestParseParamCommentByExampleUnsupportedType(t *testing.T) {
 func TestParseParamCommentBySchemaExampleString(t *testing.T) {
 	t.Parallel()
 
-	comment := `@Param some_id body string true "Some ID" SchemaExample(True feelings)`
+	comment := `@Param some_id body string true "Some ID" SchemaExample(True feelings (maybe))`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 
@@ -1972,7 +1972,7 @@ func TestParseParamCommentBySchemaExampleString(t *testing.T) {
         "required": true,
         "schema": {
             "type": "string",
-            "example": "True feelings"
+            "example": "True feelings (maybe)"
         }
     }
 ]`
