@@ -426,23 +426,23 @@ const (
 
 var regexAttributes = map[string]*regexp.Regexp{
 	// for Enums(A, B)
-	enumsTag: regexp.MustCompile(`(?i)\s+enums\(.*\)`),
+	enumsTag: regexp.MustCompile(`(?Ui)\s+enums\(.*\)`),
 	// for maximum(0)
-	maximumTag: regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
+	maximumTag: regexp.MustCompile(`(?Ui)\s+maxinum|maximum\(.*\)`),
 	// for minimum(0)
-	minimumTag: regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
+	minimumTag: regexp.MustCompile(`(?Ui)\s+mininum|minimum\(.*\)`),
 	// for default(0)
-	defaultTag: regexp.MustCompile(`(?i)\s+default\(.*\)`),
+	defaultTag: regexp.MustCompile(`(?Ui)\s+default\(.*\)`),
 	// for minlength(0)
-	minLengthTag: regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
+	minLengthTag: regexp.MustCompile(`(?Ui)\s+minlength\(.*\)`),
 	// for maxlength(0)
-	maxLengthTag: regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
+	maxLengthTag: regexp.MustCompile(`(?Ui)\s+maxlength\(.*\)`),
 	// for format(email)
-	formatTag: regexp.MustCompile(`(?i)\s+format\(.*\)`),
+	formatTag: regexp.MustCompile(`(?Ui)\s+format\(.*\)`),
 	// for extensions(x-example=test)
-	extensionsTag: regexp.MustCompile(`(?i)\s+extensions\(.*\)`),
+	extensionsTag: regexp.MustCompile(`(?Ui)\s+extensions\(.*\)`),
 	// for collectionFormat(csv)
-	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
+	collectionFormatTag: regexp.MustCompile(`(?Ui)\s+collectionFormat\(.*\)`),
 	// example(0)
 	exampleTag: regexp.MustCompile(`(?i)\s+example\(.*\)`),
 	// schemaExample(0)
