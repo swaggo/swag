@@ -182,9 +182,8 @@ var initFlags = []cli.Flag{
 		Usage: "Set host state for swagger.json",
 	},
 	&cli.BoolFlag{
-		Name: parseFuncBodyFlag,
-		// Value: false,
-		Usage: "Parse API info within body of functions in go files, disabled by default (default: false)",
+		Name:  parseFuncBodyFlag,
+		Usage: "Parse API info within body of functions in go files, disabled by default",
 	},
 }
 
