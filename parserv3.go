@@ -745,9 +745,13 @@ func (p *Parser) ParseDefinitionV3(typeSpecDef *TypeSpecDef) (*SchemaV3, error) 
 			definition.Spec.Extensions[enumCommentsExtension] = enumComments
 		}
 	}
+	schemaName := typeName
+	if typeSpecDef.SchemaName != "" {
+		schemaName = typeSpecDef.SchemaName
+	}
 
 	sch := SchemaV3{
-		Name:    typeName,
+		Name:    schemaName,
 		PkgPath: typeSpecDef.PkgPath,
 		Schema:  definition.Spec,
 	}
