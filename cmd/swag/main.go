@@ -164,12 +164,6 @@ var initFlags = []cli.Flag{
 		Name:    templateDelimsFlag,
 		Aliases: []string{"td"},
 		Value:   "",
-		Usage:   "Provide custom delimeters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
-	},
-	&cli.StringFlag{
-		Name:    templateDelimsFlag,
-		Aliases: []string{"td"},
-		Value:   "",
 		Usage:   "Provide custom delimiters for Go template generation. The format is leftDelim,rightDelim. For example: \"[[,]]\"",
 	},
 	&cli.StringFlag{
