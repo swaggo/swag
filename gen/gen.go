@@ -18,7 +18,7 @@ import (
 	"github.com/go-openapi/spec"
 	asyncReflector "github.com/swaggest/go-asyncapi/reflector/asyncapi-2.4.0"
 	asyncSpec "github.com/swaggest/go-asyncapi/spec-2.4.0"
-	"github.com/swaggo/swag"
+	"github.com/yalochat/swag"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"sigs.k8s.io/yaml"
