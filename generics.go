@@ -420,7 +420,7 @@ func getGenericTypeName(file *ast.File, field ast.Expr) (string, error) {
 	return "", fmt.Errorf("unknown type %#v", field)
 }
 
-func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr) (*spec.Schema, error) {
+func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr, forAsyncAPI bool) (*spec.Schema, error) {
 	switch expr := typeExpr.(type) {
 	// suppress debug messages for these types
 	case *ast.InterfaceType:
@@ -434,7 +434,7 @@ func (parser *Parser) parseGenericTypeExpr(file *ast.File, typeExpr ast.Expr) (*
 	case *ast.IndexExpr, *ast.IndexListExpr:
 		name, err := getExtendedGenericFieldType(file, expr, nil)
 		if err == nil {
-			if schema, err := parser.getTypeSchema(name, file, false); err == nil {
+			if schema, err := parser.getTypeSchema(name, file, false, forAsyncAPI); err == nil {
 				return schema, nil
 			}
 		}

@@ -89,7 +89,7 @@ func TestOverrides_getTypeSchema(t *testing.T) {
 	t.Run("Override sql.NullString by string", func(t *testing.T) {
 		t.Parallel()
 
-		s, err := p.getTypeSchema("sql.NullString", nil, false)
+		s, err := p.getTypeSchema("sql.NullString", nil, false, false)
 		if assert.NoError(t, err) {
 			assert.Truef(t, s.Type.Contains("string"), "type sql.NullString should be overridden by string")
 		}
@@ -98,7 +98,7 @@ func TestOverrides_getTypeSchema(t *testing.T) {
 	t.Run("Missing Override for sql.NullInt64", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := p.getTypeSchema("sql.NullInt64", nil, false)
+		_, err := p.getTypeSchema("sql.NullInt64", nil, false, false)
 		if assert.Error(t, err) {
 			assert.Equal(t, "cannot find type definition: sql.NullInt64", err.Error())
 		}
@@ -126,7 +126,7 @@ func TestParser_ParseDefinition(t *testing.T) {
 	expected := &Schema{}
 	p.parsedSchemas[definition] = expected
 
-	schema, err := p.ParseDefinition(definition)
+	schema, err := p.ParseDefinition(definition, false)
 	assert.NoError(t, err)
 	assert.Equal(t, expected, schema)
 
@@ -145,7 +145,7 @@ func TestParser_ParseDefinition(t *testing.T) {
 			Type: &ast.FuncType{},
 		},
 	}
-	_, err = p.ParseDefinition(definition)
+	_, err = p.ParseDefinition(definition, false)
 	assert.Error(t, err)
 
 	// Parsing *ast.FuncType with parent spec
@@ -166,7 +166,7 @@ func TestParser_ParseDefinition(t *testing.T) {
 			Name: ast.NewIdent("TestFuncDecl"),
 		},
 	}
-	_, err = p.ParseDefinition(definition)
+	_, err = p.ParseDefinition(definition, false)
 	assert.Error(t, err)
 	assert.Equal(t, "model.TestFuncDecl.Test", definition.TypeName())
 }

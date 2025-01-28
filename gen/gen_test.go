@@ -654,6 +654,43 @@ func TestGen_GeneratedDoc(t *testing.T) {
 	}
 }
 
+func TestGen_GeneratedAsyncDoc(t *testing.T) {
+	config := &Config{
+		SearchDir:          "../testdata/simple_async",
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple_async/docs",
+		OutputTypes:        outputTypes,
+		PropNamingStrategy: "",
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	goCMD, err := exec.LookPath("go")
+	assert.NoError(t, err)
+
+	cmd := exec.Command(goCMD, "build", filepath.Join(config.OutputDir, "docs.go"))
+
+	cmd.Stdout = os.Stdout
+
+	cmd.Stderr = os.Stderr
+
+	assert.NoError(t, cmd.Run())
+
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, "asyncapi.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+
+		_ = os.Remove(expectedFile)
+	}
+}
+
 func TestGen_cgoImports(t *testing.T) {
 	config := &Config{
 		SearchDir:          "../testdata/simple_cgo",

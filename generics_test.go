@@ -390,23 +390,23 @@ func TestParseGenericTypeExpr(t *testing.T) {
 	logger := &testLogger{}
 	SetDebugger(logger)(parser)
 
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.InterfaceType{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.InterfaceType{}, false)
 	assert.Empty(t, logger.Messages)
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.StructType{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.StructType{}, false)
 	assert.Empty(t, logger.Messages)
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.Ident{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.Ident{}, false)
 	assert.Empty(t, logger.Messages)
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.StarExpr{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.StarExpr{}, false)
 	assert.Empty(t, logger.Messages)
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.SelectorExpr{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.SelectorExpr{}, false)
 	assert.Empty(t, logger.Messages)
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.ArrayType{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.ArrayType{}, false)
 	assert.Empty(t, logger.Messages)
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.MapType{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.MapType{}, false)
 	assert.Empty(t, logger.Messages)
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.FuncType{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.FuncType{}, false)
 	assert.Empty(t, logger.Messages)
-	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.BadExpr{})
+	_, _ = parser.parseGenericTypeExpr(&ast.File{}, &ast.BadExpr{}, false)
 	assert.NotEmpty(t, logger.Messages)
 	assert.Len(t, logger.Messages, 1)
 
@@ -422,6 +422,7 @@ func TestParseGenericTypeExpr(t *testing.T) {
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.IndexExpr{X: &ast.SelectorExpr{X: &ast.Ident{Name: "field"}, Sel: &ast.Ident{Name: "Name"}}, Index: &ast.Ident{Name: "string"}},
 		false,
+		false,
 	)
 	assert.NotNil(t, spec)
 	assert.NoError(t, err)
@@ -430,6 +431,7 @@ func TestParseGenericTypeExpr(t *testing.T) {
 	spec, err = parser.parseTypeExpr(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.IndexExpr{X: &ast.BadExpr{}, Index: &ast.Ident{Name: "string"}},
+		false,
 		false,
 	)
 	assert.NotNil(t, spec)
@@ -441,6 +443,7 @@ func TestParseGenericTypeExpr(t *testing.T) {
 	spec, err = parser.parseTypeExpr(
 		&ast.File{Name: &ast.Ident{Name: "test"}},
 		&ast.BadExpr{},
+		false,
 		false,
 	)
 	assert.NotNil(t, spec)

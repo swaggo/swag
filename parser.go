@@ -21,6 +21,7 @@ import (
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
+	asyncSpec "github.com/swaggest/go-asyncapi/spec-2.4.0"
 )
 
 const (
@@ -68,6 +69,7 @@ const (
 	xCodeSamplesAttr        = "@x-codesamples"
 	scopeAttrPrefix         = "@scope."
 	stateAttr               = "@state"
+	asyncAPIAttr            = "@asyncapi"
 )
 
 // ParseFlag determine what to parse
@@ -112,6 +114,9 @@ var allMethod = map[string]struct{}{
 type Parser struct {
 	// swagger represents the root document object for the API specification
 	swagger *spec.Swagger
+
+	// asyncAPI represents the root document object for AsyncAPI specification
+	asyncAPI *asyncSpec.AsyncAPI
 
 	// packages store entities of APIs, definitions, file, package path etc.  and their relations
 	packages *PackagesDefinitions
@@ -239,6 +244,13 @@ func New(options ...func(*Parser)) *Parser {
 		tags:               make(map[string]struct{}),
 		fieldParserFactory: newTagBaseFieldParser,
 		Overrides:          make(map[string]string),
+		asyncAPI: &asyncSpec.AsyncAPI{
+			Channels: make(map[string]asyncSpec.ChannelItem),
+			Servers:  make(map[string]asyncSpec.ServersAdditionalProperties),
+			Components: &asyncSpec.Components{
+				Schemas: make(map[string]map[string]interface{}),
+			},
+		},
 	}
 
 	for _, option := range options {
@@ -1065,6 +1077,15 @@ func getFuncDoc(decl any) (*ast.CommentGroup, bool) {
 	return nil, false
 }
 
+func getFuncName(decl any) *string {
+	switch astDecl := decl.(type) {
+	case *ast.FuncDecl: // func name() {}
+		return &astDecl.Name.Name
+	default:
+		return nil
+	}
+}
+
 // ParseRouterAPIInfo parses router api info for given astFile.
 func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 	if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
@@ -1075,7 +1096,7 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 	if parser.ParseFuncBody {
 		for _, astComments := range fileInfo.File.Comments {
 			if astComments.List != nil {
-				if err := parser.parseRouterAPIInfoComment(astComments.List, fileInfo); err != nil {
+				if err := parser.parseFunctionInfoComment(nil, astComments.List, fileInfo); err != nil {
 					return err
 				}
 			}
@@ -1087,7 +1108,8 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 	for _, decl := range fileInfo.File.Decls {
 		funcDoc, ok := getFuncDoc(decl)
 		if ok && funcDoc != nil && funcDoc.List != nil {
-			if err := parser.parseRouterAPIInfoComment(funcDoc.List, fileInfo); err != nil {
+			funcName := getFuncName(decl)
+			if err := parser.parseFunctionInfoComment(funcName, funcDoc.List, fileInfo); err != nil {
 				return err
 			}
 		}
@@ -1096,27 +1118,104 @@ func (parser *Parser) ParseRouterAPIInfo(fileInfo *AstFileInfo) error {
 	return nil
 }
 
-func (parser *Parser) parseRouterAPIInfoComment(comments []*ast.Comment, fileInfo *AstFileInfo) error {
-	if parser.matchTags(comments) && matchExtension(parser.parseExtension, comments) {
-		// for per 'function' comment, create a new 'Operation' object
-		operation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
-		for _, comment := range comments {
-			err := operation.ParseComment(comment.Text, fileInfo.File)
-			if err != nil {
-				return fmt.Errorf("ParseComment error in file %s for comment: '%s': %+v", fileInfo.Path, comment.Text, err)
-			}
-			if operation.State != "" && operation.State != parser.HostState {
-				return nil
-			}
-		}
-		err := processRouterOperation(parser, operation)
-		if err != nil {
-			return err
+func (parser *Parser) parseFunctionInfoComment(funcName *string, comments []*ast.Comment, fileInfo *AstFileInfo) error {
+	if !parser.matchTags(comments) || !matchExtension(parser.parseExtension, comments) {
+		return nil
+	}
+
+	if isAsyncAPIComment(comments) {
+		return parser.handleAsyncAPIComments(funcName, comments, fileInfo)
+	}
+
+	return parser.handleOpenAPIComments(comments, fileInfo)
+}
+
+// Determines if the comments represent an AsyncAPI block.
+func isAsyncAPIComment(comments []*ast.Comment) bool {
+	if len(comments) == 0 {
+		return false
+	}
+	firstComment := strings.ToLower(comments[0].Text)
+	trimmedComment := strings.TrimSpace(strings.TrimLeft(firstComment, "/"))
+	return trimmedComment == asyncAPIAttr
+}
+
+// Handles AsyncAPI comments by creating a new scope and processing it.
+func (parser *Parser) handleAsyncAPIComments(funcName *string, comments []*ast.Comment, fileInfo *AstFileInfo) error {
+	asyncAPIScope := NewAsyncScope(parser)
+
+	for _, comment := range comments[1:] {
+		if err := asyncAPIScope.ParseAsyncAPIComment(funcName, comment.Text, fileInfo.File); err != nil {
+			return fmt.Errorf("ParseAsyncAPIComment error in file %s for comment: '%s': %+v", fileInfo.Path, comment.Text, err)
 		}
 	}
 
+	return processAsyncAPIScope(parser, asyncAPIScope)
+}
+
+// Handles OpenAPI comments by creating an operation and processing it.
+func (parser *Parser) handleOpenAPIComments(comments []*ast.Comment, fileInfo *AstFileInfo) error {
+	// for per 'function' comment, create a new 'Operation' object
+	httpOperation := NewOperation(parser, SetCodeExampleFilesDirectory(parser.codeExampleFilesDir))
+
+	for _, comment := range comments {
+		if err := httpOperation.ParseComment(comment.Text, fileInfo.File); err != nil {
+			return fmt.Errorf("ParseComment error in file %s for comment: '%s': %+v", fileInfo.Path, comment.Text, err)
+		}
+
+		// Early exit if the operation state changes and is no longer the host state.
+		if httpOperation.State != "" && httpOperation.State != parser.HostState {
+			return nil
+		}
+	}
+
+	return processRouterOperation(parser, httpOperation)
+}
+
+// Processes the AsyncAPI scope and updates the parser's AsyncAPI configuration.
+func processAsyncAPIScope(parser *Parser, asyncAPIScope *AsyncScope) error {
+	addAsyncAPIServers(parser, asyncAPIScope)
+	addAsyncAPIChannels(parser, asyncAPIScope)
+	addAsyncAPIOperations(parser, asyncAPIScope)
 	return nil
 }
+
+// Adds servers from the AsyncAPI scope to the parser's AsyncAPI configuration.
+func addAsyncAPIServers(parser *Parser, asyncAPIScope *AsyncScope) {
+	for serverName, server := range asyncAPIScope.servers {
+		parser.asyncAPI.Servers[serverName] = *server
+	}
+}
+
+// Adds channels from the AsyncAPI scope to the parser's AsyncAPI configuration.
+func addAsyncAPIChannels(parser *Parser, asyncAPIScope *AsyncScope) {
+	for channelName, channel := range asyncAPIScope.channels {
+		if existingChannel, ok := parser.asyncAPI.Channels[channelName]; ok {
+			// Preserve existing publish/subscribe operations.
+			channel.Publish = existingChannel.Publish
+			channel.Subscribe = existingChannel.Subscribe
+		}
+		parser.asyncAPI.Channels[channelName] = *channel
+	}
+}
+
+// Adds operations from the AsyncAPI scope to the corresponding channels in the parser's AsyncAPI configuration.
+func addAsyncAPIOperations(parser *Parser, asyncAPIScope *AsyncScope) {
+	for _, operation := range asyncAPIScope.operations {
+		channel := parser.asyncAPI.Channels[operation.channel]
+
+		if operation.action == Receive {
+			channel.Subscribe = &operation.Operation
+		}
+
+		if operation.action == Send {
+			channel.Publish = &operation.Operation
+		}
+
+		parser.asyncAPI.Channels[operation.channel] = channel
+	}
+}
+
 
 func refRouteMethodOp(item *spec.PathItem, method string) (op **spec.Operation) {
 	switch method {
@@ -1205,7 +1304,7 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 	return typeName, ErrFailedConvertPrimitiveType
 }
 
-func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
+func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool, forAsyncAPI bool) (*spec.Schema, error) {
 	if override, ok := parser.Overrides[typeName]; ok {
 		parser.debug.Printf("Override detected for %s: using %s instead", typeName, override)
 		return parseObjectSchema(parser, override, file)
@@ -1252,7 +1351,7 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 	if !ok {
 		var err error
 
-		schema, err = parser.ParseDefinition(typeSpecDef)
+		schema, err = parser.ParseDefinition(typeSpecDef, forAsyncAPI)
 		if err != nil {
 			if err == ErrRecursiveParseStruct && ref {
 				return parser.getRefTypeSchema(typeSpecDef, schema), nil
@@ -1303,12 +1402,16 @@ func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package, and populates swagger schema definitions registry
 // with a schema for the given type
-func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error) {
+func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef, forAsyncAPI bool) (*Schema, error) {
 	typeName := typeSpecDef.TypeName()
 	schema, found := parser.parsedSchemas[typeSpecDef]
 	if found {
 		parser.debug.Printf("Skipping '%s', already parsed.", typeName)
-
+		if forAsyncAPI {
+			schema.UsedForAsyncAPI = true
+		} else {
+			schema.UsedForOpenAPI = true
+		}
 		return schema, nil
 	}
 
@@ -1327,7 +1430,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	parser.debug.Printf("Generating %s", typeName)
 
-	definition, err := parser.parseTypeExpr(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
+	definition, err := parser.parseTypeExpr(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false, forAsyncAPI)
 	if err != nil {
 		parser.debug.Printf("Error parsing type definition '%s': %s", typeName, err)
 		return nil, err
@@ -1373,6 +1476,13 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		PkgPath: typeSpecDef.PkgPath,
 		Schema:  definition,
 	}
+
+	if forAsyncAPI {
+		sch.UsedForAsyncAPI = true
+	} else {
+		sch.UsedForOpenAPI = true
+	}
+
 	parser.parsedSchemas[typeSpecDef] = &sch
 
 	// update an empty schema as a result of recursion
@@ -1411,6 +1521,7 @@ func (parser *Parser) fillDefinitionDescription(definition *spec.Schema, file *a
 			}
 			definition.Description, err =
 				parser.extractDeclarationDescription(typeName, typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
+
 			if err != nil {
 				return
 			}
@@ -1470,7 +1581,7 @@ func (parser *Parser) extractDeclarationDescription(typeName string, commentGrou
 
 // parseTypeExpr parses given type expression that corresponds to the type under
 // given name and package, and returns swagger schema for it.
-func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool) (*spec.Schema, error) {
+func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool, forAsyncAPI bool) (*spec.Schema, error) {
 	switch expr := typeExpr.(type) {
 	// type Foo interface{}
 	case *ast.InterfaceType:
@@ -1478,24 +1589,24 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 
 	// type Foo struct {...}
 	case *ast.StructType:
-		return parser.parseStruct(file, expr.Fields)
+		return parser.parseStruct(file, expr.Fields, forAsyncAPI)
 
 	// type Foo Baz
 	case *ast.Ident:
-		return parser.getTypeSchema(expr.Name, file, ref)
+		return parser.getTypeSchema(expr.Name, file, ref, forAsyncAPI)
 
 	// type Foo *Baz
 	case *ast.StarExpr:
-		return parser.parseTypeExpr(file, expr.X, ref)
+		return parser.parseTypeExpr(file, expr.X, ref, forAsyncAPI)
 
 	// type Foo pkg.Bar
 	case *ast.SelectorExpr:
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
-			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, ref)
+			return parser.getTypeSchema(fullTypeName(xIdent.Name, expr.Sel.Name), file, ref, forAsyncAPI)
 		}
 	// type Foo []Baz
 	case *ast.ArrayType:
-		itemSchema, err := parser.parseTypeExpr(file, expr.Elt, true)
+		itemSchema, err := parser.parseTypeExpr(file, expr.Elt, true, forAsyncAPI)
 		if err != nil {
 			return nil, err
 		}
@@ -1506,7 +1617,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 		if _, ok := expr.Value.(*ast.InterfaceType); ok {
 			return spec.MapProperty(nil), nil
 		}
-		schema, err := parser.parseTypeExpr(file, expr.Value, true)
+		schema, err := parser.parseTypeExpr(file, expr.Value, true, forAsyncAPI)
 		if err != nil {
 			return nil, err
 		}
@@ -1518,14 +1629,14 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 		// ...
 	}
 
-	return parser.parseGenericTypeExpr(file, typeExpr)
+	return parser.parseGenericTypeExpr(file, typeExpr, forAsyncAPI)
 }
 
-func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
+func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList, forAsyncAPI bool) (*spec.Schema, error) {
 	required, properties := make([]string, 0), make(map[string]spec.Schema)
 
 	for _, field := range fields.List {
-		fieldProps, requiredFromAnon, err := parser.parseStructField(file, field)
+		fieldProps, requiredFromAnon, err := parser.parseStructField(file, field, forAsyncAPI)
 		if err != nil {
 			if errors.Is(err, ErrFuncTypeField) || errors.Is(err, ErrSkippedField) {
 				continue
@@ -1556,7 +1667,7 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 	}, nil
 }
 
-func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[string]spec.Schema, []string, error) {
+func (parser *Parser) parseStructField(file *ast.File, field *ast.Field, forAsyncAPI bool) (map[string]spec.Schema, []string, error) {
 	if field.Tag != nil {
 		skip, ok := reflect.StructTag(strings.ReplaceAll(field.Tag.Value, "`", "")).Lookup("swaggerignore")
 		if ok && strings.EqualFold(skip, "true") {
@@ -1581,7 +1692,7 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 			return nil, nil, err
 		}
 
-		schema, err := parser.getTypeSchema(typeName, file, false)
+		schema, err := parser.getTypeSchema(typeName, file, false, forAsyncAPI)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1612,10 +1723,10 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 		typeName, err := getFieldType(file, field.Type, nil)
 		if err == nil {
 			// named type
-			schema, err = parser.getTypeSchema(typeName, file, true)
+			schema, err = parser.getTypeSchema(typeName, file, true, forAsyncAPI)
 		} else {
 			// unnamed type
-			schema, err = parser.parseTypeExpr(file, field.Type, false)
+			schema, err = parser.parseTypeExpr(file, field.Type, false, forAsyncAPI)
 		}
 
 		if err != nil {
@@ -1949,6 +2060,14 @@ func walkWith(excludes map[string]struct{}, parseVendor bool) func(path string, 
 // GetSwagger returns *spec.Swagger which is the root document object for the API specification.
 func (parser *Parser) GetSwagger() *spec.Swagger {
 	return parser.swagger
+}
+
+func (parser *Parser) GetAsyncAPI() *asyncSpec.AsyncAPI {
+	return parser.asyncAPI
+}
+
+func (parser *Parser) GetParsedSchemas() map[*TypeSpecDef]*Schema {
+	return parser.parsedSchemas
 }
 
 // addTestType just for tests.
