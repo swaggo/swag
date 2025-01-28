@@ -1,4 +1,4 @@
-module github.com/swaggo/swag
+module github.com/yalochat/swag
 
 go 1.18
 
@@ -7,6 +7,7 @@ require (
 	github.com/go-openapi/spec v0.20.4
 	github.com/stretchr/testify v1.8.0
 	github.com/swaggest/go-asyncapi v0.8.0
+	github.com/swaggo/swag v1.16.4
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/text v0.14.0
 	golang.org/x/tools v0.7.0
