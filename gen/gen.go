@@ -230,8 +230,6 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
-	g.debug.Printf("Generating asyncAPI spec....")
-
 	if err := processAsyncAPI(p, swagger, config); err != nil {
 		return fmt.Errorf("failed to process AsyncAPI spec: %w", err)
 	}
