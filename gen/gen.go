@@ -252,6 +252,7 @@ func processAsyncAPI(p *swag.Parser, swagger *spec.Swagger, config *Config) erro
 	asyncAPI := p.GetAsyncAPI()
 
 	if len(asyncAPI.Servers) == 0 && len(asyncAPI.Channels) == 0 {
+		log.Printf("no AsyncAPI spec found, skipping generation")
 		return nil
 	}
 
