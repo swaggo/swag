@@ -85,11 +85,11 @@ func (asyncScope *AsyncScope) ParseAsyncAPIComment(funcName *string, comment str
 	}
 
 	handler, exists := AttributeHandler[Attribute(lowerAttribute)]
-	if exists {
-		return handler(asyncScope, funcName, lineRemainder, astFile)
+	if !exists {
+		return fmt.Errorf("unknown attribute '%s' in comment '%s'", attribute, comment)
 	}
-	
-	return fmt.Errorf("unknown attribute '%s' in comment '%s'", attribute, comment)
+
+	return handler(asyncScope, funcName, lineRemainder, astFile)
 }
 
 var serverCommentPattern = regexp.MustCompile(`(\S+)\s+(\S+)\s+(\S+)`)
