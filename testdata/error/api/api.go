@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	. "github.com/swaggo/swag/testdata/error/errors"
-	_ "github.com/swaggo/swag/testdata/error/web"
+	. "github.com/yalochat/swag/testdata/error/errors"
+	_ "github.com/yalochat/swag/testdata/error/web"
 )
 
 // Upload do something

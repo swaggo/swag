@@ -270,7 +270,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 	var enums []interface{}
 	if !IsPrimitiveType(refType) {
-		schema, _ := operation.parser.getTypeSchema(refType, astFile, false)
+		schema, _ := operation.parser.getTypeSchema(refType, astFile, false, false)
 		if schema != nil && len(schema.Type) == 1 && schema.Enum != nil {
 			if objectType == OBJECT {
 				objectType = PRIMITIVE
@@ -296,7 +296,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		case PRIMITIVE:
 			break
 		case OBJECT:
-			schema, err := operation.parser.getTypeSchema(refType, astFile, false)
+			schema, err := operation.parser.getTypeSchema(refType, astFile, false, false)
 			if err != nil {
 				return err
 			}
@@ -878,7 +878,7 @@ func parseObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec
 		return parseCombinedObjectSchema(parser, refType, astFile)
 	default:
 		if parser != nil { // checking refType has existing in 'TypeDefinitions'
-			schema, err := parser.getTypeSchema(refType, astFile, true)
+			schema, err := parser.getTypeSchema(refType, astFile, true, false)
 			if err != nil {
 				return nil, err
 			}

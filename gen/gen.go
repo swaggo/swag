@@ -16,7 +16,9 @@ import (
 	"time"
 
 	"github.com/go-openapi/spec"
-	"github.com/swaggo/swag"
+	asyncReflector "github.com/swaggest/go-asyncapi/reflector/asyncapi-2.4.0"
+	asyncSpec "github.com/swaggest/go-asyncapi/spec-2.4.0"
+	"github.com/yalochat/swag"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"sigs.k8s.io/yaml"
@@ -228,6 +230,12 @@ func (g *Gen) Build(config *Config) error {
 		return err
 	}
 
+	g.debug.Printf("Generate async API docs....")
+
+	if err := processAsyncAPI(p, swagger, config); err != nil {
+		return fmt.Errorf("failed to process AsyncAPI spec: %w", err)
+	}
+
 	for _, outputType := range config.OutputTypes {
 		outputType = strings.ToLower(strings.TrimSpace(outputType))
 		if typeWriter, ok := g.outputTypeMap[outputType]; ok {
@@ -239,6 +247,148 @@ func (g *Gen) Build(config *Config) error {
 		}
 	}
 
+	return nil
+}
+
+func processAsyncAPI(p *swag.Parser, swagger *spec.Swagger, config *Config) error {
+	asyncAPI := p.GetAsyncAPI()
+
+	if len(asyncAPI.Servers) == 0 && len(asyncAPI.Channels) == 0 {
+		log.Printf("no AsyncAPI spec found, skipping generation")
+		return nil
+	}
+
+	updateAsyncAPIInfo(asyncAPI, swagger)
+
+	if err := validateAsyncAPIServers(asyncAPI); err != nil {
+		return err
+	}
+
+	if err := processAsyncAPIChannels(asyncAPI); err != nil {
+		return err
+	}
+
+	if err := processAsyncAPIDefinitions(p, asyncAPI, swagger); err != nil {
+		return err
+	}
+
+	return writeDocAsyncAPI(asyncAPI, fmt.Sprintf("%s/asyncapi.yaml", config.OutputDir))
+}
+
+// Updates the AsyncAPI `Info` object with information from the Swagger spec.
+func updateAsyncAPIInfo(asyncAPI *asyncSpec.AsyncAPI, swagger *spec.Swagger) {
+	asyncAPI.Info.Title = swagger.Info.Title
+	asyncAPI.Info.Description = swagger.Info.Description
+	asyncAPI.Info.Version = swagger.Info.Version
+}
+
+// Processes and validates AsyncAPI channels.
+func processAsyncAPIChannels(asyncAPI *asyncSpec.AsyncAPI) error {
+	reflector := &asyncReflector.Reflector{Schema: asyncAPI}
+
+	for channelName, channel := range asyncAPI.Channels {
+		if err := validateAsyncAPIChannel(asyncAPI, &channel); err != nil {
+			return fmt.Errorf("channel '%s' is invalid: %w", channelName, err)
+		}
+
+		reflector.AddChannel(asyncReflector.ChannelInfo{
+			Name:           channelName,
+			BaseChannelItem: &channel,
+		})
+	}
+
+	return nil
+}
+
+// Processes AsyncAPI definitions and updates schemas in the AsyncAPI `Components` object.
+func processAsyncAPIDefinitions(p *swag.Parser, asyncAPI *asyncSpec.AsyncAPI, swagger *spec.Swagger) error {
+	for definitionKey, definition := range swagger.Definitions {
+		schemaInParsed, _ := findSchemaInParsedSchemas(p, definitionKey)
+
+		if schemaInParsed.UsedForAsyncAPI {
+			schema, err := createAsyncAPISchema(&definition)
+			if err != nil {
+				return err
+			}
+
+			asyncAPI.Components.Schemas[definitionKey] = schema
+		}
+
+		if !schemaInParsed.UsedForOpenAPI {
+			delete(swagger.Definitions, definitionKey)
+		}
+	}
+
+	return nil
+}
+
+// Creates an AsyncAPI schema from a Swagger definition.
+func createAsyncAPISchema(definition *spec.Schema) (map[string]interface{}, error) {
+	schema := map[string]interface{}{
+		"type": definition.Type[0],
+	}
+
+	if definition.Type[0] == swag.OBJECT {
+		properties, err := swag.GetAsyncAPISchemaProperties(definition)
+		if err != nil {
+			return nil, err
+		}
+		schema["properties"] = properties
+	}
+
+	return schema, nil
+}
+
+func findSchemaInParsedSchemas(parser *swag.Parser, schemaName string) (*swag.Schema, error) {
+	parsedSchemas := parser.GetParsedSchemas()
+	for _, schema := range parsedSchemas {
+		if schema.Name == schemaName {
+			return schema, nil
+		}
+	}
+	return nil, fmt.Errorf("unable to find schema for '%s'", schemaName)
+}
+
+func validateAsyncAPIServers(asyncAPI *asyncSpec.AsyncAPI) error {
+	if len(asyncAPI.Servers) == 0 {
+		return fmt.Errorf("AsyncAPI spec must have at least one server")
+	}
+
+	for serverName, server := range asyncAPI.Servers {
+		if server.Server.URL == "" {
+			return fmt.Errorf("URL for server '%s' not provided", serverName)
+		}
+		if server.Server.Protocol == "" {
+			return fmt.Errorf("protocol for server '%s' not provided", serverName)
+		}
+	}
+
+	return nil
+}
+
+func validateAsyncAPIChannel(asyncAPI *asyncSpec.AsyncAPI, channel *asyncSpec.ChannelItem) error {
+	if len(channel.Servers) == 0 {
+		return fmt.Errorf("some operation is using a channel that was not defined")
+	}
+
+	channelServer := channel.Servers[0]
+	if _, ok := asyncAPI.Servers[channelServer]; !ok {
+		return fmt.Errorf("server '%s' not defined in AsyncAPI spec", channelServer)
+	}
+	return nil
+}
+
+// Generate creates the AsyncAPI spec file.
+func writeDocAsyncAPI(asyncAPI *asyncSpec.AsyncAPI, outputFile string) error {
+	yaml, err := asyncAPI.MarshalYAML()
+	if err != nil {
+		return fmt.Errorf("failed to marshal AsyncAPI spec: %w", err)
+	}
+	if err := os.WriteFile(outputFile, yaml, 0644); err != nil {
+		return fmt.Errorf("failed to write AsyncAPI spec file: %w", err)
+	}
+
+	log.Printf("asyncAPI spec written to %s\n", outputFile)
 	return nil
 }
 

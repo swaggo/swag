@@ -4,14 +4,14 @@
 
 <img align="right" width="180px" src="https://raw.githubusercontent.com/swaggo/swag/master/assets/swaggo.png">
 
-[![Build Status](https://github.com/swaggo/swag/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/features/actions)
+[![Build Status](https://github.com/yalochat/swag/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/features/actions)
 [![Coverage Status](https://img.shields.io/codecov/c/github/swaggo/swag/master.svg)](https://codecov.io/gh/swaggo/swag)
 [![Go Report Card](https://goreportcard.com/badge/github.com/swaggo/swag)](https://goreportcard.com/report/github.com/swaggo/swag)
 [![codebeat badge](https://codebeat.co/badges/71e2f5e5-9e6b-405d-baf9-7cc8b5037330)](https://codebeat.co/projects/github-com-swaggo-swag-master)
 [![Go Doc](https://godoc.org/github.com/swaggo/swagg?status.svg)](https://godoc.org/github.com/swaggo/swag)
 [![Backers on Open Collective](https://opencollective.com/swag/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/swag/sponsors/badge.svg)](#sponsors) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fswaggo%2Fswag.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fswaggo%2Fswag?ref=badge_shield)
-[![Release](https://img.shields.io/github/release/swaggo/swag.svg?style=flat-square)](https://github.com/swaggo/swag/releases)
+[![Release](https://img.shields.io/github/release/swaggo/swag.svg?style=flat-square)](https://github.com/yalochat/swag/releases)
 
 Swag converte anotações Go para Documentação Swagger 2.0. Criámos uma variedade de plugins para populares [Go web frameworks](#supported-web-frameworks). Isto permite uma integração rápida com um projecto Go existente (utilizando a Swagger UI).
 
@@ -52,11 +52,11 @@ Swag converte anotações Go para Documentação Swagger 2.0. Criámos uma varie
 
 2. Descarregue o swag utilizando:
 ```sh
-go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/yalochat/swag/cmd/swag@latest
 ```
 Para construir a partir da fonte é necessário [Go](https://golang.org/dl/) (1.19 ou mais recente).
 
-Ou descarregar um binário pré-compilado a partir da [página de lançamento](https://github.com/swaggo/swag/releases).
+Ou descarregar um binário pré-compilado a partir da [página de lançamento](https://github.com/yalochat/swag/releases).
 
 3. Executar `swag init` na pasta raiz do projecto que contém o ficheiro `main.go`. Isto irá analisar os seus comentários e gerar os ficheiros necessários (pasta `docs` e `docs/docs.go`).
 ```sh
@@ -133,7 +133,7 @@ OPÇÕES:
 
 ## Como utilizá-lo com Gin
 
-Encontrar o código fonte de exemplo [aqui](https://github.com/swaggo/swag/tree/master/example/celler).
+Encontrar o código fonte de exemplo [aqui](https://github.com/yalochat/swag/tree/master/example/celler).
 
 1. Depois de utilizar `swag init` para gerar os documentos Swagger 2.0, importar os seguintes pacotes:
 ```go
@@ -237,8 +237,8 @@ import (
     "strconv"
 
     "github.com/gin-gonic/gin"
-    "github.com/swaggo/swag/example/celler/httputil"
-    "github.com/swaggo/swag/example/celler/model"
+    "github.com/yalochat/swag/example/celler/httputil"
+    "github.com/yalochat/swag/example/celler/model"
 )
 
 // ShowAccount godoc
@@ -303,7 +303,7 @@ swag init
 ## O formatador de swag
 
 Os Swag Comments podem ser formatados automaticamente, assim como 'go fmt'.
-Encontre o resultado da formatação [aqui](https://github.com/swaggo/swag/tree/master/example/celler).
+Encontre o resultado da formatação [aqui](https://github.com/yalochat/swag/tree/master/example/celler).
 
 Usage:
 ```shell
@@ -362,7 +362,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 ## Informações Gerais API
 
 **Exemplo**
-[celler/main.go](https://github.com/swaggo/swag/blob/master/example/celler/main.go)
+[celler/main.go](https://github.com/yalochat/swag/blob/master/example/celler/main.go)
 
 | anotação | descrição | exemplo |
 |-------------|--------------------------------------------|---------------------------------|
@@ -403,7 +403,7 @@ Quando uma pequena sequência na sua documentação é insuficiente, ou precisa 
 ## Operação API
 
 **Exemplo**
-[celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
+[celler/controller](https://github.com/yalochat/swag/tree/master/example/celler/controller)
 
 | anotação | descrição |
 |-------------|----------------------------------------------------------------------------------------------------------------------------|
@@ -689,7 +689,7 @@ type Account struct {
 }
 ```
 
-[#708](https://github.com/swaggo/swag/issues/708) O analisador trata apenas de comentários estruturais a partir de `@Description` attribute.
+[#708](https://github.com/yalochat/swag/issues/708) O analisador trata apenas de comentários estruturais a partir de `@Description` attribute.
 
 Assim, gerou o doc. de swagger como se segue:
 ```json
@@ -710,7 +710,7 @@ Assim, gerou o doc. de swagger como se segue:
 ```
 
 ### Usar etiqueta do tipo swaggertype para suportar o tipo personalizado
-[#201](https://github.com/swaggo/swag/issues/201#issuecomment-475479409)
+[#201](https://github.com/yalochat/swag/issues/201#issuecomment-475479409)
 
 ```go
 type TimestampTime struct {
@@ -746,7 +746,7 @@ type Account struct {
 }
 ```
 
-[#379](https://github.com/swaggo/swag/issues/379)
+[#379](https://github.com/yalochat/swag/issues/379)
 ```go
 type CerticateKeyPair struct {
 	Crt []byte `json:"crt" swaggertype:"string" format:"base64" example:"U3dhZ2dlciByb2Nrcw=="`
@@ -916,11 +916,11 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	_ = web.GenericNestedResponse[types.Post]{}
 }
 ```
-Para mais detalhes e outros exemplos, veja [esse arquivo](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go)
+Para mais detalhes e outros exemplos, veja [esse arquivo](https://github.com/yalochat/swag/blob/master/testdata/generics_nested/api/api.go)
 
 ### Alterar os delimitadores de acção padrão Go Template
-[#980](https://github.com/swaggo/swag/issues/980)
-[#1177](https://github.com/swaggo/swag/issues/1177)
+[#980](https://github.com/yalochat/swag/issues/980)
+[#1177](https://github.com/yalochat/swag/issues/1177)
 
 Se as suas anotações ou campos estruturantes contêm "{{" or "}}", a geração de modelos irá muito provavelmente falhar, uma vez que estes são os delimitadores por defeito para [go templates](https://pkg.go.dev/text/template#Template.Delims).
 
@@ -937,7 +937,7 @@ Este projecto foi inspirado por [yvasiyarov/swagger](https://github.com/yvasiyar
 ## Contribuidores
 
 Este projecto existe graças a todas as pessoas que contribuem. [[Contribute](CONTRIBUTING.md)].
-<a href="https://github.com/swaggo/swag/graphs/contributors"><img src="https://opencollective.com/swag/contributors.svg?width=890&button=false" /></a>
+<a href="https://github.com/yalochat/swag/graphs/contributors"><img src="https://opencollective.com/swag/contributors.svg?width=890&button=false" /></a>
 
 
 ## Apoios

@@ -18,7 +18,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto"
                         }
                     }
                 }
@@ -58,7 +58,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto"
                         }
                     }
                 }
@@ -98,7 +98,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto"
                         }
                     }
                 }
@@ -138,7 +138,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto"
                         }
                     }
                 }
@@ -158,7 +158,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto"
                         }
                     }
                 }
@@ -178,7 +178,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto"
                         }
                     }
                 }
@@ -198,7 +198,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto"
                         }
                     }
                 }
@@ -218,7 +218,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external1_Customer"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external1_Customer"
                         }
                     }
                 }
@@ -238,7 +238,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external2_Customer"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external2_Customer"
                         }
                     }
                 }
@@ -258,7 +258,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external3_Customer"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external3_Customer"
                         }
                     }
                 }
@@ -278,7 +278,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external4_Customer"
+                            "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external4_Customer"
                         }
                     }
                 }
@@ -399,7 +399,7 @@
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external1_Customer": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external1_Customer": {
             "type": "object",
             "properties": {
                 "items1": {
@@ -410,7 +410,7 @@
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external2_Customer": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external2_Customer": {
             "type": "object",
             "properties": {
                 "items1": {
@@ -421,7 +421,7 @@
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external3_Customer": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external3_Customer": {
             "type": "object",
             "properties": {
                 "items1": {
@@ -432,7 +432,7 @@
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external4_Customer": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-external4_Customer": {
             "type": "object",
             "properties": {
                 "items1": {
@@ -443,29 +443,29 @@
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto": {
             "type": "object",
             "properties": {
                 "items1": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ProductDto"
+                        "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ProductDto"
                     }
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto": {
             "type": "object",
             "properties": {
                 "items1": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1.ProductDto"
+                        "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1.ProductDto"
                     }
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ProductDto": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ProductDto": {
             "type": "object",
             "properties": {
                 "name1": {
@@ -473,29 +473,29 @@
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1_ProductDto": {
             "type": "object",
             "properties": {
                 "items2": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path1_v1.ProductDto"
+                        "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path1_v1.ProductDto"
                     }
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1.ListResult-github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1_ProductDto": {
             "type": "object",
             "properties": {
                 "items2": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1.ProductDto"
+                        "$ref": "#/definitions/github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1.ProductDto"
                     }
                 }
             }
         },
-        "github_com_swaggo_swag_testdata_generics_package_alias_internal_path2_v1.ProductDto": {
+        "github_com_yalochat_swag_testdata_generics_package_alias_internal_path2_v1.ProductDto": {
             "type": "object",
             "properties": {
                 "name2": {

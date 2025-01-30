@@ -11,7 +11,7 @@
 [![Go Doc](https://godoc.org/github.com/swaggo/swagg?status.svg)](https://godoc.org/github.com/swaggo/swag)
 [![Backers on Open Collective](https://opencollective.com/swag/backers/badge.svg)](#backers) 
 [![Sponsors on Open Collective](https://opencollective.com/swag/sponsors/badge.svg)](#sponsors) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fswaggo%2Fswag.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fswaggo%2Fswag?ref=badge_shield)
-[![Release](https://img.shields.io/github/release/swaggo/swag.svg?style=flat-square)](https://github.com/swaggo/swag/releases)
+[![Release](https://img.shields.io/github/release/swaggo/swag.svg?style=flat-square)](https://github.com/yalochat/swag/releases)
 
 Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framework](#支持的Web框架) 创建了各种插件，这样可以与现有Go项目快速集成（使用Swagger UI）。
 
@@ -47,7 +47,7 @@ Swag将Go的注释转换为Swagger2.0文档。我们为流行的 [Go Web Framewo
 2. 使用如下命令下载swag：
 
 ```bash
-go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/yalochat/swag/cmd/swag@latest
 ```
 
 从源码开始构建的话，需要有Go环境（1.19及以上版本）。
@@ -130,7 +130,7 @@ OPTIONS:
 
 ## 如何与Gin集成
 
-[点击此处](https://github.com/swaggo/swag/tree/master/example/celler)查看示例源代码。
+[点击此处](https://github.com/yalochat/swag/tree/master/example/celler)查看示例源代码。
 
 1. 使用`swag init`生成Swagger2.0文档后，导入如下代码包：
 
@@ -234,8 +234,8 @@ import (
     "strconv"
 
     "github.com/gin-gonic/gin"
-    "github.com/swaggo/swag/example/celler/httputil"
-    "github.com/swaggo/swag/example/celler/model"
+    "github.com/yalochat/swag/example/celler/httputil"
+    "github.com/yalochat/swag/example/celler/model"
 )
 
 // ShowAccount godoc
@@ -300,7 +300,7 @@ swag init
 ## 格式化说明
 
 可以针对Swag的注释自动格式化，就像`go fmt`。   
-此处查看格式化结果 [here](https://github.com/swaggo/swag/tree/master/example/celler).
+此处查看格式化结果 [here](https://github.com/yalochat/swag/tree/master/example/celler).
 
 示例：
 ```shell
@@ -336,7 +336,7 @@ swag fmt -d ./ --exclude ./internal
 
 ## 通用API信息
 
-**示例** [`celler/main.go`](https://github.com/swaggo/swag/blob/master/example/celler/main.go)
+**示例** [`celler/main.go`](https://github.com/yalochat/swag/blob/master/example/celler/main.go)
 
 | 注释                    | 说明                                                                                            | 示例                                                            |
 | ----------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
@@ -377,7 +377,7 @@ swag fmt -d ./ --exclude ./internal
 
 ## API操作
 
-Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/celler/controller)
+Example [celler/controller](https://github.com/yalochat/swag/tree/master/example/celler/controller)
 
 | 注释                   | 描述                                                                                             |
 |----------------------|------------------------------------------------------------------------------------------------|
@@ -602,7 +602,7 @@ type Account struct {
 
 ### 使用`swaggertype`标签更改字段类型
 
-[#201](https://github.com/swaggo/swag/issues/201#issuecomment-475479409)
+[#201](https://github.com/yalochat/swag/issues/201#issuecomment-475479409)
 
 ```go
 type TimestampTime struct {
@@ -639,7 +639,7 @@ type Account struct {
 }
 ```
 
-[#379](https://github.com/swaggo/swag/issues/379)
+[#379](https://github.com/yalochat/swag/issues/379)
 
 ```go
 type CerticateKeyPair struct {
@@ -742,7 +742,7 @@ This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/
 ## 贡献者
 
 This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
-<a href="https://github.com/swaggo/swag/graphs/contributors"><img src="https://opencollective.com/swag/contributors.svg?width=890&button=false" /></a>
+<a href="https://github.com/yalochat/swag/graphs/contributors"><img src="https://opencollective.com/swag/contributors.svg?width=890&button=false" /></a>
 
 ## 支持者
 

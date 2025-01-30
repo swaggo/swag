@@ -2,9 +2,7 @@ name: build
 
 on:
   push:
-    branches: [ master, v2 ]
   pull_request:
-    branches: [ master, v2 ]
 
 jobs:
   test:
@@ -14,18 +12,21 @@ jobs:
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
+      
       - name: deps
         run:  make deps
+      
       - name: static program analysis
         run: make fmt-check vet
+      
       - name: build
         run: make build
+      
       - name: test
         run: make test
-      - name: coverage
-        run: bash <(curl -s https://codecov.io/bash)

@@ -17,7 +17,7 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/swaggo/swag"
+	"github.com/yalochat/swag"
 )
 
 const searchDir = "../testdata/simple"
@@ -225,7 +225,7 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 		}
 	}
 
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/quotes")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/yalochat/swag/testdata/quotes")
 
 	cmd.Dir = config.SearchDir
 
@@ -286,7 +286,7 @@ func TestGen_BuildDocCustomDelims(t *testing.T) {
 		}
 	}
 
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/delims")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/yalochat/swag/testdata/delims")
 
 	cmd.Dir = config.SearchDir
 
@@ -644,6 +644,43 @@ func TestGen_GeneratedDoc(t *testing.T) {
 		filepath.Join(config.OutputDir, "docs.go"),
 		filepath.Join(config.OutputDir, "swagger.json"),
 		filepath.Join(config.OutputDir, "swagger.yaml"),
+	}
+	for _, expectedFile := range expectedFiles {
+		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+
+		_ = os.Remove(expectedFile)
+	}
+}
+
+func TestGen_GeneratedAsyncDoc(t *testing.T) {
+	config := &Config{
+		SearchDir:          "../testdata/simple_async",
+		MainAPIFile:        "./main.go",
+		OutputDir:          "../testdata/simple_async/docs",
+		OutputTypes:        outputTypes,
+		PropNamingStrategy: "",
+	}
+
+	assert.NoError(t, New().Build(config))
+
+	goCMD, err := exec.LookPath("go")
+	assert.NoError(t, err)
+
+	cmd := exec.Command(goCMD, "build", filepath.Join(config.OutputDir, "docs.go"))
+
+	cmd.Stdout = os.Stdout
+
+	cmd.Stderr = os.Stderr
+
+	assert.NoError(t, cmd.Run())
+
+	expectedFiles := []string{
+		filepath.Join(config.OutputDir, "docs.go"),
+		filepath.Join(config.OutputDir, "swagger.json"),
+		filepath.Join(config.OutputDir, "swagger.yaml"),
+		filepath.Join(config.OutputDir, "asyncapi.yaml"),
 	}
 	for _, expectedFile := range expectedFiles {
 		if _, err := os.Stat(expectedFile); os.IsNotExist(err) {

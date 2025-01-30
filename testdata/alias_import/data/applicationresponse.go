@@ -1,7 +1,7 @@
 package data
 
 import (
-	typesapplication "github.com/swaggo/swag/testdata/alias_import/types"
+	typesapplication "github.com/yalochat/swag/testdata/alias_import/types"
 )
 
 type ApplicationResponse struct {
