@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/swaggo/swag/testdata/simple_async/api"
+	"github.com/yalochat/swag/testdata/simple_async/api"
 )
 
 // @title Swagger Example AsyncAPI

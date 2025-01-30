@@ -3,7 +3,7 @@
 Gen doc
 
 ```console
-$ go get -u github.com/swaggo/swag/cmd/swag
+$ go get -u github.com/yalochat/swag/cmd/swag
 $ swag init
 ```
 
@@ -14,4 +14,3 @@ $ go run main.go
 ```
 
 [open swagger](http://localhost:8080/swagger/index.html)
-

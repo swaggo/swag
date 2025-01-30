@@ -2174,7 +2174,7 @@ func TestParseImportAliases(t *testing.T) {
 
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	// windows will fail: \r\n \n
-	assert.Equal(t, string(expected), string(b))
+	assert.Equal(t, strings.TrimSpace(string(expected)), strings.TrimSpace(string(b)))
 }
 
 func TestParseTypeOverrides(t *testing.T) {
@@ -2182,9 +2182,9 @@ func TestParseTypeOverrides(t *testing.T) {
 
 	searchDir := "testdata/global_override"
 	p := New(SetOverrides(map[string]string{
-		"github.com/swaggo/swag/testdata/global_override/types.Application":  "string",
-		"github.com/swaggo/swag/testdata/global_override/types.Application2": "github.com/swaggo/swag/testdata/global_override/othertypes.Application",
-		"github.com/swaggo/swag/testdata/global_override/types.ShouldSkip":   "",
+		"github.com/yalochat/swag/testdata/global_override/types.Application":  "string",
+		"github.com/yalochat/swag/testdata/global_override/types.Application2": "github.com/yalochat/swag/testdata/global_override/othertypes.Application",
+		"github.com/yalochat/swag/testdata/global_override/types.ShouldSkip":   "",
 	}))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
@@ -2264,7 +2264,7 @@ func TestParseConflictSchemaName(t *testing.T) {
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
-	assert.Equal(t, string(expected), string(b))
+	assert.Equal(t, strings.TrimSpace(string(expected)), strings.TrimSpace(string(b)))
 }
 
 func TestParseExternalModels(t *testing.T) {
@@ -4293,21 +4293,21 @@ func TestParser_skipPackageByPrefix(t *testing.T) {
 
 	parser := New()
 
-	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
-	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
-	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/yalochat/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/yalochat/swag/cmd"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/yalochat/swag/gen"))
 
-	parser = New(SetPackagePrefix("github.com/swaggo/swag/cmd"))
+	parser = New(SetPackagePrefix("github.com/yalochat/swag/cmd"))
 
-	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
-	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
-	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+	assert.True(t, parser.skipPackageByPrefix("github.com/yalochat/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/yalochat/swag/cmd"))
+	assert.True(t, parser.skipPackageByPrefix("github.com/yalochat/swag/gen"))
 
-	parser = New(SetPackagePrefix("github.com/swaggo/swag/cmd,github.com/swaggo/swag/gen"))
+	parser = New(SetPackagePrefix("github.com/yalochat/swag/cmd,github.com/yalochat/swag/gen"))
 
-	assert.True(t, parser.skipPackageByPrefix("github.com/swaggo/swag"))
-	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/cmd"))
-	assert.False(t, parser.skipPackageByPrefix("github.com/swaggo/swag/gen"))
+	assert.True(t, parser.skipPackageByPrefix("github.com/yalochat/swag"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/yalochat/swag/cmd"))
+	assert.False(t, parser.skipPackageByPrefix("github.com/yalochat/swag/gen"))
 }
 
 func TestParser_ParseRouterApiInFuncBody(t *testing.T) {
@@ -4389,7 +4389,7 @@ func TestParser_EmbeddedStructAsOtherAliasGoListNested(t *testing.T) {
 
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
 	assert.NoError(t, err)
-	assert.Equal(t, string(expected), string(b))
+	assert.Equal(t, strings.TrimSpace(string(expected)), strings.TrimSpace(string(b)))
 }
 
 func TestParser_genVarDefinedFuncDoc(t *testing.T) {

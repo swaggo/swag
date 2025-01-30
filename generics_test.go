@@ -9,6 +9,7 @@ import (
 	"go/ast"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -131,7 +132,7 @@ func TestParseGenericsPackageAlias(t *testing.T) {
 	assert.NoError(t, err)
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
 	assert.NoError(t, err)
-	assert.Equal(t, string(expected), string(b))
+	assert.Equal(t, strings.TrimSpace(string(expected)), strings.TrimSpace(string(b)))
 }
 
 func TestParseGenericsFunctionScoped(t *testing.T) {

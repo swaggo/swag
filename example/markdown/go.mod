@@ -1,4 +1,4 @@
-module github.com/swaggo/swag/example/markdown
+module github.com/yalochat/swag/example/markdown
 
 go 1.18
 
