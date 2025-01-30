@@ -30,113 +30,155 @@ func TestNewAsyncScope(t *testing.T) {
 
 func TestParseServerComment(t *testing.T) {
 	t.Parallel()
-	t.Run("parses a valid @server comment", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		comment := "@server myServer mqtt mqtt://broker.hivemq.com"
 
-		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
+	tests := []struct {
+		name        string
+		comment     string
+		funcName    *string
+		expectedErr string
+		assertFunc  func(t *testing.T, err error, asyncScope *AsyncScope)
+	}{
+		{
+			name:        "parses a valid @server comment",
+			comment:     "@server myServer mqtt mqtt://broker.hivemq.com",
+			expectedErr: "",
+			assertFunc: func(t *testing.T, err error, asyncScope *AsyncScope) {
+				assert.Contains(t, asyncScope.servers, "myServer")
+				assert.Equal(t, "mqtt", asyncScope.servers["myServer"].Server.Protocol)
+				assert.Equal(t, "mqtt://broker.hivemq.com", asyncScope.servers["myServer"].Server.URL)
+			},
+		},
+		{
+			name:        "returns error for invalid @server comment",
+			comment:     "@server myServer mqtt",
+			expectedErr: "missing required param comment parameters \"myServer mqtt\"",
+		},
+	}
 
-		assert.NoError(t, err)
-		assert.Contains(t, asyncScope.servers, "myServer")
-
-		assert.Equal(t, "mqtt", asyncScope.servers["myServer"].Server.Protocol)
-		assert.Equal(t, "mqtt://broker.hivemq.com", asyncScope.servers["myServer"].Server.URL)
-	})
-
-	t.Run("returns error for invalid @server comment", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		comment := "@server myServer mqtt"
-
-		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
-
-		assert.Error(t, err)
-		assert.Equal(t, "missing required param comment parameters \"myServer mqtt\"", err.Error())
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			asyncScope := NewAsyncScope(nil)
+			err := asyncScope.ParseAsyncAPIComment(tt.funcName, tt.comment, nil)
+			if tt.expectedErr != "" {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedErr, err.Error())
+			} else {
+				assert.NoError(t, err)
+				tt.assertFunc(t, err, asyncScope)
+			}
+		})
+	}
 }
 
 func TestParseChannelComment(t *testing.T) {
 	t.Parallel()
-	t.Run("parses a valid @channel comment", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		comment := `@channel topic1 myServer "This is a test channel"`
 
-		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
+	tests := []struct {
+		name        string
+		comment     string
+		expectedErr string
+		funcName    *string
+		assertFunc  func(t *testing.T, err error, asyncScope *AsyncScope)
+	}{
+		{
+			name:        "parses a valid @channel comment",
+			comment:     `@channel topic1 myServer "This is a test channel"`,
+			expectedErr: "",
+			assertFunc: func(t *testing.T, err error, asyncScope *AsyncScope) {
+				assert.Contains(t, asyncScope.channels, "topic1")
+				assert.Equal(t, "myServer", asyncScope.channels["topic1"].Servers[0])
+				assert.Equal(t, "This is a test channel", asyncScope.channels["topic1"].Description)
+			},
+		},
+		{
+			name:        "returns error for invalid @channel comment",
+			comment:     `@channel topic1 myServer`,
+			expectedErr: "missing required param comment parameters \"topic1 myServer\"",
+		},
+	}
 
-		assert.NoError(t, err)
-		assert.Contains(t, asyncScope.channels, "topic1")
-		assert.Equal(t, "myServer", asyncScope.channels["topic1"].Servers[0])
-		assert.Equal(t, "This is a test channel", asyncScope.channels["topic1"].Description)
-	})
-
-	t.Run("returns error for invalid @channel comment", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		comment := `@channel topic1 myServer`
-
-		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
-
-		assert.Error(t, err)
-		assert.Equal(t, "missing required param comment parameters \"topic1 myServer\"", err.Error())
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			asyncScope := NewAsyncScope(nil)
+			err := asyncScope.ParseAsyncAPIComment(tt.funcName, tt.comment, nil)
+			if tt.expectedErr != "" {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedErr, err.Error())
+			} else {
+				assert.NoError(t, err)
+				tt.assertFunc(t, err, asyncScope)
+			}
+		})
+	}
 }
 
 func TestParseOperationComment(t *testing.T) {
 	t.Parallel()
-	t.Run("parses a valid @operation comment", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		asyncScope.parser.addTestType("model.OrderRow")
+	funcNameExample := "myOperation"
 
-		comment := `@operation myOperation send topic1 model.OrderRow`
-		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
+	tests := []struct {
+		name        string
+		comment     string
+		expectedErr string
+		funcName    *string
+		assertFunc  func(t *testing.T, err error, asyncScope *AsyncScope)
+	}{
+		{
+			name:        "parses a valid @operation comment",
+			comment:     `@operation myOperation send topic1 model.OrderRow`,
+			expectedErr: "",
+			assertFunc: func(t *testing.T, err error, asyncScope *AsyncScope) {
+				assert.Contains(t, asyncScope.operations, "myOperation")
+				assert.Equal(t, Send, asyncScope.operations["myOperation"].action)
+				assert.Equal(t, "topic1", asyncScope.operations["myOperation"].channel)
+			},
+		},
+		{
+			name:        "parses a valid @operation comment - funcName used as operationID",
+			comment:     `@operation send topic1 model.OrderRow`,
+			expectedErr: "",
+			funcName: 	&funcNameExample,
+			assertFunc: func(t *testing.T, err error, asyncScope *AsyncScope) {
+				assert.Contains(t, asyncScope.operations, "myOperation")
+				assert.Equal(t, Send, asyncScope.operations["myOperation"].action)
+				assert.Equal(t, "topic1", asyncScope.operations["myOperation"].channel)
+			},
+		},
+		{
+			name:        "returns error for invalid @operation comment",
+			comment:     `@operation myOperation invalid topic1 model.OrderRow`,
+			expectedErr: "invalid operation action 'invalid' in comment line 'myOperation invalid topic1 model.OrderRow'. Valid values are 'send' or 'receive'",
+		},
+		{
+			name:        "returns error for invalid @operation comment - missing params",
+			comment:     `@operation model.OrderRow`,
+			expectedErr: "missing required comment parameters: \"model.OrderRow\"",
+		},
+		{
+			name:        "returns error for invalid @operation comment - unable to define operationID",
+			comment:     `@operation myOperation topic1 model.OrderRow`,
+			expectedErr: "unable to get operation ID from comment line",
+		},
+	}
 
-		assert.NoError(t, err)
-		assert.Contains(t, asyncScope.operations, "myOperation")
-		assert.Equal(t, Send, asyncScope.operations["myOperation"].action)
-		assert.Equal(t, "topic1", asyncScope.operations["myOperation"].channel)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			asyncScope := NewAsyncScope(nil)
+			asyncScope.parser.addTestType("model.OrderRow")
 
-	t.Run("parses a valid @operation comment - funcName used as operationID", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		asyncScope.parser.addTestType("model.OrderRow")
-		funcName := "myOperation"
+			err := asyncScope.ParseAsyncAPIComment(tt.funcName, tt.comment, nil)
 
-		comment := `@operation send topic1 model.OrderRow`
-		err := asyncScope.ParseAsyncAPIComment(&funcName, comment, nil)
-
-		assert.NoError(t, err)
-		assert.Contains(t, asyncScope.operations, "myOperation")
-		assert.Equal(t, Send, asyncScope.operations["myOperation"].action)
-		assert.Equal(t, "topic1", asyncScope.operations["myOperation"].channel)
-	})
-
-	t.Run("returns error for invalid @operation comment", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		comment := `@operation myOperation invalid topic1 model.OrderRow`
-
-		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
-
-		assert.Error(t, err)
-		assert.Equal(t, "invalid operation action 'invalid' in comment line 'myOperation invalid topic1 model.OrderRow'. Valid values are 'send' or 'receive'", err.Error())
-	})
-
-	t.Run("returns error for invalid @operation comment - missing params", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		comment := `@operation model.OrderRow`
-
-		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
-
-		assert.Error(t, err)
-		assert.Equal(t, "missing required comment parameters: \"model.OrderRow\"", err.Error())
-	})
-
-	t.Run("returns error for invalid @operation comment - unable to define operationID", func(t *testing.T) {
-		asyncScope := NewAsyncScope(nil)
-		comment := `@operation myOperation topic1 model.OrderRow`
-
-		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
-
-		assert.Error(t, err)
-		assert.Equal(t, "unable to get operation ID from comment line", err.Error())
-	})
+			if tt.expectedErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expectedErr, err.Error())
+			}
+			if tt.assertFunc != nil {
+				tt.assertFunc(t, err, asyncScope)
+			}
+		})
+	}
 }
 
 func TestReplaceStringInJSON(t *testing.T) {
