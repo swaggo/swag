@@ -11,7 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sv-tools/openapi/spec"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // OperationV3 describes a single API operation on a path.
