@@ -118,10 +118,11 @@ func (ps *tagBaseFieldParserV3) CustomSchema() (*spec.RefOrSpec[spec.Schema], er
 // ComplementSchema complement schema with field properties
 func (ps *tagBaseFieldParserV3) ComplementSchema(schema *spec.RefOrSpec[spec.Schema]) error {
 	if schema.Spec == nil {
-		schema = ps.p.openAPI.Components.Spec.Schemas[strings.ReplaceAll(schema.Ref.Ref, "#/components/schemas/", "")]
-		if schema == nil {
+		componentSchema := ps.p.openAPI.Components.Spec.Schemas[strings.ReplaceAll(schema.Ref.Ref, "#/components/schemas/", "")]
+		if componentSchema == nil {
 			return fmt.Errorf("could not resolve schema for ref %s", schema.Ref.Ref)
 		}
+		schema = componentSchema
 	}
 
 	types := ps.p.GetSchemaTypePathV3(schema, 2)
