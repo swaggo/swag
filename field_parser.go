@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/spec"
 )
 
-var _ FieldParser = &tagBaseFieldParser{p: nil, field: nil, tag: ""}
+var _ FieldParser = (*tagBaseFieldParser)(nil)
 
 const (
 	requiredLabel    = "required"
@@ -21,10 +21,6 @@ const (
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
 )
-
-var _ FieldParser = &tagBaseFieldParser{}
-
-var _ FieldParser = &tagBaseFieldParser{}
 
 type tagBaseFieldParser struct {
 	p     *Parser
