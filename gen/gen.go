@@ -453,7 +453,7 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 		return err
 	}
 
-	swag.ExcludePathsFromSwagger(swaggerCopy, config.ExcludeFromUI)
+	swag.ExcludePathsAndDefinitionsFromSwagger(swaggerCopy, config.ExcludeFromUI)
 
 	swaggerSpec := &spec.Swagger{
 		VendorExtensible: swaggerCopy.VendorExtensible,
