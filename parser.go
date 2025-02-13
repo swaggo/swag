@@ -1961,3 +1961,82 @@ func (parser *Parser) addTestType(typename string) {
 		Schema:  PrimitiveSchema(OBJECT),
 	}
 }
+
+// SetExcludeFromUI excludes apis with operations which match given extension
+func SetExcludeFromUI(excludeFromUI string) map[string]bool {
+	ExcludeFromUI := make(map[string]bool, 0)
+	for _, f := range strings.Split(excludeFromUI, ",") {
+		f = strings.TrimSpace(f)
+		if f != "" {
+			lowerAttribute := fmt.Sprintf("x-%s", strings.ToLower(f)) 
+			ExcludeFromUI[lowerAttribute] = true
+		}
+	}
+	return ExcludeFromUI
+}
+
+// Exclude Paths from the swagger based on the annotation
+func ExcludePathsFromSwagger(swagger *spec.Swagger, excludeFromUI string) {
+	if excludeFromUI == "" {
+		return 
+	}
+
+	ExcludeFromUI := SetExcludeFromUI(excludeFromUI)
+
+	for path, item := range swagger.Paths.Paths {
+		for method := range allMethod {
+			op := refRouteMethodOp(&item, method)
+			if *op != nil {
+				for key := range (**op).VendorExtensible.Extensions {
+					if ExcludeFromUI[strings.ToLower(key)] {
+						delete(swagger.Paths.Paths, path)
+						break
+					}
+				}
+			}
+		}
+	}
+	
+	RemoveUnusedDefinitions(swagger)
+}
+
+
+// Remove unused definitions
+func RemoveUnusedDefinitions(swagger *spec.Swagger) {
+	// Remove unused definitions
+	usedDefinitions := map[string]bool{}
+	for _, item := range swagger.Paths.Paths {
+		for method := range allMethod {
+			op := refRouteMethodOp(&item, method)
+			if *op != nil {
+				for _, param := range (**op).Parameters {
+					if param.Schema != nil && param.Schema.Ref.String() != "" {
+						ref := param.Schema.Ref.String()
+						if strings.HasPrefix(ref, "#/definitions/") {
+							defName := strings.TrimPrefix(ref, "#/definitions/")
+							usedDefinitions[defName] = true
+						}
+					}
+				}
+				if (**op).Responses != nil {
+					for _, response := range (**op).Responses.StatusCodeResponses {
+						if response.Schema != nil && response.Schema.Ref.String() != "" {
+							ref := response.Schema.Ref.String()
+							if strings.HasPrefix(ref, "#/definitions/") {
+								defName := strings.TrimPrefix(ref, "#/definitions/")
+								usedDefinitions[defName] = true
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for def := range swagger.Definitions {
+		if !usedDefinitions[def] {
+			delete(swagger.Definitions, def)
+		}
+	}
+
+}

@@ -149,6 +149,9 @@ type Config struct {
 
 	// ParseFuncBody whether swag should parse api info inside of funcs
 	ParseFuncBody bool
+
+	// ExcludeFromUI exclude the apis from UI with specified annotation
+	ExcludeFromUI string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -413,7 +416,31 @@ func parseOverrides(r io.Reader) (map[string]string, error) {
 	return overrides, nil
 }
 
+// DeepCopySwagger creates a deep copy of the given Swagger object.
+func DeepCopySwagger(swagger *spec.Swagger) (*spec.Swagger, error) {
+    // Marshal the original swagger object to JSON
+    data, err := json.Marshal(swagger)
+    if err != nil {
+        return nil, err
+    }
+
+    // Unmarshal the JSON data into a new swagger object
+    var copy spec.Swagger
+    err = json.Unmarshal(data, &copy)
+    if err != nil {
+        return nil, err
+    }
+
+    return &copy, nil
+}
+
 func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swagger, config *Config) error {
+	// Create a deep copy of the swagger object
+    swaggerCopy, err := DeepCopySwagger(swagger)
+    if err != nil {
+        return err
+    }
+
 	generator, err := template.New("swagger_info").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
 			// Add schemes
@@ -426,34 +453,36 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 		return err
 	}
 
+	swag.ExcludePathsFromSwagger(swaggerCopy, config.ExcludeFromUI)
+
 	swaggerSpec := &spec.Swagger{
-		VendorExtensible: swagger.VendorExtensible,
+		VendorExtensible: swaggerCopy.VendorExtensible,
 		SwaggerProps: spec.SwaggerProps{
-			ID:       swagger.ID,
-			Consumes: swagger.Consumes,
-			Produces: swagger.Produces,
-			Swagger:  swagger.Swagger,
+			ID:       swaggerCopy.ID,
+			Consumes: swaggerCopy.Consumes,
+			Produces: swaggerCopy.Produces,
+			Swagger:  swaggerCopy.Swagger,
 			Info: &spec.Info{
-				VendorExtensible: swagger.Info.VendorExtensible,
+				VendorExtensible: swaggerCopy.Info.VendorExtensible,
 				InfoProps: spec.InfoProps{
 					Description:    config.LeftTemplateDelim + "escape .Description" + config.RightTemplateDelim,
 					Title:          config.LeftTemplateDelim + ".Title" + config.RightTemplateDelim,
-					TermsOfService: swagger.Info.TermsOfService,
-					Contact:        swagger.Info.Contact,
-					License:        swagger.Info.License,
+					TermsOfService: swaggerCopy.Info.TermsOfService,
+					Contact:        swaggerCopy.Info.Contact,
+					License:        swaggerCopy.Info.License,
 					Version:        config.LeftTemplateDelim + ".Version" + config.RightTemplateDelim,
 				},
 			},
 			Host:                config.LeftTemplateDelim + ".Host" + config.RightTemplateDelim,
 			BasePath:            config.LeftTemplateDelim + ".BasePath" + config.RightTemplateDelim,
-			Paths:               swagger.Paths,
-			Definitions:         swagger.Definitions,
-			Parameters:          swagger.Parameters,
-			Responses:           swagger.Responses,
-			SecurityDefinitions: swagger.SecurityDefinitions,
-			Security:            swagger.Security,
-			Tags:                swagger.Tags,
-			ExternalDocs:        swagger.ExternalDocs,
+			Paths:               swaggerCopy.Paths,
+			Definitions:         swaggerCopy.Definitions,
+			Parameters:          swaggerCopy.Parameters,
+			Responses:           swaggerCopy.Responses,
+			SecurityDefinitions: swaggerCopy.SecurityDefinitions,
+			Security:            swaggerCopy.Security,
+			Tags:                swaggerCopy.Tags,
+			ExternalDocs:        swaggerCopy.ExternalDocs,
 		},
 	}
 
@@ -489,13 +518,13 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *spec.Swa
 		Timestamp:          time.Now(),
 		GeneratedTime:      config.GeneratedTime,
 		Doc:                string(buf),
-		Host:               swagger.Host,
+		Host:               swaggerCopy.Host,
 		PackageName:        packageName,
-		BasePath:           swagger.BasePath,
-		Schemes:            swagger.Schemes,
-		Title:              swagger.Info.Title,
-		Description:        swagger.Info.Description,
-		Version:            swagger.Info.Version,
+		BasePath:           swaggerCopy.BasePath,
+		Schemes:            swaggerCopy.Schemes,
+		Title:              swaggerCopy.Info.Title,
+		Description:        swaggerCopy.Info.Description,
+		Version:            swaggerCopy.Info.Version,
 		State:              state,
 		InstanceName:       config.InstanceName,
 		LeftTemplateDelim:  config.LeftTemplateDelim,

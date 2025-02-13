@@ -43,6 +43,7 @@ const (
 	packagePrefixFlag        = "packagePrefix"
 	stateFlag                = "state"
 	parseFuncBodyFlag        = "parseFuncBody"
+	excludeFromUIFlag        = "excludeFromUI"
 )
 
 var initFlags = []cli.Flag{
@@ -186,6 +187,11 @@ var initFlags = []cli.Flag{
 		// Value: false,
 		Usage: "Parse API info within body of functions in go files, disabled by default (default: false)",
 	},
+	&cli.StringFlag{
+		Name:  excludeFromUIFlag,
+		Value: "",
+		Usage: "Exclude the apis from UI with specified annotation. For Example: excludeFromUI=hidden,internal",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -268,6 +274,7 @@ func initAction(ctx *cli.Context) error {
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
 		ParseFuncBody:       ctx.Bool(parseFuncBodyFlag),
+		ExcludeFromUI:       ctx.String(excludeFromUIFlag),
 	})
 }
 

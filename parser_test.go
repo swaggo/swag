@@ -4422,3 +4422,316 @@ var Func2 = Func
 	assert.NotNil(t, val2.Get)
 	assert.Equal(t, val2.Get.OperationProps.Summary, "generate indirectly pointing")
 }
+
+func TestParser_RemoveUnusedDefinitions(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Remove Pet definition", func(t *testing.T) {
+		swagger := &spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Paths: &spec.Paths{
+					Paths: map[string]spec.PathItem{
+						"/account/user": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									OperationProps: spec.OperationProps{
+										Parameters: []spec.Parameter{
+											{
+												ParamProps: spec.ParamProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Ref: spec.MustCreateRef("#/definitions/User"),
+														},
+													},
+												},
+											},
+										},
+										Responses: &spec.Responses{
+											ResponsesProps: spec.ResponsesProps{
+												StatusCodeResponses: map[int]spec.Response{
+													200: {
+														ResponseProps: spec.ResponseProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Ref: spec.MustCreateRef("#/definitions/User"),
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Definitions: map[string]spec.Schema{
+					"Pet": {},
+					"User":  {},
+				},
+			},
+		}
+
+		RemoveUnusedDefinitions(swagger)
+
+		assert.Contains(t, swagger.Definitions, "User")
+		assert.NotContains(t, swagger.Definitions, "Pet")
+	})
+
+	t.Run("No definitions to remove", func(t *testing.T) {
+		swagger := &spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Paths: &spec.Paths{
+					Paths: map[string]spec.PathItem{
+						"/example": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									OperationProps: spec.OperationProps{
+										Parameters: []spec.Parameter{
+											{
+												ParamProps: spec.ParamProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Ref: spec.MustCreateRef("#/definitions/Example"),
+														},
+													},
+												},
+											},
+										},
+										Responses: &spec.Responses{
+											ResponsesProps: spec.ResponsesProps{
+												StatusCodeResponses: map[int]spec.Response{
+													200: {
+														ResponseProps: spec.ResponseProps{
+															Schema: &spec.Schema{
+																SchemaProps: spec.SchemaProps{
+																	Ref: spec.MustCreateRef("#/definitions/Example"),
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Definitions: map[string]spec.Schema{
+					"Example": {},
+				},
+			},
+		}
+
+		RemoveUnusedDefinitions(swagger)
+
+		assert.Contains(t, swagger.Definitions, "Example")
+	})
+
+	t.Run("No paths", func(t *testing.T) {
+		swagger := &spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Paths: &spec.Paths{
+					Paths: map[string]spec.PathItem{},
+				},
+				Definitions: map[string]spec.Schema{
+					"Example": {},
+				},
+			},
+		}
+
+		RemoveUnusedDefinitions(swagger)
+
+		assert.NotContains(t, swagger.Definitions, "Example")
+	})
+}
+
+func TestParser_ExcludePathsFromSwagger(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Exclude paths with matching extensions", func(t *testing.T) {
+		swagger := &spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Paths: &spec.Paths{
+					Paths: map[string]spec.PathItem{
+						"/example": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-public": true,
+										},
+									},
+								},
+							},
+						},
+						"/example2": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-internal": true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Definitions: map[string]spec.Schema{
+					"Example": {},
+					"Unused":  {},
+				},
+			},
+		}
+
+		ExcludePathsFromSwagger(swagger, "internal")
+
+		assert.Contains(t, swagger.Paths.Paths, "/example")
+		assert.NotContains(t, swagger.Paths.Paths, "/example2")
+	})
+
+	t.Run("No paths to exclude", func(t *testing.T) {
+		swagger := &spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Paths: &spec.Paths{
+					Paths: map[string]spec.PathItem{
+						"/example": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-public": true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Definitions: map[string]spec.Schema{
+					"Example": {},
+				},
+			},
+		}
+
+		ExcludePathsFromSwagger(swagger, "")
+
+		assert.Contains(t, swagger.Paths.Paths, "/example")
+	})
+
+	t.Run("Exclude paths with multiple extensions", func(t *testing.T) {
+		swagger := &spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Paths: &spec.Paths{
+					Paths: map[string]spec.PathItem{
+						"/example": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-public": true,
+										},
+									},
+								},
+							},
+						},
+						"/example2": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-internal": true,
+										},
+									},
+								},
+							},
+						},
+						"/example3": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-deprecated": true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Definitions: map[string]spec.Schema{
+					"Example": {},
+					"Unused":  {},
+				},
+			},
+		}
+
+		ExcludePathsFromSwagger(swagger, "internal,deprecated")
+
+		assert.Contains(t, swagger.Paths.Paths, "/example")
+		assert.NotContains(t, swagger.Paths.Paths, "/example2")
+		assert.NotContains(t, swagger.Paths.Paths, "/example3")
+	})
+
+	t.Run("Exclude paths and remove unused definitions", func(t *testing.T) {
+		swagger := &spec.Swagger{
+			SwaggerProps: spec.SwaggerProps{
+				Paths: &spec.Paths{
+					Paths: map[string]spec.PathItem{
+						"/example": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-public": true,
+										},
+									},
+									OperationProps: spec.OperationProps{
+										Parameters: []spec.Parameter{
+											{
+												ParamProps: spec.ParamProps{
+													Schema: &spec.Schema{
+														SchemaProps: spec.SchemaProps{
+															Ref: spec.MustCreateRef("#/definitions/Example"),
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"/example2": {
+							PathItemProps: spec.PathItemProps{
+								Get: &spec.Operation{
+									VendorExtensible: spec.VendorExtensible{
+										Extensions: spec.Extensions{
+											"x-internal": true,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Definitions: map[string]spec.Schema{
+					"Example": {},
+					"Unused":  {},
+				},
+			},
+		}
+
+		ExcludePathsFromSwagger(swagger, "internal")
+
+		assert.Contains(t, swagger.Paths.Paths, "/example")
+		assert.NotContains(t, swagger.Paths.Paths, "/example2")
+		assert.Contains(t, swagger.Definitions, "Example")
+		assert.NotContains(t, swagger.Definitions, "Unused")
+	})
+}
