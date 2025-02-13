@@ -1205,11 +1205,11 @@ func addAsyncAPIOperations(parser *Parser, asyncAPIScope *AsyncScope) {
 		channel := parser.asyncAPI.Channels[operation.channel]
 
 		if operation.action == Receive {
-			channel.Subscribe = &operation.Operation
+			channel.Publish = &operation.Operation
 		}
 
 		if operation.action == Send {
-			channel.Publish = &operation.Operation
+			channel.Subscribe = &operation.Operation
 		}
 
 		parser.asyncAPI.Channels[operation.channel] = channel
