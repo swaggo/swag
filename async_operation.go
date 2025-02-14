@@ -166,7 +166,7 @@ func (asyncScope *AsyncScope) ParseOperationComment(funcName *string, commentLin
 		return err
 	}
 
-	msg, err := asyncScope.createMessage(typeSchema, message)
+	msg, err := asyncScope.createMessage(typeSchema, formatMessageID(message))
 	if err != nil {
 		return err
 	}
@@ -222,6 +222,14 @@ func (asyncScope *AsyncScope) createMessage(typeSchema *typeSpec.Schema, message
 	})
 
 	return msg, nil
+}
+
+// formatMessageID extracts the message type from the package name (e.g., "package.MessageType" -> "MessageType").
+func formatMessageID(messageID string) string {
+	if i := strings.LastIndex(messageID, "."); i != -1 {
+		return messageID[i+1:]
+	}
+	return messageID
 }
 
 // Marshals and processes asyncAPI type schema properties.
