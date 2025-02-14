@@ -131,6 +131,7 @@ func TestParseOperationComment(t *testing.T) {
 				assert.Contains(t, asyncScope.operations, "myOperation")
 				assert.Equal(t, Send, asyncScope.operations["myOperation"].action)
 				assert.Equal(t, "topic1", asyncScope.operations["myOperation"].channel)
+				assert.Equal(t, "OrderRow", asyncScope.operations["myOperation"].Message.OneOf1.MessageEntity.MessageID)
 			},
 		},
 		{
@@ -142,6 +143,7 @@ func TestParseOperationComment(t *testing.T) {
 				assert.Contains(t, asyncScope.operations, "myOperation")
 				assert.Equal(t, Send, asyncScope.operations["myOperation"].action)
 				assert.Equal(t, "topic1", asyncScope.operations["myOperation"].channel)
+				assert.Equal(t, "OrderRow", asyncScope.operations["myOperation"].Message.OneOf1.MessageEntity.MessageID)
 			},
 		},
 		{
