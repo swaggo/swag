@@ -22,7 +22,7 @@ func listPackages(ctx context.Context, dir string, env []string, args ...string)
 	var stderrBuf bytes.Buffer
 	cmd.Stderr = &stderrBuf
 	defer func() {
-		if stderrBuf.Len() > 0 {
+		if (finalErr != nil) && (stderrBuf.Len() > 0) {
 			finalErr = fmt.Errorf("%v\n%s", finalErr, stderrBuf.Bytes())
 		}
 	}()
