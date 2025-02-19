@@ -86,7 +86,8 @@ func (asyncScope *AsyncScope) ParseAsyncAPIComment(funcName *string, comment str
 
 	handler, exists := AttributeHandler[Attribute(lowerAttribute)]
 	if !exists {
-		return fmt.Errorf("unknown attribute '%s' in comment '%s'", attribute, comment)
+		log.Printf("unknown attribute '%s' in comment '%s', skipping...", attribute, comment)
+		return nil
 	}
 
 	return handler(asyncScope, funcName, lineRemainder, astFile)

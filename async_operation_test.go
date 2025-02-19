@@ -198,12 +198,11 @@ func TestReplaceStringInJSON(t *testing.T) {
 
 func TestInvalidCommentAttr(t *testing.T) {
 	t.Parallel()
-	t.Run("returns error if unknown attr", func(t *testing.T) {
+	t.Run("does not return error if unknown attr", func(t *testing.T) {
 		asyncScope := NewAsyncScope(nil)
 		comment := "@unknownAttr somevalue"
 
 		err := asyncScope.ParseAsyncAPIComment(nil, comment, nil)
-		assert.Error(t, err)
-		assert.Equal(t, "unknown attribute '@unknownAttr' in comment '@unknownAttr somevalue'", err.Error())
+		assert.NoError(t, err)
 	})
 }
