@@ -26,7 +26,7 @@ func TestOverridesGetTypeSchemaV3(t *testing.T) {
 
 		s, err := p.getTypeSchemaV3("sql.NullString", nil, false)
 		if assert.NoError(t, err) {
-			assert.Truef(t, s.Spec.Type[0] == "string", "type sql.NullString should be overridden by string")
+			assert.Truef(t, (*s.Spec.Type)[0] == "string", "type sql.NullString should be overridden by string")
 		}
 	})
 
@@ -341,14 +341,14 @@ func TestParsePet(t *testing.T) {
 
 	tagSchema := schemas["web.Tag"].Spec
 	assert.Equal(t, 2, len(tagSchema.Properties))
-	assert.Equal(t, typeInteger, tagSchema.Properties["id"].Spec.Type)
-	assert.Equal(t, typeString, tagSchema.Properties["name"].Spec.Type)
+	assert.Equal(t, &typeInteger, tagSchema.Properties["id"].Spec.Type)
+	assert.Equal(t, &typeString, tagSchema.Properties["name"].Spec.Type)
 
 	petSchema := schemas["web.Pet"].Spec
 	assert.NotNil(t, petSchema)
 	assert.Equal(t, 8, len(petSchema.Properties))
-	assert.Equal(t, typeInteger, petSchema.Properties["id"].Spec.Type)
-	assert.Equal(t, typeString, petSchema.Properties["name"].Spec.Type)
+	assert.Equal(t, &typeInteger, petSchema.Properties["id"].Spec.Type)
+	assert.Equal(t, &typeString, petSchema.Properties["name"].Spec.Type)
 
 }
 

@@ -7,8 +7,8 @@ require (
 	github.com/go-openapi/spec v0.20.9
 	github.com/json-iterator/go v1.1.12
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.2
-	github.com/sv-tools/openapi v0.2.1
+	github.com/stretchr/testify v1.8.4
+	github.com/sv-tools/openapi v0.4.0
 	golang.org/x/tools v0.8.0
 	sigs.k8s.io/yaml v1.3.0
 )

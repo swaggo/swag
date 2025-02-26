@@ -9,7 +9,7 @@ import (
 // PrimitiveSchemaV3 build a primitive schema.
 func PrimitiveSchemaV3(refType string) *spec.RefOrSpec[spec.Schema] {
 	result := spec.NewSchemaSpec()
-	result.Spec.Type = spec.SingleOrArray[string]{refType}
+	result.Spec.Type = &spec.SingleOrArray[string]{refType}
 
 	return result
 }
@@ -22,12 +22,12 @@ func IsComplexSchemaV3(schema *SchemaV3) bool {
 	}
 
 	// a deep array type is complex, how to determine deep? here more than 2 ,for example: [][]object,[][][]int
-	if len(schema.Type) > 2 {
+	if len(*schema.Type) > 2 {
 		return true
 	}
 
 	//Object included, such as Object or []Object
-	for _, st := range schema.Type {
+	for _, st := range *schema.Type {
 		if st == OBJECT {
 			return true
 		}
@@ -65,7 +65,7 @@ func BuildCustomSchemaV3(types []string) (*spec.RefOrSpec[spec.Schema], error) {
 
 		// TODO: check if this is correct
 		result := spec.NewSchemaSpec()
-		result.Spec.Type = []string{"array"}
+		result.Spec.Type = &spec.SingleOrArray[string]{ARRAY}
 		result.Spec.AdditionalProperties = spec.NewBoolOrSchema(true, schema)
 
 		return result, nil
@@ -81,7 +81,7 @@ func BuildCustomSchemaV3(types []string) (*spec.RefOrSpec[spec.Schema], error) {
 
 		result := spec.NewSchemaSpec()
 		result.Spec.AdditionalProperties = spec.NewBoolOrSchema(true, schema)
-		result.Spec.Type = spec.NewSingleOrArray("object")
+		result.Spec.Type = &spec.SingleOrArray[string]{OBJECT}
 
 		return result, nil
 	default:
