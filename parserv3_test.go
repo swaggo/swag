@@ -137,7 +137,7 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	assert.Equal(t, "OpenAPI", p.openAPI.ExternalDocs.Spec.Description)
 	assert.Equal(t, "https://swagger.io/resources/open-api", p.openAPI.ExternalDocs.Spec.URL)
 
-	assert.Equal(t, 7, len(p.openAPI.Components.Spec.SecuritySchemes))
+	assert.Equal(t, 8, len(p.openAPI.Components.Spec.SecuritySchemes))
 
 	security := p.openAPI.Components.Spec.SecuritySchemes
 	assert.Equal(t, "basic", security["basic"].Spec.Spec.Scheme)
@@ -166,9 +166,13 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	assert.Equal(t, "header", security["OAuth2AccessCode"].Spec.Spec.In)
 	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2AccessCode"].Spec.Spec.Flows.Spec.AuthorizationCode.Spec.TokenURL)
 
-	assert.Equal(t, "bearer", security["bearerauth"].Spec.Spec.Scheme)
-	assert.Equal(t, "http", security["bearerauth"].Spec.Spec.Type)
-	assert.Equal(t, "JWT", security["bearerauth"].Spec.Spec.BearerFormat)
+	assert.Equal(t, "bearer", security["BearerAuthDefault"].Spec.Spec.Scheme)
+	assert.Equal(t, "http", security["BearerAuthDefault"].Spec.Spec.Type)
+	assert.Equal(t, "JWT", security["BearerAuthDefault"].Spec.Spec.BearerFormat)
+
+	assert.Equal(t, "bearer", security["BearerAuthFormat"].Spec.Spec.Scheme)
+	assert.Equal(t, "http", security["BearerAuthFormat"].Spec.Spec.Type)
+	assert.Equal(t, "Bearer <token>", security["BearerAuthFormat"].Spec.Spec.BearerFormat)
 }
 
 func TestParser_ParseGeneralApiInfoExtensionsV3(t *testing.T) {
@@ -280,14 +284,16 @@ func TestParserParseGeneralAPITagDocsV3(t *testing.T) {
 	parser := New(GenerateOpenAPI3Doc(true))
 	assert.Error(t, parser.parseGeneralAPIInfoV3([]string{
 		"@tag.name Test",
-		"@tag.docs.description Best example documentation"}))
+		"@tag.docs.description Best example documentation",
+	}))
 
 	parser = New(GenerateOpenAPI3Doc(true))
 	err := parser.parseGeneralAPIInfoV3([]string{
 		"@tag.name test",
 		"@tag.description A test Tag",
 		"@tag.docs.url https://example.com",
-		"@tag.docs.description Best example documentation"})
+		"@tag.docs.description Best example documentation",
+	})
 	assert.NoError(t, err)
 
 	assert.Equal(t, "test", parser.openAPI.Tags[0].Spec.Name)
@@ -349,7 +355,6 @@ func TestParsePet(t *testing.T) {
 	assert.Equal(t, 8, len(petSchema.Properties))
 	assert.Equal(t, typeInteger, petSchema.Properties["id"].Spec.Type)
 	assert.Equal(t, typeString, petSchema.Properties["name"].Spec.Type)
-
 }
 
 func TestParseSimpleApiV3(t *testing.T) {
@@ -375,7 +380,7 @@ func TestParseSimpleApiV3(t *testing.T) {
 	path = paths["/FormData"].Spec.Spec.Post.Spec
 	assert.NotNil(t, path)
 	assert.NotNil(t, path.RequestBody)
-	//TODO add asserts
+	// TODO add asserts
 
 	t.Run("Test parse struct oneOf", func(t *testing.T) {
 		t.Parallel()
@@ -466,7 +471,6 @@ func TestParseSimpleApiV3(t *testing.T) {
 			{Ref: &spec.Ref{Ref: "#/components/schemas/web.Cat"}},
 			{Ref: &spec.Ref{Ref: "#/components/schemas/web.Dog"}},
 		}, rootSchema.OneOf)
-
 	})
 }
 
@@ -494,7 +498,6 @@ func TestParserParseServers(t *testing.T) {
 
 	assert.Equal(t, "https://petstore.com/v3", servers[1].Spec.URL)
 	assert.Equal(t, "Production Petstore server.", servers[1].Spec.Description)
-
 }
 
 func TestParseTypeAlias(t *testing.T) {

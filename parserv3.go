@@ -331,6 +331,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		descriptionAttr  = "@description"
 		tokenURL         = "@tokenurl"
 		authorizationURL = "@authorizationurl"
+		bearerFormat     = "@bearerformat"
 	)
 
 	var search []string
@@ -351,20 +352,16 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		search = []string{authorizationURL, in}
 	case secAccessCodeAttr:
 		search = []string{tokenURL, authorizationURL, in}
-	case secBearerAuthAttr:
-		scheme := spec.SecurityScheme{
-			Type:         "http",
-			Scheme:       "bearer",
-			BearerFormat: "JWT",
-		}
-		return "bearerauth", &scheme, nil
 	}
 
 	// For the first line we get the attributes in the context parameter, so we skip to the next one
 	*index++
 
-	attrMap, scopes := make(map[string]string), make(map[string]string)
-	extensions, description := make(map[string]interface{}), ""
+	attrMap := make(map[string]string)
+	scopes := make(map[string]string)
+	optMap := make(map[string]string)
+	extensions := make(map[string]interface{})
+	description := ""
 
 	for ; *index < len(lines); *index++ {
 		v := strings.TrimSpace(lines[*index])
@@ -378,6 +375,8 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		if len(fields) > 1 {
 			value = fields[1]
 		}
+
+		optMap[securityAttr] = value
 
 		for _, findTerm := range search {
 			if securityAttr == findTerm {
@@ -467,6 +466,14 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 		scheme.Flows.Spec.AuthorizationCode = spec.NewOAuthFlow()
 		scheme.Flows.Spec.AuthorizationCode.Spec.AuthorizationURL = attrMap[authorizationURL]
 		scheme.Flows.Spec.AuthorizationCode.Spec.TokenURL = attrMap[tokenURL]
+
+	case secBearerAuthAttr:
+		scheme.Type = "http"
+		scheme.Scheme = "bearer"
+		scheme.BearerFormat = optMap[bearerFormat]
+		if len(scheme.BearerFormat) == 0 {
+			scheme.BearerFormat = "JWT"
+		}
 	}
 
 	scheme.Description = description
@@ -727,7 +734,7 @@ func (p *Parser) ParseDefinitionV3(typeSpecDef *TypeSpecDef) (*SchemaV3, error) 
 
 	if len(typeSpecDef.Enums) > 0 {
 		var varNames []string
-		var enumComments = make(map[string]string)
+		enumComments := make(map[string]string)
 		for _, value := range typeSpecDef.Enums {
 			definition.Spec.Enum = append(definition.Spec.Enum, value.Value)
 			varNames = append(varNames, value.key)
