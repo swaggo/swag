@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/sv-tools/openapi/spec"
 )
 
@@ -235,7 +234,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			if strings.HasPrefix(attribute, "@x-") {
 				err := p.parseExtensionsV3(value, attribute)
 				if err != nil {
-					return errors.Wrap(err, "could not parse extension comment")
+					return fmt.Errorf("%w: %s", err, "could not parse extension comment")
 				}
 			}
 		}
@@ -811,7 +810,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 	case *ast.Ident:
 		result, err := p.getTypeSchemaV3(expr.Name, file, ref)
 		if err != nil {
-			return nil, errors.Wrap(err, errMessage)
+			return nil, fmt.Errorf("%w: %s", err, errMessage)
 		}
 
 		return result, nil
@@ -824,7 +823,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
 			result, err := p.getTypeSchemaV3(fullTypeName(xIdent.Name, expr.Sel.Name), file, ref)
 			if err != nil {
-				return nil, errors.Wrap(err, errMessage)
+				return nil, fmt.Errorf("%w: %s", err, errMessage)
 			}
 
 			return result, nil

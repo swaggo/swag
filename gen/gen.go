@@ -16,8 +16,6 @@ import (
 	"text/template"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
-
 	v2 "github.com/go-openapi/spec"
 	v3 "github.com/sv-tools/openapi/spec"
 
@@ -56,7 +54,7 @@ func New() *Gen {
 	gen := Gen{
 		json: json.Marshal,
 		jsonIndent: func(data interface{}) ([]byte, error) {
-			return jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent(&data, "", "    ")
+			return json.MarshalIndent(data, "", "    ")
 		},
 		jsonToYAML: yaml.JSONToYAML,
 		debug:      log.New(os.Stdout, "", log.LstdFlags),
