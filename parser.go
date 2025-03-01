@@ -530,7 +530,7 @@ func (parser *Parser) parseDeps(absMainAPIFilePath string, parseDepth int) error
 
 		pkgName, err := getPkgName(absMainAPIFilePath)
 		if err != nil {
-			return fmt.Errorf("%w: %s", err, "could not parse dependencies")
+			return fmt.Errorf("could not parse dependencies: %w", err)
 		}
 
 		if err = t.Resolve(pkgName); err != nil {
@@ -539,7 +539,7 @@ func (parser *Parser) parseDeps(absMainAPIFilePath string, parseDepth int) error
 
 		for i := 0; i < len(t.Root.Deps); i++ {
 			if err = parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i], parser.ParseDependency); err != nil {
-				return fmt.Errorf("%w: %s", err, "could not parse dependencies")
+				return fmt.Errorf("could not parse dependencies: %w", err)
 			}
 		}
 	}

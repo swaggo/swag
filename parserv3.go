@@ -234,7 +234,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			if strings.HasPrefix(attribute, "@x-") {
 				err := p.parseExtensionsV3(value, attribute)
 				if err != nil {
-					return fmt.Errorf("%w: %s", err, "could not parse extension comment")
+					return fmt.Errorf("could not parse extension comment: %w", err)
 				}
 			}
 		}
@@ -810,7 +810,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 	case *ast.Ident:
 		result, err := p.getTypeSchemaV3(expr.Name, file, ref)
 		if err != nil {
-			return nil, fmt.Errorf("%w: %s", err, errMessage)
+			return nil, fmt.Errorf("%s: %w", errMessage, err)
 		}
 
 		return result, nil
@@ -823,7 +823,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 		if xIdent, ok := expr.X.(*ast.Ident); ok {
 			result, err := p.getTypeSchemaV3(fullTypeName(xIdent.Name, expr.Sel.Name), file, ref)
 			if err != nil {
-				return nil, fmt.Errorf("%w: %s", err, errMessage)
+				return nil, fmt.Errorf("%s: %w", errMessage, err)
 			}
 
 			return result, nil
