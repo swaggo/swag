@@ -534,7 +534,7 @@ func (parser *Parser) parseDeps(absMainAPIFilePath string, parseDepth int) error
 		}
 
 		if err = t.Resolve(pkgName); err != nil {
-			return fmt.Errorf("%w: %s", fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not resolve dependencies")
+			return fmt.Errorf("pkg %s cannot find all dependencies, %w: could not resolve dependencies", pkgName, err)
 		}
 
 		for i := 0; i < len(t.Root.Deps); i++ {
