@@ -8,7 +8,7 @@ require (
 	github.com/KyleBanks/depth v1.2.1
 	github.com/go-openapi/spec v0.21.0
 	github.com/stretchr/testify v1.10.0
-	github.com/sv-tools/openapi v0.4.0
+	github.com/sv-tools/openapi v0.2.2
 	github.com/urfave/cli/v2 v2.27.5
 	golang.org/x/text v0.22.0
 	golang.org/x/tools v0.30.0
