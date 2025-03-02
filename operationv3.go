@@ -9,9 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/sv-tools/openapi/spec"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // OperationV3 describes a single API operation on a path.
@@ -153,7 +152,7 @@ func (o *OperationV3) ParseAcceptComment(commentLine string) error {
 
 	validTypes, err := parseMimeTypeListV3(commentLine, "%v accept type can't be accepted")
 	if err != nil {
-		return errors.Wrap(err, errMessage)
+		return fmt.Errorf("%s: %w", errMessage, err)
 	}
 
 	if o.RequestBody == nil {
@@ -205,7 +204,7 @@ func (o *OperationV3) ParseProduceComment(commentLine string) error {
 
 	validTypes, err := parseMimeTypeListV3(commentLine, "%v produce type can't be accepted")
 	if err != nil {
-		return errors.Wrap(err, errMessage)
+		return fmt.Errorf("%s: %w", errMessage, err)
 	}
 
 	o.responseMimeTypes = validTypes
@@ -229,7 +228,7 @@ func (o *OperationV3) ProcessProduceComment() error {
 		for key, response := range o.Responses.Spec.Response {
 			code, err := strconv.Atoi(key)
 			if err != nil {
-				return errors.Wrap(err, errMessage)
+				return fmt.Errorf("%s: %w", errMessage, err)
 			}
 
 			// Status 204 is no content. So we do not need to add content.
