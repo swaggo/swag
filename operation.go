@@ -322,8 +322,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					nameOverrideType = "formData"
 				}
 				// load overridden type specific name from extensions if exists
-				if nameVal, ok := item.Schema.Extensions[nameOverrideType]; ok {
-					name = nameVal.(string)
+				if nameVal, ok := item.Schema.Extensions.GetString(nameOverrideType); ok {
+					name = nameVal
 				}
 
 				switch {
@@ -344,7 +344,11 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					if !IsSimplePrimitiveType(itemSchema.Type[0]) {
 						continue
 					}
-					param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], format, findInSlice(schema.Required, item.Name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
+					collectionFormat := operation.parser.collectionFormatInQuery
+					if cfv, ok := prop.Extensions.GetString(collectionFormatTag); ok {
+						collectionFormat = cfv
+					}
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], format, findInSlice(schema.Required, item.Name), itemSchema.Enum, collectionFormat)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
 					param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], format, findInSlice(schema.Required, item.Name), nil, operation.parser.collectionFormatInQuery)
