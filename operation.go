@@ -16,7 +16,7 @@ import (
 
 	"github.com/go-openapi/spec"
 	"golang.org/x/tools/go/loader"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // RouteProperties describes HTTP properties of a single router comment.

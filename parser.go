@@ -3,6 +3,7 @@ package swag
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -17,8 +18,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/pkg/errors"
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
@@ -531,16 +530,16 @@ func (parser *Parser) parseDeps(absMainAPIFilePath string, parseDepth int) error
 
 		pkgName, err := getPkgName(absMainAPIFilePath)
 		if err != nil {
-			return errors.Wrap(err, "could not parse dependencies")
+			return fmt.Errorf("could not parse dependencies: %w", err)
 		}
 
-		if err := t.Resolve(pkgName); err != nil {
-			return errors.Wrap(fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err), "could not resolve dependencies")
+		if err = t.Resolve(pkgName); err != nil {
+			return fmt.Errorf("could not resolve dependencies: pkg %s cannot find all dependencies, %w", pkgName, err)
 		}
 
 		for i := 0; i < len(t.Root.Deps); i++ {
-			if err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i], parser.ParseDependency); err != nil {
-				return errors.Wrap(err, "could not parse dependencies")
+			if err = parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i], parser.ParseDependency); err != nil {
+				return fmt.Errorf("could not parse dependencies: %w", err)
 			}
 		}
 	}
