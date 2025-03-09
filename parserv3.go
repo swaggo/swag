@@ -837,7 +837,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 
 		if itemSchema == nil {
 			schema := &spec.Schema{}
-			schema.Type = spec.NewSingleOrArray(ARRAY)
+			schema.Type = &spec.SingleOrArray[string]{ARRAY}
 			schema.Items = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
 			p.debug.Printf("Creating array with empty item schema %v", expr.Elt)
 
@@ -845,7 +845,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 		}
 
 		result := &spec.Schema{}
-		result.Type = spec.NewSingleOrArray(ARRAY)
+		result.Type = &spec.SingleOrArray[string]{ARRAY}
 		result.Items = spec.NewBoolOrSchema(false, itemSchema)
 
 		return spec.NewRefOrSpec(nil, result), nil
@@ -854,7 +854,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 		if _, ok := expr.Value.(*ast.InterfaceType); ok {
 			result := &spec.Schema{}
 			result.AdditionalProperties = spec.NewBoolOrSchema(false, spec.NewSchemaSpec())
-			result.Type = spec.NewSingleOrArray(OBJECT)
+			result.Type = &spec.SingleOrArray[string]{OBJECT}
 
 			return spec.NewRefOrSpec(nil, result), nil
 		}
@@ -866,7 +866,7 @@ func (p *Parser) parseTypeExprV3(file *ast.File, typeExpr ast.Expr, ref bool) (*
 
 		result := &spec.Schema{}
 		result.AdditionalProperties = spec.NewBoolOrSchema(false, schema)
-		result.Type = spec.NewSingleOrArray(OBJECT)
+		result.Type = &spec.SingleOrArray[string]{OBJECT}
 
 		return spec.NewRefOrSpec(nil, result), nil
 	case *ast.FuncType:
@@ -904,7 +904,7 @@ func (p *Parser) parseStructV3(file *ast.File, fields *ast.FieldList) (*spec.Ref
 	sort.Strings(required)
 
 	result := spec.NewSchemaSpec()
-	result.Spec.Type = spec.NewSingleOrArray(OBJECT)
+	result.Spec.Type = &spec.SingleOrArray[string]{OBJECT}
 	result.Spec.Properties = properties
 	result.Spec.Required = required
 
@@ -941,7 +941,7 @@ func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[strin
 			return nil, nil, err
 		}
 
-		if len(schema.Spec.Type) > 0 && schema.Spec.Type[0] == OBJECT {
+		if len(*schema.Spec.Type) > 0 && (*schema.Spec.Type)[0] == OBJECT {
 			if len(schema.Spec.Properties) == 0 {
 				return nil, nil, nil
 			}
@@ -1054,12 +1054,12 @@ func (p *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], depth 
 		return nil
 	}
 
-	if schema.Spec != nil && len(schema.Spec.Type) > 0 {
-		switch schema.Spec.Type[0] {
+	if schema.Spec.Type != nil && len(*schema.Spec.Type) > 0 {
+		switch (*schema.Spec.Type)[0] {
 		case ARRAY:
 			depth--
 
-			s := []string{schema.Spec.Type[0]}
+			s := []string{(*schema.Spec.Type)[0]}
 
 			return append(s, p.GetSchemaTypePathV3(schema.Spec.Items.Schema, depth)...)
 		case OBJECT:
@@ -1067,13 +1067,13 @@ func (p *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], depth 
 				// for map
 				depth--
 
-				s := []string{schema.Spec.Type[0]}
+				s := []string{(*schema.Spec.Type)[0]}
 
 				return append(s, p.GetSchemaTypePathV3(schema.Spec.AdditionalProperties.Schema, depth)...)
 			}
 		}
 
-		return []string{schema.Spec.Type[0]}
+		return []string{(*schema.Spec.Type)[0]}
 	}
 
 	println("found schema with no Type, returning any")
