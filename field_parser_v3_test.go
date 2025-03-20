@@ -180,6 +180,35 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("Enums tag twice", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.NewSchemaSpec()
+		schema.Spec.Type = []string{"string"}
+		parser := &Parser{}
+		fieldParser := newTagBaseFieldParserV3(
+			parser,
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" enums:"a,b,c"`,
+			}},
+		)
+		err := fieldParser.ComplementSchema(schema)
+		assert.NoError(t, err)
+		assert.Equal(t, []interface{}{"a", "b", "c"}, schema.Spec.Enum)
+
+		fieldParser2 := newTagBaseFieldParserV3(
+			parser,
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" enums:"d,e,f"`,
+			}},
+		)
+		fieldParser2.ComplementSchema(schema)
+		assert.Equal(t, []interface{}{"a", "b", "c", "d", "e", "f"}, schema.Spec.Enum)
+
+	})
+
 	t.Run("EnumVarNames tag", func(t *testing.T) {
 		t.Parallel()
 

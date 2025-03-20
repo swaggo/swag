@@ -376,7 +376,7 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 	elemSchema.MultipleOf = field.multipleOf
 	elemSchema.MaxLength = field.maxLength
 	elemSchema.MinLength = field.minLength
-	elemSchema.Enum = field.enums
+	elemSchema.Enum = append(elemSchema.Enum, field.enums...)
 	elemSchema.Pattern = field.pattern
 	elemSchema.OneOf = oneOfSchemas
 
