@@ -483,8 +483,8 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 
 func getSecurityDefinitionKey(lines []string) string {
 	for _, line := range lines {
-		if strings.HasPrefix(strings.ToLower(line), "@securitydefinitions") {
-			splittedLine := strings.Split(line, " ")
+		if strings.HasPrefix(strings.TrimSpace(strings.ToLower(line)), "@securitydefinitions") {
+			splittedLine := strings.Fields(line)
 			return splittedLine[len(splittedLine)-1]
 		}
 	}
