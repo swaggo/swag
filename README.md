@@ -471,6 +471,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 | png                   | image/png                         |
 | jpeg                  | image/jpeg                        |
 | gif                   | image/gif                         |
+| event-stream          | text/event-stream                 |
 
 
 
@@ -963,7 +964,7 @@ If the struct is defined in a dependency package, use `--parseDependency`.
 
 If the struct is defined in your main project, use `--parseInternal`.
 
-if you want to include both internal and from dependencies use both flags 
+if you want to include both internal and from dependencies use both flags
 ```
 swag init --parseDependency --parseInternal
 ```

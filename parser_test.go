@@ -488,9 +488,10 @@ func TestParser_ParseAcceptComment(t *testing.T) {
 		"image/gif",
 		"application/xhtml+xml",
 		"application/health+json",
+		"text/event-stream",
 	}
 
-	comment := `@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+	comment := `@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,event-stream`
 
 	parser := New()
 	assert.NoError(t, parseGeneralAPIInfo(parser, []string{comment}))
@@ -521,9 +522,10 @@ func TestParser_ParseProduceComment(t *testing.T) {
 		"image/gif",
 		"application/xhtml+xml",
 		"application/health+json",
+		"text/event-stream",
 	}
 
-	comment := `@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+	comment := `@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,event-stream`
 
 	parser := New()
 	assert.NoError(t, parseGeneralAPIInfo(parser, []string{comment}))
@@ -3400,14 +3402,14 @@ func TestParseFunctionScopedComplexStructDefinition(t *testing.T) {
 	src := `
 package main
 
-// @Param request body main.Fun.request true "query params" 
+// @Param request body main.Fun.request true "query params"
 // @Success 200 {object} main.Fun.response
 // @Router /test [post]
 func Fun()  {
 	type request struct {
 		Name string
 	}
-	
+
 	type grandChild struct {
 		Name string
 	}
@@ -3544,16 +3546,16 @@ package main
 
 type PublicChild struct {
 	Name string
-}	
+}
 
-// @Param request body main.Fun.request true "query params" 
+// @Param request body main.Fun.request true "query params"
 // @Success 200 {object} main.Fun.response
 // @Router /test [post]
 func Fun()  {
 	type request struct {
 		Name string
 	}
-	
+
 	type grandChild struct {
 		Name string
 	}

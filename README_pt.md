@@ -445,6 +445,7 @@ Além disso, `swag` também aceita pseudónimos para alguns tipos de MIME, como 
 | png                   | image/png                         |
 | jpeg                  | image/jpeg                        |
 | gif                   | image/gif                         |
+| event-stream          | text/event-stream                 |
 
 
 
