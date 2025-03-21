@@ -166,9 +166,9 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	assert.Equal(t, "header", security["OAuth2AccessCode"].Spec.Spec.In)
 	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2AccessCode"].Spec.Spec.Flows.Spec.AuthorizationCode.Spec.TokenURL)
 
-	assert.Equal(t, "bearer", security["bearerauth"].Spec.Spec.Scheme)
-	assert.Equal(t, "http", security["bearerauth"].Spec.Spec.Type)
-	assert.Equal(t, "JWT", security["bearerauth"].Spec.Spec.BearerFormat)
+	assert.Equal(t, "bearer", security["BearerAuth"].Spec.Spec.Scheme)
+	assert.Equal(t, "http", security["BearerAuth"].Spec.Spec.Type)
+	assert.Equal(t, "JWT", security["BearerAuth"].Spec.Spec.BearerFormat)
 }
 
 func TestParser_ParseGeneralApiInfoExtensionsV3(t *testing.T) {
