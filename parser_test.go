@@ -3995,6 +3995,20 @@ func TestParser_Skip(t *testing.T) {
 	assert.Error(t, parser.Skip(filepath.Clean("admin/release"), &mockFS{IsDirectory: true}))
 }
 
+func TestParser_ExcludeFilesAndFolders(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/conflict_name"
+
+	p := New(SetExcludedDirsAndFiles("api/api1.go,model"))
+	err := p.getAllGoFileInfo("testdata", searchDir)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 4, len(p.packages.files))
+
+	assert.Error(t, p.Skip("model", &mockFS{IsDirectory: true}))
+}
+
 func TestGetFieldType(t *testing.T) {
 	t.Parallel()
 
