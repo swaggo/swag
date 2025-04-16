@@ -217,6 +217,15 @@ func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestParseRouterCommentWithTilde(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Router /customer/{id}/~last-name [patch]`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+}
+
 func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
 	t.Parallel()
 
