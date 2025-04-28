@@ -72,7 +72,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 				return err
 			}
 
-			setspecInfo(p.openAPI, attr, string(commentInfo))
+			setspecInfo(p.openAPI, descriptionAttr, string(commentInfo))
 		case "@host":
 			if len(p.openAPI.Servers) == 0 {
 				server := spec.NewServer()
