@@ -2082,3 +2082,120 @@ func TestParseServerCommentV3(t *testing.T) {
 	assert.Equal(t, "https://api.example.com/v2", operation.Servers[1].Spec.URL)
 	assert.Equal(t, "override path 2", operation.Servers[1].Spec.Description)
 }
+
+func TestResponseSchemaWithCustomMimeTypeV3(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Schema ref is correctly associated with custom MIME type", func(t *testing.T) {
+		t.Parallel()
+
+		// Create operation with parser to handle the type reference
+		parser := New()
+		operation := NewOperationV3(parser)
+
+		// Create a mock type in the parser as a stand-in for model.OrderRow
+		parser.addTestType("model.OrderRow")
+
+		// First, set the response MIME type with @Produce
+		err := operation.ParseComment("/@Produce json-api", nil)
+		require.NoError(t, err)
+
+		// Then set the response with @Success
+		err = operation.ParseComment("/@Success 200 {object} model.OrderRow", nil)
+		require.NoError(t, err)
+
+		// Check that we have a response for status code 200
+		response, exists := operation.Responses.Spec.Response["200"]
+		require.True(t, exists, "Response for status code 200 should exist")
+
+		// Verify the correct MIME type (json-api -> application/vnd.api+json) has the schema reference
+		content := response.Spec.Spec.Content
+		require.NotNil(t, content, "Response content should not be nil")
+
+		// Check that application/vnd.api+json exists in the content map
+		apiJsonContent, exists := content["application/vnd.api+json"]
+		require.True(t, exists, "application/vnd.api+json content should exist")
+
+		// Verify the schema reference is correct
+		require.NotNil(t, apiJsonContent.Spec.Schema, "Schema should not be nil")
+		require.NotNil(t, apiJsonContent.Spec.Schema.Ref, "Schema ref should not be nil")
+		require.Equal(t, "#/components/schemas/model.OrderRow", apiJsonContent.Spec.Schema.Ref.Ref)
+
+		// Make sure the schema is NOT also defined under application/json
+		_, exists = content["application/json"]
+		require.False(t, exists, "application/json content should not exist when only json-api was specified")
+	})
+
+	t.Run("Default to application/json when no MIME type is specified", func(t *testing.T) {
+		t.Parallel()
+
+		// Create operation with parser to handle the type reference
+		parser := New()
+		operation := NewOperationV3(parser)
+
+		// Create a mock type in the parser
+		parser.addTestType("model.OrderRow")
+
+		// Only set the response with @Success, without any @Produce
+		err := operation.ParseComment("/@Success 200 {object} model.OrderRow", nil)
+		require.NoError(t, err)
+
+		// Check that we have a response for status code 200
+		response, exists := operation.Responses.Spec.Response["200"]
+		require.True(t, exists, "Response for status code 200 should exist")
+
+		// Verify application/json has the schema reference
+		content := response.Spec.Spec.Content
+		require.NotNil(t, content, "Response content should not be nil")
+
+		// Check that application/json exists in the content map
+		jsonContent, exists := content["application/json"]
+		require.True(t, exists, "application/json content should exist")
+
+		// Verify the schema reference is correct
+		require.NotNil(t, jsonContent.Spec.Schema, "Schema should not be nil")
+		require.NotNil(t, jsonContent.Spec.Schema.Ref, "Schema ref should not be nil")
+		require.Equal(t, "#/components/schemas/model.OrderRow", jsonContent.Spec.Schema.Ref.Ref)
+	})
+
+	t.Run("Multiple MIME types have the same schema reference", func(t *testing.T) {
+		t.Parallel()
+
+		// Create operation with parser to handle the type reference
+		parser := New()
+		operation := NewOperationV3(parser)
+
+		// Create a mock type in the parser
+		parser.addTestType("model.OrderRow")
+
+		// Set multiple MIME types
+		err := operation.ParseComment("/@Produce json,json-api", nil)
+		require.NoError(t, err)
+
+		// Set the response
+		err = operation.ParseComment("/@Success 200 {object} model.OrderRow", nil)
+		require.NoError(t, err)
+
+		// Check that we have a response for status code 200
+		response, exists := operation.Responses.Spec.Response["200"]
+		require.True(t, exists, "Response for status code 200 should exist")
+
+		// Verify both MIME types have the schema reference
+		content := response.Spec.Spec.Content
+		require.NotNil(t, content, "Response content should not be nil")
+
+		// Check application/json
+		jsonContent, exists := content["application/json"]
+		require.True(t, exists, "application/json content should exist")
+		require.NotNil(t, jsonContent.Spec.Schema, "Schema should not be nil")
+		require.NotNil(t, jsonContent.Spec.Schema.Ref, "Schema ref should not be nil")
+		require.Equal(t, "#/components/schemas/model.OrderRow", jsonContent.Spec.Schema.Ref.Ref)
+
+		// Check application/vnd.api+json
+		apiJsonContent, exists := content["application/vnd.api+json"]
+		require.True(t, exists, "application/vnd.api+json content should exist")
+		require.NotNil(t, apiJsonContent.Spec.Schema, "Schema should not be nil")
+		require.NotNil(t, apiJsonContent.Spec.Schema.Ref, "Schema ref should not be nil")
+		require.Equal(t, "#/components/schemas/model.OrderRow", apiJsonContent.Spec.Schema.Ref.Ref)
+	})
+}
