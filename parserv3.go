@@ -1118,5 +1118,11 @@ func (p *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], depth 
 
 func (p *Parser) getSchemaByRef(ref *spec.Ref) *spec.Schema {
 	searchString := strings.ReplaceAll(ref.Ref, "#/components/schemas/", "")
-	return p.openAPI.Components.Spec.Schemas[searchString].Spec
+	schemaRef, exists := p.openAPI.Components.Spec.Schemas[searchString]
+	if !exists || schemaRef == nil {
+		println(fmt.Sprintf("Schema not found for ref: %s, returning any", ref.Ref))
+		return &spec.Schema{} // return empty schema if not found
+	}
+
+	return schemaRef.Spec
 }
