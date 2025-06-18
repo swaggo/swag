@@ -596,3 +596,59 @@ func TestParseInterface(t *testing.T) {
 
 	assert.JSONEq(t, string(expected), string(result))
 }
+
+func TestParseRecursionWithSchemaName(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/recursion_schema_name"
+	p := New(GenerateOpenAPI3Doc(true))
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	require.NoError(t, err)
+
+	userSchema, exists := p.openAPI.Components.Spec.Schemas["User"]
+	require.True(t, exists, "User schema should exist")
+	require.NotNil(t, userSchema, "User schema should not be nil")
+	require.NotNil(t, userSchema.Spec, "User schema spec should not be nil")
+
+	assert.Equal(t, "object", (*userSchema.Spec.Type)[0])
+
+	childrenProp, exists := userSchema.Spec.Properties["children"]
+	require.True(t, exists, "children property should exist")
+	require.NotNil(t, childrenProp.Spec, "children property spec should not be nil")
+
+	assert.Equal(t, "array", (*childrenProp.Spec.Type)[0])
+
+	require.NotNil(t, childrenProp.Spec.Items, "children items should not be nil")
+	require.NotNil(t, childrenProp.Spec.Items.Schema, "children items schema should not be nil")
+
+	expectedRef := "#/components/schemas/User"
+	assert.Equal(t, expectedRef, childrenProp.Spec.Items.Schema.Ref.Ref)
+}
+
+func TestGetSchemaByRef(t *testing.T) {
+	t.Parallel()
+
+	p := New(GenerateOpenAPI3Doc(true))
+	p.openAPI.Components.Spec.Schemas = make(map[string]*spec.RefOrSpec[spec.Schema])
+
+	t.Run("Existing schema", func(t *testing.T) {
+		testSchema := &spec.Schema{}
+		testSchema.Type = &spec.SingleOrArray[string]{"string"}
+		p.openAPI.Components.Spec.Schemas["TestSchema"] = spec.NewRefOrSpec(nil, testSchema)
+
+		ref := &spec.Ref{Ref: "#/components/schemas/TestSchema"}
+		result := p.getSchemaByRef(ref)
+
+		require.NotNil(t, result)
+		assert.Equal(t, testSchema, result)
+	})
+
+	t.Run("Non-existing schema returns empty schema", func(t *testing.T) {
+		ref := &spec.Ref{Ref: "#/components/schemas/NonExistentSchema"}
+		result := p.getSchemaByRef(ref)
+
+		require.NotNil(t, result)
+		assert.Equal(t, &spec.Schema{}, result)
+	})
+}
