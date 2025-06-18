@@ -184,7 +184,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		t.Parallel()
 
 		schema := spec.NewSchemaSpec()
-		schema.Spec.Type = []string{"string"}
+		schema.Spec.Type = &spec.SingleOrArray[string]{"string"}
 		parser := &Parser{}
 		fieldParser := newTagBaseFieldParserV3(
 			parser,
