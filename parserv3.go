@@ -732,12 +732,25 @@ func (p *Parser) ParseDefinitionV3(typeSpecDef *TypeSpecDef) (*SchemaV3, error) 
 	if p.isInStructStack(typeSpecDef) {
 		p.debug.Printf("Skipping '%s', recursion detected.", typeName)
 
-		return &SchemaV3{
-				Name:    typeName,
-				PkgPath: typeSpecDef.PkgPath,
-				Schema:  PrimitiveSchemaV3(OBJECT).Spec,
-			},
-			ErrRecursiveParseStruct
+		schemaName := typeName
+		if typeSpecDef.SchemaName != "" {
+			schemaName = typeSpecDef.SchemaName
+		}
+
+		schema := &SchemaV3{
+			Name:    schemaName,
+			PkgPath: typeSpecDef.PkgPath,
+			Schema:  PrimitiveSchemaV3(OBJECT).Spec,
+		}
+
+		p.parsedSchemasV3[typeSpecDef] = schema
+
+		if p.openAPI.Components.Spec.Schemas == nil {
+			p.openAPI.Components.Spec.Schemas = make(map[string]*spec.RefOrSpec[spec.Schema])
+		}
+		p.openAPI.Components.Spec.Schemas[schema.Name] = spec.NewRefOrSpec(nil, schema.Schema)
+
+		return schema, ErrRecursiveParseStruct
 	}
 
 	p.structStack = append(p.structStack, typeSpecDef)
