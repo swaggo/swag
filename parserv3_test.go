@@ -501,7 +501,7 @@ func TestParserParseGeneralAPIInfoGlobalSecurityV3(t *testing.T) {
 	t.Parallel()
 
 	parser := New(GenerateOpenAPI3Doc(true))
-	
+
 	// Test parsing global security with simple scheme
 	assert.NoError(t, parser.parseGeneralAPIInfoV3([]string{
 		"@securitydefinitions.apikey ApiKeyAuth",
@@ -509,12 +509,12 @@ func TestParserParseGeneralAPIInfoGlobalSecurityV3(t *testing.T) {
 		"@name Authorization",
 		"@security ApiKeyAuth",
 	}))
-	
+
 	// Verify that global security was set
 	assert.Len(t, parser.openAPI.Security, 1)
 	assert.Contains(t, parser.openAPI.Security[0], "ApiKeyAuth")
 	assert.Equal(t, []string{}, parser.openAPI.Security[0]["ApiKeyAuth"])
-	
+
 	// Test parsing global security with OAuth2 scopes
 	parser2 := New(GenerateOpenAPI3Doc(true))
 	assert.NoError(t, parser2.parseGeneralAPIInfoV3([]string{
@@ -524,12 +524,12 @@ func TestParserParseGeneralAPIInfoGlobalSecurityV3(t *testing.T) {
 		"@scope.write Grants write access",
 		"@security OAuth2Implicit[read,write]",
 	}))
-	
+
 	// Verify OAuth2 security with scopes
 	assert.Len(t, parser2.openAPI.Security, 1)
 	assert.Contains(t, parser2.openAPI.Security[0], "OAuth2Implicit")
 	assert.Equal(t, []string{"read", "write"}, parser2.openAPI.Security[0]["OAuth2Implicit"])
-	
+
 	// Test parsing multiple global security requirements (OR logic)
 	parser3 := New(GenerateOpenAPI3Doc(true))
 	assert.NoError(t, parser3.parseGeneralAPIInfoV3([]string{
@@ -539,14 +539,14 @@ func TestParserParseGeneralAPIInfoGlobalSecurityV3(t *testing.T) {
 		"@securitydefinitions.basic BasicAuth",
 		"@security ApiKeyAuth || BasicAuth",
 	}))
-	
+
 	// Verify OR logic creates both schemes in same requirement
 	assert.Len(t, parser3.openAPI.Security, 1)
 	assert.Contains(t, parser3.openAPI.Security[0], "ApiKeyAuth")
 	assert.Contains(t, parser3.openAPI.Security[0], "BasicAuth")
 	assert.Equal(t, []string{}, parser3.openAPI.Security[0]["ApiKeyAuth"])
 	assert.Equal(t, []string{}, parser3.openAPI.Security[0]["BasicAuth"])
-	
+
 	// Test multiple @security annotations (AND logic - multiple requirements)
 	parser4 := New(GenerateOpenAPI3Doc(true))
 	assert.NoError(t, parser4.parseGeneralAPIInfoV3([]string{
@@ -557,7 +557,7 @@ func TestParserParseGeneralAPIInfoGlobalSecurityV3(t *testing.T) {
 		"@security ApiKeyAuth",
 		"@security BasicAuth",
 	}))
-	
+
 	// Verify AND logic creates separate requirements
 	assert.Len(t, parser4.openAPI.Security, 2)
 	assert.Contains(t, parser4.openAPI.Security[0], "ApiKeyAuth")
