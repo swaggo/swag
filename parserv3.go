@@ -142,6 +142,9 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 
 			p.openAPI.Components.Spec.SecuritySchemes[key] = schemeSpec
 
+		case securityAttr:
+			p.openAPI.Security = append(p.openAPI.Security, parseSecurity(value))
+
 		case "@query.collection.format":
 			p.collectionFormatInQuery = TransToValidCollectionFormat(value)
 
