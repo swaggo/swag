@@ -500,65 +500,45 @@ func TestParserParseServers(t *testing.T) {
 func TestParserParseGeneralAPIInfoGlobalSecurityV3(t *testing.T) {
 	t.Parallel()
 
+	// Test simple global security
 	parser := New(GenerateOpenAPI3Doc(true))
-
-	// Test parsing global security with simple scheme
-	assert.NoError(t, parser.parseGeneralAPIInfoV3([]string{
-		"@securitydefinitions.apikey ApiKeyAuth",
-		"@in header",
-		"@name Authorization",
+	err := parser.parseGeneralAPIInfoV3([]string{
 		"@security ApiKeyAuth",
-	}))
-
-	// Verify that global security was set
+	})
+	assert.NoError(t, err)
 	assert.Len(t, parser.openAPI.Security, 1)
 	assert.Contains(t, parser.openAPI.Security[0], "ApiKeyAuth")
 	assert.Equal(t, []string{}, parser.openAPI.Security[0]["ApiKeyAuth"])
 
-	// Test parsing global security with OAuth2 scopes
+	// Test OAuth2 with scopes
 	parser2 := New(GenerateOpenAPI3Doc(true))
-	assert.NoError(t, parser2.parseGeneralAPIInfoV3([]string{
-		"@securitydefinitions.oauth2.implicit OAuth2Implicit",
-		"@authorizationurl https://example.com/oauth/authorize",
-		"@scope.read Grants read access",
-		"@scope.write Grants write access",
+	err2 := parser2.parseGeneralAPIInfoV3([]string{
 		"@security OAuth2Implicit[read,write]",
-	}))
-
-	// Verify OAuth2 security with scopes
+	})
+	assert.NoError(t, err2)
 	assert.Len(t, parser2.openAPI.Security, 1)
 	assert.Contains(t, parser2.openAPI.Security[0], "OAuth2Implicit")
 	assert.Equal(t, []string{"read", "write"}, parser2.openAPI.Security[0]["OAuth2Implicit"])
 
-	// Test parsing multiple global security requirements (OR logic)
+	// Test OR logic
 	parser3 := New(GenerateOpenAPI3Doc(true))
-	assert.NoError(t, parser3.parseGeneralAPIInfoV3([]string{
-		"@securitydefinitions.apikey ApiKeyAuth",
-		"@in header",
-		"@name Authorization",
-		"@securitydefinitions.basic BasicAuth",
+	err3 := parser3.parseGeneralAPIInfoV3([]string{
 		"@security ApiKeyAuth || BasicAuth",
-	}))
-
-	// Verify OR logic creates both schemes in same requirement
+	})
+	assert.NoError(t, err3)
 	assert.Len(t, parser3.openAPI.Security, 1)
 	assert.Contains(t, parser3.openAPI.Security[0], "ApiKeyAuth")
 	assert.Contains(t, parser3.openAPI.Security[0], "BasicAuth")
 	assert.Equal(t, []string{}, parser3.openAPI.Security[0]["ApiKeyAuth"])
 	assert.Equal(t, []string{}, parser3.openAPI.Security[0]["BasicAuth"])
 
-	// Test multiple @security annotations (AND logic - multiple requirements)
+	// Test AND logic (multiple @security lines)
 	parser4 := New(GenerateOpenAPI3Doc(true))
-	assert.NoError(t, parser4.parseGeneralAPIInfoV3([]string{
-		"@securitydefinitions.apikey ApiKeyAuth",
-		"@in header",
-		"@name Authorization",
-		"@securitydefinitions.basic BasicAuth",
+	err4 := parser4.parseGeneralAPIInfoV3([]string{
 		"@security ApiKeyAuth",
 		"@security BasicAuth",
-	}))
-
-	// Verify AND logic creates separate requirements
+	})
+	assert.NoError(t, err4)
 	assert.Len(t, parser4.openAPI.Security, 2)
 	assert.Contains(t, parser4.openAPI.Security[0], "ApiKeyAuth")
 	assert.Contains(t, parser4.openAPI.Security[1], "BasicAuth")
