@@ -497,6 +497,53 @@ func TestParserParseServers(t *testing.T) {
 
 }
 
+func TestParserParseGeneralAPIInfoGlobalSecurityV3(t *testing.T) {
+	t.Parallel()
+
+	// Test simple global security
+	parser := New(GenerateOpenAPI3Doc(true))
+	err := parser.parseGeneralAPIInfoV3([]string{
+		"@security ApiKeyAuth",
+	})
+	assert.NoError(t, err)
+	assert.Len(t, parser.openAPI.Security, 1)
+	assert.Contains(t, parser.openAPI.Security[0], "ApiKeyAuth")
+	assert.Equal(t, []string{}, parser.openAPI.Security[0]["ApiKeyAuth"])
+
+	// Test OAuth2 with scopes
+	parser2 := New(GenerateOpenAPI3Doc(true))
+	err2 := parser2.parseGeneralAPIInfoV3([]string{
+		"@security OAuth2Implicit[read,write]",
+	})
+	assert.NoError(t, err2)
+	assert.Len(t, parser2.openAPI.Security, 1)
+	assert.Contains(t, parser2.openAPI.Security[0], "OAuth2Implicit")
+	assert.Equal(t, []string{"read", "write"}, parser2.openAPI.Security[0]["OAuth2Implicit"])
+
+	// Test OR logic
+	parser3 := New(GenerateOpenAPI3Doc(true))
+	err3 := parser3.parseGeneralAPIInfoV3([]string{
+		"@security ApiKeyAuth || BasicAuth",
+	})
+	assert.NoError(t, err3)
+	assert.Len(t, parser3.openAPI.Security, 1)
+	assert.Contains(t, parser3.openAPI.Security[0], "ApiKeyAuth")
+	assert.Contains(t, parser3.openAPI.Security[0], "BasicAuth")
+	assert.Equal(t, []string{}, parser3.openAPI.Security[0]["ApiKeyAuth"])
+	assert.Equal(t, []string{}, parser3.openAPI.Security[0]["BasicAuth"])
+
+	// Test AND logic (multiple @security lines)
+	parser4 := New(GenerateOpenAPI3Doc(true))
+	err4 := parser4.parseGeneralAPIInfoV3([]string{
+		"@security ApiKeyAuth",
+		"@security BasicAuth",
+	})
+	assert.NoError(t, err4)
+	assert.Len(t, parser4.openAPI.Security, 2)
+	assert.Contains(t, parser4.openAPI.Security[0], "ApiKeyAuth")
+	assert.Contains(t, parser4.openAPI.Security[1], "BasicAuth")
+}
+
 func TestParseTypeAlias(t *testing.T) {
 	t.Parallel()
 

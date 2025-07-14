@@ -429,6 +429,7 @@ func (c *Controller) ListAccounts(ctx *gin.Context) {
 | schemes     | The transfer protocol for the operation that separated by spaces. | // @schemes http https |
 | externalDocs.description | Description of the external document. | // @externalDocs.description OpenAPI |
 | externalDocs.url         | URL of the external document. | // @externalDocs.url https://swagger.io/resources/open-api/ |
+| security    | Global security requirements that apply to all operations by default. | // @security ApiKeyAuth |
 | x-name      | The extension key, must be start by x- and take only json value | // @x-example-key {"key": "value"} |
 
 ### Using markdown descriptions
@@ -920,7 +921,12 @@ General API info.
 // @tokenUrl https://example.com/oauth/token
 // @scope.write Grants write access
 // @scope.admin Grants read and write access to administrative information
+
+// @security BasicAuth
+// @security OAuth2Application
 ```
+
+To set global security requirements that apply to all operations by default, use the `@security` annotation in your general API info. This creates a top-level `security` array in the generated OpenAPI specification.
 
 Each API operation.
 
