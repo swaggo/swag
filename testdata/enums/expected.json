@@ -155,6 +155,20 @@
                     },
                     {
                         "enum": [
+                            77,
+                            70
+                        ],
+                        "type": "integer",
+                        "format": "int32",
+                        "x-enum-varnames": [
+                            "Male",
+                            "Female"
+                        ],
+                        "name": "sex",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
                             "teacher",
                             "student",
                             "Other"
@@ -330,10 +344,25 @@
                 "name": {
                     "type": "string"
                 },
+                "sex": {
+                    "$ref": "#/definitions/types.Sex"
+                },
                 "type": {
                     "$ref": "#/definitions/types.Type"
                 }
             }
+        },
+        "types.Sex": {
+            "type": "integer",
+            "format": "int32",
+            "enum": [
+                77,
+                70
+            ],
+            "x-enum-varnames": [
+                "Male",
+                "Female"
+            ]
         },
         "types.Type": {
             "type": "string",
