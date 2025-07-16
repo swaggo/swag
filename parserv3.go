@@ -338,13 +338,14 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	var search []string
 
 	attribute := strings.ToLower(FieldsByAnySpace(lines[*index], 2)[0])
+	key := getSecurityDefinitionKey(lines)
 	switch attribute {
 	case secBasicAttr:
 		scheme := spec.SecurityScheme{
 			Type:   "http",
 			Scheme: "basic",
 		}
-		return "basic", &scheme, nil
+		return key, &scheme, nil
 	case secAPIKeyAttr:
 		search = []string{in, name}
 	case secApplicationAttr, secPasswordAttr:
@@ -354,12 +355,38 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	case secAccessCodeAttr:
 		search = []string{tokenURL, authorizationURL, in}
 	case secBearerAuthAttr:
+		// Support Bearer scheme with parameters
 		scheme := spec.SecurityScheme{
-			Type:         "http",
-			Scheme:       "bearer",
-			BearerFormat: "JWT",
+			Type:   "http",
+			Scheme: "bearer",
 		}
-		return "bearerauth", &scheme, nil
+		// Parse parameters
+		*index++
+		description := ""
+		for ; *index < len(lines); *index++ {
+			v := strings.TrimSpace(lines[*index])
+			if len(v) == 0 {
+				continue
+			}
+			fields := FieldsByAnySpace(v, 2)
+			securityAttr := strings.ToLower(fields[0])
+			var value string
+			if len(fields) > 1 {
+				value = fields[1]
+			}
+			if securityAttr == "@description" {
+				description = value
+			}
+			if securityAttr == "@bearerformat" {
+				scheme.BearerFormat = value
+			}
+			if strings.HasPrefix(securityAttr, "@securitydefinitions.") {
+				*index--
+				break
+			}
+		}
+		scheme.Description = description
+		return key, &scheme, nil
 	}
 
 	// For the first line we get the attributes in the context parameter, so we skip to the next one
@@ -422,7 +449,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	}
 
 	scheme := &spec.SecurityScheme{}
-	key := getSecurityDefinitionKey(lines)
+	key = getSecurityDefinitionKey(lines)
 
 	switch attribute {
 	case secAPIKeyAttr:
