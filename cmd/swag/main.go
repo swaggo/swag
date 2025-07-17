@@ -24,6 +24,7 @@ const (
 	outputTypesFlag          = "outputTypes"
 	parseVendorFlag          = "parseVendor"
 	parseDependencyFlag      = "parseDependency"
+	useStructNameFlag        = "useStructName"
 	parseDependencyLevelFlag = "parseDependencyLevel"
 	markdownFilesFlag        = "markdownFiles"
 	codeExampleFilesFlag     = "codeExampleFiles"
@@ -98,6 +99,11 @@ var initFlags = []cli.Flag{
 		Name:    parseDependencyFlag,
 		Aliases: []string{"pd"},
 		Usage:   "Parse go files inside dependency folder, disabled by default",
+	},
+	&cli.BoolFlag{
+		Name:    useStructNameFlag,
+		Aliases: []string{"st"},
+		Usage:   "Dont use those ugly full-path names when using dependency flag",
 	},
 	&cli.StringFlag{
 		Name:    markdownFilesFlag,
@@ -251,6 +257,7 @@ func initAction(ctx *cli.Context) error {
 		ParseDependency:     pdv,
 		MarkdownFilesDir:    ctx.String(markdownFilesFlag),
 		ParseInternal:       ctx.Bool(parseInternalFlag),
+		UseStructNames:      ctx.Bool(useStructNameFlag),
 		GeneratedTime:       ctx.Bool(generatedTimeFlag),
 		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
 		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
