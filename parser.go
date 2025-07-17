@@ -264,7 +264,7 @@ func SetParseDependency(parseDependency int) func(*Parser) {
 	}
 }
 
-// SetUseStructName sets whether to parse the dependent packages.
+// SetUseStructName sets whether to strip the full-path definition name.
 func SetUseStructName(useStructName bool) func(*Parser) {
 	return func(p *Parser) {
 		p.UseStructName = useStructName
@@ -1340,6 +1340,7 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 			typeSpecDef.SchemaName = schemaName[len(schemaName)-1]
 			typeName = typeSpecDef.SchemaName
 		}
+		parser.debug.Printf("Could not strip type name of %s", typeName)
 	}
 
 	parser.structStack = append(parser.structStack, typeSpecDef)
