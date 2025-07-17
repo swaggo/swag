@@ -1339,8 +1339,9 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		if len(schemaName) > 1 {
 			typeSpecDef.SchemaName = schemaName[len(schemaName)-1]
 			typeName = typeSpecDef.SchemaName
+		} else {
+			parser.debug.Printf("Could not strip type name of %s", typeName)
 		}
-		parser.debug.Printf("Could not strip type name of %s", typeName)
 	}
 
 	parser.structStack = append(parser.structStack, typeSpecDef)
