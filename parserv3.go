@@ -337,6 +337,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 
 	var search []string
 
+	key := getSecurityDefinitionKey(lines)
 	attribute := strings.ToLower(FieldsByAnySpace(lines[*index], 2)[0])
 	switch attribute {
 	case secBasicAttr:
@@ -359,7 +360,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 			Scheme:       "bearer",
 			BearerFormat: "JWT",
 		}
-		return "bearerauth", &scheme, nil
+		return key, &scheme, nil
 	}
 
 	// For the first line we get the attributes in the context parameter, so we skip to the next one
@@ -422,7 +423,6 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	}
 
 	scheme := &spec.SecurityScheme{}
-	key := getSecurityDefinitionKey(lines)
 
 	switch attribute {
 	case secAPIKeyAttr:
