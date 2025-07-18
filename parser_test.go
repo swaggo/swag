@@ -3995,6 +3995,73 @@ func TestParser_Skip(t *testing.T) {
 	assert.Error(t, parser.Skip(filepath.Clean("admin/release"), &mockFS{IsDirectory: true}))
 }
 
+func TestGetFuncDoc_NilPointerSafety(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		decl     interface{}
+		wantDoc  *ast.CommentGroup
+		wantBool bool
+	}{
+		{
+			name: "GenDecl with empty Specs",
+			decl: &ast.GenDecl{
+				Tok:   token.VAR,
+				Specs: []ast.Spec{}, // empty specs
+			},
+			wantDoc:  nil,
+			wantBool: false,
+		},
+		{
+			name: "ValueSpec with empty Values",
+			decl: &ast.ValueSpec{
+				Values: []ast.Expr{}, // empty values
+			},
+			wantDoc:  nil,
+			wantBool: false,
+		},
+		{
+			name: "ValueSpec with nil Obj",
+			decl: &ast.ValueSpec{
+				Values: []ast.Expr{
+					&ast.Ident{
+						Name: "test",
+						Obj:  nil, // nil object
+					},
+				},
+			},
+			wantDoc:  nil,
+			wantBool: false,
+		},
+		{
+			name: "ValueSpec with nil Obj.Decl",
+			decl: &ast.ValueSpec{
+				Values: []ast.Expr{
+					&ast.Ident{
+						Name: "test",
+						Obj: &ast.Object{
+							Decl: nil, // nil declaration
+						},
+					},
+				},
+			},
+			wantDoc:  nil,
+			wantBool: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			gotDoc, gotBool := getFuncDoc(tt.decl)
+			assert.Equal(t, tt.wantDoc, gotDoc)
+			assert.Equal(t, tt.wantBool, gotBool)
+		})
+	}
+}
+
 func TestGetFieldType(t *testing.T) {
 	t.Parallel()
 

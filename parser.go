@@ -1049,6 +1049,9 @@ func getFuncDoc(decl any) (*ast.CommentGroup, bool) {
 		if astDecl.Tok != token.VAR {
 			return nil, false
 		}
+		if len(astDecl.Specs) == 0 {
+			return nil, false
+		}
 		varSpec, ok := astDecl.Specs[0].(*ast.ValueSpec)
 		if !ok || len(varSpec.Values) != 1 {
 			return nil, false
@@ -1056,8 +1059,11 @@ func getFuncDoc(decl any) (*ast.CommentGroup, bool) {
 		_, ok = getFuncDoc(varSpec)
 		return astDecl.Doc, ok
 	case *ast.ValueSpec:
+		if len(astDecl.Values) == 0 {
+			return nil, false
+		}
 		value, ok := astDecl.Values[0].(*ast.Ident)
-		if !ok || value == nil {
+		if !ok || value == nil || value.Obj == nil || value.Obj.Decl == nil {
 			return nil, false
 		}
 		_, ok = getFuncDoc(value.Obj.Decl)
