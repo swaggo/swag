@@ -108,6 +108,9 @@ type Config struct {
 	// ParseDependencies whether swag should be parse outside dependency folder: 0 none, 1 models, 2 operations, 3 all
 	ParseDependency int
 
+	// UseStructNames stick to the struct name instead of those ugly full-path names
+	UseStructNames bool
+
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
 
@@ -198,6 +201,7 @@ func (g *Gen) Build(config *Config) error {
 
 	p := swag.New(
 		swag.SetParseDependency(config.ParseDependency),
+		swag.SetUseStructName(config.UseStructNames),
 		swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetDebugger(config.Debugger),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
