@@ -14,7 +14,7 @@ type ConstVariable struct {
 	Name    *ast.Ident
 	Type    ast.Expr
 	Value   interface{}
-	Comment *ast.CommentGroup
+	Comment string
 	File    *ast.File
 	Pkg     *PackageDefinitions
 }

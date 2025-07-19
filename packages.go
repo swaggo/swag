@@ -400,8 +400,8 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 				key:   name,
 				Value: constVar.Value,
 			}
-			if constVar.Comment != nil && len(constVar.Comment.List) > 0 {
-				enumValue.Comment = constVar.Comment.List[0].Text
+			if len(constVar.Comment) > 0 {
+				enumValue.Comment = constVar.Comment
 				enumValue.Comment = strings.TrimPrefix(enumValue.Comment, "//")
 				enumValue.Comment = strings.TrimPrefix(enumValue.Comment, "/*")
 				enumValue.Comment = strings.TrimSuffix(enumValue.Comment, "*/")
