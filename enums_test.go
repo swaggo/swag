@@ -35,6 +35,7 @@ func TestParseGlobalEnums(t *testing.T) {
 	assert.Equal(t, 0b10001000, p.packages.packages[constsPath].ConstTable["binaryInteger"].Value)
 
 	typesPath := "github.com/swaggo/swag/testdata/enums/types"
+
 	difficultyEnums := p.packages.packages[typesPath].TypeDefinitions["Difficulty"].Enums
 	assert.Equal(t, "Easy", difficultyEnums[0].key)
 	assert.Equal(t, "", difficultyEnums[0].Comment)
@@ -42,4 +43,12 @@ func TestParseGlobalEnums(t *testing.T) {
 	assert.Equal(t, "This one also has a comment", difficultyEnums[1].Comment)
 	assert.Equal(t, "DifficultyHard", difficultyEnums[2].key)
 	assert.Equal(t, "This means really hard", difficultyEnums[2].Comment)
+
+	securityLevelEnums := p.packages.packages[typesPath].TypeDefinitions["SecurityClearance"].Enums
+	assert.Equal(t, "Public", securityLevelEnums[0].key)
+	assert.Equal(t, "", securityLevelEnums[0].Comment)
+	assert.Equal(t, "SecurityClearanceSensitive", securityLevelEnums[1].key)
+	assert.Equal(t, "Name override and comment rules apply here just as above", securityLevelEnums[1].Comment)
+	assert.Equal(t, "SuperSecret", securityLevelEnums[2].key)
+	assert.Equal(t, "This one has a name override and a comment", securityLevelEnums[2].Comment)
 }
