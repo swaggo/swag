@@ -103,8 +103,12 @@
                             "B": "BBB"
                         },
                         "x-enum-descriptions": [
+                            "",
                             "AAA",
-                            "BBB"
+                            "BBB",
+                            "",
+                            "",
+                            ""
                         ],
                         "x-enum-varnames": [
                             "None",
@@ -125,9 +129,8 @@
                         ],
                         "type": "string",
                         "x-enum-comments": {
-                            "Easy": "",
-                            "Medium": "This one also has a comment",
-                            "DifficultyHard": "This means really hard"
+                            "DifficultyHard": "This means really hard",
+                            "Medium": "This one also has a comment"
                         },
                         "x-enum-descriptions": [
                             "",
@@ -161,7 +164,8 @@
                             "Mask1",
                             "Mask2",
                             "Mask3",
-                            "Mask4"
+                            "Mask4",
+                            ""
                         ],
                         "x-enum-varnames": [
                             "Mask1",
@@ -186,19 +190,18 @@
                         ],
                         "type": "integer",
                         "x-enum-comments": {
-                            "SecurityClearancePublic": "@name Public",
-                            "SecurityClearanceSecret": "@name SuperSecret This one has a name override and a comment",
-                            "SecurityClearanceSensitive": "Name override and comment rules apply here just as above"
+                            "SecurityClearanceSensitive": "Name override and comment rules apply here just as above",
+                            "SuperSecret": "This one has a name override and a comment"
                         },
                         "x-enum-descriptions": [
-                            "@name Public",
+                            "",
                             "Name override and comment rules apply here just as above",
-                            "@name SuperSecret This one has a name override and a comment"
+                            "This one has a name override and a comment"
                         ],
                         "x-enum-varnames": [
-                            "SecurityClearancePublic",
+                            "Public",
                             "SecurityClearanceSensitive",
-                            "SecurityClearanceSecret"
+                            "SuperSecret"
                         ],
                         "name": "securityClearance",
                         "in": "formData"
@@ -272,27 +275,15 @@
                         "in": "formData"
                     },
                     {
-                        "enum": [
-                            "easy",
-                            "medium",
-                            "hard"
-                        ],
-                        "type": "string",
-                        "x-enum-comments": {
-                            "Easy": "",
-                            "Medium": "This one also has a comment",
-                            "DifficultyHard": "This means really hard"
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                "easy",
+                                "medium",
+                                "hard"
+                            ],
+                            "type": "string"
                         },
-                        "x-enum-descriptions": [
-                            "",
-                            "This one also has a comment",
-                            "This means really hard"
-                        ],
-                        "x-enum-varnames": [
-                            "Easy",
-                            "Medium",
-                            "DifficultyHard"
-                        ],
                         "name": "difficulty",
                         "in": "formData"
                     },
@@ -317,27 +308,15 @@
                         "in": "formData"
                     },
                     {
-                        "enum": [
-                            0,
-                            1,
-                            2
-                        ],
-                        "type": "integer",
-                        "x-enum-comments": {
-                            "SecurityClearancePublic": "@name Public",
-                            "SecurityClearanceSecret": "@name SuperSecret This one has a name override and a comment",
-                            "SecurityClearanceSensitive": "Name override and comment rules apply here just as above"
+                        "type": "array",
+                        "items": {
+                            "enum": [
+                                0,
+                                1,
+                                2
+                            ],
+                            "type": "integer"
                         },
-                        "x-enum-descriptions": [
-                            "@name Public",
-                            "Name override and comment rules apply here just as above",
-                            "@name SuperSecret This one has a name override and a comment"
-                        ],
-                        "x-enum-varnames": [
-                            "SecurityClearancePublic",
-                            "SecurityClearanceSensitive",
-                            "SecurityClearanceSecret"
-                        ],
                         "name": "securityClearance",
                         "in": "formData"
                     },
@@ -391,8 +370,12 @@
                 "B": "BBB"
             },
             "x-enum-descriptions": [
+                "",
                 "AAA",
-                "BBB"
+                "BBB",
+                "",
+                "",
+                ""
             ],
             "x-enum-varnames": [
                 "None",
@@ -411,11 +394,10 @@
                 "hard"
             ],
             "x-enum-comments": {
-                "Easy": "",
-                "Medium": "This one also has a comment",
-                "DifficultyHard": "This means really hard"
+                "DifficultyHard": "This means really hard",
+                "Medium": "This one also has a comment"
             },
-            "x-enum-descriptions":[
+            "x-enum-descriptions": [
                 "",
                 "This one also has a comment",
                 "This means really hard"
@@ -445,7 +427,8 @@
                 "Mask1",
                 "Mask2",
                 "Mask3",
-                "Mask4"
+                "Mask4",
+                ""
             ],
             "x-enum-varnames": [
                 "Mask1",
@@ -489,7 +472,6 @@
                 2
             ],
             "x-enum-comments": {
-                "Public": "",
                 "SecurityClearanceSensitive": "Name override and comment rules apply here just as above",
                 "SuperSecret": "This one has a name override and a comment"
             },
