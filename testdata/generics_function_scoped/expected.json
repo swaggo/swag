@@ -1,0 +1,279 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api",
+    "paths": {
+        "/": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Generic Response",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericResponse-api_GetGeneric_User"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericResponse-api_GetGeneric_Post"
+                        }
+                    }
+                }
+            }
+        },
+        "/multi": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Multiple Generic Response",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericMultiResponse-api_GetGenericMulti_MyStructA-api_GetGenericMulti_MyStructB"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericMultiResponse-api_GetGenericMulti_MyStructB-api_GetGenericMulti_MyStructA"
+                        }
+                    }
+                }
+            }
+        },
+        "/multi-renamed": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Multiple Generic Response With Custom Type Names",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericMultiResponse-NameForMyStructA-NameForMyStructB"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericMultiResponse-NameForMyStructB-NameForMyStructA"
+                        }
+                    }
+                }
+            }
+        },
+        "/renamed": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "Generic Response With Custom Type Names",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericResponse-RenamedUserData"
+                        }
+                    },
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/types.GenericResponse-RenamedPostData"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "NameForMyStructA": {
+            "type": "object",
+            "properties": {
+                "some_field_a": {
+                    "type": "string"
+                }
+            }
+        },
+        "NameForMyStructB": {
+            "type": "object",
+            "properties": {
+                "some_field_b": {
+                    "type": "string"
+                }
+            }
+        },
+        "RenamedPostData": {
+            "type": "object",
+            "properties": {
+                "slug": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "RenamedUserData": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.GetGeneric.Post": {
+            "type": "object",
+            "properties": {
+                "slug": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GetGeneric.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "integer"
+                }
+            }
+        },
+        "api.GetGenericMulti.MyStructA": {
+            "type": "object",
+            "properties": {
+                "some_field_a": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.GetGenericMulti.MyStructB": {
+            "type": "object",
+            "properties": {
+                "some_field_b": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericMultiResponse-NameForMyStructA-NameForMyStructB": {
+            "type": "object",
+            "properties": {
+                "data_t": {
+                    "$ref": "#/definitions/NameForMyStructA"
+                },
+                "data_x": {
+                    "$ref": "#/definitions/NameForMyStructB"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericMultiResponse-NameForMyStructB-NameForMyStructA": {
+            "type": "object",
+            "properties": {
+                "data_t": {
+                    "$ref": "#/definitions/NameForMyStructB"
+                },
+                "data_x": {
+                    "$ref": "#/definitions/NameForMyStructA"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericMultiResponse-api_GetGenericMulti_MyStructA-api_GetGenericMulti_MyStructB": {
+            "type": "object",
+            "properties": {
+                "data_t": {
+                    "$ref": "#/definitions/api.GetGenericMulti.MyStructA"
+                },
+                "data_x": {
+                    "$ref": "#/definitions/api.GetGenericMulti.MyStructB"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericMultiResponse-api_GetGenericMulti_MyStructB-api_GetGenericMulti_MyStructA": {
+            "type": "object",
+            "properties": {
+                "data_t": {
+                    "$ref": "#/definitions/api.GetGenericMulti.MyStructB"
+                },
+                "data_x": {
+                    "$ref": "#/definitions/api.GetGenericMulti.MyStructA"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericResponse-RenamedPostData": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/RenamedPostData"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericResponse-RenamedUserData": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/RenamedUserData"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericResponse-api_GetGeneric_Post": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.GetGeneric.Post"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "types.GenericResponse-api_GetGeneric_User": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/api.GetGeneric.User"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

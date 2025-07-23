@@ -31,7 +31,8 @@ Swag converts Go annotations to Swagger Documentation 2.0. We've created a varie
 	- [User defined structure with an array type](#user-defined-structure-with-an-array-type)
 	- [Function scoped struct declaration](#function-scoped-struct-declaration)
 	- [Model composition in response](#model-composition-in-response)
-	- [Add a headers in response](#add-a-headers-in-response)
+        - [Add request headers](#add-request-headers)
+	- [Add response headers](#add-response-headers)
 	- [Use multiple path params](#use-multiple-path-params)
 	- [Example value of struct](#example-value-of-struct)
 	- [SchemaExample of body](#schemaexample-of-body)
@@ -103,6 +104,7 @@ OPTIONS:
    --outputTypes value, --ot value        Output types of generated files (docs.go, swagger.json, swagger.yaml) like go,json,yaml (default: "go,json,yaml")
    --parseVendor                          Parse go files in 'vendor' folder, disabled by default (default: false)
    --parseDependency, --pd                Parse go files inside dependency folder, disabled by default (default: false)
+   --parseDependencyLevel, --pdl          Enhancement of '--parseDependency', parse go files inside dependency folder, 0 disabled, 1 only parse models, 2 only parse operations, 3 parse all (default: 0)
    --markdownFiles value, --md value      Parse folder containing markdown files to use as description, disabled by default
    --codeExampleFiles value, --cef value  Parse folder containing code example files to use for the x-codeSamples extension, disabled by default
    --parseInternal                        Parse go files in internal packages, disabled by default (default: false)
@@ -116,6 +118,7 @@ OPTIONS:
    --templateDelims value, --td value     Provide custom delimiters for Go template generation. The format is leftDelim,rightDelim. For example: "[[,]]"
    --collectionFormat value, --cf value   Set default collection format (default: "csv")
    --state value                          Initial state for the state machine (default: ""), @HostState in root file, @State in other files
+   --parseFuncBody                        Parse API info within body of functions in go files, disabled by default (default: false)
    --help, -h                             show help (default: false)
 ```
 
@@ -417,6 +420,7 @@ When a short string in your documentation is insufficient, or you need images, c
 | description.markdown  | A short description of the application. Parsed from the api.md file. This is an alternative to @description    |// @description.markdown No value needed, this parses the description from api.md         																 |
 | tag.name    | Name of a tag.| // @tag.name This is the name of the tag                     |
 | tag.description.markdown   | Description of the tag this is an alternative to tag.description. The description will be read from a file named like tagname.md  | // @tag.description.markdown         |
+| tag.x-name  | The extension key, must be start by x- and take only string value | // @x-example-key value |
 
 
 ## API Operation
@@ -467,6 +471,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 | png                   | image/png                         |
 | jpeg                  | image/jpeg                        |
 | gif                   | image/gif                         |
+| event-stream          | text/event-stream                 |
 
 
 
@@ -536,6 +541,7 @@ type Foo struct {
 Field Name | Type | Description
 ---|:---:|---
 <a name="validate"></a>validate | `string` | 	Determines the validation for the parameter. Possible values are: `required,optional`.
+<a name="json"></a>json | `string` | JSON tag options. The `omitempty` option will mark the field as not required.
 <a name="parameterDefault"></a>default | * | Declares the value of the parameter that the server will use if none is provided, for example a "count" to control the number of results per page might default to 100 if not supplied by the client in the request. (Note: "default" has no meaning for required parameters.)  See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-6.2. Unlike JSON Schema this value MUST conform to the defined [`type`](#parameterType) for this parameter.
 <a name="parameterMaximum"></a>maximum | `number` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.1.2.
 <a name="parameterMinimum"></a>minimum | `number` | See https://tools.ietf.org/html/draft-fge-json-schema-validation-00#section-5.1.3.
@@ -645,7 +651,14 @@ type DeepObject struct { //in `proto` package
 }
 @success 200 {object} jsonresult.JSONResult{data1=proto.Order{data=proto.DeepObject},data2=[]proto.Order{data=[]proto.DeepObject}} "desc"
 ```
-### Add a headers in response
+### Add request headers
+
+```go
+// @Param        X-MyHeader	  header    string    true   	"MyHeader must be set for valid response"
+// @Param        X-API-VERSION    header    string    true   	"API version eg.: 1.0"
+```
+
+### Add response headers
 
 ```go
 // @Success      200              {string}  string    "ok"
@@ -886,18 +899,18 @@ Each API operation.
 // @Security ApiKeyAuth
 ```
 
-Make it AND condition
+Make it OR condition
 
 ```go
 // @Security ApiKeyAuth
 // @Security OAuth2Application[write, admin]
 ```
 
-Make it OR condition
+Make it AND condition
 
 ```go
-// @Security ApiKeyAuth || firebase
-// @Security OAuth2Application[write, admin] || APIKeyAuth
+// @Security ApiKeyAuth && firebase
+// @Security OAuth2Application[write, admin] && APIKeyAuth
 ```
 
 ### Generate enum types from enum constants
@@ -961,7 +974,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	_ = web.GenericNestedResponse[types.Post]{}
 }
 ```
-See [this file](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go) for more details 
+See [this file](https://github.com/swaggo/swag/blob/master/testdata/generics_nested/api/api.go) for more details
 and other examples.
 
 ### Change the default Go Template action delimiters
@@ -975,6 +988,17 @@ To make the generation work properly, you can change the default delimiters with
 swag init -g http/api.go -td "[[,]]"
 ```
 The new delimiter is a string with the format "`<left delimiter>`,`<right delimiter>`".
+
+### Parse Internal and Dependency Packages
+
+If the struct is defined in a dependency package, use `--parseDependency`.
+
+If the struct is defined in your main project, use `--parseInternal`.
+
+if you want to include both internal and from dependencies use both flags
+```
+swag init --parseDependency --parseInternal
+```
 
 ## About the Project
 This project was inspired by [yvasiyarov/swagger](https://github.com/yvasiyarov/swagger) but we simplified the usage and added support a variety of [web frameworks](#supported-web-frameworks). Gopher image source is [tenntenn/gopher-stickers](https://github.com/tenntenn/gopher-stickers). It has licenses [creative commons licensing](http://creativecommons.org/licenses/by/3.0/deed.en).

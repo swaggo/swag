@@ -102,6 +102,10 @@
                             "A": "AAA",
                             "B": "BBB"
                         },
+                        "x-enum-descriptions": [
+                            "AAA",
+                            "BBB"
+                        ],
                         "x-enum-varnames": [
                             "None",
                             "A",
@@ -128,6 +132,12 @@
                             "Mask3": "Mask3",
                             "Mask4": "Mask4"
                         },
+                        "x-enum-descriptions": [
+                            "Mask1",
+                            "Mask2",
+                            "Mask3",
+                            "Mask4"
+                        ],
                         "x-enum-varnames": [
                             "Mask1",
                             "Mask2",
@@ -145,6 +155,20 @@
                     },
                     {
                         "enum": [
+                            77,
+                            70
+                        ],
+                        "type": "integer",
+                        "format": "int32",
+                        "x-enum-varnames": [
+                            "Male",
+                            "Female"
+                        ],
+                        "name": "sex",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
                             "teacher",
                             "student",
                             "Other"
@@ -155,6 +179,11 @@
                             "Student": "student",
                             "Teacher": "teacher"
                         },
+                        "x-enum-descriptions": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
                         "x-enum-varnames": [
                             "Teacher",
                             "Student",
@@ -224,6 +253,11 @@
                             "Student": "student",
                             "Teacher": "teacher"
                         },
+                        "x-enum-descriptions": [
+                            "teacher",
+                            "student",
+                            "Other"
+                        ],
                         "x-enum-varnames": [
                             "Teacher",
                             "Student",
@@ -256,6 +290,10 @@
                 "A": "AAA",
                 "B": "BBB"
             },
+            "x-enum-descriptions": [
+                "AAA",
+                "BBB"
+            ],
             "x-enum-varnames": [
                 "None",
                 "A",
@@ -280,6 +318,12 @@
                 "Mask3": "Mask3",
                 "Mask4": "Mask4"
             },
+            "x-enum-descriptions": [
+                "Mask1",
+                "Mask2",
+                "Mask3",
+                "Mask4"
+            ],
             "x-enum-varnames": [
                 "Mask1",
                 "Mask2",
@@ -300,10 +344,25 @@
                 "name": {
                     "type": "string"
                 },
+                "sex": {
+                    "$ref": "#/definitions/types.Sex"
+                },
                 "type": {
                     "$ref": "#/definitions/types.Type"
                 }
             }
+        },
+        "types.Sex": {
+            "type": "integer",
+            "format": "int32",
+            "enum": [
+                77,
+                70
+            ],
+            "x-enum-varnames": [
+                "Male",
+                "Female"
+            ]
         },
         "types.Type": {
             "type": "string",
@@ -317,6 +376,11 @@
                 "Student": "student",
                 "Teacher": "teacher"
             },
+            "x-enum-descriptions": [
+                "teacher",
+                "student",
+                "Other"
+            ],
             "x-enum-varnames": [
                 "Teacher",
                 "Student",

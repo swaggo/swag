@@ -3,6 +3,7 @@ package format
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -81,7 +82,8 @@ func (f *Format) visit(path string, fileInfo os.FileInfo, err error) error {
 
 func (f *Format) excludeDir(path string) bool {
 	return f.exclude[path] ||
-		filepath.Base(path)[0] == '.' && len(filepath.Base(path)) > 1 // exclude hidden folders
+		filepath.Base(path)[0] == '.' &&
+			len(filepath.Base(path)) > 1 // exclude hidden folders
 }
 
 func (f *Format) excludeFile(path string) bool {
@@ -91,15 +93,17 @@ func (f *Format) excludeFile(path string) bool {
 }
 
 func (f *Format) format(path string) error {
-	contents, err := os.ReadFile(path)
+	original, err := os.ReadFile(path)
 	if err != nil {
 		return err
 	}
+	contents := make([]byte, len(original))
+	copy(contents, original)
 	formatted, err := f.formatter.Format(path, contents)
 	if err != nil {
 		return err
 	}
-	if bytes.Equal(contents, formatted) {
+	if bytes.Equal(original, formatted) {
 		// Skip write if no change
 		return nil
 	}
@@ -126,4 +130,21 @@ func write(path string, contents []byte) error {
 		return err
 	}
 	return os.Rename(f.Name(), path)
+}
+
+// Run the format on src and write the result to dst.
+func (f *Format) Run(src io.Reader, dst io.Writer) error {
+	contents, err := io.ReadAll(src)
+	if err != nil {
+		return err
+	}
+	result, err := f.formatter.Format("", contents)
+	if err != nil {
+		return err
+	}
+	r := bytes.NewReader(result)
+	if _, err := io.Copy(dst, r); err != nil {
+		return err
+	}
+	return nil
 }

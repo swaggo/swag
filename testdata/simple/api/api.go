@@ -138,3 +138,20 @@ func GetPet6FunctionScopedResponse() {
 		Name string
 	}
 }
+
+// @Success 200 {object}  api.GetPet6FunctionScopedComplexResponse.response "ok"
+// @Router /GetPet6FunctionScopedComplexResponse [get]
+func GetPet6FunctionScopedComplexResponse() {
+	type pet struct {
+		Name string
+	}
+
+	type pointerPet struct {
+		Name string
+	}
+
+	type response struct {
+		Pets       []pet
+		PointerPet *pointerPet
+	}
+}

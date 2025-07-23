@@ -9,7 +9,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/swaggo/swag)](https://goreportcard.com/report/github.com/swaggo/swag)
 [![codebeat badge](https://codebeat.co/badges/71e2f5e5-9e6b-405d-baf9-7cc8b5037330)](https://codebeat.co/projects/github-com-swaggo-swag-master)
 [![Go Doc](https://godoc.org/github.com/swaggo/swagg?status.svg)](https://godoc.org/github.com/swaggo/swag)
-[![Backers on Open Collective](https://opencollective.com/swag/backers/badge.svg)](#backers) 
+[![Backers on Open Collective](https://opencollective.com/swag/backers/badge.svg)](#backers)
 [![Sponsors on Open Collective](https://opencollective.com/swag/sponsors/badge.svg)](#sponsors) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fswaggo%2Fswag.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fswaggo%2Fswag?ref=badge_shield)
 [![Release](https://img.shields.io/github/release/swaggo/swag.svg?style=flat-square)](https://github.com/swaggo/swag/releases)
 
@@ -90,6 +90,7 @@ OPTIONS:
    --output value, -o value               文件(swagger.json, swagger.yaml and doc.go)输出目录 (默认: "./docs")
    --parseVendor                          是否解析vendor目录里的go源文件，默认不
    --parseDependency                      是否解析依赖目录中的go源文件，默认不
+   --parseDependencyLevel, --pdl          对'--parseDependency'参数进行增强, 是否解析依赖目录中的go源文件, 0 不解析, 1 只解析对象模型, 2 只解析API, 3 对象模型和API都解析 (default: 0)
    --markdownFiles value, --md value      指定API的描述信息所使用的markdown文件所在的目录
    --generatedTime                        是否输出时间到输出文件docs.go的顶部，默认是
    --codeExampleFiles value, --cef value  解析包含用于 x-codeSamples 扩展的代码示例文件的文件夹，默认禁用
@@ -298,7 +299,7 @@ swag init
 
 ## 格式化说明
 
-可以针对Swag的注释自动格式化，就像`go fmt`。   
+可以针对Swag的注释自动格式化，就像`go fmt`。
 此处查看格式化结果 [here](https://github.com/swaggo/swag/tree/master/example/celler).
 
 示例：
@@ -416,6 +417,7 @@ Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/c
 | png                   | image/png                         |
 | jpeg                  | image/jpeg                        |
 | gif                   | image/gif                         |
+| event-stream          | text/event-stream                 |
 
 ## 参数类型
 
@@ -731,8 +733,7 @@ type Resp struct {
 使用AND条件。
 
 ```go
-// @Security ApiKeyAuth
-// @Security OAuth2Application[write, admin]
+// @Security ApiKeyAuth && OAuth2Application[write, admin]
 ```
 
 ## 项目相关

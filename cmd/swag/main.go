@@ -18,6 +18,7 @@ const (
 	searchDirFlag            = "dir"
 	excludeFlag              = "exclude"
 	generalInfoFlag          = "generalInfo"
+	pipeFlag                 = "pipe"
 	propertyStrategyFlag     = "propertyStrategy"
 	outputFlag               = "output"
 	outputTypesFlag          = "outputTypes"
@@ -41,6 +42,7 @@ const (
 	collectionFormatFlag     = "collectionFormat"
 	packagePrefixFlag        = "packagePrefix"
 	stateFlag                = "state"
+	parseFuncBodyFlag        = "parseFuncBody"
 )
 
 var initFlags = []cli.Flag{
@@ -179,6 +181,10 @@ var initFlags = []cli.Flag{
 		Value: "",
 		Usage: "Set host state for swagger.json",
 	},
+	&cli.BoolFlag{
+		Name:  parseFuncBodyFlag,
+		Usage: "Parse API info within body of functions in go files, disabled by default",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -195,11 +201,17 @@ func initAction(ctx *cli.Context) error {
 	if ctx.IsSet(templateDelimsFlag) {
 		delims := strings.Split(ctx.String(templateDelimsFlag), ",")
 		if len(delims) != 2 {
-			return fmt.Errorf("exactly two template delimiters must be provided, comma separated")
+			return fmt.Errorf(
+				"exactly two template delimiters must be provided, comma separated",
+			)
 		} else if delims[0] == delims[1] {
 			return fmt.Errorf("template delimiters must be different")
 		}
-		leftDelim, rightDelim = strings.TrimSpace(delims[0]), strings.TrimSpace(delims[1])
+		leftDelim, rightDelim = strings.TrimSpace(
+			delims[0],
+		), strings.TrimSpace(
+			delims[1],
+		)
 	}
 
 	outputTypes := strings.Split(ctx.String(outputTypesFlag), ",")
@@ -211,9 +223,14 @@ func initAction(ctx *cli.Context) error {
 		logger = log.New(io.Discard, "", log.LstdFlags)
 	}
 
-	collectionFormat := swag.TransToValidCollectionFormat(ctx.String(collectionFormatFlag))
+	collectionFormat := swag.TransToValidCollectionFormat(
+		ctx.String(collectionFormatFlag),
+	)
 	if collectionFormat == "" {
-		return fmt.Errorf("not supported %s collectionFormat", ctx.String(collectionFormat))
+		return fmt.Errorf(
+			"not supported %s collectionFormat",
+			ctx.String(collectionFormat),
+		)
 	}
 
 	var pdv = ctx.Int(parseDependencyLevelFlag)
@@ -249,6 +266,7 @@ func initAction(ctx *cli.Context) error {
 		CollectionFormat:    collectionFormat,
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
+		ParseFuncBody:       ctx.Bool(parseFuncBodyFlag),
 	})
 }
 
@@ -269,6 +287,11 @@ func main() {
 			Aliases: []string{"f"},
 			Usage:   "format swag comments",
 			Action: func(c *cli.Context) error {
+
+				if c.Bool(pipeFlag) {
+					return format.New().Run(os.Stdin, os.Stdout)
+				}
+
 				searchDir := c.String(searchDirFlag)
 				excludeDir := c.String(excludeFlag)
 				mainFile := c.String(generalInfoFlag)
@@ -295,6 +318,12 @@ func main() {
 					Aliases: []string{"g"},
 					Value:   "main.go",
 					Usage:   "Go file path in which 'swagger general API Info' is written",
+				},
+				&cli.BoolFlag{
+					Name:    "pipe",
+					Aliases: []string{"p"},
+					Value:   false,
+					Usage:   "Read from stdin, write to stdout.",
 				},
 			},
 		},

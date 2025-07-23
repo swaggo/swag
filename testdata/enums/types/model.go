@@ -47,7 +47,7 @@ type Sex rune
 
 const (
 	Male   Sex = 'M'
-	Female     = 'F'
+	Female Sex = 'F'
 )
 
 type Person struct {
@@ -55,6 +55,7 @@ type Person struct {
 	Class Class
 	Mask  Mask
 	Type  Type
+	Sex   Sex
 }
 
 type PersonWithArrayEnum struct {

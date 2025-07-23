@@ -175,6 +175,18 @@ func TestParseRouterCommentWithDollarSign(t *testing.T) {
 	assert.Equal(t, "POST", operation.RouterProperties[0].HTTPMethod)
 }
 
+func TestParseRouterCommentWithParens(t *testing.T) {
+	t.Parallel()
+
+	comment := `/@Router /customer({id}) [get]`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+	assert.Len(t, operation.RouterProperties, 1)
+	assert.Equal(t, "/customer({id})", operation.RouterProperties[0].Path)
+	assert.Equal(t, "GET", operation.RouterProperties[0].HTTPMethod)
+}
+
 func TestParseRouterCommentNoDollarSignAtPathStartErr(t *testing.T) {
 	t.Parallel()
 
@@ -203,6 +215,15 @@ func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.Error(t, err)
+}
+
+func TestParseRouterCommentWithTilde(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Router /customer/{id}/~last-name [patch]`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
 }
 
 func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
@@ -1301,6 +1322,34 @@ func TestParseParamCommentQueryArrayFormat(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+// Test ParseParamComment Query Params
+func TestParseParamCommentQueryArrayFormatWithStructTag(t *testing.T) {
+	parser := New()
+	parser.packages.ParseFile("test",
+		"/test/test.go",
+		"package test\ntype MyQueryParams struct{Param []string `form:\"param\" collectionFormat:\"multi\"`}",
+		ParseAll)
+	parser.packages.ParseTypes()
+	comment := `@Param anyWhat query test.MyQueryParams true "List"`
+	operation := NewOperation(parser)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "collectionFormat": "multi",
+        "name": "param",
+        "in": "query"
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByID(t *testing.T) {
 	t.Parallel()
 
@@ -1315,6 +1364,27 @@ func TestParseParamCommentByID(t *testing.T) {
         "type": "integer",
         "description": "Unsafe query param",
         "name": "unsafe_id[lte]",
+        "in": "query",
+        "required": true
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentWithMultilineDescriptions(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query int true "First line\nSecond line\nThird line"`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "integer",
+        "description": "First line\nSecond line\nThird line",
+        "name": "some_id",
         "in": "query",
         "required": true
     }
@@ -1586,6 +1656,7 @@ func TestParseParamCommentByFormDataTypeUint64(t *testing.T) {
 	expected := `[
     {
         "type": "integer",
+        "format": "int64",
         "description": "this is a test file",
         "name": "file",
         "in": "formData",
@@ -2281,21 +2352,28 @@ func TestParseSecurityCommentSimple(t *testing.T) {
 	})
 }
 
-func TestParseSecurityCommentOr(t *testing.T) {
+func TestParseSecurityCommentAnd(t *testing.T) {
 	t.Parallel()
 
-	comment := `@Security OAuth2Implicit[read, write] || Firebase[]`
+	comment := `@Security OAuth2Implicit[read, write] && Firebase[]`
 	operation := NewOperation(nil)
 
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
 
-	assert.Equal(t, operation.Security, []map[string][]string{
+	expect := []map[string][]string{
 		{
 			"OAuth2Implicit": {"read", "write"},
 			"Firebase":       {""},
 		},
-	})
+	}
+	assert.Equal(t, operation.Security, expect)
+
+	oldVersionComment := `@Security OAuth2Implicit[read, write] || Firebase[]`
+	operation = NewOperation(nil)
+	err = operation.ParseComment(oldVersionComment, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, operation.Security, expect)
 }
 
 func TestParseMultiDescription(t *testing.T) {
@@ -2448,15 +2526,16 @@ func TestParseObjectSchema(t *testing.T) {
 
 	schema, err := operation.parseObjectSchema("interface{}", nil)
 	assert.NoError(t, err)
-	assert.Equal(t, schema, PrimitiveSchema(OBJECT))
+	assert.Equal(t, schema, &spec.Schema{})
 
 	schema, err = operation.parseObjectSchema("any", nil)
 	assert.NoError(t, err)
-	assert.Equal(t, schema, PrimitiveSchema(OBJECT))
+	assert.Equal(t, schema, &spec.Schema{})
 
 	schema, err = operation.parseObjectSchema("any{data=string}", nil)
 	assert.NoError(t, err)
-	assert.Equal(t, schema, PrimitiveSchema(OBJECT).SetProperty("data", *PrimitiveSchema("string")))
+	assert.Equal(t, schema,
+		(&spec.Schema{}).WithAllOf(spec.Schema{}, *PrimitiveSchema(OBJECT).SetProperty("data", *PrimitiveSchema("string"))))
 
 	schema, err = operation.parseObjectSchema("int", nil)
 	assert.NoError(t, err)
