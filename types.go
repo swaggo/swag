@@ -49,10 +49,6 @@ func (t *TypeSpecDef) TypeName() string {
 		return t.TypeSpec.Name.Name[1:]
 	}
 
-	if overriddenName := nameOverride(t.TypeSpec.Comment); overriddenName != "" {
-		return overriddenName
-	}
-
 	var names []string
 	if t.NotUnique {
 		pkgPath := strings.Map(func(r rune) rune {
