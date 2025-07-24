@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-openapi/spec"
+	"go/ast"
+	"regexp"
+	"strings"
 )
 
 const (
@@ -170,6 +173,44 @@ func TransToValidCollectionFormat(format string) string {
 
 func ignoreNameOverride(name string) bool {
 	return len(name) != 0 && name[0] == IgnoreNameOverridePrefix
+}
+
+var overrideNameRegex = regexp.MustCompile(`(?i)^@name\s+(\S+)`)
+
+func nameOverride(commentGroup *ast.CommentGroup) string {
+	if commentGroup == nil {
+		return ""
+	}
+
+	// get alias from comment '// @name '
+	for _, comment := range commentGroup.List {
+		trimmedComment := strings.TrimSpace(strings.TrimLeft(comment.Text, "/"))
+		texts := overrideNameRegex.FindStringSubmatch(trimmedComment)
+		if len(texts) > 1 {
+			return texts[1]
+		}
+	}
+
+	return ""
+}
+
+func commentWithoutNameOverride(commentGroup *ast.CommentGroup) string {
+	if commentGroup == nil {
+		return ""
+	}
+
+	commentBuilder := strings.Builder{}
+	for _, comment := range commentGroup.List {
+		commentText := comment.Text
+		commentText = strings.TrimPrefix(commentText, "//")
+		commentText = strings.TrimPrefix(commentText, "/*")
+		commentText = strings.TrimSuffix(commentText, "*/")
+		commentText = strings.TrimSpace(commentText)
+		commentText = overrideNameRegex.ReplaceAllString(commentText, "")
+		commentText = strings.TrimSpace(commentText)
+		commentBuilder.WriteString(commentText)
+	}
+	return commentBuilder.String()
 }
 
 // IsComplexSchema whether a schema is complex and should be a ref schema

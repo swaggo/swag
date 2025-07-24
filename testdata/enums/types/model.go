@@ -50,17 +50,37 @@ const (
 	Female Sex = 'F'
 )
 
+type Difficulty string
+
+const (
+	DifficultyEasy   Difficulty = "easy"   // @name Easy
+	DifficultyMedium Difficulty = "medium" // @Name Medium This one also has a comment
+	DifficultyHard   Difficulty = "hard"   // This means really hard
+)
+
+type SecurityClearance int
+
+const (
+	SecurityClearancePublic    SecurityClearance = iota // @name Public
+	SecurityClearanceSensitive                          // Name override and comment rules apply here just as above
+	SecurityClearanceSecret                             // @name SuperSecret This one has a name override and a comment
+)
+
 type Person struct {
-	Name  string
-	Class Class
-	Mask  Mask
-	Type  Type
-	Sex   Sex
+	Name              string
+	Class             Class
+	Mask              Mask
+	Type              Type
+	Sex               Sex
+	Difficulty        Difficulty
+	SecurityClearance SecurityClearance
 }
 
 type PersonWithArrayEnum struct {
-	Name  string
-	Class []Class
-	Mask  []Mask
-	Type  Type
+	Name              string
+	Class             []Class
+	Mask              []Mask
+	Difficulty        []Difficulty
+	SecurityClearance []SecurityClearance
+	Type              Type
 }

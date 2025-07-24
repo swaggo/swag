@@ -913,6 +913,36 @@ Make it AND condition
 // @Security OAuth2Application[write, admin] && APIKeyAuth
 ```
 
+### Generate enum types from enum constants
+
+You can generate enums from ordered constants. Each enum variant can have a comment, an override name, or both. This works with both iota-defined and manually defined constants.
+
+```go
+type Difficulty string
+
+const (
+	Easy   Difficulty = "easy" // You can add a comment to the enum variant.
+	Medium Difficulty = "medium" // @name MediumDifficulty
+	Hard   Difficulty = "hard" // @name HardDifficulty You can have a name override and a comment.
+)
+
+type Class int
+
+const (
+	First Class = iota // @name FirstClass
+	Second // Name override and comment rules apply here just as above.
+	Third // @name ThirdClass This one has a name override and a comment.
+)
+
+// There is no need to add `enums:"..."` to the fields, it is automatically generated from the ordered consts.
+type Quiz struct {
+	Difficulty Difficulty
+	Class Class
+	Questions []string
+	Answers []string
+}
+```
+
 
 ### Add a description for enum items
 

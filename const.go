@@ -19,6 +19,19 @@ type ConstVariable struct {
 	Pkg     *PackageDefinitions
 }
 
+// VariableName gets the name for this const variable, taking into account comment overrides.
+func (cv *ConstVariable) VariableName() string {
+	if ignoreNameOverride(cv.Name.Name) {
+		return cv.Name.Name[1:]
+	}
+
+	if overriddenName := nameOverride(cv.Comment); overriddenName != "" {
+		return overriddenName
+	}
+
+	return cv.Name.Name
+}
+
 var escapedChars = map[uint8]uint8{
 	'n':  '\n',
 	'r':  '\r',

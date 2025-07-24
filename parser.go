@@ -1354,9 +1354,9 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		for _, value := range typeSpecDef.Enums {
 			definition.Enum = append(definition.Enum, value.Value)
 			varnames = append(varnames, value.key)
+			enumDescriptions = append(enumDescriptions, value.Comment)
 			if len(value.Comment) > 0 {
 				enumComments[value.key] = value.Comment
-				enumDescriptions = append(enumDescriptions, value.Comment)
 			}
 		}
 		if definition.Extensions == nil {

@@ -391,21 +391,15 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 				typeDef.Enums = make([]EnumValue, 0)
 			}
 
-			name := constVar.Name.Name
+			name := constVar.VariableName()
 			if _, ok = constVar.Value.(ast.Expr); ok {
 				continue
 			}
 
 			enumValue := EnumValue{
-				key:   name,
-				Value: constVar.Value,
-			}
-			if constVar.Comment != nil && len(constVar.Comment.List) > 0 {
-				enumValue.Comment = constVar.Comment.List[0].Text
-				enumValue.Comment = strings.TrimPrefix(enumValue.Comment, "//")
-				enumValue.Comment = strings.TrimPrefix(enumValue.Comment, "/*")
-				enumValue.Comment = strings.TrimSuffix(enumValue.Comment, "*/")
-				enumValue.Comment = strings.TrimSpace(enumValue.Comment)
+				key:     name,
+				Value:   constVar.Value,
+				Comment: commentWithoutNameOverride(constVar.Comment),
 			}
 			typeDef.Enums = append(typeDef.Enums, enumValue)
 		}
