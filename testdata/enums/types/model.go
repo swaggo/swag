@@ -36,7 +36,9 @@ const (
 type Type string
 
 const (
-	Teacher      Type = "teacher" // teacher
+	// Teacher this line is ignored by enum comment
+	// teacher
+	Teacher      Type = "teacher"
 	Student      Type = "student" /* student */
 	Other        Type = "Other"   // Other
 	Unknown           = "Unknown"

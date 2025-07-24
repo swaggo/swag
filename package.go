@@ -63,11 +63,16 @@ func (pkg *PackageDefinitions) AddTypeSpec(name string, typeSpec *TypeSpecDef) *
 func (pkg *PackageDefinitions) AddConst(astFile *ast.File, valueSpec *ast.ValueSpec) *PackageDefinitions {
 	for i := 0; i < len(valueSpec.Names) && i < len(valueSpec.Values); i++ {
 		variable := &ConstVariable{
-			Name:    valueSpec.Names[i],
-			Type:    valueSpec.Type,
-			Value:   valueSpec.Values[i],
-			Comment: valueSpec.Comment,
-			File:    astFile,
+			Name:  valueSpec.Names[i],
+			Type:  valueSpec.Type,
+			Value: valueSpec.Values[i],
+			File:  astFile,
+		}
+		//take the nearest line as comment from comment list or doc list. comment list first.
+		if valueSpec.Comment != nil && len(valueSpec.Comment.List) > 0 {
+			variable.Comment = valueSpec.Comment.List[0].Text
+		} else if valueSpec.Doc != nil && len(valueSpec.Doc.List) > 0 {
+			variable.Comment = valueSpec.Doc.List[len(valueSpec.Doc.List)-1].Text
 		}
 		pkg.ConstTable[valueSpec.Names[i].Name] = variable
 		pkg.OrderedConst = append(pkg.OrderedConst, variable)
