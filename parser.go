@@ -1990,3 +1990,157 @@ func (parser *Parser) addTestType(typename string) {
 		Schema:  PrimitiveSchema(OBJECT),
 	}
 }
+
+// SetExcludeFromUI excludes apis with operations which match given extension
+func SetExcludeFromUI(excludeFromUI string) map[string]bool {
+	ExcludeFromUI := make(map[string]bool, 0)
+	for _, f := range strings.Split(excludeFromUI, ",") {
+		f = strings.TrimSpace(f)
+		if f != "" {
+			lowerAttribute := fmt.Sprintf("x-%s", strings.ToLower(f)) 
+			ExcludeFromUI[lowerAttribute] = true
+		}
+	}
+	return ExcludeFromUI
+}
+
+// Exclude Paths from the swagger based on the annotation
+func ExcludePathsAndDefinitionsFromSwagger(swagger *spec.Swagger, excludeFromUI string) {
+	if excludeFromUI == "" {
+		return 
+	}
+
+	ExcludeFromUI := SetExcludeFromUI(excludeFromUI)
+
+	for path, item := range swagger.Paths.Paths {
+		for method := range allMethod {
+			op := refRouteMethodOp(&item, method)
+			if *op != nil {
+				for key := range (**op).VendorExtensible.Extensions {
+					if ExcludeFromUI[strings.ToLower(key)] {
+						RemoveDefinitionByPath(swagger, path)
+						delete(swagger.Paths.Paths, path)
+						break
+					}
+				}
+			}
+		}
+	}
+}
+
+// RemoveDefinition for the given path if other paths don't use that
+func RemoveDefinitionByPath(swagger *spec.Swagger, path string) {
+	definitions := map[string]int{}
+	for p, item := range swagger.Paths.Paths {
+		if p == path {
+			continue
+		}
+		countDefinitionsInPath(swagger, item, definitions)
+	}
+
+	item := swagger.Paths.Paths[path]
+	removeDefinitionsFromPath(item, definitions, swagger)
+}
+
+func countDefinitionsInPath(swagger *spec.Swagger, item spec.PathItem, definitions map[string]int) {
+	visited := make(map[string]bool)
+	for method := range allMethod {
+		op := refRouteMethodOp(&item, method)
+		if *op != nil {
+			for _, param := range (**op).Parameters {
+				if param.Schema != nil && param.Schema.Ref.String() != "" {
+					ref := param.Schema.Ref.String()
+					if strings.HasPrefix(ref, "#/definitions/") {
+						defName := strings.TrimPrefix(ref, "#/definitions/")
+						definitions[defName]++
+						countNestedDefinitions(swagger, defName, definitions, visited)
+					}
+				}
+			}
+			if (**op).Responses != nil {
+				for _, response := range (**op).Responses.StatusCodeResponses {
+					if response.Schema != nil && response.Schema.Ref.String() != "" {
+						ref := response.Schema.Ref.String()
+						if strings.HasPrefix(ref, "#/definitions/") {
+							defName := strings.TrimPrefix(ref, "#/definitions/")
+							definitions[defName]++
+							countNestedDefinitions(swagger, defName, definitions, visited)
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func countNestedDefinitions(swagger *spec.Swagger, defName string, definitions map[string]int, visited map[string]bool) {
+	if visited[defName] {
+		return
+	}
+	visited[defName] = true
+
+	if schema, ok := swagger.Definitions[defName]; ok {
+		for _, prop := range schema.Properties {
+			if prop.Ref.String() != "" {
+				ref := prop.Ref.String()
+				if strings.HasPrefix(ref, "#/definitions/") {
+					nestedDefName := strings.TrimPrefix(ref, "#/definitions/")
+					definitions[nestedDefName]++
+					countNestedDefinitions(swagger, nestedDefName, definitions, visited)
+				}
+			}
+		}
+		if schema.AdditionalProperties != nil && schema.AdditionalProperties.Schema != nil {
+			if schema.AdditionalProperties.Schema.Ref.String() != "" {
+				ref := schema.AdditionalProperties.Schema.Ref.String()
+				if strings.HasPrefix(ref, "#/definitions/") {
+					nestedDefName := strings.TrimPrefix(ref, "#/definitions/")
+					definitions[nestedDefName]++
+					countNestedDefinitions(swagger, nestedDefName, definitions, visited)
+				}
+			}
+		}
+		if schema.Items != nil && schema.Items.Schema != nil {
+			if schema.Items.Schema.Ref.String() != "" {
+				ref := schema.Items.Schema.Ref.String()
+				if strings.HasPrefix(ref, "#/definitions/") {
+					nestedDefName := strings.TrimPrefix(ref, "#/definitions/")
+					definitions[nestedDefName]++
+					countNestedDefinitions(swagger, nestedDefName, definitions, visited)
+				}
+			}
+		}
+	}
+}
+
+func removeDefinitionsFromPath(item spec.PathItem, definitions map[string]int, swagger *spec.Swagger) {
+	for method := range allMethod {
+		op := refRouteMethodOp(&item, method)
+		if *op != nil {
+			for _, param := range (**op).Parameters {
+				if param.Schema != nil && param.Schema.Ref.String() != "" {
+					ref := param.Schema.Ref.String()
+					if strings.HasPrefix(ref, "#/definitions/") {
+						defName := strings.TrimPrefix(ref, "#/definitions/")
+						if definitions[defName] == 0 {
+							delete(swagger.Definitions, defName)
+						}
+					}
+				}
+			}
+			if (**op).Responses != nil {
+				for _, response := range (**op).Responses.StatusCodeResponses {
+					if response.Schema != nil && response.Schema.Ref.String() != "" {
+						ref := response.Schema.Ref.String()
+						if strings.HasPrefix(ref, "#/definitions/") {
+							defName := strings.TrimPrefix(ref, "#/definitions/")
+							if definitions[defName] == 0 {
+								delete(swagger.Definitions, defName)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
