@@ -182,6 +182,9 @@ type Parser struct {
 
 	// ParseFuncBody whether swag should parse api info inside of funcs
 	ParseFuncBody bool
+
+	// UseStructName Dont use those ugly full-path names when using dependency flag
+	UseStructName bool
 }
 
 // FieldParserFactory create FieldParser.
@@ -258,6 +261,13 @@ func SetParseDependency(parseDependency int) func(*Parser) {
 		if p.packages != nil {
 			p.packages.parseDependency = p.ParseDependency
 		}
+	}
+}
+
+// SetUseStructName sets whether to strip the full-path definition name.
+func SetUseStructName(useStructName bool) func(*Parser) {
+	return func(p *Parser) {
+		p.UseStructName = useStructName
 	}
 }
 
@@ -1328,6 +1338,16 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 				Schema:  PrimitiveSchema(OBJECT),
 			},
 			ErrRecursiveParseStruct
+	}
+
+	if parser.UseStructName {
+		schemaName := strings.Split(typeSpecDef.SchemaName, ".")
+		if len(schemaName) > 1 {
+			typeSpecDef.SchemaName = schemaName[len(schemaName)-1]
+			typeName = typeSpecDef.SchemaName
+		} else {
+			parser.debug.Printf("Could not strip type name of %s", typeName)
+		}
 	}
 
 	parser.structStack = append(parser.structStack, typeSpecDef)
