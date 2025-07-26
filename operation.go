@@ -204,7 +204,7 @@ func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 		return
 	}
 
-	operation.Description += "\n" + lineRemainder
+	operation.Description = AppendDescription(operation.Description, lineRemainder)
 }
 
 // ParseMetadata parse metadata.

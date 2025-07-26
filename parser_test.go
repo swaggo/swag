@@ -4491,3 +4491,19 @@ var Func2 = Func
 	assert.NotNil(t, val2.Get)
 	assert.Equal(t, val2.Get.OperationProps.Summary, "generate indirectly pointing")
 }
+
+func TestParser_DescriptionLineContinuation(t *testing.T) {
+	t.Parallel()
+
+	p := New()
+	searchDir := "testdata/description_line_continuation"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+}

@@ -546,8 +546,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 			setSwaggerInfo(parser.swagger, attr, value)
 		case descriptionAttr:
 			if previousAttribute == attribute {
-				parser.swagger.Info.Description += "\n" + value
-
+				parser.swagger.Info.Description = AppendDescription(parser.swagger.Info.Description, value)
 				continue
 			}
 
