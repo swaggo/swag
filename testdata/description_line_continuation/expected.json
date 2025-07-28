@@ -1,0 +1,34 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Example long description that should not be split into multiple lines.\nThis is a new line thatescapes new line withoutadding a whitespace.\n\nAnother line that has an empty line above it.",
+        "title": "Swagger Example API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "paths": {
+        "/a": {
+            "get": {
+                "description": "This is a mock endpoint description which is long and descriptions that end with backslash do not add a new line.\nThis sentence is in a new line.\n\nAnd this have an empty line above it.\nLorem ipsum dolor sit amet consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+                "summary": "Endpoint A",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/b": {
+            "get": {
+                "description": "Something something.\n\nA new line, continue to the line.",
+                "summary": "Endpoint B",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    }
+}
