@@ -405,8 +405,8 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 
 	schema.ReadOnly = ps.tag.Get(readOnlyTag) == "true"
 
-	defaultTagValue := ps.tag.Get(defaultTag)
-	if defaultTagValue != "" {
+	defaultTagValue, ok := ps.tag.Lookup(defaultTag)
+	if ok {
 		value, err := defineType(field.schemaType, defaultTagValue)
 		if err != nil {
 			return err
