@@ -562,3 +562,22 @@ func TestParseTypeAlias(t *testing.T) {
 
 	assert.JSONEq(t, string(expected), string(result))
 }
+
+func TestParseInterface(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/v3/interface"
+
+	p := New(GenerateOpenAPI3Doc(true))
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	require.NoError(t, err)
+
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	require.NoError(t, err)
+
+	result, err := json.Marshal(p.openAPI)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(expected), string(result))
+}
