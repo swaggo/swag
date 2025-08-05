@@ -2,15 +2,15 @@ name: build
 
 on:
   push:
-    branches: [ master, v2 ]
+    branches: [master, v2]
   pull_request:
-    branches: [ master, v2 ]
+    branches: [master, v2]
 
 jobs:
   test:
     strategy:
       matrix:
-        go: [ '1.19.x', '1.20.x', '1.21.x', '1.22.x' ]
+        go: ["1.19.x", "1.20.x", "1.21.x", "1.22.x", "1.23.x"]
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
     steps:
@@ -20,7 +20,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
       - name: deps
-        run:  make deps
+        run: make deps
       - name: static program analysis
         run: make fmt-check vet
       - name: build
