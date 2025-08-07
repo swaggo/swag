@@ -194,23 +194,17 @@ func nameOverride(commentGroup *ast.CommentGroup) string {
 	return ""
 }
 
-func commentWithoutNameOverride(commentGroup *ast.CommentGroup) string {
-	if commentGroup == nil {
+func commentWithoutNameOverride(comment string) string {
+	if len(comment) == 0 {
 		return ""
 	}
-
-	commentBuilder := strings.Builder{}
-	for _, comment := range commentGroup.List {
-		commentText := comment.Text
-		commentText = strings.TrimPrefix(commentText, "//")
-		commentText = strings.TrimPrefix(commentText, "/*")
-		commentText = strings.TrimSuffix(commentText, "*/")
-		commentText = strings.TrimSpace(commentText)
-		commentText = overrideNameRegex.ReplaceAllString(commentText, "")
-		commentText = strings.TrimSpace(commentText)
-		commentBuilder.WriteString(commentText)
-	}
-	return commentBuilder.String()
+	comment = strings.TrimPrefix(comment, "//")
+	comment = strings.TrimPrefix(comment, "/*")
+	comment = strings.TrimSuffix(comment, "*/")
+	comment = strings.TrimSpace(comment)
+	comment = overrideNameRegex.ReplaceAllString(comment, "")
+	comment = strings.TrimSpace(comment)
+	return comment
 }
 
 // IsComplexSchema whether a schema is complex and should be a ref schema
