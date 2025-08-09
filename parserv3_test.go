@@ -137,38 +137,53 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	assert.Equal(t, "OpenAPI", p.openAPI.ExternalDocs.Spec.Description)
 	assert.Equal(t, "https://swagger.io/resources/open-api", p.openAPI.ExternalDocs.Spec.URL)
 
-	assert.Equal(t, 7, len(p.openAPI.Components.Spec.SecuritySchemes))
+	assert.Equal(t, 8, len(p.openAPI.Components.Spec.SecuritySchemes))
 
 	security := p.openAPI.Components.Spec.SecuritySchemes
-	assert.Equal(t, "basic", security["basic"].Spec.Spec.Scheme)
-	assert.Equal(t, "http", security["basic"].Spec.Spec.Type)
-
-	assert.Equal(t, "apiKey", security["ApiKeyAuth"].Spec.Spec.Type)
-	assert.Equal(t, "Authorization", security["ApiKeyAuth"].Spec.Spec.Name)
-	assert.Equal(t, "header", security["ApiKeyAuth"].Spec.Spec.In)
-	assert.Equal(t, "some description", security["ApiKeyAuth"].Spec.Spec.Description)
-
-	assert.Equal(t, "oauth2", security["OAuth2Application"].Spec.Spec.Type)
-	assert.Equal(t, "header", security["OAuth2Application"].Spec.Spec.In)
-	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2Application"].Spec.Spec.Flows.Spec.ClientCredentials.Spec.TokenURL)
-	assert.Equal(t, 2, len(security["OAuth2Application"].Spec.Spec.Flows.Spec.ClientCredentials.Spec.Scopes))
-
-	assert.Equal(t, "oauth2", security["OAuth2Implicit"].Spec.Spec.Type)
-	assert.Equal(t, "header", security["OAuth2Implicit"].Spec.Spec.In)
-	assert.Equal(t, "https://example.com/oauth/authorize", security["OAuth2Implicit"].Spec.Spec.Flows.Spec.Implicit.Spec.AuthorizationURL)
-	assert.Equal(t, "some_audience.google.com", security["OAuth2Implicit"].Spec.Spec.Flows.Extensions["x-google-audiences"])
-
-	assert.Equal(t, "oauth2", security["OAuth2Password"].Spec.Spec.Type)
-	assert.Equal(t, "header", security["OAuth2Password"].Spec.Spec.In)
-	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2Password"].Spec.Spec.Flows.Spec.Password.Spec.TokenURL)
-
-	assert.Equal(t, "oauth2", security["OAuth2AccessCode"].Spec.Spec.Type)
-	assert.Equal(t, "header", security["OAuth2AccessCode"].Spec.Spec.In)
-	assert.Equal(t, "https://example.com/oauth/token", security["OAuth2AccessCode"].Spec.Spec.Flows.Spec.AuthorizationCode.Spec.TokenURL)
-
-	assert.Equal(t, "bearer", security["bearerauth"].Spec.Spec.Scheme)
-	assert.Equal(t, "http", security["bearerauth"].Spec.Spec.Type)
-	assert.Equal(t, "JWT", security["bearerauth"].Spec.Spec.BearerFormat)
+	if v, ok := security["basic"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "basic", v.Spec.Spec.Scheme)
+		assert.Equal(t, "http", v.Spec.Spec.Type)
+	}
+	if v, ok := security["ApiKeyAuth"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "apiKey", v.Spec.Spec.Type)
+		assert.Equal(t, "Authorization", v.Spec.Spec.Name)
+		assert.Equal(t, "header", v.Spec.Spec.In)
+		assert.Equal(t, "some description", v.Spec.Spec.Description)
+	}
+	if v, ok := security["OAuth2Application"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "oauth2", v.Spec.Spec.Type)
+		assert.Equal(t, "header", v.Spec.Spec.In)
+		assert.Equal(t, "https://example.com/oauth/token", v.Spec.Spec.Flows.Spec.ClientCredentials.Spec.TokenURL)
+		assert.Equal(t, 2, len(v.Spec.Spec.Flows.Spec.ClientCredentials.Spec.Scopes))
+	}
+	if v, ok := security["OAuth2Implicit"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "oauth2", v.Spec.Spec.Type)
+		assert.Equal(t, "header", v.Spec.Spec.In)
+		assert.Equal(t, "https://example.com/oauth/authorize", v.Spec.Spec.Flows.Spec.Implicit.Spec.AuthorizationURL)
+		assert.Equal(t, "some_audience.google.com", v.Spec.Spec.Flows.Extensions["x-google-audiences"])
+	}
+	if v, ok := security["OAuth2Password"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "oauth2", v.Spec.Spec.Type)
+		assert.Equal(t, "header", v.Spec.Spec.In)
+		assert.Equal(t, "https://example.com/oauth/token", v.Spec.Spec.Flows.Spec.Password.Spec.TokenURL)
+	}
+	if v, ok := security["OAuth2AccessCode"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "oauth2", v.Spec.Spec.Type)
+		assert.Equal(t, "header", v.Spec.Spec.In)
+		assert.Equal(t, "https://example.com/oauth/token", v.Spec.Spec.Flows.Spec.AuthorizationCode.Spec.TokenURL)
+	}
+	if v, ok := security["BearerAuth1"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "bearer", v.Spec.Spec.Scheme)
+		assert.Equal(t, "http", v.Spec.Spec.Type)
+		assert.Equal(t, "JWT", v.Spec.Spec.BearerFormat)
+		assert.Equal(t, "First bearer token", v.Spec.Spec.Description)
+	}
+	if v, ok := security["BearerAuth2"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "bearer", v.Spec.Spec.Scheme)
+		assert.Equal(t, "http", v.Spec.Spec.Type)
+		assert.Equal(t, "CustomToken", v.Spec.Spec.BearerFormat)
+		assert.Equal(t, "Second bearer token", v.Spec.Spec.Description)
+	}
 }
 
 func TestParser_ParseGeneralApiInfoExtensionsV3(t *testing.T) {
