@@ -57,7 +57,7 @@ func (f *Formatter) Format(fileName string, contents []byte) ([]byte, error) {
 
 	// We skip generated files to not interfere with the formatting and
 	// introduce unnecessary changes.
-	if ast.IsGenerated(astFile) {
+	if astFileIsGenerated(astFile) {
 		return contents, nil
 	}
 
