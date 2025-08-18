@@ -581,7 +581,7 @@ type Order struct { //in `proto` package
 ```
 
 
-### 使用多个body参数 (OpenAPI 3.0)
+### 使用多个body参数 (OpenAPI 3.0) `--v3.1`
 
 ```go
 // ...

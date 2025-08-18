@@ -722,7 +722,7 @@ type DeepObject struct { //in `proto` package
 
 
 
-### Use multiple path params (OpenAPI 3.0)
+### Use multiple body params (OpenAPI 3.0) `--v3.1`
 
 ```go
 // ...

@@ -649,7 +649,7 @@ type DeepObject struct { //in `proto` package
 // @Router /examples/groups/{group_id}/accounts/{account_id} [get]
 ```
 
-### Usando múltiplos parâmetros no corpo (OpenAPI 3.0)
+### Uso de múltiplos parâmetros no corpo (OpenAPI 3.0) `--v3.1`
 
 ```go
 // ...
