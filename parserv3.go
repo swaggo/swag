@@ -732,12 +732,25 @@ func (p *Parser) ParseDefinitionV3(typeSpecDef *TypeSpecDef) (*SchemaV3, error) 
 	if p.isInStructStack(typeSpecDef) {
 		p.debug.Printf("Skipping '%s', recursion detected.", typeName)
 
-		return &SchemaV3{
-				Name:    typeName,
-				PkgPath: typeSpecDef.PkgPath,
-				Schema:  PrimitiveSchemaV3(OBJECT).Spec,
-			},
-			ErrRecursiveParseStruct
+		schemaName := typeName
+		if typeSpecDef.SchemaName != "" {
+			schemaName = typeSpecDef.SchemaName
+		}
+
+		schema := &SchemaV3{
+			Name:    schemaName,
+			PkgPath: typeSpecDef.PkgPath,
+			Schema:  PrimitiveSchemaV3(OBJECT).Spec,
+		}
+
+		p.parsedSchemasV3[typeSpecDef] = schema
+
+		if p.openAPI.Components.Spec.Schemas == nil {
+			p.openAPI.Components.Spec.Schemas = make(map[string]*spec.RefOrSpec[spec.Schema])
+		}
+		p.openAPI.Components.Spec.Schemas[schema.Name] = spec.NewRefOrSpec(nil, schema.Schema)
+
+		return schema, ErrRecursiveParseStruct
 	}
 
 	p.structStack = append(p.structStack, typeSpecDef)
@@ -1118,5 +1131,11 @@ func (p *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], depth 
 
 func (p *Parser) getSchemaByRef(ref *spec.Ref) *spec.Schema {
 	searchString := strings.ReplaceAll(ref.Ref, "#/components/schemas/", "")
-	return p.openAPI.Components.Spec.Schemas[searchString].Spec
+	schemaRef, exists := p.openAPI.Components.Spec.Schemas[searchString]
+	if !exists || schemaRef == nil {
+		println(fmt.Sprintf("Schema not found for ref: %s, returning any", ref.Ref))
+		return &spec.Schema{} // return empty schema if not found
+	}
+
+	return schemaRef.Spec
 }
