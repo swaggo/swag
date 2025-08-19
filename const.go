@@ -14,7 +14,7 @@ type ConstVariable struct {
 	Name    *ast.Ident
 	Type    ast.Expr
 	Value   interface{}
-	Comment *ast.CommentGroup
+	Comment string
 	File    *ast.File
 	Pkg     *PackageDefinitions
 }
@@ -25,11 +25,24 @@ func (cv *ConstVariable) VariableName() string {
 		return cv.Name.Name[1:]
 	}
 
-	if overriddenName := nameOverride(cv.Comment); overriddenName != "" {
+	if overriddenName := cv.nameOverride(); overriddenName != "" {
 		return overriddenName
 	}
 
 	return cv.Name.Name
+}
+
+func (cv *ConstVariable) nameOverride() string {
+	if len(cv.Comment) == 0 {
+		return ""
+	}
+
+	comment := strings.TrimSpace(strings.TrimLeft(cv.Comment, "/"))
+	texts := overrideNameRegex.FindStringSubmatch(comment)
+	if len(texts) > 1 {
+		return texts[1]
+	}
+	return ""
 }
 
 var escapedChars = map[uint8]uint8{
