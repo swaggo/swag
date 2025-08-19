@@ -720,6 +720,17 @@ type DeepObject struct { //in `proto` package
 // @Router /examples/user/{user_id}/address [put]
 ```
 
+
+
+### Use multiple body params (OpenAPI 3.0) `--v3.1`
+
+```go
+// ...
+// @Param Cat body web.Cat true "Cat body"
+// @Param Dog body web.Dog true "Dog body"
+// ...
+```
+
 ### Example value of struct
 
 ```go
