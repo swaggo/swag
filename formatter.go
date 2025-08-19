@@ -50,9 +50,15 @@ func NewFormatter() *Formatter {
 // that happen during parsing of contents.
 func (f *Formatter) Format(fileName string, contents []byte) ([]byte, error) {
 	fileSet := token.NewFileSet()
-	ast, err := goparser.ParseFile(fileSet, fileName, contents, goparser.ParseComments)
+	astFile, err := goparser.ParseFile(fileSet, fileName, contents, goparser.ParseComments)
 	if err != nil {
 		return nil, err
+	}
+
+	// We skip generated files to not interfere with the formatting and
+	// introduce unnecessary changes.
+	if astFileIsGenerated(astFile) {
+		return contents, nil
 	}
 
 	// Formatting changes are described as an edit list of byte range
@@ -62,12 +68,12 @@ func (f *Formatter) Format(fileName string, contents []byte) ([]byte, error) {
 	// comments. This won't touch the formatting of any other comments, or of
 	// functions, etc.
 	maxEdits := 0
-	for _, comment := range ast.Comments {
+	for _, comment := range astFile.Comments {
 		maxEdits += len(comment.List)
 	}
 	edits := make(edits, 0, maxEdits)
 
-	for _, comment := range ast.Comments {
+	for _, comment := range astFile.Comments {
 		formatFuncDoc(fileSet, comment.List, &edits)
 	}
 	formatted, err := imports.Process(fileName, edits.apply(contents), nil)
