@@ -43,6 +43,36 @@ func TestDefaultFieldParser(t *testing.T) {
 			}},
 		).ComplementSchema(&schema)
 		assert.Error(t, err)
+
+		schema = spec.Schema{}
+		schema.Type = []string{"array"}
+		schema.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{},
+		}
+		schema.Items.Schema.Type = []string{"string"}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" example:"one,two"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, []interface{}{"one", "two"}, schema.Example)
+
+		schema = spec.Schema{}
+		schema.Type = []string{"array"}
+		schema.Items = &spec.SchemaOrArray{
+			Schema: &spec.Schema{},
+		}
+		schema.Items.Schema.Type = []string{"string"}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" example:"{{one,two},{three,four}}"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, []interface{}{[]interface{}{"one", "two"}, []interface{}{"three", "four"}}, schema.Example)
 	})
 
 	t.Run("Format tag", func(t *testing.T) {
@@ -431,6 +461,56 @@ func TestDefaultFieldParser(t *testing.T) {
 			&ast.Field{Names: []*ast.Ident{{Name: "BasicStruct"}}},
 		).ComplementSchema(nil)
 		assert.Error(t, err)
+	})
+}
+
+func TestParseNestedArray(t *testing.T) {
+	t.Run("[]string", func(t *testing.T) {
+		t.Parallel()
+
+		res, err := parseNestedArrays("one,two", "string")
+		assert.NoError(t, err)
+		assert.Equal(t, []any{"one", "two"}, res)
+	})
+
+	t.Run("[]float64", func(t *testing.T) {
+		t.Parallel()
+
+		res, err := parseNestedArrays("35.2,12.3", "number")
+		assert.NoError(t, err)
+		assert.Equal(t, []any{35.2, 12.3}, res)
+	})
+
+	t.Run("[][]string", func(t *testing.T) {
+		t.Parallel()
+
+		res, err := parseNestedArrays("{{one,two},{three,four}}", "string")
+		assert.NoError(t, err)
+		assert.Equal(t, []any{[]any{"one", "two"}, []any{"three", "four"}}, res)
+	})
+
+	t.Run("[][]int", func(t *testing.T) {
+		t.Parallel()
+
+		res, err := parseNestedArrays("{{5,6},{4,5}}", "integer")
+		assert.NoError(t, err)
+		assert.Equal(t, []any{[]any{5, 6}, []any{4, 5}}, res)
+	})
+
+	t.Run("[][][]string", func(t *testing.T) {
+		t.Parallel()
+
+		res, err := parseNestedArrays("{{one,two},{{three},{four},{five,six}}}", "string")
+		assert.NoError(t, err)
+		assert.Equal(t, []any{[]any{"one", "two"}, []any{[]any{"three"}, []any{"four"}, []any{"five", "six"}}}, res)
+	})
+
+	t.Run("[][][]boolean", func(t *testing.T) {
+		t.Parallel()
+
+		res, err := parseNestedArrays("{{{true},{true},{true,false}},{true,false}}", "boolean")
+		assert.NoError(t, err)
+		assert.Equal(t, []any{[]any{[]any{true}, []any{true}, []any{true, false}}, []any{true, false}}, res)
 	})
 }
 
