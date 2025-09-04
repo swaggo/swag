@@ -580,6 +580,17 @@ type Order struct { //in `proto` package
 // @Router /examples/groups/{group_id}/accounts/{account_id} [get]
 ```
 
+
+### 使用多个body参数 (OpenAPI 3.0) `--v3.1`
+
+```go
+// ...
+// @Param Cat body web.Cat true "Cat body"
+// @Param Dog body web.Dog true "Dog body"
+// ...
+```
+
+
 ### 结构体的示例值
 
 ```go

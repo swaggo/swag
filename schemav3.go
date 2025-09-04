@@ -21,6 +21,11 @@ func IsComplexSchemaV3(schema *SchemaV3) bool {
 		return true
 	}
 
+	// a schema without type (i.e. `any`) cannot be complex
+	if schema.Type == nil {
+		return false
+	}
+
 	// a deep array type is complex, how to determine deep? here more than 2 ,for example: [][]object,[][][]int
 	if len(*schema.Type) > 2 {
 		return true

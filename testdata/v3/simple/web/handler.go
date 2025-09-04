@@ -127,3 +127,8 @@ type Cat struct {
 	Hunts bool `json:"hunts"`
 	Age   int  `json:"age"`
 }
+
+type Fish struct {
+	Breed string `json:"breed"`
+	Size  int    `json:"size"`
+}
