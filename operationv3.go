@@ -989,8 +989,15 @@ func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File
 		response := spec.NewResponseSpec()
 		response.Spec.Spec.Description = description
 
-		mimeType := "application/json" // TODO: set correct mimeType
-		setResponseSchema(response.Spec.Spec, mimeType, schema)
+		// Add the schema to all specified response MIME types
+		if len(o.responseMimeTypes) > 0 {
+			for _, mimeType := range o.responseMimeTypes {
+				setResponseSchema(response.Spec.Spec, mimeType, schema)
+			}
+		} else {
+			// Default to application/json if no MIME types were specified
+			setResponseSchema(response.Spec.Spec, "application/json", schema)
+		}
 
 		o.AddResponse(codeStr, response)
 	}
