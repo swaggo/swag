@@ -1845,7 +1845,10 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 	if parser.skipPackageByPrefix(packageDir) {
 		return nil // ignored by user-defined package path prefixes
 	}
-	return filepath.Walk(searchDir, func(path string, f os.FileInfo, _ error) error {
+	return filepath.Walk(searchDir, func(path string, f os.FileInfo, wError error) error {
+		if wError != nil {
+			return fmt.Errorf("failed to access path %q, err: %v\n", path, wError)
+		}
 		err := parser.Skip(path, f)
 		if err != nil {
 			return err
