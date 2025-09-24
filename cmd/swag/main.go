@@ -190,7 +190,7 @@ var initFlags = []cli.Flag{
 	&cli.StringFlag{
 		Name:  versionFlag,
 		Value: "",
-		Usage: "Specify the version of the version of the API in the generated files",
+		Usage: "Specify the version of the API in the generated files",
 	},
 }
 
