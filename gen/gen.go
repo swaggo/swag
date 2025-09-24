@@ -227,6 +227,9 @@ func (g *Gen) Build(config *Config) error {
 
 	swagger := p.GetSwagger()
 	if config.Version != "" {
+		if swagger.Info.Version != "" {
+			log.Println("WARN: documentation version got overridden by flag --version")
+		}
 		swagger.Info.Version = config.Version
 	}
 
