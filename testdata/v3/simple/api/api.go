@@ -160,3 +160,13 @@ func GetOneOfTypes() {
 func GetPetByID() {
 
 }
+
+// @Summary Add a new pet
+// @Param cat body web.Cat false "cat description"
+// @Param dog body web.Dog false "dog description"
+// @Param fish body web.Fish false "fish description"
+// @Success 200 {object} web.Pet "Pet added successfully"
+// @Router /pets [post]
+func AddPet() {
+
+}
