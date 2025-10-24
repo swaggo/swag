@@ -587,6 +587,13 @@ func parseEnumTags(enumTag string, field *structField) error {
 			return err
 		}
 
+		for _, e := range field.enums {
+			if reflect.DeepEqual(e, value) {
+				// skip duplicate enum value
+				return nil
+			}
+		}
+
 		field.enums = append(field.enums, value)
 	}
 

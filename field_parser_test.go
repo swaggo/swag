@@ -183,6 +183,21 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("Duplicated enum values", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"string"}
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test" enums:"a,b,c,c,c,c"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, []interface{}{"a", "b", "c"}, schema.Enum)
+	})
+
 	t.Run("EnumVarNames tag", func(t *testing.T) {
 		t.Parallel()
 
