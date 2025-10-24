@@ -476,14 +476,17 @@ Além disso, `swag` também aceita pseudónimos para alguns tipos de MIME, como 
 | securitydefinitions.oauth2.accessCode | [código de acesso OAuth2](https://swagger.io/docs/specification/authentication/oauth2/) auth.       | tokenUrl, authorizationUrl, scope, description | // @securitydefinitions.oauth2.accessCode OAuth2AccessCode | [código de acesso OAuth2.accessCode]()
 
 
-| anotação de parâmetros | exemplo |
-|---------------------------------|-------------------------------------------------------------------------|
-| in | // @in header |
-| name | // @name Authorization |
-| tokenUrl | // @tokenUrl https://example.com/oauth/token |
-| authorizationurl | // @authorizationurl https://example.com/oauth/authorize |
-| scope.hoge | // @scope.write Grants write access |
-| description | // @descrição OAuth protege os pontos finais da nossa entidade |
+| Anotação de Parâmetros | Exemplo                                                            |
+| ---------------------- | ------------------------------------------------------------------ |
+| name                   | `// @name Authorization`                                           |
+| tokenUrl               | `// @tokenUrl https://example.com/oauth/token`                     |
+| authorizationurl       | `// @authorizationurl https://example.com/oauth/authorize`         |
+| scope.write            | `// @scope.write Garante acesso de escrita`                        |
+| scope.openid           | `// @scope.openid Garante leitura de openid`                       |
+| scope.email            | `// @scope.email Garante leitura de email`                         |
+| scope.profile          | `// @scope.profile Garante leitura de perfil`                      |
+| description            | `// @description OAuth protege os pontos finais da nossa entidade` |
+
 
 ## Atributo
 
