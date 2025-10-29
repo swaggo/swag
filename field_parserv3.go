@@ -476,8 +476,8 @@ func (ps *tagBaseFieldParserV3) ShouldSkip() bool {
 	}
 
 	// json:"tag,hoge"
-	name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
-	if name == "-" {
+	name := ps.JsonName()
+	if name == "" {
 		return true
 	}
 
@@ -487,18 +487,16 @@ func (ps *tagBaseFieldParserV3) ShouldSkip() bool {
 func (ps *tagBaseFieldParserV3) FieldName() (string, error) {
 	var name string
 
-	if ps.field.Tag != nil {
-		// json:"tag,hoge"
-		name = strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
-		if name != "" {
-			return name, nil
-		}
+	// json:"tag,hoge"
+	name = ps.JsonName()
+	if name != "" {
+		return name, nil
+	}
 
-		// use "form" tag over json tag
-		name = ps.FormName()
-		if name != "" {
-			return name, nil
-		}
+	// use "form" tag over json tag
+	name = ps.FormName()
+	if name != "" {
+		return name, nil
 	}
 
 	if ps.field.Names == nil {
@@ -517,7 +515,20 @@ func (ps *tagBaseFieldParserV3) FieldName() (string, error) {
 
 func (ps *tagBaseFieldParserV3) FormName() string {
 	if ps.field.Tag != nil {
-		return strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0])
+		name := strings.TrimSpace(strings.Split(ps.tag.Get(formTag), ",")[0])
+		if name != "-" {
+			return name
+		}
+	}
+	return ""
+}
+
+func (ps *tagBaseFieldParserV3) JsonName() string {
+	if ps.field.Tag != nil {
+		name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
+		if name != "-" {
+			return name
+		}
 	}
 	return ""
 }
