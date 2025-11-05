@@ -463,7 +463,10 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 		schema.MinItems = field.minItems
 		schema.UniqueItems = field.unique
 
-		eleSchema = schema.Items.Schema
+		if schema.Items != nil {
+			eleSchema = schema.Items.Schema
+		}
+
 		eleSchema.Format = field.formatType
 	}
 
