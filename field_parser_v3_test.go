@@ -132,6 +132,34 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		assert.False(t, got)
 	})
 
+	t.Run("Skipped tag", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := newTagBaseFieldParserV3(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"-"`,
+			}},
+		).FieldName()
+		assert.NoError(t, err)
+		assert.Empty(t, got)
+
+		got, err = newTagBaseFieldParserV3(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `form:"-"`,
+			}},
+		).FieldName()
+		assert.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
 	t.Run("Extensions tag", func(t *testing.T) {
 		t.Parallel()
 
