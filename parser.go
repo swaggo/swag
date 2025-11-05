@@ -1340,13 +1340,11 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	}
 
 	if parser.UseStructName {
-		schemaName := strings.Split(typeSpecDef.SchemaName, ".")
-		if len(schemaName) > 1 {
-			typeSpecDef.SchemaName = schemaName[len(schemaName)-1]
-			typeName = typeSpecDef.SchemaName
-		} else {
-			parser.debug.Printf("Could not strip type name of %s", typeName)
-		}
+		typeSpecDef.SchemaName = parser.stripToStructName(typeSpecDef.SchemaName)
+		typeName = typeSpecDef.SchemaName
+		parser.debug.Printf("Stripped type name to %s", typeName)
+	} else {
+		typeSpecDef.SchemaName = normalizeGenericTypeName(typeSpecDef.SchemaName)
 	}
 
 	parser.structStack = append(parser.structStack, typeSpecDef)
@@ -1408,6 +1406,19 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	}
 
 	return &sch, nil
+}
+
+func (parser *Parser) stripToStructName(schemaName string) string {
+	parts := strings.Split(schemaName, "-")
+	for i, part := range parts {
+		dotParts := strings.Split(part, ".")
+		parts[i] = dotParts[len(dotParts)-1]
+	}
+	return strings.Join(parts, "-")
+}
+
+func normalizeGenericTypeName(name string) string {
+	return strings.ReplaceAll(name, ".", "_")
 }
 
 func fullTypeName(parts ...string) string {
