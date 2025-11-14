@@ -431,27 +431,27 @@ const (
 
 var regexAttributes = map[string]*regexp.Regexp{
 	// for Enums(A, B)
-	enumsTag: regexp.MustCompile(`(?i)\s+enums\(.*\)`),
+	enumsTag: regexp.MustCompile(`(?i)\s+enums\(.*?\)(?:\s|$)`),
 	// for maximum(0)
-	maximumTag: regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
+	maximumTag: regexp.MustCompile(`(?i)\s+(?:maxinum|maximum)\(.*?\)(?:\s|$)`),
 	// for minimum(0)
-	minimumTag: regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
+	minimumTag: regexp.MustCompile(`(?i)\s+(?:mininum|minimum)\(.*?\)(?:\s|$)`),
 	// for default(0)
-	defaultTag: regexp.MustCompile(`(?i)\s+default\(.*\)`),
+	defaultTag: regexp.MustCompile(`(?i)\s+default\(.*?\)(?:\s|$)`),
 	// for minlength(0)
-	minLengthTag: regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
+	minLengthTag: regexp.MustCompile(`(?i)\s+minlength\(.*?\)(?:\s|$)`),
 	// for maxlength(0)
-	maxLengthTag: regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
+	maxLengthTag: regexp.MustCompile(`(?i)\s+maxlength\(.*?\)(?:\s|$)`),
 	// for format(email)
-	formatTag: regexp.MustCompile(`(?i)\s+format\(.*\)`),
+	formatTag: regexp.MustCompile(`(?i)\s+format\(.*?\)(?:\s|$)`),
 	// for extensions(x-example=test)
-	extensionsTag: regexp.MustCompile(`(?i)\s+extensions\(.*\)`),
+	extensionsTag: regexp.MustCompile(`(?i)\s+extensions\(.*?\)(?:\s|$)`),
 	// for collectionFormat(csv)
-	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
+	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*?\)(?:\s|$)`),
 	// example(0)
-	exampleTag: regexp.MustCompile(`(?i)\s+example\(.*\)`),
+	exampleTag: regexp.MustCompile(`(?i)\s+example\(.*?\)(?:\s|$)`),
 	// schemaExample(0)
-	schemaExampleTag: regexp.MustCompile(`(?i)\s+schemaExample\(.*\)`),
+	schemaExampleTag: regexp.MustCompile(`(?i)\s+schemaExample\(.*?\)(?:\s|$)`),
 }
 
 func (operation *Operation) parseParamAttribute(comment, objectType, schemaType, paramType string, param *spec.Parameter) error {
@@ -495,7 +495,7 @@ func (operation *Operation) parseParamAttribute(comment, objectType, schemaType,
 func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	attr := re.FindString(commentLine)
 
-	l, r := strings.Index(attr, "("), strings.Index(attr, ")")
+	l, r := strings.Index(attr, "("), strings.LastIndex(attr, ")")
 	if l == -1 || r == -1 {
 		return "", fmt.Errorf("can not find regex=%s, comment=%s", re.String(), commentLine)
 	}
