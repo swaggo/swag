@@ -419,10 +419,11 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 
 	// Use 'go list' command instead of depth.Resolve()
 	if parser.ParseDependency > 0 {
+		allDir := append([]string{filepath.Dir(absMainAPIFilePath)}, searchDirs...)
 		if parser.parseGoList {
-			pkgs, err := listPackages(context.Background(), filepath.Dir(absMainAPIFilePath), nil, "-deps")
+			pkgs, err := listPackages(context.Background(), allDir, nil, "-deps")
 			if err != nil {
-				return fmt.Errorf("pkg %s cannot find all dependencies, %s", filepath.Dir(absMainAPIFilePath), err)
+				return err
 			}
 
 			length := len(pkgs)
@@ -433,23 +434,35 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 				}
 			}
 		} else {
-			var t depth.Tree
-			t.ResolveInternal = true
-			t.MaxDepth = parseDepth
-
-			pkgName, err := getPkgName(filepath.Dir(absMainAPIFilePath))
-			if err != nil {
-				return err
+			dirImported := make(map[string]struct{}) // for deduplication
+			for _, dir := range allDir {             // ignore search dir (have been parsed)
+				absDir, err := filepath.Abs(dir)
+				if err == nil {
+					dirImported[absDir] = struct{}{}
+				}
 			}
+			for index, dir := range allDir {
+				var t depth.Tree
+				t.ResolveInternal = true
+				t.MaxDepth = parseDepth
 
-			err = t.Resolve(pkgName)
-			if err != nil {
-				return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
-			}
-			for i := 0; i < len(t.Root.Deps); i++ {
-				err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i], parser.ParseDependency)
+				pkgName, err := getPkgName(dir)
 				if err != nil {
-					return err
+					if index == 0 { // ignore error when load search dir
+						return err
+					}
+					continue
+				}
+
+				err = t.Resolve(pkgName)
+				if err != nil {
+					return fmt.Errorf("pkg %s cannot find all dependencies, %s", pkgName, err)
+				}
+				for i := 0; i < len(t.Root.Deps); i++ {
+					err := parser.getAllGoFileInfoFromDeps(&t.Root.Deps[i], parser.ParseDependency, dirImported)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -1867,7 +1880,7 @@ func (parser *Parser) getAllGoFileInfo(packageDir, searchDir string) error {
 	})
 }
 
-func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg, parseFlag ParseFlag) error {
+func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg, parseFlag ParseFlag, dirImported map[string]struct{}) error {
 	ignoreInternal := pkg.Internal && !parser.ParseInternal
 	if ignoreInternal || !pkg.Resolved { // ignored internal and not resolved dependencies
 		return nil
@@ -1883,6 +1896,10 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg, parseFlag ParseFl
 	}
 
 	srcDir := pkg.Raw.Dir
+	if _, ok := dirImported[srcDir]; ok {
+		return nil
+	}
+	dirImported[srcDir] = struct{}{}
 
 	files, err := os.ReadDir(srcDir) // only parsing files in the dir(don't contain sub dir files)
 	if err != nil {
@@ -1901,7 +1918,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg, parseFlag ParseFl
 	}
 
 	for i := 0; i < len(pkg.Deps); i++ {
-		if err := parser.getAllGoFileInfoFromDeps(&pkg.Deps[i], parseFlag); err != nil {
+		if err := parser.getAllGoFileInfoFromDeps(&pkg.Deps[i], parseFlag, dirImported); err != nil {
 			return err
 		}
 	}
