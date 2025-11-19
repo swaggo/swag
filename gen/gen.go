@@ -152,6 +152,9 @@ type Config struct {
 
 	// ParseFuncBody whether swag should parse api info inside of funcs
 	ParseFuncBody bool
+
+	// Version represents the version of the API in the generated swagger documents
+	Version string
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -227,6 +230,12 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	swagger := p.GetSwagger()
+	if config.Version != "" {
+		if swagger.Info.Version != "" {
+			log.Println("WARN: documentation version got overridden by flag --version")
+		}
+		swagger.Info.Version = config.Version
+	}
 
 	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
 		return err

@@ -44,6 +44,7 @@ const (
 	packagePrefixFlag        = "packagePrefix"
 	stateFlag                = "state"
 	parseFuncBodyFlag        = "parseFuncBody"
+	versionFlag              = "version"
 )
 
 var initFlags = []cli.Flag{
@@ -191,6 +192,11 @@ var initFlags = []cli.Flag{
 		Name:  parseFuncBodyFlag,
 		Usage: "Parse API info within body of functions in go files, disabled by default",
 	},
+	&cli.StringFlag{
+		Name:  versionFlag,
+		Value: "",
+		Usage: "Specify the version of the API in the generated files",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -274,6 +280,7 @@ func initAction(ctx *cli.Context) error {
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
 		ParseFuncBody:       ctx.Bool(parseFuncBodyFlag),
+		Version:             ctx.String(versionFlag),
 	})
 }
 

@@ -118,6 +118,7 @@ OPTIONS:
    --collectionFormat value, --cf value   Set default collection format (default: "csv")
    --state value                          Initial state for the state machine (default: ""), @HostState in root file, @State in other files
    --parseFuncBody                        Parse API info within body of functions in go files, disabled by default (default: false)
+   --version value                        Specify the version of the API in the generated files
    --help, -h                             show help (default: false)
 ```
 
