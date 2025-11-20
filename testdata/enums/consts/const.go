@@ -12,3 +12,4 @@ const escapestr = "aa\nbb\u8888cc"
 const escapechar = '\u8888'
 const underscored = 1_000_000
 const binaryInteger = 0b10001000
+const octInteger = 0o755

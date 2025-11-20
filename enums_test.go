@@ -33,6 +33,7 @@ func TestParseGlobalEnums(t *testing.T) {
 	assert.Equal(t, "aa\nbb\u8888cc", p.packages.packages[constsPath].ConstTable["escapestr"].Value)
 	assert.Equal(t, 1_000_000, p.packages.packages[constsPath].ConstTable["underscored"].Value)
 	assert.Equal(t, 0b10001000, p.packages.packages[constsPath].ConstTable["binaryInteger"].Value)
+	assert.Equal(t, 0o755, p.packages.packages[constsPath].ConstTable["octInteger"].Value)
 
 	typesPath := "github.com/swaggo/swag/testdata/enums/types"
 
