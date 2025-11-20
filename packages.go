@@ -40,11 +40,11 @@ func (pkgDefs *PackagesDefinitions) ParseFile(packageDir, path string, src inter
 	if err != nil {
 		return fmt.Errorf("failed to parse file %s, error:%+v", path, err)
 	}
-	return pkgDefs.collectAstFile(fileSet, packageDir, path, astFile, flag)
+	return pkgDefs.CollectAstFile(fileSet, packageDir, path, astFile, flag)
 }
 
-// collectAstFile collect ast.file.
-func (pkgDefs *PackagesDefinitions) collectAstFile(fileSet *token.FileSet, packageDir, path string, astFile *ast.File, flag ParseFlag) error {
+// CollectAstFile collect ast.file.
+func (pkgDefs *PackagesDefinitions) CollectAstFile(fileSet *token.FileSet, packageDir, path string, astFile *ast.File, flag ParseFlag) error {
 	if pkgDefs.files == nil {
 		pkgDefs.files = make(map[*ast.File]*AstFileInfo)
 	}
