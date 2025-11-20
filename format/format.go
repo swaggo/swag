@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/swaggo/swag"
+	"golang.org/x/sync/errgroup"
 )
 
 // Format implements `fmt` command for formatting swag comments in Go source
@@ -58,24 +61,27 @@ func (f *Format) Build(config *Config) error {
 			f.exclude[filepath.Clean(fi)] = true
 		}
 	}
+	var eg errgroup.Group
+	eg.SetLimit(runtime.GOMAXPROCS(0))
 	for _, searchDir := range searchDirs {
-		err := filepath.Walk(searchDir, f.visit)
+		err := filepath.Walk(searchDir, func(path string, fileInfo fs.FileInfo, err error) error {
+			if fileInfo.IsDir() && f.excludeDir(path) {
+				return filepath.SkipDir
+			}
+			if f.excludeFile(path) {
+				return nil
+			}
+			eg.Go(func() error {
+				return f.format(path)
+			})
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (f *Format) visit(path string, fileInfo os.FileInfo, err error) error {
-	if fileInfo.IsDir() && f.excludeDir(path) {
-		return filepath.SkipDir
-	}
-	if f.excludeFile(path) {
-		return nil
-	}
-	if err := f.format(path); err != nil {
-		return fmt.Errorf("fmt: %w", err)
+	if err := eg.Wait(); err != nil {
+		return err
 	}
 	return nil
 }
