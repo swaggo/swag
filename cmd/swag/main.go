@@ -44,6 +44,7 @@ const (
 	packagePrefixFlag        = "packagePrefix"
 	stateFlag                = "state"
 	parseFuncBodyFlag        = "parseFuncBody"
+	parseGoPackagesFlag      = "parseGoPackages"
 )
 
 var initFlags = []cli.Flag{
@@ -191,6 +192,10 @@ var initFlags = []cli.Flag{
 		Name:  parseFuncBodyFlag,
 		Usage: "Parse API info within body of functions in go files, disabled by default",
 	},
+	&cli.BoolFlag{
+		Name:  parseGoPackagesFlag,
+		Usage: "Parse Go sources by golang.org/x/tools/go/packages, disabled by default",
+	},
 }
 
 func initAction(ctx *cli.Context) error {
@@ -274,6 +279,7 @@ func initAction(ctx *cli.Context) error {
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
 		ParseFuncBody:       ctx.Bool(parseFuncBodyFlag),
+		ParseGoPackages:     ctx.Bool(parseGoPackagesFlag),
 	})
 }
 

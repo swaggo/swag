@@ -174,6 +174,12 @@ type Parser struct {
 	// parseGoList whether swag use go list to parse dependency
 	parseGoList bool
 
+	// ParseGoPackages whether swag use golang.org/x/tools/go/packages to parse source.
+	// It ignores go source files which build tags do not match.
+	// It throws error when type check failed.
+	// It worked better for resolve const.
+	ParseGoPackages bool
+
 	// tags to filter the APIs after
 	tags map[string]struct{}
 
@@ -398,27 +404,32 @@ func (parser *Parser) skipPackageByPrefix(pkgpath string) bool {
 
 // ParseAPIMultiSearchDir is like ParseAPI but for multiple search dirs.
 func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile string, parseDepth int) error {
-	for _, searchDir := range searchDirs {
-		parser.debug.Printf("Generate general API Info, search dir:%s", searchDir)
-
-		packageDir, err := getPkgName(searchDir)
-		if err != nil {
-			parser.debug.Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
-		}
-
-		err = parser.getAllGoFileInfo(packageDir, searchDir)
-		if err != nil {
-			return err
-		}
-	}
-
 	absMainAPIFilePath, err := filepath.Abs(filepath.Join(searchDirs[0], mainAPIFile))
 	if err != nil {
 		return err
 	}
+	if parser.ParseGoPackages {
+		if err := parser.loadPackagesAndDeps(searchDirs, absMainAPIFilePath); err != nil {
+			return err
+		}
+	} else {
+		for _, searchDir := range searchDirs {
+			parser.debug.Printf("Generate general API Info, search dir:%s", searchDir)
+
+			packageDir, err := getPkgName(searchDir)
+			if err != nil {
+				parser.debug.Printf("warning: failed to get package name in dir: %s, error: %s", searchDir, err.Error())
+			}
+
+			err = parser.getAllGoFileInfo(packageDir, searchDir)
+			if err != nil {
+				return err
+			}
+		}
+	}
 
 	// Use 'go list' command instead of depth.Resolve()
-	if parser.ParseDependency > 0 {
+	if parser.ParseDependency > 0 && !parser.ParseGoPackages {
 		allDir := append([]string{filepath.Dir(absMainAPIFilePath)}, searchDirs...)
 		if parser.parseGoList {
 			pkgs, err := listPackages(context.Background(), allDir, nil, "-deps")
