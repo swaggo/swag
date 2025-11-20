@@ -61,6 +61,8 @@ func (parser *Parser) loadPackagesAndDeps(searchDirs []string, absMainAPIFilePat
 		}
 		return nil
 	})
+
+	parser.packages.AddPackages(pkgs)
 	return err
 }
 

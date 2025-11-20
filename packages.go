@@ -3,15 +3,19 @@ package swag
 import (
 	"fmt"
 	"go/ast"
+	"go/constant"
 	goparser "go/parser"
 	"go/token"
+	"go/types"
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 
 	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/packages"
 )
 
 // PackagesDefinitions map[package import path]*PackageDefinitions.
@@ -29,6 +33,25 @@ func NewPackagesDefinitions() *PackagesDefinitions {
 		files:             make(map[*ast.File]*AstFileInfo),
 		packages:          make(map[string]*PackageDefinitions),
 		uniqueDefinitions: make(map[string]*TypeSpecDef),
+	}
+}
+
+// AddPackages store packages.Package to PackagesDefinitions.
+func (pkgDefs *PackagesDefinitions) AddPackages(pkgs []*packages.Package) {
+	for _, pkg := range pkgs {
+		pkgDef, ok := pkgDefs.packages[pkg.PkgPath]
+		if !ok {
+			continue
+		}
+		if pkgDef.Package != nil {
+			continue
+		}
+		pkgDef.Package = pkg
+		imports := make([]*packages.Package, 0, len(pkg.Imports))
+		for _, dep := range pkg.Imports {
+			imports = append(imports, dep)
+		}
+		pkgDefs.AddPackages(imports)
 	}
 }
 
@@ -311,8 +334,87 @@ func (pkgDefs *PackagesDefinitions) evaluateAllConstVariables() {
 	}
 }
 
+func findFileInPackageByObject(pkg *packages.Package, obj types.Object) *ast.File {
+	filename := pkg.Fset.Position(obj.Pos()).Filename
+
+	for i, file := range pkg.CompiledGoFiles {
+		if file == filename {
+			return pkg.Syntax[i]
+		}
+	}
+	return nil
+}
+
+func findAstNodeInPackage(pkg *packages.Package, obj types.Object) (*ast.ValueSpec, *ast.GenDecl) {
+	file := findFileInPackageByObject(pkg, obj)
+	if file == nil {
+		return nil, nil
+	}
+	var found *ast.ValueSpec
+	var parent *ast.GenDecl
+	ast.Inspect(file, func(node ast.Node) bool {
+		if found != nil || node == nil {
+			return false
+		}
+		genDecl, ok := node.(*ast.GenDecl)
+		if !ok {
+			return true
+		}
+		i := slices.IndexFunc(genDecl.Specs, func(spec ast.Spec) bool {
+			return spec.Pos() == obj.Pos()
+		})
+		if i >= 0 {
+			found = genDecl.Specs[i].(*ast.ValueSpec)
+			parent = genDecl
+			return false
+		}
+		return true
+	})
+	return found, parent
+}
+
+func tryParseTypeFromPackage(pkg *packages.Package, constObj *types.Const) ast.Expr {
+	spec, parent := findAstNodeInPackage(pkg, constObj)
+	if spec == nil {
+		return nil
+	}
+	if spec.Type != nil {
+		return spec.Type
+	}
+	typeObj := constObj.Type()
+	for _, otherSpec := range parent.Specs {
+		if otherSpec == spec {
+			continue
+		}
+		declSpec, ok := otherSpec.(*ast.ValueSpec)
+		if !ok {
+			continue
+		}
+		if declSpec.Type == nil {
+			continue
+		}
+		otherType := pkg.TypesInfo.TypeOf(declSpec.Names[0])
+		if otherType == typeObj {
+			return declSpec.Type
+		}
+	}
+	return nil
+}
+
 // EvaluateConstValue evaluate a const variable.
 func (pkgDefs *PackagesDefinitions) EvaluateConstValue(pkg *PackageDefinitions, cv *ConstVariable, recursiveStack map[string]struct{}) (interface{}, ast.Expr) {
+	if pkg.Package != nil {
+		obj := pkg.Package.Types.Scope().Lookup(cv.Name.Name)
+		if obj != nil {
+			if constObj, ok := obj.(*types.Const); ok {
+				cv.Value = constant.Val(constObj.Val())
+				if cv.Type == nil {
+					cv.Type = tryParseTypeFromPackage(pkg.Package, constObj)
+				}
+				return cv.Value, cv.Type
+			}
+		}
+	}
 	if expr, ok := cv.Value.(ast.Expr); ok {
 		defer func() {
 			if err := recover(); err != nil {
