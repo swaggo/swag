@@ -12,11 +12,12 @@ import (
 
 func TestParseGlobalEnums(t *testing.T) {
 	searchDir := "testdata/enums"
-	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
-	assert.NoError(t, err)
 
 	p := New()
-	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
 	assert.NoError(t, err)
 
 	b, err := json.MarshalIndent(p.swagger, "", "    ")
@@ -33,6 +34,11 @@ func TestParseGlobalEnums(t *testing.T) {
 	assert.Equal(t, "aa\nbb\u8888cc", p.packages.packages[constsPath].ConstTable["escapestr"].Value)
 	assert.Equal(t, 1_000_000, p.packages.packages[constsPath].ConstTable["underscored"].Value)
 	assert.Equal(t, 0b10001000, p.packages.packages[constsPath].ConstTable["binaryInteger"].Value)
+	assert.Equal(t, 3, p.packages.packages[constsPath].ConstTable["lenArrayLit"].Value)
+	assert.Equal(t, 2, p.packages.packages[constsPath].ConstTable["lenArrayAlias1"].Value)
+	assert.Equal(t, 3, p.packages.packages[constsPath].ConstTable["lenArrayAlias2"].Value)
+	assert.Equal(t, 3, p.packages.packages[constsPath].ConstTable["lenArrayFieldsOfAnonymousStruct"].Value)
+	assert.Equal(t, 4, p.packages.packages[constsPath].ConstTable["lenArrayFieldsOfNamedStruct"].Value)
 
 	typesPath := "github.com/swaggo/swag/testdata/enums/types"
 

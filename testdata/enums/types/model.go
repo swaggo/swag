@@ -86,3 +86,10 @@ type PersonWithArrayEnum struct {
 	SecurityClearance []SecurityClearance
 	Type              Type
 }
+
+type MyStruct struct {
+	A struct {
+		Items [4]int
+	}
+	Items [3]int
+}
