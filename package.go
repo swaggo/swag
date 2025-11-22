@@ -173,7 +173,10 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 				value = EvaluateDataConversion(value, name)
 				return value, nil
 			} else if name == "len" {
-				return reflect.ValueOf(value).Len(), nil
+				if value != nil {
+					return reflect.ValueOf(value).Len(), nil
+				}
+				return pkg.evaluateArrayExprLength(file, iota, arg, globalEvaluator, recursiveStack), nil
 			}
 			typeDef := globalEvaluator.FindTypeSpec(name, file)
 			if typeDef == nil {
@@ -189,4 +192,76 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 		}
 	}
 	return nil, nil
+}
+
+func (pkg *PackageDefinitions) evaluateArrayExprLength(file *ast.File, iota int, expr ast.Expr, globalEvaluator ConstVariableGlobalEvaluator, recursiveStack map[string]struct{}) interface{} {
+	switch subType := expr.(type) {
+	case *ast.Ident:
+		if subType.Obj != nil && subType.Obj.Decl != nil {
+			if typeSpec, ok := subType.Obj.Decl.(*ast.TypeSpec); ok {
+				return pkg.evaluateArrayExprLength(file, iota, typeSpec.Type, globalEvaluator, recursiveStack)
+			}
+		}
+	case *ast.CompositeLit:
+		return pkg.evaluateArrayExprLength(file, iota, subType.Type, globalEvaluator, recursiveStack)
+	case *ast.IndexExpr:
+		eleType := pkg.getArrayType(file, subType, globalEvaluator)
+		if eleType == nil {
+			return nil
+		}
+		return pkg.evaluateArrayExprLength(file, iota, eleType, globalEvaluator, recursiveStack)
+	case *ast.ArrayType:
+		length, _ := pkg.evaluateConstValue(file, iota, subType.Len, globalEvaluator, recursiveStack)
+		return length
+	case *ast.SelectorExpr:
+		sType := pkg.getArrayType(file, subType, globalEvaluator)
+		if sType == nil {
+			return nil
+		}
+		return pkg.evaluateArrayExprLength(file, iota, sType, globalEvaluator, recursiveStack)
+	}
+
+	return nil
+}
+
+func (pkg *PackageDefinitions) getArrayType(file *ast.File, expr ast.Expr, globalEvaluator ConstVariableGlobalEvaluator) ast.Expr {
+	switch xType := expr.(type) {
+	case *ast.StructType:
+		return expr
+	case *ast.SelectorExpr:
+		if xxType, ok := xType.X.(*ast.Ident); ok {
+			typeSpec := globalEvaluator.FindTypeSpec(fullTypeName(xxType.Name, xType.Sel.Name), file)
+			if typeSpec != nil {
+				return typeSpec.TypeSpec.Type
+			}
+		}
+		xxType := pkg.getArrayType(file, xType.X, globalEvaluator)
+		if structType, ok := xxType.(*ast.StructType); ok {
+			for _, field := range structType.Fields.List {
+				for _, name := range field.Names {
+					if name.Name == xType.Sel.Name {
+						return pkg.getArrayType(file, field.Type, globalEvaluator)
+					}
+				}
+			}
+		}
+	case *ast.CompositeLit:
+		return pkg.getArrayType(file, xType.Type, globalEvaluator)
+	case *ast.IndexExpr:
+		xxTYpe := pkg.getArrayType(file, xType.X, globalEvaluator)
+		if arrayType, ok := xxTYpe.(*ast.ArrayType); ok {
+			return pkg.getArrayType(file, arrayType.Elt, globalEvaluator)
+		}
+	case *ast.Ident:
+		if xType.Obj != nil && xType.Obj.Decl != nil {
+			if typeSpec, ok := xType.Obj.Decl.(*ast.TypeSpec); ok {
+				return pkg.getArrayType(file, typeSpec.Type, globalEvaluator)
+			}
+		}
+		typeSpec := globalEvaluator.FindTypeSpec(xType.Name, file)
+		if typeSpec != nil {
+			return typeSpec.TypeSpec.Type
+		}
+	}
+	return expr
 }
