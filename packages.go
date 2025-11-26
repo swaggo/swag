@@ -335,7 +335,11 @@ func (pkgDefs *PackagesDefinitions) evaluateAllConstVariables() {
 }
 
 func findFileInPackageByObject(pkg *packages.Package, obj types.Object) *ast.File {
-	filename := pkg.Fset.Position(obj.Pos()).Filename
+	return findFileInPackageByPos(pkg, obj.Pos())
+}
+
+func findFileInPackageByPos(pkg *packages.Package, pos token.Pos) *ast.File {
+	filename := pkg.Fset.Position(pos).Filename
 
 	for i, file := range pkg.CompiledGoFiles {
 		if file == filename {
@@ -706,4 +710,57 @@ func (pkgDefs *PackagesDefinitions) FindTypeSpec(typeName string, file *ast.File
 	}
 
 	return nil
+}
+
+func findGenericTypeFromPackage(pkg *packages.Package, pos token.Pos) types.Object {
+	file := findFileInPackageByPos(pkg, pos)
+	if file == nil {
+		return nil
+	}
+	var found ast.Node
+	ast.Inspect(file, func(node ast.Node) bool {
+		if node == nil || found != nil {
+			return false
+		}
+		if node.Pos() == pos {
+			found = node
+			return false
+		}
+		return true
+	})
+	typeSpec, _ := found.(*ast.TypeSpec)
+	if typeSpec == nil {
+		return nil
+	}
+	return pkg.TypesInfo.ObjectOf(typeSpec.Name)
+}
+
+// CheckTypeSpec check is there some warning or error
+func (pkgDefs *PackagesDefinitions) CheckTypeSpec(typeSpecDef *TypeSpecDef) {
+	packageDefinition := pkgDefs.packages[typeSpecDef.PkgPath]
+	if packageDefinition == nil {
+		return
+	}
+	pkg := packageDefinition.Package
+	if pkg == nil {
+		return
+	}
+	obj := pkg.TypesInfo.ObjectOf(typeSpecDef.TypeSpec.Name)
+	if obj == nil {
+		// generic type has modified name
+		obj = findGenericTypeFromPackage(pkg, typeSpecDef.TypeSpec.Name.Pos())
+	}
+	if obj == nil {
+		pkgDefs.debug.Printf("warning: %s TypeSpecDef is nil", typeSpecDef.TypeSpec.Name.Name)
+		return
+	}
+	pkgDefs.checkJSONMarshal(pkg, obj)
+}
+
+func (pkgDefs *PackagesDefinitions) checkJSONMarshal(pkg *packages.Package, obj types.Object) {
+	methodSet := types.NewMethodSet(obj.Type())
+	method := methodSet.Lookup(pkg.Types, "MarshalJSON")
+	if method != nil {
+		pkgDefs.debug.Printf("warning: %s.%s has MarshalJSON method, may need special handling", pkg.PkgPath, obj.Name())
+	}
 }

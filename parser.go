@@ -1288,6 +1288,8 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		typeSpecDef = parser.packages.findTypeSpec(override[0:separator], override[separator+1:])
 	}
 
+	parser.packages.CheckTypeSpec(typeSpecDef)
+
 	schema, ok := parser.parsedSchemas[typeSpecDef]
 	if !ok {
 		var err error
