@@ -18,62 +18,62 @@
     },
     "/testapi/basic": {
       "get": {
-        "security": [
-          {
-            "BasicAuth": []
-          }
-        ],
         "summary": "basic security",
         "responses": {
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ]
       }
     },
     "/testapi/nosec": {
       "get": {
-        "security": [],
         "summary": "no security",
         "responses": {
           "200": {
             "description": "OK"
           }
-        }
+        },
+        "security": []
       }
     },
     "/testapi/oauth/admin": {
       "get": {
+        "summary": "oauth2 admin",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
         "security": [
           {
             "OAuth2Application": [
               "admin"
             ]
           }
-        ],
-        "summary": "oauth2 admin",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
+        ]
       }
     },
     "/testapi/oauth/write": {
       "get": {
+        "summary": "oauth2 write",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
         "security": [
           {
             "OAuth2Application": [
               "write"
             ]
           }
-        ],
-        "summary": "oauth2 write",
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
+        ]
       }
     }
   },

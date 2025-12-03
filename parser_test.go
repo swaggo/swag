@@ -1052,35 +1052,6 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
         },
         "/testapi/get-struct-array-by-string/{some_id}": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    },
-                    {
-                        "BasicAuth": []
-                    },
-                    {
-                        "OAuth2Application": [
-                            "write"
-                        ]
-                    },
-                    {
-                        "OAuth2Implicit": [
-                            "read",
-                            "admin"
-                        ]
-                    },
-                    {
-                        "OAuth2AccessCode": [
-                            "read"
-                        ]
-                    },
-                    {
-                        "OAuth2Password": [
-                            "admin"
-                        ]
-                    }
-                ],
                 "description": "get struct array by ID",
                 "consumes": [
                     "application/json"
@@ -1157,7 +1128,36 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "BasicAuth": []
+                    },
+                    {
+                        "OAuth2Application": [
+                            "write"
+                        ]
+                    },
+                    {
+                        "OAuth2Implicit": [
+                            "read",
+                            "admin"
+                        ]
+                    },
+                    {
+                        "OAuth2AccessCode": [
+                            "read"
+                        ]
+                    },
+                    {
+                        "OAuth2Password": [
+                            "admin"
+                        ]
+                    }
+                ]
             }
         }
     },
@@ -1538,35 +1538,6 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
         },
         "/testapi/get-struct-array-by-string/{some_id}": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    },
-                    {
-                        "BasicAuth": []
-                    },
-                    {
-                        "OAuth2Application": [
-                            "write"
-                        ]
-                    },
-                    {
-                        "OAuth2Implicit": [
-                            "read",
-                            "admin"
-                        ]
-                    },
-                    {
-                        "OAuth2AccessCode": [
-                            "read"
-                        ]
-                    },
-                    {
-                        "OAuth2Password": [
-                            "admin"
-                        ]
-                    }
-                ],
                 "description": "get struct array by ID",
                 "consumes": [
                     "application/json"
@@ -1643,7 +1614,36 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "BasicAuth": []
+                    },
+                    {
+                        "OAuth2Application": [
+                            "write"
+                        ]
+                    },
+                    {
+                        "OAuth2Implicit": [
+                            "read",
+                            "admin"
+                        ]
+                    },
+                    {
+                        "OAuth2AccessCode": [
+                            "read"
+                        ]
+                    },
+                    {
+                        "OAuth2Password": [
+                            "admin"
+                        ]
+                    }
+                ]
             }
         }
     },

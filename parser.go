@@ -981,7 +981,7 @@ func isExistsScope(scope string) (bool, error) {
 	for _, v := range s {
 		if strings.HasPrefix(v, scopeAttrPrefix) {
 			if strings.Contains(v, ",") {
-				return false, fmt.Errorf("@scope can't use comma(,) get=" + v)
+				return false, fmt.Errorf("@scope can't use comma(,) get=%s", v)
 			}
 		}
 	}
