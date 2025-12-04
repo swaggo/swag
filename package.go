@@ -34,8 +34,8 @@ type PackageDefinitions struct {
 
 // ConstVariableGlobalEvaluator an interface used to evaluate enums across packages
 type ConstVariableGlobalEvaluator interface {
-	EvaluateConstValue(pkg *PackageDefinitions, cv *ConstVariable, recursiveStack map[string]struct{}) (interface{}, ast.Expr)
-	EvaluateConstValueByName(file *ast.File, pkgPath, constVariableName string, recursiveStack map[string]struct{}) (interface{}, ast.Expr)
+	EvaluateConstValue(pkg *PackageDefinitions, cv *ConstVariable, recursiveStack map[string]struct{}) (any, ast.Expr)
+	EvaluateConstValueByName(file *ast.File, pkgPath, constVariableName string, recursiveStack map[string]struct{}) (any, ast.Expr)
 	FindTypeSpec(typeName string, file *ast.File) *TypeSpecDef
 }
 
@@ -83,7 +83,7 @@ func (pkg *PackageDefinitions) AddConst(astFile *ast.File, valueSpec *ast.ValueS
 	return pkg
 }
 
-func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr ast.Expr, globalEvaluator ConstVariableGlobalEvaluator, recursiveStack map[string]struct{}) (interface{}, ast.Expr) {
+func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr ast.Expr, globalEvaluator ConstVariableGlobalEvaluator, recursiveStack map[string]struct{}) (any, ast.Expr) {
 	switch valueExpr := expr.(type) {
 	case *ast.Ident:
 		if valueExpr.Name == "iota" {
