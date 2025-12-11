@@ -9,6 +9,6 @@ const (
 // EnumValue a model to record an enum consts variable
 type EnumValue struct {
 	key     string
-	Value   interface{}
+	Value   any
 	Comment string
 }

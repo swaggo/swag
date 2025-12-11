@@ -31,8 +31,8 @@ type genTypeWriter func(*Config, *spec.Swagger) error
 
 // Gen presents a generate tool for swag.
 type Gen struct {
-	json          func(data interface{}) ([]byte, error)
-	jsonIndent    func(data interface{}) ([]byte, error)
+	json          func(data any) ([]byte, error)
+	jsonIndent    func(data any) ([]byte, error)
 	jsonToYAML    func(data []byte) ([]byte, error)
 	outputTypeMap map[string]genTypeWriter
 	debug         Debugger
@@ -40,14 +40,14 @@ type Gen struct {
 
 // Debugger is the interface that wraps the basic Printf method.
 type Debugger interface {
-	Printf(format string, v ...interface{})
+	Printf(format string, v ...any)
 }
 
 // New creates a new Gen.
 func New() *Gen {
 	gen := Gen{
 		json: json.Marshal,
-		jsonIndent: func(data interface{}) ([]byte, error) {
+		jsonIndent: func(data any) ([]byte, error) {
 			return json.MarshalIndent(data, "", "    ")
 		},
 		jsonToYAML: yaml.JSONToYAML,

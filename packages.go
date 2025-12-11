@@ -56,7 +56,7 @@ func (pkgDefs *PackagesDefinitions) AddPackages(pkgs []*packages.Package) {
 }
 
 // ParseFile parse a source file.
-func (pkgDefs *PackagesDefinitions) ParseFile(packageDir, path string, src interface{}, flag ParseFlag) error {
+func (pkgDefs *PackagesDefinitions) ParseFile(packageDir, path string, src any, flag ParseFlag) error {
 	// positions are relative to FileSet
 	fileSet := token.NewFileSet()
 	astFile, err := goparser.ParseFile(fileSet, path, src, goparser.ParseComments)
@@ -406,7 +406,7 @@ func tryParseTypeFromPackage(pkg *packages.Package, constObj *types.Const) ast.E
 }
 
 // EvaluateConstValue evaluate a const variable.
-func (pkgDefs *PackagesDefinitions) EvaluateConstValue(pkg *PackageDefinitions, cv *ConstVariable, recursiveStack map[string]struct{}) (interface{}, ast.Expr) {
+func (pkgDefs *PackagesDefinitions) EvaluateConstValue(pkg *PackageDefinitions, cv *ConstVariable, recursiveStack map[string]struct{}) (any, ast.Expr) {
 	if pkg.Package != nil {
 		obj := pkg.Package.Types.Scope().Lookup(cv.Name.Name)
 		if obj != nil {
@@ -450,7 +450,7 @@ func (pkgDefs *PackagesDefinitions) EvaluateConstValue(pkg *PackageDefinitions, 
 }
 
 // EvaluateConstValueByName evaluate a const variable by name.
-func (pkgDefs *PackagesDefinitions) EvaluateConstValueByName(file *ast.File, pkgName, constVariableName string, recursiveStack map[string]struct{}) (interface{}, ast.Expr) {
+func (pkgDefs *PackagesDefinitions) EvaluateConstValueByName(file *ast.File, pkgName, constVariableName string, recursiveStack map[string]struct{}) (any, ast.Expr) {
 	matchedPkgPaths, externalPkgPaths := pkgDefs.findPackagePathFromImports(pkgName, file)
 	for _, pkgPath := range matchedPkgPaths {
 		if pkg, ok := pkgDefs.packages[pkgPath]; ok {

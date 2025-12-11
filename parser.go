@@ -211,7 +211,7 @@ type FieldParser interface {
 
 // Debugger is the interface that wraps the basic Printf method.
 type Debugger interface {
-	Printf(format string, v ...interface{})
+	Printf(format string, v ...any)
 }
 
 // New creates a new Parser with default properties.
@@ -695,7 +695,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 					return fmt.Errorf("annotation %s need a value", attribute)
 				}
 
-				var valueJSON interface{}
+				var valueJSON any
 				err := json.Unmarshal([]byte(value), &valueJSON)
 				if err != nil {
 					return fmt.Errorf("annotation %s need a valid json value", attribute)
@@ -705,7 +705,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 					parser.swagger.Info.Extensions.Add(extensionName, valueJSON)
 				} else {
 					if parser.swagger.Extensions == nil {
-						parser.swagger.Extensions = make(map[string]interface{})
+						parser.swagger.Extensions = make(map[string]any)
 					}
 
 					parser.swagger.Extensions[attribute[1:]] = valueJSON
@@ -718,7 +718,7 @@ func parseGeneralAPIInfo(parser *Parser, comments []string) error {
 				}
 
 				if tag.Extensions == nil {
-					tag.Extensions = make(map[string]interface{})
+					tag.Extensions = make(map[string]any)
 				}
 
 				// tag.Extensions.Add(extensionName, value) works wrong (transforms extensionName to lower case)
@@ -788,7 +788,7 @@ func parseSecAttributes(context string, lines []string, index *int) (*spec.Secur
 	*index++
 
 	attrMap, scopes := make(map[string]string), make(map[string]string)
-	extensions, description := make(map[string]interface{}), ""
+	extensions, description := make(map[string]any), ""
 
 loopline:
 	for ; *index < len(lines); *index++ {
@@ -1823,7 +1823,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 		return v, nil
 	case ARRAY:
 		values := strings.Split(exampleValue, ",")
-		result := make([]interface{}, 0)
+		result := make([]any, 0)
 		for _, value := range values {
 			v, err := defineTypeOfExample(arrayType, "", value)
 			if err != nil {
@@ -1841,7 +1841,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 		values := strings.Split(exampleValue, ",")
 
-		result := map[string]interface{}{}
+		result := map[string]any{}
 
 		for _, value := range values {
 			mapData := strings.SplitN(value, ":", 2)
@@ -1939,7 +1939,7 @@ func (parser *Parser) getAllGoFileInfoFromDeps(pkg *depth.Pkg, parseFlag ParseFl
 	return nil
 }
 
-func (parser *Parser) parseFile(packageDir, path string, src interface{}, flag ParseFlag) error {
+func (parser *Parser) parseFile(packageDir, path string, src any, flag ParseFlag) error {
 	if strings.HasSuffix(strings.ToLower(path), "_test.go") || filepath.Ext(path) != ".go" {
 		return nil
 	}
