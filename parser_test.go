@@ -3924,7 +3924,12 @@ func TestDefineTypeOfExample(t *testing.T) {
 	t.Run("Object type", func(t *testing.T) {
 		t.Parallel()
 
-		example, err := defineTypeOfExample("object", "", "key_one:one,key_two:two,key_three:three")
+		// Test empty object "{}" - issue #2018
+		example, err := defineTypeOfExample("object", "", "{}")
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]any{}, example)
+
+		example, err = defineTypeOfExample("object", "", "key_one:one,key_two:two,key_three:three")
 		assert.Error(t, err)
 		assert.Nil(t, example)
 
@@ -3945,6 +3950,13 @@ func TestDefineTypeOfExample(t *testing.T) {
 		}
 
 		assert.Equal(t, obj, map[string]string{"key_one": "one", "key_two": "two", "key_three": "three"})
+
+		// Test map[string]struct{} with empty object values - issue #2018
+		example, err = defineTypeOfExample("object", "object", "key1:{},key2:{}")
+		assert.NoError(t, err)
+		objMap := example.(map[string]interface{})
+		assert.Equal(t, map[string]any{}, objMap["key1"])
+		assert.Equal(t, map[string]any{}, objMap["key2"])
 	})
 
 	t.Run("Invalid type", func(t *testing.T) {
