@@ -1,8 +1,8 @@
 package api
 
 import (
-	myexternal "github.com/griffnb/swag/testdata/generics_package_alias/external/external2"
-	_ "github.com/griffnb/swag/testdata/generics_package_alias/internal/path1/v1"
+	myexternal "github.com/swaggo/swag/testdata/generics_package_alias/external/external2"
+	_ "github.com/swaggo/swag/testdata/generics_package_alias/internal/path1/v1"
 )
 
 // @Summary Create movie

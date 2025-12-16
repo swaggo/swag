@@ -1,4 +1,4 @@
-module github.com/griffnb/swag
+module github.com/swaggo/swag
 
 go 1.18
 

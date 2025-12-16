@@ -1,6 +1,6 @@
 package web
 
-import "github.com/griffnb/swag/testdata/generics_property/types"
+import "github.com/swaggo/swag/testdata/generics_property/types"
 
 type PostSelector func(selector func())
 

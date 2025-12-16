@@ -2113,12 +2113,12 @@ func TestParseParamStructCodeExample(t *testing.T) {
 
 	fset := token.NewFileSet()
 	ast, err := goparser.ParseFile(fset, "operation_test.go", `package swag
-	import structs "github.com/griffnb/swag/testdata/param_structs"
+	import structs "github.com/swaggo/swag/testdata/param_structs"
 	`, goparser.ParseComments)
 	assert.NoError(t, err)
 
 	parser := New()
-	err = parser.parseFile("github.com/griffnb/swag/testdata/param_structs", "testdata/param_structs/structs.go", nil, ParseModels)
+	err = parser.parseFile("github.com/swaggo/swag/testdata/param_structs", "testdata/param_structs/structs.go", nil, ParseModels)
 	assert.NoError(t, err)
 	_, err = parser.packages.ParseTypes()
 	assert.NoError(t, err)

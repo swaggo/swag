@@ -15,9 +15,9 @@ import (
 	"testing"
 
 	"github.com/go-openapi/spec"
-	"github.com/griffnb/swag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/swaggo/swag"
 )
 
 const searchDir = "../testdata/simple"
@@ -225,7 +225,7 @@ func TestGen_BuildDescriptionWithQuotes(t *testing.T) {
 		}
 	}
 
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/griffnb/swag/testdata/quotes")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/quotes")
 
 	cmd.Dir = config.SearchDir
 
@@ -286,7 +286,7 @@ func TestGen_BuildDocCustomDelims(t *testing.T) {
 		}
 	}
 
-	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/griffnb/swag/testdata/delims")
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/testdata/delims")
 
 	cmd.Dir = config.SearchDir
 

@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/griffnb/swag/testdata/generics_function_scoped/types"
+	"github.com/swaggo/swag/testdata/generics_function_scoped/types"
 )
 
 // @Summary Generic Response

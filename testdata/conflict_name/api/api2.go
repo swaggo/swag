@@ -1,9 +1,8 @@
 package api
 
 import (
+	_ "github.com/swaggo/swag/testdata/conflict_name/model2"
 	"net/http"
-
-	_ "github.com/griffnb/swag/testdata/conflict_name/model2"
 )
 
 // @Tags Health

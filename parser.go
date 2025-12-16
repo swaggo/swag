@@ -1059,8 +1059,6 @@ func getFuncDoc(decl any) (*ast.CommentGroup, bool) {
 		if !ok || value == nil {
 			return nil, false
 		}
-
-		fmt.Printf("decl: %+v\n", decl)
 		_, ok = getFuncDoc(value.Obj.Decl)
 		return astDecl.Doc, ok
 	}
@@ -1382,8 +1380,6 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	if found {
 		parser.swagger.Definitions[s2.Name] = *definition
 	}
-
-	//fmt.Printf("Parsed %s %+v", typeName, definition)
 
 	return &sch, nil
 }
