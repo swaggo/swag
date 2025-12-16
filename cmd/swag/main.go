@@ -24,6 +24,7 @@ const (
 	outputTypesFlag          = "outputTypes"
 	parseVendorFlag          = "parseVendor"
 	parseDependencyFlag      = "parseDependency"
+	useStructNameFlag        = "useStructName"
 	parseDependencyLevelFlag = "parseDependencyLevel"
 	markdownFilesFlag        = "markdownFiles"
 	codeExampleFilesFlag     = "codeExampleFiles"
@@ -43,6 +44,7 @@ const (
 	packagePrefixFlag        = "packagePrefix"
 	stateFlag                = "state"
 	parseFuncBodyFlag        = "parseFuncBody"
+	parseGoPackagesFlag      = "parseGoPackages"
 )
 
 var initFlags = []cli.Flag{
@@ -98,6 +100,11 @@ var initFlags = []cli.Flag{
 		Name:    parseDependencyFlag,
 		Aliases: []string{"pd"},
 		Usage:   "Parse go files inside dependency folder, disabled by default",
+	},
+	&cli.BoolFlag{
+		Name:    useStructNameFlag,
+		Aliases: []string{"st"},
+		Usage:   "Dont use those ugly full-path names when using dependency flag",
 	},
 	&cli.StringFlag{
 		Name:    markdownFilesFlag,
@@ -182,9 +189,12 @@ var initFlags = []cli.Flag{
 		Usage: "Set host state for swagger.json",
 	},
 	&cli.BoolFlag{
-		Name: parseFuncBodyFlag,
-		// Value: false,
-		Usage: "Parse API info within body of functions in go files, disabled by default (default: false)",
+		Name:  parseFuncBodyFlag,
+		Usage: "Parse API info within body of functions in go files, disabled by default",
+	},
+	&cli.BoolFlag{
+		Name:  parseGoPackagesFlag,
+		Usage: "Parse Go sources by golang.org/x/tools/go/packages, disabled by default",
 	},
 }
 
@@ -252,6 +262,7 @@ func initAction(ctx *cli.Context) error {
 		ParseDependency:     pdv,
 		MarkdownFilesDir:    ctx.String(markdownFilesFlag),
 		ParseInternal:       ctx.Bool(parseInternalFlag),
+		UseStructNames:      ctx.Bool(useStructNameFlag),
 		GeneratedTime:       ctx.Bool(generatedTimeFlag),
 		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
 		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
@@ -268,6 +279,7 @@ func initAction(ctx *cli.Context) error {
 		PackagePrefix:       ctx.String(packagePrefixFlag),
 		State:               ctx.String(stateFlag),
 		ParseFuncBody:       ctx.Bool(parseFuncBodyFlag),
+		ParseGoPackages:     ctx.Bool(parseGoPackagesFlag),
 	})
 }
 

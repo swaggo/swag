@@ -217,6 +217,15 @@ func TestParseRouterCommentNoColonSignAtPathStartErr(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestParseRouterCommentWithTilde(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Router /customer/{id}/~last-name [patch]`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+}
+
 func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
 	t.Parallel()
 
@@ -1313,6 +1322,34 @@ func TestParseParamCommentQueryArrayFormat(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+// Test ParseParamComment Query Params
+func TestParseParamCommentQueryArrayFormatWithStructTag(t *testing.T) {
+	parser := New()
+	parser.packages.ParseFile("test",
+		"/test/test.go",
+		"package test\ntype MyQueryParams struct{Param []string `form:\"param\" collectionFormat:\"multi\"`}",
+		ParseAll)
+	parser.packages.ParseTypes()
+	comment := `@Param anyWhat query test.MyQueryParams true "List"`
+	operation := NewOperation(parser)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "array",
+        "items": {
+            "type": "string"
+        },
+        "collectionFormat": "multi",
+        "name": "param",
+        "in": "query"
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByID(t *testing.T) {
 	t.Parallel()
 
@@ -1929,6 +1966,28 @@ func TestParseParamCommentByExampleString(t *testing.T) {
     {
         "type": "string",
         "example": "True feelings",
+        "description": "Some ID",
+        "name": "some_id",
+        "in": "query",
+        "required": true
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
+func TestParseParamCommentByExampleStringComplex(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Param some_id query string true "Some ID" Example(user_id.eq(1))`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "string",
+        "example": "user_id.eq(1)",
         "description": "Some ID",
         "name": "some_id",
         "in": "query",

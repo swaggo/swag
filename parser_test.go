@@ -488,9 +488,10 @@ func TestParser_ParseAcceptComment(t *testing.T) {
 		"image/gif",
 		"application/xhtml+xml",
 		"application/health+json",
+		"text/event-stream",
 	}
 
-	comment := `@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+	comment := `@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,event-stream`
 
 	parser := New()
 	assert.NoError(t, parseGeneralAPIInfo(parser, []string{comment}))
@@ -521,9 +522,10 @@ func TestParser_ParseProduceComment(t *testing.T) {
 		"image/gif",
 		"application/xhtml+xml",
 		"application/health+json",
+		"text/event-stream",
 	}
 
-	comment := `@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+	comment := `@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,event-stream`
 
 	parser := New()
 	assert.NoError(t, parseGeneralAPIInfo(parser, []string{comment}))
@@ -1050,35 +1052,6 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
         },
         "/testapi/get-struct-array-by-string/{some_id}": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    },
-                    {
-                        "BasicAuth": []
-                    },
-                    {
-                        "OAuth2Application": [
-                            "write"
-                        ]
-                    },
-                    {
-                        "OAuth2Implicit": [
-                            "read",
-                            "admin"
-                        ]
-                    },
-                    {
-                        "OAuth2AccessCode": [
-                            "read"
-                        ]
-                    },
-                    {
-                        "OAuth2Password": [
-                            "admin"
-                        ]
-                    }
-                ],
                 "description": "get struct array by ID",
                 "consumes": [
                     "application/json"
@@ -1155,7 +1128,36 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "BasicAuth": []
+                    },
+                    {
+                        "OAuth2Application": [
+                            "write"
+                        ]
+                    },
+                    {
+                        "OAuth2Implicit": [
+                            "read",
+                            "admin"
+                        ]
+                    },
+                    {
+                        "OAuth2AccessCode": [
+                            "read"
+                        ]
+                    },
+                    {
+                        "OAuth2Password": [
+                            "admin"
+                        ]
+                    }
+                ]
             }
         }
     },
@@ -1536,35 +1538,6 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
         },
         "/testapi/get-struct-array-by-string/{some_id}": {
             "get": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    },
-                    {
-                        "BasicAuth": []
-                    },
-                    {
-                        "OAuth2Application": [
-                            "write"
-                        ]
-                    },
-                    {
-                        "OAuth2Implicit": [
-                            "read",
-                            "admin"
-                        ]
-                    },
-                    {
-                        "OAuth2AccessCode": [
-                            "read"
-                        ]
-                    },
-                    {
-                        "OAuth2Password": [
-                            "admin"
-                        ]
-                    }
-                ],
                 "description": "get struct array by ID",
                 "consumes": [
                     "application/json"
@@ -1641,7 +1614,36 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                             "$ref": "#/definitions/web.APIError"
                         }
                     }
-                }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    },
+                    {
+                        "BasicAuth": []
+                    },
+                    {
+                        "OAuth2Application": [
+                            "write"
+                        ]
+                    },
+                    {
+                        "OAuth2Implicit": [
+                            "read",
+                            "admin"
+                        ]
+                    },
+                    {
+                        "OAuth2AccessCode": [
+                            "read"
+                        ]
+                    },
+                    {
+                        "OAuth2Password": [
+                            "admin"
+                        ]
+                    }
+                ]
             }
         }
     },
@@ -3400,14 +3402,14 @@ func TestParseFunctionScopedComplexStructDefinition(t *testing.T) {
 	src := `
 package main
 
-// @Param request body main.Fun.request true "query params" 
+// @Param request body main.Fun.request true "query params"
 // @Success 200 {object} main.Fun.response
 // @Router /test [post]
 func Fun()  {
 	type request struct {
 		Name string
 	}
-	
+
 	type grandChild struct {
 		Name string
 	}
@@ -3544,16 +3546,16 @@ package main
 
 type PublicChild struct {
 	Name string
-}	
+}
 
-// @Param request body main.Fun.request true "query params" 
+// @Param request body main.Fun.request true "query params"
 // @Success 200 {object} main.Fun.response
 // @Router /test [post]
 func Fun()  {
 	type request struct {
 		Name string
 	}
-	
+
 	type grandChild struct {
 		Name string
 	}
@@ -3993,6 +3995,73 @@ func TestParser_Skip(t *testing.T) {
 	assert.Error(t, parser.Skip(filepath.Clean("admin/release"), &mockFS{IsDirectory: true}))
 }
 
+func TestGetFuncDoc_NilPointerSafety(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		decl     interface{}
+		wantDoc  *ast.CommentGroup
+		wantBool bool
+	}{
+		{
+			name: "GenDecl with empty Specs",
+			decl: &ast.GenDecl{
+				Tok:   token.VAR,
+				Specs: []ast.Spec{}, // empty specs
+			},
+			wantDoc:  nil,
+			wantBool: false,
+		},
+		{
+			name: "ValueSpec with empty Values",
+			decl: &ast.ValueSpec{
+				Values: []ast.Expr{}, // empty values
+			},
+			wantDoc:  nil,
+			wantBool: false,
+		},
+		{
+			name: "ValueSpec with nil Obj",
+			decl: &ast.ValueSpec{
+				Values: []ast.Expr{
+					&ast.Ident{
+						Name: "test",
+						Obj:  nil, // nil object
+					},
+				},
+			},
+			wantDoc:  nil,
+			wantBool: false,
+		},
+		{
+			name: "ValueSpec with nil Obj.Decl",
+			decl: &ast.ValueSpec{
+				Values: []ast.Expr{
+					&ast.Ident{
+						Name: "test",
+						Obj: &ast.Object{
+							Decl: nil, // nil declaration
+						},
+					},
+				},
+			},
+			wantDoc:  nil,
+			wantBool: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			gotDoc, gotBool := getFuncDoc(tt.decl)
+			assert.Equal(t, tt.wantDoc, gotDoc)
+			assert.Equal(t, tt.wantBool, gotBool)
+		})
+	}
+}
+
 func TestGetFieldType(t *testing.T) {
 	t.Parallel()
 
@@ -4421,4 +4490,20 @@ var Func2 = Func
 	assert.True(t, ok)
 	assert.NotNil(t, val2.Get)
 	assert.Equal(t, val2.Get.OperationProps.Summary, "generate indirectly pointing")
+}
+
+func TestParser_DescriptionLineContinuation(t *testing.T) {
+	t.Parallel()
+
+	p := New()
+	searchDir := "testdata/description_line_continuation"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
 }

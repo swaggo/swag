@@ -47,6 +47,7 @@ var mimeTypeAliases = map[string]string{
 	"png":                   "image/png",
 	"jpeg":                  "image/jpeg",
 	"gif":                   "image/gif",
+	"event-stream":          "text/event-stream",
 }
 
 var mimeTypePattern = regexp.MustCompile("^[^/]+/[^/]+$")
@@ -203,7 +204,7 @@ func (operation *Operation) ParseDescriptionComment(lineRemainder string) {
 		return
 	}
 
-	operation.Description += "\n" + lineRemainder
+	operation.Description = AppendDescription(operation.Description, lineRemainder)
 }
 
 // ParseMetadata parse metadata.
@@ -322,8 +323,8 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					nameOverrideType = "formData"
 				}
 				// load overridden type specific name from extensions if exists
-				if nameVal, ok := item.Schema.Extensions[nameOverrideType]; ok {
-					name = nameVal.(string)
+				if nameVal, ok := item.Schema.Extensions.GetString(nameOverrideType); ok {
+					name = nameVal
 				}
 
 				switch {
@@ -344,7 +345,11 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					if !IsSimplePrimitiveType(itemSchema.Type[0]) {
 						continue
 					}
-					param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], format, findInSlice(schema.Required, item.Name), itemSchema.Enum, operation.parser.collectionFormatInQuery)
+					collectionFormat := operation.parser.collectionFormatInQuery
+					if cfv, ok := prop.Extensions.GetString(collectionFormatTag); ok {
+						collectionFormat = cfv
+					}
+					param = createParameter(paramType, prop.Description, name, prop.Type[0], itemSchema.Type[0], format, findInSlice(schema.Required, item.Name), itemSchema.Enum, collectionFormat)
 
 				case IsSimplePrimitiveType(prop.Type[0]):
 					param = createParameter(paramType, prop.Description, name, PRIMITIVE, prop.Type[0], format, findInSlice(schema.Required, item.Name), nil, operation.parser.collectionFormatInQuery)
@@ -426,27 +431,27 @@ const (
 
 var regexAttributes = map[string]*regexp.Regexp{
 	// for Enums(A, B)
-	enumsTag: regexp.MustCompile(`(?i)\s+enums\(.*\)`),
+	enumsTag: regexp.MustCompile(`(?i)\s+enums\(.*?\)(?:\s|$)`),
 	// for maximum(0)
-	maximumTag: regexp.MustCompile(`(?i)\s+maxinum|maximum\(.*\)`),
+	maximumTag: regexp.MustCompile(`(?i)\s+(?:maxinum|maximum)\(.*?\)(?:\s|$)`),
 	// for minimum(0)
-	minimumTag: regexp.MustCompile(`(?i)\s+mininum|minimum\(.*\)`),
+	minimumTag: regexp.MustCompile(`(?i)\s+(?:mininum|minimum)\(.*?\)(?:\s|$)`),
 	// for default(0)
-	defaultTag: regexp.MustCompile(`(?i)\s+default\(.*\)`),
+	defaultTag: regexp.MustCompile(`(?i)\s+default\(.*?\)(?:\s|$)`),
 	// for minlength(0)
-	minLengthTag: regexp.MustCompile(`(?i)\s+minlength\(.*\)`),
+	minLengthTag: regexp.MustCompile(`(?i)\s+minlength\(.*?\)(?:\s|$)`),
 	// for maxlength(0)
-	maxLengthTag: regexp.MustCompile(`(?i)\s+maxlength\(.*\)`),
+	maxLengthTag: regexp.MustCompile(`(?i)\s+maxlength\(.*?\)(?:\s|$)`),
 	// for format(email)
-	formatTag: regexp.MustCompile(`(?i)\s+format\(.*\)`),
+	formatTag: regexp.MustCompile(`(?i)\s+format\(.*?\)(?:\s|$)`),
 	// for extensions(x-example=test)
-	extensionsTag: regexp.MustCompile(`(?i)\s+extensions\(.*\)`),
+	extensionsTag: regexp.MustCompile(`(?i)\s+extensions\(.*?\)(?:\s|$)`),
 	// for collectionFormat(csv)
-	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
+	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*?\)(?:\s|$)`),
 	// example(0)
-	exampleTag: regexp.MustCompile(`(?i)\s+example\(.*\)`),
+	exampleTag: regexp.MustCompile(`(?i)\s+example\(.*?\)(?:\s|$)`),
 	// schemaExample(0)
-	schemaExampleTag: regexp.MustCompile(`(?i)\s+schemaExample\(.*\)`),
+	schemaExampleTag: regexp.MustCompile(`(?i)\s+schemaExample\(.*?\)(?:\s|$)`),
 }
 
 func (operation *Operation) parseParamAttribute(comment, objectType, schemaType, paramType string, param *spec.Parameter) error {
@@ -490,7 +495,7 @@ func (operation *Operation) parseParamAttribute(comment, objectType, schemaType,
 func findAttr(re *regexp.Regexp, commentLine string) (string, error) {
 	attr := re.FindString(commentLine)
 
-	l, r := strings.Index(attr, "("), strings.Index(attr, ")")
+	l, r := strings.Index(attr, "("), strings.LastIndex(attr, ")")
 	if l == -1 || r == -1 {
 		return "", fmt.Errorf("can not find regex=%s, comment=%s", re.String(), commentLine)
 	}
@@ -708,7 +713,7 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w./\-{}\(\)+:$]*)[[:blank:]]+\[(\w+)]`)
+var routerPattern = regexp.MustCompile(`^(/[\w./\-{}\(\)+:$~]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for given `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string, deprecated bool) error {

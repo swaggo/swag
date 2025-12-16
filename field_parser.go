@@ -18,6 +18,7 @@ var _ FieldParser = &tagBaseFieldParser{p: nil, field: nil, tag: ""}
 const (
 	requiredLabel    = "required"
 	optionalLabel    = "optional"
+	omitEmptyLabel   = "omitempty"
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
 )
@@ -99,7 +100,7 @@ func (ps *tagBaseFieldParser) FieldNames() ([]string, error) {
 	return names, nil
 }
 
-func (ps *tagBaseFieldParser) firstTagValue(tag string) string {
+func (ps *tagBaseFieldParser) FirstTagValue(tag string) string {
 	if ps.field.Tag != nil {
 		return strings.TrimRight(strings.TrimSpace(strings.Split(ps.tag.Get(tag), ",")[0]), "[]")
 	}
@@ -107,15 +108,15 @@ func (ps *tagBaseFieldParser) firstTagValue(tag string) string {
 }
 
 func (ps *tagBaseFieldParser) FormName() string {
-	return ps.firstTagValue(formTag)
+	return ps.FirstTagValue(formTag)
 }
 
 func (ps *tagBaseFieldParser) HeaderName() string {
-	return ps.firstTagValue(headerTag)
+	return ps.FirstTagValue(headerTag)
 }
 
 func (ps *tagBaseFieldParser) PathName() string {
-	return ps.firstTagValue(uriTag)
+	return ps.FirstTagValue(uriTag)
 }
 
 func toSnakeCase(in string) string {
@@ -404,8 +405,8 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 
 	schema.ReadOnly = ps.tag.Get(readOnlyTag) == "true"
 
-	defaultTagValue := ps.tag.Get(defaultTag)
-	if defaultTagValue != "" {
+	defaultTagValue, ok := ps.tag.Lookup(defaultTag)
+	if ok {
 		value, err := defineType(field.schemaType, defaultTagValue)
 		if err != nil {
 			return err
@@ -462,7 +463,10 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 		schema.MinItems = field.minItems
 		schema.UniqueItems = field.unique
 
-		eleSchema = schema.Items.Schema
+		if schema.Items != nil {
+			eleSchema = schema.Items.Schema
+		}
+
 		eleSchema.Format = field.formatType
 	}
 
@@ -528,6 +532,15 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 			case requiredLabel:
 				return true, nil
 			case optionalLabel:
+				return false, nil
+			}
+		}
+	}
+
+	jsonTag := ps.tag.Get(jsonTag)
+	if jsonTag != "" {
+		for _, val := range strings.Split(jsonTag, ",") {
+			if val == omitEmptyLabel {
 				return false, nil
 			}
 		}

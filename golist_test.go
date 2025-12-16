@@ -42,7 +42,7 @@ func TestListPackages(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			_, err := listPackages(context.TODO(), c.searchDir, nil, c.args...)
+			_, err := listOnePackages(context.TODO(), c.searchDir, nil, c.args...)
 			if c.except != nil {
 				assert.NotNil(t, err)
 			} else {

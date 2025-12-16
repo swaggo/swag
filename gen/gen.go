@@ -108,6 +108,9 @@ type Config struct {
 	// ParseDependencies whether swag should be parse outside dependency folder: 0 none, 1 models, 2 operations, 3 all
 	ParseDependency int
 
+	// UseStructNames stick to the struct name instead of those ugly full-path names
+	UseStructNames bool
+
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
 
@@ -149,6 +152,9 @@ type Config struct {
 
 	// ParseFuncBody whether swag should parse api info inside of funcs
 	ParseFuncBody bool
+
+	// ParseGoPackages whether swag use golang.org/x/tools/go/packages to parse source.
+	ParseGoPackages bool
 }
 
 // Build builds swagger json file  for given searchDir and mainAPIFile. Returns json.
@@ -161,9 +167,11 @@ func (g *Gen) Build(config *Config) error {
 	}
 
 	searchDirs := strings.Split(config.SearchDir, ",")
-	for _, searchDir := range searchDirs {
-		if _, err := os.Stat(searchDir); os.IsNotExist(err) {
-			return fmt.Errorf("dir: %s does not exist", searchDir)
+	if !config.ParseGoPackages { // packages.Load support pattern like ./...
+		for _, searchDir := range searchDirs {
+			if _, err := os.Stat(searchDir); os.IsNotExist(err) {
+				return fmt.Errorf("dir: %s does not exist", searchDir)
+			}
 		}
 	}
 
@@ -198,6 +206,7 @@ func (g *Gen) Build(config *Config) error {
 
 	p := swag.New(
 		swag.SetParseDependency(config.ParseDependency),
+		swag.SetUseStructName(config.UseStructNames),
 		swag.SetMarkdownFileDirectory(config.MarkdownFilesDir),
 		swag.SetDebugger(config.Debugger),
 		swag.SetExcludedDirsAndFiles(config.Excludes),
@@ -217,6 +226,7 @@ func (g *Gen) Build(config *Config) error {
 	p.RequiredByDefault = config.RequiredByDefault
 	p.HostState = config.State
 	p.ParseFuncBody = config.ParseFuncBody
+	p.ParseGoPackages = config.ParseGoPackages
 
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err

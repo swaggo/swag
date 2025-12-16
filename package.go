@@ -5,7 +5,8 @@ import (
 	"go/token"
 	"reflect"
 	"strconv"
-	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
 // PackageDefinitions files and definition in a package.
@@ -27,6 +28,8 @@ type PackageDefinitions struct {
 
 	// package path
 	Path string
+
+	Package *packages.Package
 }
 
 // ConstVariableGlobalEvaluator an interface used to evaluate enums across packages
@@ -63,11 +66,16 @@ func (pkg *PackageDefinitions) AddTypeSpec(name string, typeSpec *TypeSpecDef) *
 func (pkg *PackageDefinitions) AddConst(astFile *ast.File, valueSpec *ast.ValueSpec) *PackageDefinitions {
 	for i := 0; i < len(valueSpec.Names) && i < len(valueSpec.Values); i++ {
 		variable := &ConstVariable{
-			Name:    valueSpec.Names[i],
-			Type:    valueSpec.Type,
-			Value:   valueSpec.Values[i],
-			Comment: valueSpec.Comment,
-			File:    astFile,
+			Name:  valueSpec.Names[i],
+			Type:  valueSpec.Type,
+			Value: valueSpec.Values[i],
+			File:  astFile,
+		}
+		//take the nearest line as comment from comment list or doc list. comment list first.
+		if valueSpec.Comment != nil && len(valueSpec.Comment.List) > 0 {
+			variable.Comment = valueSpec.Comment.List[0].Text
+		} else if valueSpec.Doc != nil && len(valueSpec.Doc.List) > 0 {
+			variable.Comment = valueSpec.Doc.List[len(valueSpec.Doc.List)-1].Text
 		}
 		pkg.ConstTable[valueSpec.Names[i].Name] = variable
 		pkg.OrderedConst = append(pkg.OrderedConst, variable)
@@ -95,36 +103,10 @@ func (pkg *PackageDefinitions) evaluateConstValue(file *ast.File, iota int, expr
 	case *ast.BasicLit:
 		switch valueExpr.Kind {
 		case token.INT:
-			// handle underscored number, such as 1_000_000
-			if strings.ContainsRune(valueExpr.Value, '_') {
-				valueExpr.Value = strings.Replace(valueExpr.Value, "_", "", -1)
-			}
-			if len(valueExpr.Value) >= 2 && valueExpr.Value[0] == '0' {
-				var start, base = 2, 8
-				switch valueExpr.Value[1] {
-				case 'x', 'X':
-					//hex
-					base = 16
-				case 'b', 'B':
-					//binary
-					base = 2
-				default:
-					//octet
-					start = 1
-				}
-				if x, err := strconv.ParseInt(valueExpr.Value[start:], base, 64); err == nil {
-					return int(x), nil
-				} else if x, err := strconv.ParseUint(valueExpr.Value[start:], base, 64); err == nil {
-					return x, nil
-				} else {
-					panic(err)
-				}
-			}
-
 			//a basic literal integer is int type in default, or must have an explicit converting type in front
-			if x, err := strconv.ParseInt(valueExpr.Value, 10, 64); err == nil {
+			if x, err := strconv.ParseInt(valueExpr.Value, 0, 64); err == nil {
 				return int(x), nil
-			} else if x, err := strconv.ParseUint(valueExpr.Value, 10, 64); err == nil {
+			} else if x, err := strconv.ParseUint(valueExpr.Value, 0, 64); err == nil {
 				return x, nil
 			} else {
 				panic(err)

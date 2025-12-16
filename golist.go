@@ -8,9 +8,39 @@ import (
 	"go/build"
 	"os/exec"
 	"path/filepath"
+	"slices"
 )
 
-func listPackages(ctx context.Context, dir string, env []string, args ...string) (pkgs []*build.Package, finalErr error) {
+func listPackages(ctx context.Context, dirs []string, env []string, args ...string) ([]*build.Package, error) {
+	pkgMap := make(map[string]*build.Package)
+	for i, dir := range dirs {
+		pkgs, err := listOnePackages(ctx, dir, env, args...)
+		if err != nil {
+			if i == 0 {
+				return nil, fmt.Errorf("pkg %s cannot find all dependencies, %s", dir, err)
+			}
+			continue // ignore search dir load error?
+		}
+		for _, pkg := range pkgs {
+			pkgMap[pkg.Dir] = pkg
+		}
+	}
+	pkgs := make([]*build.Package, 0, len(pkgMap))
+	for _, pkg := range pkgMap {
+		pkgs = append(pkgs, pkg)
+	}
+	slices.SortFunc(pkgs, func(a, b *build.Package) int {
+		if a.Dir < b.Dir {
+			return -1
+		} else if a.Dir > b.Dir {
+			return 1
+		}
+		return 0
+	})
+	return pkgs, nil
+}
+
+func listOnePackages(ctx context.Context, dir string, env []string, args ...string) (pkgs []*build.Package, finalErr error) {
 	cmd := exec.CommandContext(ctx, "go", append([]string{"list", "-json", "-e"}, args...)...)
 	cmd.Env = env
 	cmd.Dir = dir
@@ -22,7 +52,7 @@ func listPackages(ctx context.Context, dir string, env []string, args ...string)
 	var stderrBuf bytes.Buffer
 	cmd.Stderr = &stderrBuf
 	defer func() {
-		if stderrBuf.Len() > 0 {
+		if (finalErr != nil) && (stderrBuf.Len() > 0) {
 			finalErr = fmt.Errorf("%v\n%s", finalErr, stderrBuf.Bytes())
 		}
 	}()
