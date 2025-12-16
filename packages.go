@@ -479,10 +479,28 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 			if constVar.Type == nil {
 				continue
 			}
-			ident, ok := constVar.Type.(*ast.Ident)
+
+			var (
+				ident *ast.Ident
+				ok    bool
+			)
+
+			switch expr := constVar.Type.(type) {
+			case *ast.IndexExpr:
+				ident, ok = expr.X.(*ast.Ident)
+			case *ast.IndexListExpr:
+				ident, ok = expr.X.(*ast.Ident)
+			case *ast.Ident:
+				ident = expr
+				ok = true
+			default:
+				continue
+			}
+
 			if !ok || IsGolangPrimitiveType(ident.Name) {
 				continue
 			}
+
 			typeDef, ok := pkg.TypeDefinitions[ident.Name]
 			if !ok {
 				continue

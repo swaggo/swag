@@ -147,6 +147,30 @@
                     },
                     {
                         "enum": [
+                            "g_easy",
+                            "g_medium",
+                            "g_hard"
+                        ],
+                        "type": "string",
+                        "x-enum-comments": {
+                            "GenericDifficultyHard": "This means really hard",
+                            "GenericMedium": "This one also has a comment"
+                        },
+                        "x-enum-descriptions": [
+                            "",
+                            "This one also has a comment",
+                            "This means really hard"
+                        ],
+                        "x-enum-varnames": [
+                            "GenericEasy",
+                            "GenericMedium",
+                            "GenericDifficultyHard"
+                        ],
+                        "name": "genericDifficulty",
+                        "in": "formData"
+                    },
+                    {
+                        "enum": [
                             1,
                             2,
                             4,
@@ -291,6 +315,19 @@
                         "type": "array",
                         "items": {
                             "enum": [
+                                "g_easy",
+                                "g_medium",
+                                "g_hard"
+                            ],
+                            "type": "string"
+                        },
+                        "name": "genericDifficulty",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "enum": [
                                 1,
                                 2,
                                 4,
@@ -408,6 +445,28 @@
                 "DifficultyHard"
             ]
         },
+        "types.GenericDifficulty-types_Level": {
+            "type": "string",
+            "enum": [
+                "g_easy",
+                "g_medium",
+                "g_hard"
+            ],
+            "x-enum-comments": {
+                "GenericDifficultyHard": "This means really hard",
+                "GenericMedium": "This one also has a comment"
+            },
+            "x-enum-descriptions": [
+                "",
+                "This one also has a comment",
+                "This means really hard"
+            ],
+            "x-enum-varnames": [
+                "GenericEasy",
+                "GenericMedium",
+                "GenericDifficultyHard"
+            ]
+        },
         "types.Mask": {
             "type": "integer",
             "enum": [
@@ -446,6 +505,9 @@
                 },
                 "difficulty": {
                     "$ref": "#/definitions/types.Difficulty"
+                },
+                "genericDifficulty": {
+                    "$ref": "#/definitions/types.GenericDifficulty-types_Level"
                 },
                 "mask": {
                     "$ref": "#/definitions/types.Mask"
