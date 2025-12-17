@@ -8,6 +8,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag/console"
 	"golang.org/x/tools/go/packages"
 )
@@ -36,6 +37,9 @@ func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName s
 		packageMap[pkg.PkgPath] = pkg
 	}
 
+	// Set the packageMap on the parser so checkNamed can use it
+	c.packageMap = packageMap
+
 	console.Printf("$Green{IMport Path for LookupStructFields: %s}\n", importPath)
 
 	for _, pkg := range pkgs {
@@ -46,6 +50,7 @@ func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName s
 		log.Printf("Processing package: %+v\n", pkg)
 
 		visited := make(map[string]bool)
+		c.visited = visited
 		//fmt.Printf("\n\n-------Package: %s------- \n", pkg.PkgPath)
 		//for _, f := range pkg.Syntax {
 		//	fmt.Println("Parsed file:", pkg.Fset.Position(f.Pos()).Filename)
@@ -374,4 +379,79 @@ func (c *CoreStructParser) checkMap(fieldType types.Type) ([]*StructField, strin
 	}
 
 	return nil, "", false
+}
+
+// BuildAllSchemas generates both public and non-public schema variants for a type
+// Returns a map of schema names to schemas (includes both base and Public variants)
+func BuildAllSchemas(baseModule, pkgPath, typeName string) (map[string]*spec.Schema, error) {
+	parser := &CoreStructParser{}
+
+	// Lookup struct fields using existing LookupStructFields
+	builder := parser.LookupStructFields(baseModule, pkgPath, typeName)
+	if builder == nil {
+		return nil, fmt.Errorf("failed to lookup struct fields for %s", typeName)
+	}
+
+	allSchemas := make(map[string]*spec.Schema)
+	processed := make(map[string]bool) // Track processed types to avoid infinite recursion
+
+	// Generate schemas for the main type
+	err := buildSchemasRecursive(builder, typeName, false, allSchemas, processed, parser, baseModule, pkgPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build schemas for %s: %w", typeName, err)
+	}
+
+	err = buildSchemasRecursive(builder, typeName+"Public", true, allSchemas, processed, parser, baseModule, pkgPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build public schemas for %s: %w", typeName, err)
+	}
+
+	return allSchemas, nil
+}
+
+// buildSchemasRecursive recursively builds schemas for a type and all its nested types
+func buildSchemasRecursive(builder *StructBuilder, schemaName string, public bool, allSchemas map[string]*spec.Schema, processed map[string]bool, parser *CoreStructParser, baseModule, pkgPath string) error {
+	// Avoid infinite recursion
+	if processed[schemaName] {
+		return nil
+	}
+	processed[schemaName] = true
+
+	// Extract base type name (remove Public suffix if present)
+	baseTypeName := schemaName
+	if public && strings.HasSuffix(schemaName, "Public") {
+		baseTypeName = strings.TrimSuffix(schemaName, "Public")
+	}
+
+	// Build schema for current type
+	schema, nestedTypes, err := builder.BuildSpecSchema(baseTypeName, public)
+	if err != nil {
+		return fmt.Errorf("failed to build schema for %s: %w", schemaName, err)
+	}
+
+	// Store the schema
+	allSchemas[schemaName] = schema
+
+	// Recursively process nested types
+	for _, nestedTypeName := range nestedTypes {
+		// Need to lookup the nested type's fields
+		nestedBuilder := parser.LookupStructFields(baseModule, pkgPath, nestedTypeName)
+		if nestedBuilder == nil {
+			console.Printf("$Yellow{Warning: Could not lookup nested type %s}\n", nestedTypeName)
+			continue
+		}
+
+		// Generate both public and non-public variants for nested types
+		err = buildSchemasRecursive(nestedBuilder, nestedTypeName, false, allSchemas, processed, parser, baseModule, pkgPath)
+		if err != nil {
+			return err
+		}
+
+		err = buildSchemasRecursive(nestedBuilder, nestedTypeName+"Public", true, allSchemas, processed, parser, baseModule, pkgPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

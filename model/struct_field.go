@@ -5,6 +5,7 @@ import (
 	"go/types"
 	"strings"
 
+	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag/console"
 )
 
@@ -353,4 +354,222 @@ func snakeToPascal(s string) string {
 		}
 	}
 	return strings.Join(parts, "")
+}
+
+// ToSpecSchema converts a StructField to OpenAPI spec.Schema
+// propName: extracted from json tag (first part before comma)
+// schema: the OpenAPI schema for this field
+// required: true if omitempty is absent from json tag
+// nestedTypes: list of struct type names encountered for recursive definition generation
+func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spec.Schema, required bool, nestedTypes []string, err error) {
+	// Filter field if public mode and field is not public
+	if public && !this.IsPublic() {
+		return "", nil, false, nil, nil
+	}
+
+	// Extract property name from json tag
+	tags := this.GetTags()
+	jsonTag := tags["json"]
+	if jsonTag == "" {
+		jsonTag = tags["column"]
+	}
+	if jsonTag == "" {
+		// Use field name as fallback
+		propName = this.Name
+	} else {
+		parts := strings.Split(jsonTag, ",")
+		propName = parts[0]
+
+		// Check for omitempty to determine required
+		required = true
+		for _, part := range parts[1:] {
+			if strings.TrimSpace(part) == "omitempty" {
+				required = false
+				break
+			}
+		}
+	}
+
+	// Skip if json tag is "-"
+	if propName == "-" {
+		return "", nil, false, nil, nil
+	}
+
+	// Detect StructField[T] pattern and extract type parameter T
+	typeStr := this.TypeString
+	if this.Type != nil {
+		typeStr = this.Type.String()
+	}
+
+	var extractedType string
+	if strings.Contains(typeStr, "fields.StructField[") {
+		// Extract type parameter using bracket parsing
+		extractedType, err = extractTypeParameter(typeStr)
+		if err != nil {
+			return "", nil, false, nil, fmt.Errorf("failed to extract type parameter from %s: %w", typeStr, err)
+		}
+	} else {
+		extractedType = typeStr
+	}
+
+	// Build schema for the extracted type
+	schema, nestedTypes, err = buildSchemaForType(extractedType, public)
+	if err != nil {
+		return "", nil, false, nil, fmt.Errorf("failed to build schema for type %s: %w", extractedType, err)
+	}
+
+	return propName, schema, required, nestedTypes, nil
+}
+
+// extractTypeParameter extracts the type parameter T from StructField[T]
+// Handles nested brackets like StructField[map[string][]User]
+func extractTypeParameter(typeStr string) (string, error) {
+	// Find the opening bracket for StructField[
+	idx := strings.Index(typeStr, "StructField[")
+	if idx == -1 {
+		return "", fmt.Errorf("StructField[ not found in %s", typeStr)
+	}
+
+	// Start after "StructField["
+	start := idx + len("StructField[")
+	bracketCount := 1
+	end := start
+
+	// Count brackets to find matching closing bracket
+	for end < len(typeStr) && bracketCount > 0 {
+		switch typeStr[end] {
+		case '[':
+			bracketCount++
+		case ']':
+			bracketCount--
+		}
+		if bracketCount > 0 {
+			end++
+		}
+	}
+
+	if bracketCount != 0 {
+		return "", fmt.Errorf("mismatched brackets in %s", typeStr)
+	}
+
+	extracted := typeStr[start:end]
+
+	// Remove leading * if it's a pointer
+	extracted = strings.TrimPrefix(extracted, "*")
+
+	return extracted, nil
+}
+
+// buildSchemaForType builds an OpenAPI schema for a Go type string
+// Returns schema, list of nested struct type names, and error
+func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, error) {
+	var nestedTypes []string
+
+	// Remove pointer prefix
+	isPointer := strings.HasPrefix(typeStr, "*")
+	if isPointer {
+		typeStr = strings.TrimPrefix(typeStr, "*")
+	}
+
+	// Handle primitive types
+	if isPrimitiveType(typeStr) {
+		schema := primitiveTypeToSchema(typeStr)
+		return schema, nil, nil
+	}
+
+	// Handle arrays
+	if strings.HasPrefix(typeStr, "[]") {
+		elemType := strings.TrimPrefix(typeStr, "[]")
+		elemSchema, elemNestedTypes, err := buildSchemaForType(elemType, public)
+		if err != nil {
+			return nil, nil, err
+		}
+		schema := spec.ArrayProperty(elemSchema)
+		return schema, elemNestedTypes, nil
+	}
+
+	// Handle maps
+	if strings.HasPrefix(typeStr, "map[") {
+		// Extract value type
+		bracketCount := 0
+		valueStart := -1
+		for i, ch := range typeStr {
+			if ch == '[' {
+				bracketCount++
+			} else if ch == ']' {
+				bracketCount--
+				if bracketCount == 0 {
+					valueStart = i + 1
+					break
+				}
+			}
+		}
+		if valueStart == -1 {
+			return nil, nil, fmt.Errorf("invalid map type: %s", typeStr)
+		}
+		valueType := typeStr[valueStart:]
+		valueSchema, valueNestedTypes, err := buildSchemaForType(valueType, public)
+		if err != nil {
+			return nil, nil, err
+		}
+		schema := spec.MapProperty(valueSchema)
+		return schema, valueNestedTypes, nil
+	}
+
+	// Handle struct types (including package-qualified names)
+	// Extract just the type name (last part after .)
+	typeName := typeStr
+	if strings.Contains(typeName, ".") {
+		parts := strings.Split(typeName, ".")
+		typeName = parts[len(parts)-1]
+	}
+
+	// Add Public suffix if in public mode
+	refName := typeName
+	if public {
+		refName = typeName + "Public"
+	}
+
+	// Create reference schema
+	schema := spec.RefSchema("#/definitions/" + refName)
+	nestedTypes = append(nestedTypes, typeName)
+
+	return schema, nestedTypes, nil
+}
+
+// isPrimitiveType checks if a type string is a Go primitive type
+func isPrimitiveType(typeStr string) bool {
+	primitives := map[string]bool{
+		"string": true, "bool": true,
+		"int": true, "int8": true, "int16": true, "int32": true, "int64": true,
+		"uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
+		"byte": true, "rune": true,
+		"float32": true, "float64": true,
+		"time.Time": true,
+	}
+	return primitives[typeStr]
+}
+
+// primitiveTypeToSchema converts a Go primitive type to OpenAPI schema
+func primitiveTypeToSchema(typeStr string) *spec.Schema {
+	switch typeStr {
+	case "string":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}
+	case "bool":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"boolean"}}}
+	case "int", "uint":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}}}
+	case "int8", "uint8", "int16", "uint16", "int32", "uint32", "byte", "rune":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}, Format: "int32"}}
+	case "int64", "uint64":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}, Format: "int64"}}
+	case "float32":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"number"}, Format: "float"}}
+	case "float64":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"number"}, Format: "double"}}
+	case "time.Time":
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: "date-time"}}
+	default:
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{typeStr}}}
+	}
 }

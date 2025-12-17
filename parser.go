@@ -21,6 +21,7 @@ import (
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
+	"github.com/swaggo/swag/model"
 )
 
 const (
@@ -68,6 +69,7 @@ const (
 	xCodeSamplesAttr        = "@x-codesamples"
 	scopeAttrPrefix         = "@scope."
 	stateAttr               = "@state"
+	publicAttr              = "@public"
 )
 
 // ParseFlag determine what to parse
@@ -1342,6 +1344,82 @@ func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
 	return false
 }
 
+// getBaseModule extracts the base module path from a package path
+// For example: "github.com/swaggo/swag/testdata/core_models/account" -> "github.com/swaggo/swag"
+func (parser *Parser) getBaseModule(pkgPath string) string {
+	// Try to find a common base pattern
+	// Look for patterns like /testdata/, /internal/, /cmd/, etc.
+	patterns := []string{"/testdata/", "/internal/", "/cmd/", "/pkg/"}
+
+	for _, pattern := range patterns {
+		if idx := strings.Index(pkgPath, pattern); idx >= 0 {
+			return pkgPath[:idx]
+		}
+	}
+
+	// If no pattern found, try to extract first 3 path segments
+	// e.g., "github.com/user/repo/..." -> "github.com/user/repo"
+	parts := strings.Split(pkgPath, "/")
+	if len(parts) >= 3 {
+		return strings.Join(parts[:3], "/")
+	}
+
+	// Fall back to the whole path
+	return pkgPath
+}
+
+// requiresCustomParser checks if a type definition requires the custom struct parser
+// Returns true if the struct has fields that use fields.StructField types
+func (parser *Parser) requiresCustomParser(typeSpecDef *TypeSpecDef) bool {
+	// Only check struct types
+	structType, ok := typeSpecDef.TypeSpec.Type.(*ast.StructType)
+	if !ok {
+		return false
+	}
+
+	// Check if any field uses fields.StructField
+	for _, field := range structType.Fields.List {
+		// Check field type for StructField pattern
+		if parser.hasStructFieldType(field.Type) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// hasStructFieldType recursively checks if a type expression contains fields.StructField
+func (parser *Parser) hasStructFieldType(expr ast.Expr) bool {
+	switch t := expr.(type) {
+	case *ast.StarExpr:
+		return parser.hasStructFieldType(t.X)
+	case *ast.SelectorExpr:
+		// Check for fields.StructField pattern
+		if ident, ok := t.X.(*ast.Ident); ok {
+			if ident.Name == "fields" && t.Sel.Name == "StructField" {
+				return true
+			}
+		}
+		return false
+	case *ast.IndexExpr:
+		// Generic type like StructField[T]
+		return parser.hasStructFieldType(t.X)
+	case *ast.ArrayType:
+		return parser.hasStructFieldType(t.Elt)
+	case *ast.MapType:
+		return parser.hasStructFieldType(t.Value)
+	case *ast.StructType:
+		// Embedded struct - check its fields
+		for _, field := range t.Fields.List {
+			if parser.hasStructFieldType(field.Type) {
+				return true
+			}
+		}
+		return false
+	}
+	return false
+}
+
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package, and populates swagger schema definitions registry
 // with a schema for the given type
@@ -1378,6 +1456,46 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	parser.structStack = append(parser.structStack, typeSpecDef)
 
 	parser.debug.Printf("Generating %s", typeName)
+
+	// Check if this type requires custom parsing (has fields.StructField types)
+	if parser.requiresCustomParser(typeSpecDef) {
+		parser.debug.Printf("Using custom parser for '%s' (contains StructField types)", typeName)
+
+		// Determine base module - try to extract from PkgPath
+		baseModule := parser.getBaseModule(typeSpecDef.PkgPath)
+
+		// Call BuildAllSchemas to get all schema variants
+		allSchemas, err := model.BuildAllSchemas(baseModule, typeSpecDef.PkgPath, typeSpecDef.Name())
+		if err != nil {
+			parser.debug.Printf("Error using custom parser for '%s': %s", typeName, err)
+			// Fall back to standard parsing if custom parser fails
+		} else {
+			// Store all generated schemas in definitions
+			for schemaName, schemaSpec := range allSchemas {
+				parser.swagger.Definitions[schemaName] = *schemaSpec
+				parser.debug.Printf("Added schema '%s' to definitions", schemaName)
+			}
+
+			// Return the base schema (non-Public version)
+			baseSchema := allSchemas[typeSpecDef.Name()]
+			if baseSchema == nil {
+				parser.debug.Printf("Warning: base schema not found for '%s', using empty object", typeName)
+				baseSchema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{OBJECT}}}
+			}
+
+			schema := &Schema{
+				Name:    typeSpecDef.SchemaName,
+				PkgPath: typeSpecDef.PkgPath,
+				Schema:  baseSchema,
+			}
+			parser.parsedSchemas[typeSpecDef] = schema
+
+			// Pop from struct stack
+			parser.structStack = parser.structStack[:len(parser.structStack)-1]
+
+			return schema, nil
+		}
+	}
 
 	definition, err := parser.parseTypeExpr(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
 	if err != nil {
