@@ -19,6 +19,31 @@ type CoreStructParser struct {
 	visited     map[string]bool
 }
 
+// toPascalCase converts package_name or package-name to PascalCase (PackageName)
+func toPascalCase(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	// Split by underscore or hyphen
+	var parts []string
+	for _, part := range strings.FieldsFunc(s, func(r rune) bool {
+		return r == '_' || r == '-'
+	}) {
+		if len(part) > 0 {
+			// Capitalize first letter of each part
+			parts = append(parts, strings.ToUpper(part[:1])+part[1:])
+		}
+	}
+
+	if len(parts) == 0 {
+		// No delimiters, just capitalize first letter
+		return strings.ToUpper(s[:1]) + s[1:]
+	}
+
+	return strings.Join(parts, "")
+}
+
 func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName string) *StructBuilder {
 	builder := &StructBuilder{}
 
@@ -444,6 +469,33 @@ func buildSchemasRecursive(builder *StructBuilder, schemaName string, public boo
 
 	// Store the schema with package prefix
 	fullSchemaName := packageName + "." + schemaName
+
+	// Set title to create clean class names in code generators
+	// Strategy:
+	// 1. If package is a prefix of type (e.g., account.Account, account.AccountJoined)
+	//    → use just the type name (Account, AccountJoined)
+	// 2. Otherwise (e.g., account.Properties, billing_plan.FeatureSet)
+	//    → combine as PascalCase (AccountProperties, BillingPlanFeatureSet)
+
+	typeName := schemaName // Use schemaName to preserve "Public" suffix if present
+
+	// Remove underscores/hyphens from package for comparison
+	// e.g., billing_plan → billingplan
+	packageNoSeparators := strings.ReplaceAll(strings.ReplaceAll(packageName, "_", ""), "-", "")
+
+	if strings.HasPrefix(strings.ToLower(typeName), strings.ToLower(packageNoSeparators)) {
+		// Package is a prefix of type name (case-insensitive, ignoring separators)
+		// e.g., account.Account → Account, account.AccountJoined → AccountJoined
+		//       billing_plan.BillingPlanJoined → BillingPlanJoined
+		schema.Title = typeName
+	} else {
+		// Package and type don't align - combine them
+		// e.g., account.Properties → AccountProperties
+		// Convert package_name to PascalCase: billing_plan → BillingPlan
+		packagePascal := toPascalCase(packageName)
+		schema.Title = packagePascal + typeName
+	}
+
 	allSchemas[fullSchemaName] = schema
 
 	// Recursively process nested types

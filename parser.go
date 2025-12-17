@@ -1624,6 +1624,18 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		} else {
 			// Store all generated schemas in definitions
 			for schemaName, schemaSpec := range allSchemas {
+				// Check if there's a @Name override
+				if alias := typeSpecDef.Alias(); alias != "" {
+					// Apply @Name override to the schema title
+					// Only override the base schema, not Public variants
+					if !strings.HasSuffix(schemaName, "Public") {
+						schemaSpec.Title = alias
+					} else {
+						// For Public variant, append "Public" to the alias
+						schemaSpec.Title = alias + "Public"
+					}
+				}
+				
 				parser.swagger.Definitions[schemaName] = *schemaSpec
 				parser.debug.Printf("Added schema '%s' to definitions", schemaName)
 			}

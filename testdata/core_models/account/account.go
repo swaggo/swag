@@ -63,6 +63,8 @@ type Account struct {
 	ManualFields
 }
 
+// AccountWithFeatures combines account with billing plan features
+// @name UserWithFeatures
 type AccountWithFeatures struct {
 	Account
 	PlanJoins

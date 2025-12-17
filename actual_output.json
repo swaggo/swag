@@ -231,6 +231,7 @@
   "definitions": {
     "account.Account": {
       "type": "object",
+      "title": "Account",
       "required": [
         "id",
         "urn",
@@ -338,6 +339,7 @@
     },
     "account.AccountJoined": {
       "type": "object",
+      "title": "AccountJoined",
       "required": [
         "id",
         "urn",
@@ -461,6 +463,7 @@
     },
     "account.AccountJoinedPublic": {
       "type": "object",
+      "title": "AccountJoinedPublic",
       "required": [
         "id",
         "urn",
@@ -544,6 +547,7 @@
     },
     "account.AccountPublic": {
       "type": "object",
+      "title": "AccountPublic",
       "required": [
         "id",
         "urn",
@@ -627,6 +631,7 @@
     },
     "account.AccountWithFeatures": {
       "type": "object",
+      "title": "AccountWithFeatures",
       "required": [
         "id",
         "urn",
@@ -763,6 +768,7 @@
     },
     "account.AccountWithFeaturesPublic": {
       "type": "object",
+      "title": "AccountWithFeaturesPublic",
       "required": [
         "id",
         "urn",
@@ -867,6 +873,7 @@
     },
     "account.Properties": {
       "type": "object",
+      "title": "AccountProperties",
       "properties": {
         "external_user_info": {},
         "invite_key": {
@@ -886,10 +893,12 @@
       }
     },
     "account.PropertiesPublic": {
-      "type": "object"
+      "type": "object",
+      "title": "AccountPropertiesPublic"
     },
     "account.SignupProperties": {
       "type": "object",
+      "title": "AccountSignupProperties",
       "required": [
         "is_oauth"
       ],
@@ -901,7 +910,8 @@
       }
     },
     "account.SignupPropertiesPublic": {
-      "type": "object"
+      "type": "object",
+      "title": "AccountSignupPropertiesPublic"
     },
     "api.APIResponse": {
       "type": "object",
@@ -924,6 +934,7 @@
     },
     "billing_plan.BillingPlanJoined": {
       "type": "object",
+      "title": "BillingPlanJoined",
       "required": [
         "id",
         "urn",
@@ -1010,6 +1021,7 @@
     },
     "billing_plan.BillingPlanJoinedPublic": {
       "type": "object",
+      "title": "BillingPlanJoinedPublic",
       "required": [
         "id",
         "urn",
@@ -1084,6 +1096,7 @@
     },
     "billing_plan.FeatureSet": {
       "type": "object",
+      "title": "BillingPlanFeatureSet",
       "properties": {
         "advanced_analytics": {
           "type": "integer",
@@ -1101,6 +1114,7 @@
     },
     "billing_plan.FeatureSetPublic": {
       "type": "object",
+      "title": "BillingPlanFeatureSetPublic",
       "properties": {
         "advanced_analytics": {
           "type": "integer",
@@ -1109,13 +1123,16 @@
       }
     },
     "billing_plan.MergeableFeatureSet": {
-      "type": "object"
+      "type": "object",
+      "title": "BillingPlanMergeableFeatureSet"
     },
     "billing_plan.MergeableFeatureSetPublic": {
-      "type": "object"
+      "type": "object",
+      "title": "BillingPlanMergeableFeatureSetPublic"
     },
     "billing_plan.Properties": {
       "type": "object",
+      "title": "BillingPlanProperties",
       "required": [
         "pricing_text",
         "default_discount_code"
@@ -1131,6 +1148,7 @@
     },
     "billing_plan.PropertiesPublic": {
       "type": "object",
+      "title": "BillingPlanPropertiesPublic",
       "required": [
         "pricing_text"
       ],
