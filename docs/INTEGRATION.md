@@ -206,3 +206,120 @@ Create comprehensive integration test that:
 - Test coverage includes both success and edge cases
 - Code follows existing swag patterns and conventions
 - No breaking changes to existing API
+
+---
+
+## Test Results and Current Issues (December 17, 2025 - Latest)
+
+### Integration Test Created
+
+Created comprehensive integration test at `/Users/griffnb/projects/swag/core_models_integration_test.go` that:
+- Tests against real testdata at `/Users/griffnb/projects/swag/testdata/core_models`  
+- Validates schema generation for Account, AccountJoined, and related types
+- Checks @Public annotation handling
+- Generates actual_output.json for comparison
+
+### Issues Identified
+
+#### 1. @Public Annotation Not Applied to Schema References
+
+**Status:** ❌ FAILING
+
+**Problem:** Operations marked with `@Public` annotation still reference base schemas instead of Public variants.
+
+**Evidence:**
+```go
+// In api.go:
+//     @Public
+//     @Success  200  {object}  response.SuccessResponse{data=account.AccountJoined}
+// ...
+func Me(_ http.ResponseWriter, req *http.Request) {}
+```
+
+Expected: Should reference `account.AccountJoinedPublic`  
+Actual: References `account.AccountJoined`
+
+**Root Cause:** The `operation.IsPublic` flag is being set correctly during parsing, but it's not being used when generating schema references in response/parameter parsing. The `ParseResponseComment` and related functions need to check `operation.IsPublic` and append "Public" suffix to struct type names.
+
+**Fix Needed:** In [operation.go](operation.go), modify `parseObjectSchemaWithPublic()` and related functions to actually USE the public parameter. Currently these functions exist but the public flag isn't being passed through or applied to modify the schema reference names.
+
+#### 2. Duplicate Schema Names (With and Without Package Prefix)
+
+**Status:** ❌ FAILING
+
+**Problem:** Schemas are being generated with BOTH package-qualified names (`account.Account`) and unqualified names (`Account`, `AccountPublic`).
+
+**Evidence from test output:**
+```
+definitions generated: 23
+  - Account  (should be account.Account)
+  - AccountPublic (should be account.AccountPublic)
+  - AccountJoined (should be account.AccountJoined)
+  - account.Account ✓ (correct)
+  - account.AccountJoined ✓ (correct)
+```
+
+**Root Cause:** In `model/struct_builder.go` `BuildSpecSchema()`, the schema names returned in `nestedTypes` are unqualified (just type name without package). When `BuildAllSchemas` recursively processes these, it generates schemas with unqualified names. The package qualification happens at a different layer.
+
+**Fix Needed:** Ensure schema names in `allSchemas` map returned from `BuildAllSchemas` are ALWAYS package-qualified. Modify `buildSchemasRecursive()` to use full package path when creating schema map keys.
+
+#### 3. Malformed Generic Type Names  
+
+**Status:** ❌ FAILING  
+
+**Problem:** Generic type parameters with brackets are creating malformed schema names like `Role]` and `Role]Public`.
+
+**Evidence:**
+```
+- Role]
+- Role]Public
+```
+
+**Root Cause:** In `model/struct_field.go` `extractTypeParameter()`, the bracket parsing for generic types like `IntConstantField[constants.Role]` is not handling the type parameter correctly. The closing bracket `]` is being included in the extracted type name.
+
+**Fix Needed:** Fix the bracket counting logic in `extractTypeParameter()` to properly exclude the closing bracket from the type parameter string.
+
+#### 4. Field Types Being Added as Top-Level Schemas
+
+**Status:** ⚠️  MINOR ISSUE
+
+**Problem:** Primitive field wrapper types like `StringField`, `IntField`, `UUIDField` are being added as top-level schemas when they shouldn't be.
+
+**Evidence:**
+```
+- StringField
+- StringFieldPublic  
+- IntField
+- IntFieldPublic
+- UUIDField
+- any
+- anyPublic
+```
+
+**Root Cause:** The `buildSchemaFor Type()` function in `struct_field.go` treats these as nested struct types and adds them to the nestedTypes list, which causes them to be recursively processed and added as schemas.
+
+**Fix Needed:** Add filtering logic to skip generating schemas for the `fields.*Field` wrapper types themselves - only generate schemas for the CONTENTS of `StructField[T]` generic types, not for primitive field wrappers.
+
+### Test Output Summary
+
+**Passing:**
+- ✅ Custom parser detection (correctly identifies types needing custom parsing)
+- ✅ Base schema generation (Account, AccountJoined exist)
+- ✅ Field extraction from embedded structs (DBColumns, JoinData, ManualFields all processed)
+- ✅ StructField[T] generic type parameter extraction (Properties, SignupProperties extracted)
+- ✅ Nested struct resolution (Properties and SignupProperties sub-fields extracted)
+
+**Failing:**
+- ❌ Public schema variant naming (not prefixed with package name)
+- ❌ @Public annotation application (operations don't use Public schemas)
+- ❌ Generic type parameter parsing (creates malformed names like `Role]`)
+- ❌ Public schema field filtering (AccountPublic has 0 properties instead of filtered public fields)
+
+### Next Steps (Priority Order)
+
+1. **Fix extractTypeParameter() bracket parsing** - Stops malformed schema names
+2. **Fix BuildAllSchemas package qualification** - Ensures all schemas have proper `package.Type` names
+3. **Fix public field filtering in ToSpecSchema** - Ensures Public schemas actually filter private fields
+4. **Apply @Public annotation to operation schema references** - Makes operations use Public variants
+5. **Filter out primitive field wrapper schemas** - Cleanup unnecessary definitions
+6. **Create proper expected.json** - Document correct expected output

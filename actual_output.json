@@ -1,0 +1,661 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Parse external models.",
+    "title": "Swagger Example API",
+    "contact": {},
+    "version": "1.0"
+  },
+  "basePath": "/v1",
+  "paths": {
+    "/admin/accounts": {
+      "get": {
+        "description": "Retrieves a paginated list of accounts with optional search",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "summary": "List accounts",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Search query",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Results per page",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Page offset",
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/response.SuccessResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/account.AccountJoined"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/admin/testUser": {
+      "post": {
+        "description": "Creates a test account with the provided details and optionally logs in as that account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Create test account",
+        "parameters": [
+          {
+            "description": "Test user details",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/api.TestUserInput"
+            }
+          },
+          {
+            "type": "string",
+            "description": "Set to login as the created user",
+            "name": "login_as",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/response.SuccessResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/definitions/account.Account"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "description": "Retrieves the authenticated user's account details with joined data",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Get current user",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/response.SuccessResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/definitions/account.AccountJoined"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Account": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "properties",
+        "signup_properties",
+        "hashed_password",
+        "password_updated_at_ts",
+        "email_verified_at_ts",
+        "last_login_ts",
+        "is_super_user_session"
+      ],
+      "properties": {
+        "email": {
+          "$ref": "#/definitions/StringField"
+        },
+        "email_verified_at_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "external_id": {
+          "$ref": "#/definitions/StringField"
+        },
+        "first_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "hashed_password": {
+          "$ref": "#/definitions/StringField"
+        },
+        "is_super_user_session": {
+          "$ref": "#/definitions/IntField"
+        },
+        "last_login_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "last_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "organization_id": {
+          "$ref": "#/definitions/UUIDField"
+        },
+        "password_updated_at_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "phone": {
+          "$ref": "#/definitions/StringField"
+        },
+        "properties": {
+          "$ref": "#/definitions/Properties"
+        },
+        "role": {
+          "$ref": "#/definitions/Role%5D"
+        },
+        "signup_properties": {
+          "$ref": "#/definitions/SignupProperties"
+        },
+        "test_user_type": {
+          "$ref": "#/definitions/IntField"
+        }
+      }
+    },
+    "AccountJoined": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "properties",
+        "signup_properties",
+        "hashed_password",
+        "password_updated_at_ts",
+        "email_verified_at_ts",
+        "last_login_ts",
+        "is_super_user_session",
+        "name",
+        "organization_name",
+        "created_by_name",
+        "updated_by_name"
+      ],
+      "properties": {
+        "created_by_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "email": {
+          "$ref": "#/definitions/StringField"
+        },
+        "email_verified_at_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "external_id": {
+          "$ref": "#/definitions/StringField"
+        },
+        "first_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "hashed_password": {
+          "$ref": "#/definitions/StringField"
+        },
+        "is_super_user_session": {
+          "$ref": "#/definitions/IntField"
+        },
+        "last_login_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "last_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "organization_id": {
+          "$ref": "#/definitions/UUIDField"
+        },
+        "organization_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "password_updated_at_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "phone": {
+          "$ref": "#/definitions/StringField"
+        },
+        "properties": {
+          "$ref": "#/definitions/Properties"
+        },
+        "role": {
+          "$ref": "#/definitions/Role%5D"
+        },
+        "signup_properties": {
+          "$ref": "#/definitions/SignupProperties"
+        },
+        "test_user_type": {
+          "$ref": "#/definitions/IntField"
+        },
+        "updated_by_name": {
+          "$ref": "#/definitions/StringField"
+        }
+      }
+    },
+    "AccountJoinedPublic": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "is_super_user_session"
+      ],
+      "properties": {
+        "email": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "external_id": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "first_name": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "is_super_user_session": {
+          "$ref": "#/definitions/IntFieldPublic"
+        },
+        "last_name": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "organization_id": {
+          "$ref": "#/definitions/UUIDFieldPublic"
+        },
+        "phone": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "role": {
+          "$ref": "#/definitions/Role%5DPublic"
+        },
+        "test_user_type": {
+          "$ref": "#/definitions/IntFieldPublic"
+        }
+      }
+    },
+    "AccountPublic": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "is_super_user_session"
+      ],
+      "properties": {
+        "email": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "external_id": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "first_name": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "is_super_user_session": {
+          "$ref": "#/definitions/IntFieldPublic"
+        },
+        "last_name": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "organization_id": {
+          "$ref": "#/definitions/UUIDFieldPublic"
+        },
+        "phone": {
+          "$ref": "#/definitions/StringFieldPublic"
+        },
+        "role": {
+          "$ref": "#/definitions/Role%5DPublic"
+        },
+        "test_user_type": {
+          "$ref": "#/definitions/IntFieldPublic"
+        }
+      }
+    },
+    "IntField": {
+      "type": "object"
+    },
+    "IntFieldPublic": {
+      "type": "object"
+    },
+    "Properties": {
+      "type": "object",
+      "properties": {
+        "external_user_info": {
+          "$ref": "#/definitions/any"
+        },
+        "invite_key": {
+          "type": "string"
+        },
+        "invite_ts": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "last_seen": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "verify_email_key": {
+          "type": "string"
+        }
+      }
+    },
+    "PropertiesPublic": {
+      "type": "object"
+    },
+    "Role]": {
+      "type": "object"
+    },
+    "Role]Public": {
+      "type": "object"
+    },
+    "SignupProperties": {
+      "type": "object",
+      "required": [
+        "is_oauth"
+      ],
+      "properties": {
+        "is_oauth": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SignupPropertiesPublic": {
+      "type": "object"
+    },
+    "StringField": {
+      "type": "object"
+    },
+    "StringFieldPublic": {
+      "type": "object"
+    },
+    "UUIDField": {
+      "type": "object"
+    },
+    "UUIDFieldPublic": {
+      "type": "object"
+    },
+    "account.Account": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "properties",
+        "signup_properties",
+        "hashed_password",
+        "password_updated_at_ts",
+        "email_verified_at_ts",
+        "last_login_ts",
+        "is_super_user_session"
+      ],
+      "properties": {
+        "email": {
+          "$ref": "#/definitions/StringField"
+        },
+        "email_verified_at_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "external_id": {
+          "$ref": "#/definitions/StringField"
+        },
+        "first_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "hashed_password": {
+          "$ref": "#/definitions/StringField"
+        },
+        "is_super_user_session": {
+          "$ref": "#/definitions/IntField"
+        },
+        "last_login_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "last_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "organization_id": {
+          "$ref": "#/definitions/UUIDField"
+        },
+        "password_updated_at_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "phone": {
+          "$ref": "#/definitions/StringField"
+        },
+        "properties": {
+          "$ref": "#/definitions/Properties"
+        },
+        "role": {
+          "$ref": "#/definitions/Role%5D"
+        },
+        "signup_properties": {
+          "$ref": "#/definitions/SignupProperties"
+        },
+        "test_user_type": {
+          "$ref": "#/definitions/IntField"
+        }
+      }
+    },
+    "account.AccountJoined": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "properties",
+        "signup_properties",
+        "hashed_password",
+        "password_updated_at_ts",
+        "email_verified_at_ts",
+        "last_login_ts",
+        "is_super_user_session",
+        "name",
+        "organization_name",
+        "created_by_name",
+        "updated_by_name"
+      ],
+      "properties": {
+        "created_by_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "email": {
+          "$ref": "#/definitions/StringField"
+        },
+        "email_verified_at_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "external_id": {
+          "$ref": "#/definitions/StringField"
+        },
+        "first_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "hashed_password": {
+          "$ref": "#/definitions/StringField"
+        },
+        "is_super_user_session": {
+          "$ref": "#/definitions/IntField"
+        },
+        "last_login_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "last_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "organization_id": {
+          "$ref": "#/definitions/UUIDField"
+        },
+        "organization_name": {
+          "$ref": "#/definitions/StringField"
+        },
+        "password_updated_at_ts": {
+          "$ref": "#/definitions/IntField"
+        },
+        "phone": {
+          "$ref": "#/definitions/StringField"
+        },
+        "properties": {
+          "$ref": "#/definitions/Properties"
+        },
+        "role": {
+          "$ref": "#/definitions/Role%5D"
+        },
+        "signup_properties": {
+          "$ref": "#/definitions/SignupProperties"
+        },
+        "test_user_type": {
+          "$ref": "#/definitions/IntField"
+        },
+        "updated_by_name": {
+          "$ref": "#/definitions/StringField"
+        }
+      }
+    },
+    "any": {
+      "type": "object"
+    },
+    "anyPublic": {
+      "type": "object"
+    },
+    "api.TestUserInput": {
+      "type": "object",
+      "properties": {
+        "organization_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response.ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "response.SuccessResponse": {
+      "type": "object",
+      "properties": {
+        "data": {}
+      }
+    }
+  }
+}

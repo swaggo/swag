@@ -1377,10 +1377,21 @@ func (parser *Parser) requiresCustomParser(typeSpecDef *TypeSpecDef) bool {
 		return false
 	}
 
+	// Simple check: if the file imports "github.com/griffnb/core/lib/model/fields", use custom parser
+	if typeSpecDef.File != nil {
+		for _, imp := range typeSpecDef.File.Imports {
+			impPath := strings.Trim(imp.Path.Value, "\"")
+			if strings.Contains(impPath, "/model/fields") {
+				parser.debug.Printf("Type '%s' imports fields package, using custom parser", typeSpecDef.TypeName())
+				return true
+			}
+		}
+	}
+
 	// Check if any field uses fields.StructField
 	for _, field := range structType.Fields.List {
 		// Check field type for StructField pattern
-		if parser.hasStructFieldType(field.Type) {
+		if parser.hasStructFieldType(field.Type, typeSpecDef) {
 			return true
 		}
 	}
@@ -1389,35 +1400,93 @@ func (parser *Parser) requiresCustomParser(typeSpecDef *TypeSpecDef) bool {
 }
 
 // hasStructFieldType recursively checks if a type expression contains fields.StructField
-func (parser *Parser) hasStructFieldType(expr ast.Expr) bool {
+func (parser *Parser) hasStructFieldType(expr ast.Expr, currentTypeSpecDef *TypeSpecDef) bool {
 	switch t := expr.(type) {
 	case *ast.StarExpr:
-		return parser.hasStructFieldType(t.X)
+		return parser.hasStructFieldType(t.X, currentTypeSpecDef)
 	case *ast.SelectorExpr:
 		// Check for fields.StructField pattern
 		if ident, ok := t.X.(*ast.Ident); ok {
-			if ident.Name == "fields" && t.Sel.Name == "StructField" {
+			if ident.Name == "fields" {
+				// Any fields.* type indicates we need custom parser
 				return true
+			}
+			// This might be a package-qualified type like base.Structure
+			// Try to resolve it and check if IT contains StructField types
+			pkgName := ident.Name
+			typeName := t.Sel.Name
+
+			// Look up the embedded type
+			if embeddedType := parser.findTypeSpec(pkgName, typeName, currentTypeSpecDef.File); embeddedType != nil {
+				return parser.requiresCustomParser(embeddedType)
 			}
 		}
 		return false
 	case *ast.IndexExpr:
 		// Generic type like StructField[T]
-		return parser.hasStructFieldType(t.X)
+		return parser.hasStructFieldType(t.X, currentTypeSpecDef)
 	case *ast.ArrayType:
-		return parser.hasStructFieldType(t.Elt)
+		return parser.hasStructFieldType(t.Elt, currentTypeSpecDef)
 	case *ast.MapType:
-		return parser.hasStructFieldType(t.Value)
+		return parser.hasStructFieldType(t.Value, currentTypeSpecDef)
+	case *ast.Ident:
+		// This might be an embedded type from the same package
+		// Try to resolve it
+		if embeddedType := parser.findTypeSpec("", t.Name, currentTypeSpecDef.File); embeddedType != nil {
+			return parser.requiresCustomParser(embeddedType)
+		}
+		return false
 	case *ast.StructType:
 		// Embedded struct - check its fields
 		for _, field := range t.Fields.List {
-			if parser.hasStructFieldType(field.Type) {
+			if parser.hasStructFieldType(field.Type, currentTypeSpecDef) {
 				return true
 			}
 		}
 		return false
 	}
 	return false
+}
+
+// findTypeSpec tries to find a type specification by package and name
+func (parser *Parser) findTypeSpec(pkgName, typeName string, currentFile *ast.File) *TypeSpecDef {
+	// First check if it's in the same package (pkgName is empty or matches current package)
+	if pkgName == "" || (currentFile != nil && currentFile.Name != nil && pkgName == currentFile.Name.Name) {
+		// Look in parsed schemas for same-package type
+		for typeSpecDef := range parser.parsedSchemas {
+			if typeSpecDef.Name() == typeName {
+				return typeSpecDef
+			}
+		}
+	}
+
+	// Check imports to resolve package path
+	if currentFile != nil && pkgName != "" {
+		for _, imp := range currentFile.Imports {
+			impPath := strings.Trim(imp.Path.Value, "\"")
+
+			// Check if this import matches the package name we're looking for
+			var importName string
+			if imp.Name != nil {
+				importName = imp.Name.Name
+			} else {
+				// Extract package name from import path
+				parts := strings.Split(impPath, "/")
+				importName = parts[len(parts)-1]
+			}
+
+			if importName == pkgName {
+				// Try to find the type in this package's unique definitions
+				fullTypeName := impPath + "." + typeName
+				if typeSpecDef, exists := parser.packages.uniqueDefinitions[fullTypeName]; exists {
+					return typeSpecDef
+				}
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // ParseDefinition parses given type spec that corresponds to the type under
