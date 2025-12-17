@@ -60,3 +60,14 @@ When `ToSpecSchema` encounters nested struct in public mode (e.g., field type `U
 ### 3. Primitive Array/Map Handling
 
 For `StructField[[]string]` or `StructField[map[string]int]`, extracted type is primitive collection. Schema should be array/object with primitive items, no definition references created. Type checking in `ToSpecSchema` needed to distinguish struct vs primitive extraction results.
+
+
+
+
+
+**IMPORTANT** 
+After implementing each step above, add in proper unit testing, you can use 
+
+`/Users/griffnb/projects/swag/testdata/core_models` for a test package and models to test against that the abovev code works properly.
+
+No task is complete without a functioning unit test!
