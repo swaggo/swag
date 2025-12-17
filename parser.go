@@ -1576,10 +1576,17 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 				parser.debug.Printf("Added schema '%s' to definitions", schemaName)
 			}
 
-			// Return the base schema (non-Public version)
-			baseSchema := allSchemas[typeSpecDef.Name()]
+			// Find the base schema - it should be package-qualified
+			// Extract package name from pkgPath (last segment)
+			packageName := pkgPath
+			if idx := strings.LastIndex(pkgPath, "/"); idx >= 0 {
+				packageName = pkgPath[idx+1:]
+			}
+			baseSchemaKey := packageName + "." + typeSpecDef.Name()
+
+			baseSchema := allSchemas[baseSchemaKey]
 			if baseSchema == nil {
-				parser.debug.Printf("Warning: base schema not found for '%s', using empty object", typeName)
+				parser.debug.Printf("Warning: base schema not found for key '%s' (tried unqualified '%s'), using empty object", baseSchemaKey, typeSpecDef.Name())
 				baseSchema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{OBJECT}}}
 			}
 

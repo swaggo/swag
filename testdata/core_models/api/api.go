@@ -82,7 +82,7 @@ func adminIndex(_ http.ResponseWriter, req *http.Request) {
 
 // adminIndex lists all accounts with pagination and search
 //
-//	 @Public
+//	    @Public
 //		@Summary		List accounts
 //		@Description	Retrieves a paginated list of accounts with optional search
 //		@Tags			accounts

@@ -22,8 +22,6 @@ type CoreStructParser struct {
 func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName string) *StructBuilder {
 	builder := &StructBuilder{}
 
-	console.Printf("$Green{[LookupStructFields] Starting lookup for %s in %s}\n", typeName, importPath)
-
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedName,
 		Fset: token.NewFileSet(),
@@ -42,8 +40,6 @@ func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName s
 	// Set the packageMap on the parser so checkNamed can use it
 	c.packageMap = packageMap
 
-	console.Printf("$Green{IMport Path for LookupStructFields: %s}\n", importPath)
-
 	for _, pkg := range pkgs {
 		if pkg.PkgPath != importPath {
 			continue
@@ -58,8 +54,6 @@ func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName s
 		//	fmt.Println("Parsed file:", pkg.Fset.Position(f.Pos()).Filename)
 		//}
 		fields := c.ExtractFieldsRecursive(pkg, typeName, packageMap, visited)
-
-		console.Printf("$Green{[LookupStructFields] ExtractFieldsRecursive returned %d fields for %s}\n", len(fields), typeName)
 
 		for _, f := range fields {
 			fmt.Printf("Field: %s, Type: %s, Tag: %s\n", f.Name, f.Type, f.Tag)

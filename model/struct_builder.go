@@ -14,15 +14,11 @@ type StructBuilder struct {
 func (this *StructBuilder) BuildStructs(name string, public bool, aliasName string, childStructs map[string]string) string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("type %s struct {\n", name))
-	fmt.Printf("\n\nBuilding struct %s (public=%v) with %d fields\n", name, public, len(this.Fields))
 	for _, field := range this.Fields {
 		if public && !field.IsPublic() {
 			continue
 		}
 		sb.WriteString(field.BuildStructDef(public))
-
-		fmt.Printf("Field %s: IsStruct=%v, IsPublic=%v, TypeString=%s, FieldsCount=%d\n",
-			field.Name, field.IsStruct(), field.IsPublic(), field.TypeString, len(field.Fields))
 
 		if field.IsStruct() && public && field.IsPublic() {
 			// Strip package prefix from TypeString for the key
@@ -31,7 +27,6 @@ func (this *StructBuilder) BuildStructs(name string, public bool, aliasName stri
 				parts := strings.Split(typeName, ".")
 				typeName = parts[len(parts)-1]
 			}
-			fmt.Printf("Creating child struct for %s -> %sPublic\n", field.TypeString, typeName)
 			childStructs[typeName+"Public"] = field.BuildStruct(childStructs, public, typeName)
 		}
 	}
@@ -86,10 +81,7 @@ func (this *StructBuilder) BuildSpecSchema(typeName string, public bool) (*spec.
 	var required []string
 	nestedStructs := make(map[string]bool) // Use map to deduplicate
 
-	fmt.Printf("[BuildSpecSchema] Building schema for '%s' (public=%v) with %d fields\n", typeName, public, len(this.Fields))
-
 	for _, field := range this.Fields {
-		fmt.Printf("[BuildSpecSchema] Processing field: Name=%s, Type=%v, TypeString=%s\n", field.Name, field.Type, field.TypeString)
 		propName, propSchema, isRequired, nestedTypes, err := field.ToSpecSchema(public)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to build schema for field %s: %w", field.Name, err)
@@ -97,10 +89,8 @@ func (this *StructBuilder) BuildSpecSchema(typeName string, public bool) (*spec.
 
 		// Skip if field was filtered (e.g., not public when public=true)
 		if propName == "" || propSchema == nil {
-			fmt.Printf("[BuildSpecSchema] Field %s skipped (propName=%s, propSchema=%v)\n", field.Name, propName, propSchema)
 			continue
 		}
-		fmt.Printf("[BuildSpecSchema] Field %s -> property %s (required=%v, nestedTypes=%v)\n", field.Name, propName, isRequired, nestedTypes)
 
 		// Add property to schema
 		schema.Properties[propName] = *propSchema

@@ -179,286 +179,6 @@
     }
   },
   "definitions": {
-    "Account": {
-      "type": "object",
-      "required": [
-        "first_name",
-        "last_name",
-        "email",
-        "phone",
-        "external_id",
-        "test_user_type",
-        "organization_id",
-        "role",
-        "properties",
-        "signup_properties",
-        "hashed_password",
-        "password_updated_at_ts",
-        "email_verified_at_ts",
-        "last_login_ts",
-        "is_super_user_session"
-      ],
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "email_verified_at_ts": {
-          "type": "integer"
-        },
-        "external_id": {
-          "type": "string"
-        },
-        "first_name": {
-          "type": "string"
-        },
-        "hashed_password": {
-          "type": "string"
-        },
-        "is_super_user_session": {
-          "type": "integer"
-        },
-        "last_login_ts": {
-          "type": "integer"
-        },
-        "last_name": {
-          "type": "string"
-        },
-        "organization_id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "password_updated_at_ts": {
-          "type": "integer"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "properties": {
-          "$ref": "#/definitions/Properties"
-        },
-        "role": {
-          "type": "integer"
-        },
-        "signup_properties": {
-          "$ref": "#/definitions/SignupProperties"
-        },
-        "test_user_type": {
-          "type": "integer"
-        }
-      }
-    },
-    "AccountJoined": {
-      "type": "object",
-      "required": [
-        "first_name",
-        "last_name",
-        "email",
-        "phone",
-        "external_id",
-        "test_user_type",
-        "organization_id",
-        "role",
-        "properties",
-        "signup_properties",
-        "hashed_password",
-        "password_updated_at_ts",
-        "email_verified_at_ts",
-        "last_login_ts",
-        "is_super_user_session",
-        "name",
-        "organization_name",
-        "created_by_name",
-        "updated_by_name"
-      ],
-      "properties": {
-        "created_by_name": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string"
-        },
-        "email_verified_at_ts": {
-          "type": "integer"
-        },
-        "external_id": {
-          "type": "string"
-        },
-        "first_name": {
-          "type": "string"
-        },
-        "hashed_password": {
-          "type": "string"
-        },
-        "is_super_user_session": {
-          "type": "integer"
-        },
-        "last_login_ts": {
-          "type": "integer"
-        },
-        "last_name": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "organization_id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "organization_name": {
-          "type": "string"
-        },
-        "password_updated_at_ts": {
-          "type": "integer"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "properties": {
-          "$ref": "#/definitions/Properties"
-        },
-        "role": {
-          "type": "integer"
-        },
-        "signup_properties": {
-          "$ref": "#/definitions/SignupProperties"
-        },
-        "test_user_type": {
-          "type": "integer"
-        },
-        "updated_by_name": {
-          "type": "string"
-        }
-      }
-    },
-    "AccountJoinedPublic": {
-      "type": "object",
-      "required": [
-        "first_name",
-        "last_name",
-        "email",
-        "phone",
-        "external_id",
-        "test_user_type",
-        "organization_id",
-        "role",
-        "is_super_user_session"
-      ],
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "external_id": {
-          "type": "string"
-        },
-        "first_name": {
-          "type": "string"
-        },
-        "is_super_user_session": {
-          "type": "integer"
-        },
-        "last_name": {
-          "type": "string"
-        },
-        "organization_id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "role": {
-          "type": "integer"
-        },
-        "test_user_type": {
-          "type": "integer"
-        }
-      }
-    },
-    "AccountPublic": {
-      "type": "object",
-      "required": [
-        "first_name",
-        "last_name",
-        "email",
-        "phone",
-        "external_id",
-        "test_user_type",
-        "organization_id",
-        "role",
-        "is_super_user_session"
-      ],
-      "properties": {
-        "email": {
-          "type": "string"
-        },
-        "external_id": {
-          "type": "string"
-        },
-        "first_name": {
-          "type": "string"
-        },
-        "is_super_user_session": {
-          "type": "integer"
-        },
-        "last_name": {
-          "type": "string"
-        },
-        "organization_id": {
-          "type": "string",
-          "format": "uuid"
-        },
-        "phone": {
-          "type": "string"
-        },
-        "role": {
-          "type": "integer"
-        },
-        "test_user_type": {
-          "type": "integer"
-        }
-      }
-    },
-    "Properties": {
-      "type": "object",
-      "properties": {
-        "external_user_info": {
-          "$ref": "#/definitions/any"
-        },
-        "invite_key": {
-          "type": "string"
-        },
-        "invite_ts": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "last_seen": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "verify_email_key": {
-          "type": "string"
-        }
-      }
-    },
-    "PropertiesPublic": {
-      "type": "object"
-    },
-    "SignupProperties": {
-      "type": "object",
-      "required": [
-        "is_oauth"
-      ],
-      "properties": {
-        "is_oauth": {
-          "type": "integer",
-          "format": "int64"
-        }
-      }
-    },
-    "SignupPropertiesPublic": {
-      "type": "object"
-    },
     "account.Account": {
       "type": "object",
       "required": [
@@ -611,10 +331,130 @@
         }
       }
     },
-    "any": {
+    "account.AccountJoinedPublic": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "is_super_user_session"
+      ],
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "is_super_user_session": {
+          "type": "integer"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "type": "integer"
+        },
+        "test_user_type": {
+          "type": "integer"
+        }
+      }
+    },
+    "account.AccountPublic": {
+      "type": "object",
+      "required": [
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "is_super_user_session"
+      ],
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "is_super_user_session": {
+          "type": "integer"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "type": "integer"
+        },
+        "test_user_type": {
+          "type": "integer"
+        }
+      }
+    },
+    "account.Properties": {
+      "type": "object",
+      "properties": {
+        "external_user_info": {},
+        "invite_key": {
+          "type": "string"
+        },
+        "invite_ts": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "last_seen": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "verify_email_key": {
+          "type": "string"
+        }
+      }
+    },
+    "account.PropertiesPublic": {
       "type": "object"
     },
-    "anyPublic": {
+    "account.SignupProperties": {
+      "type": "object",
+      "required": [
+        "is_oauth"
+      ],
+      "properties": {
+        "is_oauth": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "account.SignupPropertiesPublic": {
       "type": "object"
     },
     "api.TestUserInput": {

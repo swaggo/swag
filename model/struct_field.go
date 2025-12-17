@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/go-openapi/spec"
-	"github.com/swaggo/swag/console"
 )
 
 type StructField struct {
@@ -215,7 +214,6 @@ func (this *StructField) GetAttrType() string {
 	case "timestamp with time zone", "tswtz":
 		return "date-dayjs"
 	default:
-		console.Printf("$Red{Unknown Go type '%s' for column '%s', defaulting to 'any'}", this.GetColumnType(), this.GetColumn())
 		return "any"
 	}
 }
@@ -233,9 +231,6 @@ func (this *StructField) GetInterfaceTypeFromGoType() string {
 	case "time.Time", "*time.Time":
 		return "dayjs.Dayjs | null"
 	default:
-
-		fmt.Printf("Unknown type string: %s\n", this.TypeString)
-
 		// Try to infer from Go type if db type is unknown
 		if strings.Contains(this.TypeString, "[]") {
 			elementType := strings.TrimPrefix(this.TypeString, "[]")
@@ -424,8 +419,6 @@ func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spe
 // extractTypeParameter extracts the type parameter T from StructField[T]
 // Handles nested brackets like StructField[map[string][]User]
 func extractTypeParameter(typeStr string) (string, error) {
-	fmt.Printf("[extractTypeParameter] Input: %s\n", typeStr)
-
 	// Find the opening bracket for StructField[
 	idx := strings.Index(typeStr, "StructField[")
 	if idx == -1 {
@@ -456,12 +449,8 @@ func extractTypeParameter(typeStr string) (string, error) {
 
 	extracted := typeStr[start:end]
 
-	fmt.Printf("[extractTypeParameter] Extracted from [%d:%d]: '%s'\n", start, end, extracted)
-
 	// Remove leading * if it's a pointer
 	extracted = strings.TrimPrefix(extracted, "*")
-
-	fmt.Printf("[extractTypeParameter] After trim: '%s'\n", extracted)
 
 	return extracted, nil
 }
@@ -470,8 +459,6 @@ func extractTypeParameter(typeStr string) (string, error) {
 // Returns schema, list of nested struct type names, and error
 func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, error) {
 	var nestedTypes []string
-
-	fmt.Printf("[buildSchemaForType] Input: typeStr='%s', public=%v\n", typeStr, public)
 
 	// Remove pointer prefix
 	isPointer := strings.HasPrefix(typeStr, "*")
@@ -482,7 +469,6 @@ func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, er
 	// Check if this is a fields wrapper type (StringField, IntField, etc.)
 	// These should be treated as primitives, not struct types
 	if isFieldsWrapperType(typeStr) {
-		fmt.Printf("[buildSchemaForType] Detected fields wrapper type, using primitive schema\n")
 		return getPrimitiveSchemaForFieldType(typeStr)
 	}
 
@@ -532,6 +518,12 @@ func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, er
 	}
 
 	// Handle struct types (including package-qualified names)
+	// Filter out "any" and "interface{}" types - these should be treated as generic objects
+	if typeStr == "any" || typeStr == "interface{}" {
+		// Return a generic object schema, don't add to nestedTypes
+		return &spec.Schema{}, nil, nil
+	}
+
 	// Extract just the type name (last part after .)
 	typeName := typeStr
 	if strings.Contains(typeName, ".") {
