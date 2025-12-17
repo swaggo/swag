@@ -34,7 +34,7 @@ type APIResponse struct {
 	Billing *billing_plan.BillingPlanJoined `json:"billing_plan"`
 }
 
-// internalAPIAccount retrieves account and organization data for internal API use
+// InternalAPIAccount retrieves account and organization data for internal API use
 //
 //	@Summary		Get account with organization
 //	@Description	Retrieves account and associated organization data by account ID
@@ -45,7 +45,7 @@ type APIResponse struct {
 //	@Success		200	{object}	response.SuccessResponse{data=APIResponse}
 //	@Failure		400	{object}	response.ErrorResponse
 //	@Router			/api/account/{id} [get]
-func internalAPIAccount(_ http.ResponseWriter, req *http.Request) {
+func InternalAPIAccount(_ http.ResponseWriter, req *http.Request) {
 }
 
 // authMe retrieves the current authenticated user's account details

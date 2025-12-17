@@ -296,3 +296,86 @@ func TestBuildSchemaForType(t *testing.T) {
 		})
 	}
 }
+
+func TestToSpecSchema_FieldsWithoutTags(t *testing.T) {
+	tests := []struct {
+		name        string
+		field       *StructField
+		public      bool
+		shouldSkip  bool
+		description string
+	}{
+		{
+			name: "field without any tags should be skipped",
+			field: &StructField{
+				Name:       "InternalField",
+				TypeString: "string",
+				Tag:        "",
+			},
+			public:      false,
+			shouldSkip:  true,
+			description: "Fields without json or column tags (likely from embedded structs) should be filtered out",
+		},
+		{
+			name: "field with only public tag should be skipped",
+			field: &StructField{
+				Name:       "SomeField",
+				TypeString: "string",
+				Tag:        `public:"view"`,
+			},
+			public:      false,
+			shouldSkip:  true,
+			description: "Fields with only public tag but no json/column tag should be filtered out",
+		},
+		{
+			name: "field with json tag should not be skipped",
+			field: &StructField{
+				Name:       "ExportedField",
+				TypeString: "string",
+				Tag:        `json:"exported_field"`,
+			},
+			public:      false,
+			shouldSkip:  false,
+			description: "Fields with json tag should be included",
+		},
+		{
+			name: "field with column tag should not be skipped",
+			field: &StructField{
+				Name:       "DatabaseField",
+				TypeString: "string",
+				Tag:        `column:"database_field"`,
+			},
+			public:      false,
+			shouldSkip:  false,
+			description: "Fields with column tag should be included",
+		},
+		{
+			name: "field with dash json tag should be skipped",
+			field: &StructField{
+				Name:       "IgnoredField",
+				TypeString: "string",
+				Tag:        `json:"-"`,
+			},
+			public:      false,
+			shouldSkip:  true,
+			description: "Fields with json:\"-\" should be filtered out",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			propName, schema, required, nestedTypes, err := tt.field.ToSpecSchema(tt.public)
+			assert.NoError(t, err, tt.description)
+
+			if tt.shouldSkip {
+				assert.Empty(t, propName, "Property name should be empty for skipped fields: %s", tt.description)
+				assert.Nil(t, schema, "Schema should be nil for skipped fields: %s", tt.description)
+				assert.False(t, required, "Required should be false for skipped fields: %s", tt.description)
+				assert.Nil(t, nestedTypes, "Nested types should be nil for skipped fields: %s", tt.description)
+			} else {
+				assert.NotEmpty(t, propName, "Property name should not be empty for included fields: %s", tt.description)
+				assert.NotNil(t, schema, "Schema should not be nil for included fields: %s", tt.description)
+			}
+		})
+	}
+}

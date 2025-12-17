@@ -30,16 +30,14 @@ func TestCoreModelsIntegration(t *testing.T) {
 	t.Run("Base schemas should exist", func(t *testing.T) {
 		assert.Contains(t, p.GetSwagger().Definitions, "account.Account", "account.Account definition should exist")
 		assert.Contains(t, p.GetSwagger().Definitions, "account.AccountJoined", "account.AccountJoined definition should exist")
-		// Note: billing_plan.BillingPlanJoined is not generated because it's only referenced
-		// in api.APIResponse, which is used in an unexported function internalAPIAccount()
-		// Swag only parses exported functions
+		assert.Contains(t, p.GetSwagger().Definitions, "billing_plan.BillingPlanJoined", "billing_plan.BillingPlanJoined definition should exist")
 	})
 
 	// Test that Public variant schemas exist
 	t.Run("Public variant schemas should exist", func(t *testing.T) {
 		assert.Contains(t, p.GetSwagger().Definitions, "account.AccountPublic", "account.AccountPublic definition should exist")
 		assert.Contains(t, p.GetSwagger().Definitions, "account.AccountJoinedPublic", "account.AccountJoinedPublic definition should exist")
-		// billing_plan.BillingPlanJoinedPublic is not generated (see note above)
+		assert.Contains(t, p.GetSwagger().Definitions, "billing_plan.BillingPlanJoinedPublic", "billing_plan.BillingPlanJoinedPublic definition should exist")
 	})
 
 	// Test field properties in base Account schema
@@ -151,8 +149,19 @@ func TestCoreModelsIntegration(t *testing.T) {
 		assert.Equal(t, "#/definitions/account.Account", createDataSchema.Ref.String(),
 			"Non-public endpoint should reference base Account schema")
 
-		// Note: /api/account/{id} is not tested because internalAPIAccount() is unexported
-		// and swag only parses exported functions
+		// Test /api/account/{id} endpoint (no @Public annotation)
+		apiAccountPath := swagger.Paths.Paths["/api/account/{id}"]
+		require.NotNil(t, apiAccountPath, "/api/account/{id} path should exist")
+
+		apiAccountOp := apiAccountPath.Get
+		require.NotNil(t, apiAccountOp, "/api/account/{id} GET operation should exist")
+
+		// Check 200 response references APIResponse with BillingPlanJoined
+		apiAccountResponse200 := apiAccountOp.Responses.StatusCodeResponses[200]
+		require.NotNil(t, apiAccountResponse200, "/api/account/{id} should have 200 response")
+		require.NotNil(t, apiAccountResponse200.Schema, "Response schema should not be nil")
+
+		t.Logf("/api/account/{id} 200 response schema: %+v", apiAccountResponse200.Schema)
 	})
 
 	// Write actual output to a file for comparison
@@ -220,10 +229,6 @@ func TestAccountJoinedSchema(t *testing.T) {
 	})
 }
 
-// TestBillingPlanSchema is commented out because BillingPlanJoined is only referenced
-// in the unexported function internalAPIAccount(), and swag only parses exported functions.
-// Therefore, billing_plan.BillingPlanJoined schema is not generated.
-/*
 func TestBillingPlanSchema(t *testing.T) {
 	searchDir := "testdata/core_models"
 	mainAPIFile := "main.go"
@@ -247,6 +252,27 @@ func TestBillingPlanSchema(t *testing.T) {
 		assert.Contains(t, props, "description", "Should have description")
 
 		t.Logf("BillingPlanJoined has %d properties", len(props))
+		for propName := range props {
+			t.Logf("  - %s", propName)
+		}
+	})
+
+	t.Run("BillingPlanJoinedPublic should filter private fields", func(t *testing.T) {
+		schema := p.GetSwagger().Definitions["billing_plan.BillingPlanJoinedPublic"]
+		require.NotNil(t, schema, "billing_plan.BillingPlanJoinedPublic should exist")
+
+		props := schema.Properties
+
+		t.Logf("BillingPlanJoinedPublic has %d properties", len(props))
+		for propName := range props {
+			t.Logf("  - %s", propName)
+		}
+
+		// Should have public fields
+		assert.Contains(t, props, "name", "Should have name (public:view)")
+		assert.Contains(t, props, "description", "Should have description (public:view)")
+
+		// feature_set has public:"view" so should be included
+		assert.Contains(t, props, "feature_set", "Should have feature_set (public:view)")
 	})
 }
-*/

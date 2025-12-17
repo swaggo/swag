@@ -136,6 +136,56 @@
         }
       }
     },
+    "/api/account/{id}": {
+      "get": {
+        "description": "Retrieves account and associated organization data by account ID",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Get account with organization",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Account ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/response.SuccessResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/definitions/api.APIResponse"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
     "/auth/me": {
       "get": {
         "description": "Retrieves the authenticated user's account details with joined data",
@@ -208,52 +258,12 @@
         "is_super_user_session"
       ],
       "properties": {
-        "ChangeLogs": {
-          "type": "boolean"
-        },
-        "Class": {
-          "type": "string"
-        },
-        "Client": {
-          "$ref": "#/definitions/Client"
-        },
-        "CreatedAtColumn": {
-          "type": "string"
-        },
-        "IDColumn": {
-          "type": "string"
-        },
-        "IsVersioned": {
-          "type": "boolean"
-        },
-        "ManualCache": {
-          "type": "boolean"
-        },
-        "PackageName": {
-          "type": "string"
-        },
-        "SavingUser": {
-          "$ref": "#/definitions/github.com/griffnb/core/lib/model/coremodel.Model"
-        },
-        "Standardized": {
-          "type": "boolean"
-        },
-        "Table": {
-          "type": "string"
-        },
-        "UpdatedAtColumn": {
-          "type": "string"
-        },
         "created_at": {
           "type": "string",
           "format": "date-time"
         },
         "created_by_urn": {
           "type": "string"
-        },
-        "data": {
-          "type": "object",
-          "additionalProperties": {}
         },
         "deleted": {
           "type": "integer"
@@ -270,10 +280,6 @@
         "external_id": {
           "type": "string"
         },
-        "fieldMap": {
-          "type": "object",
-          "additionalProperties": {}
-        },
         "first_name": {
           "type": "string"
         },
@@ -284,12 +290,6 @@
           "type": "string",
           "format": "uuid"
         },
-        "isLoaded": {
-          "type": "boolean"
-        },
-        "isSaved": {
-          "type": "boolean"
-        },
         "is_super_user_session": {
           "type": "integer"
         },
@@ -298,10 +298,6 @@
         },
         "last_name": {
           "type": "string"
-        },
-        "newData": {
-          "type": "object",
-          "additionalProperties": {}
         },
         "organization_id": {
           "type": "string",
@@ -313,23 +309,11 @@
         "phone": {
           "type": "string"
         },
-        "preValues": {
-          "type": "object",
-          "additionalProperties": {}
-        },
         "properties": {
           "$ref": "#/definitions/account.Properties"
         },
-        "readerSem": {
-          "type": "integer",
-          "format": "int32"
-        },
         "role": {
           "type": "integer"
-        },
-        "saveData": {
-          "type": "object",
-          "additionalProperties": {}
         },
         "signup_properties": {
           "$ref": "#/definitions/account.SignupProperties"
@@ -349,14 +333,6 @@
         },
         "urn": {
           "type": "string"
-        },
-        "v": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "writerSem": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     },
@@ -393,42 +369,6 @@
         "updated_by_name"
       ],
       "properties": {
-        "ChangeLogs": {
-          "type": "boolean"
-        },
-        "Class": {
-          "type": "string"
-        },
-        "Client": {
-          "$ref": "#/definitions/Client"
-        },
-        "CreatedAtColumn": {
-          "type": "string"
-        },
-        "IDColumn": {
-          "type": "string"
-        },
-        "IsVersioned": {
-          "type": "boolean"
-        },
-        "ManualCache": {
-          "type": "boolean"
-        },
-        "PackageName": {
-          "type": "string"
-        },
-        "SavingUser": {
-          "$ref": "#/definitions/github.com/griffnb/core/lib/model/coremodel.Model"
-        },
-        "Standardized": {
-          "type": "boolean"
-        },
-        "Table": {
-          "type": "string"
-        },
-        "UpdatedAtColumn": {
-          "type": "string"
-        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -438,10 +378,6 @@
         },
         "created_by_urn": {
           "type": "string"
-        },
-        "data": {
-          "type": "object",
-          "additionalProperties": {}
         },
         "deleted": {
           "type": "integer"
@@ -458,10 +394,6 @@
         "external_id": {
           "type": "string"
         },
-        "fieldMap": {
-          "type": "object",
-          "additionalProperties": {}
-        },
         "first_name": {
           "type": "string"
         },
@@ -471,12 +403,6 @@
         "id": {
           "type": "string",
           "format": "uuid"
-        },
-        "isLoaded": {
-          "type": "boolean"
-        },
-        "isSaved": {
-          "type": "boolean"
         },
         "is_super_user_session": {
           "type": "integer"
@@ -489,10 +415,6 @@
         },
         "name": {
           "type": "string"
-        },
-        "newData": {
-          "type": "object",
-          "additionalProperties": {}
         },
         "organization_id": {
           "type": "string",
@@ -507,23 +429,11 @@
         "phone": {
           "type": "string"
         },
-        "preValues": {
-          "type": "object",
-          "additionalProperties": {}
-        },
         "properties": {
           "$ref": "#/definitions/account.Properties"
         },
-        "readerSem": {
-          "type": "integer",
-          "format": "int32"
-        },
         "role": {
           "type": "integer"
-        },
-        "saveData": {
-          "type": "object",
-          "additionalProperties": {}
         },
         "signup_properties": {
           "$ref": "#/definitions/account.SignupProperties"
@@ -546,14 +456,6 @@
         },
         "urn": {
           "type": "string"
-        },
-        "v": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "writerSem": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     },
@@ -759,42 +661,6 @@
         "feature_set"
       ],
       "properties": {
-        "ChangeLogs": {
-          "type": "boolean"
-        },
-        "Class": {
-          "type": "string"
-        },
-        "Client": {
-          "$ref": "#/definitions/Client"
-        },
-        "CreatedAtColumn": {
-          "type": "string"
-        },
-        "IDColumn": {
-          "type": "string"
-        },
-        "IsVersioned": {
-          "type": "boolean"
-        },
-        "ManualCache": {
-          "type": "boolean"
-        },
-        "PackageName": {
-          "type": "string"
-        },
-        "SavingUser": {
-          "$ref": "#/definitions/github.com/griffnb/core/lib/model/coremodel.Model"
-        },
-        "Standardized": {
-          "type": "boolean"
-        },
-        "Table": {
-          "type": "string"
-        },
-        "UpdatedAtColumn": {
-          "type": "string"
-        },
         "billing_plan_feature_set": {
           "$ref": "#/definitions/billing_plan.FeatureSet"
         },
@@ -818,10 +684,6 @@
         "created_by_urn": {
           "type": "string"
         },
-        "data": {
-          "type": "object",
-          "additionalProperties": {}
-        },
         "deleted": {
           "type": "integer"
         },
@@ -843,10 +705,6 @@
         "feature_set_overrides": {
           "$ref": "#/definitions/billing_plan.MergeableFeatureSet"
         },
-        "fieldMap": {
-          "type": "object",
-          "additionalProperties": {}
-        },
         "first_name": {
           "type": "string"
         },
@@ -857,12 +715,6 @@
           "type": "string",
           "format": "uuid"
         },
-        "isLoaded": {
-          "type": "boolean"
-        },
-        "isSaved": {
-          "type": "boolean"
-        },
         "is_super_user_session": {
           "type": "integer"
         },
@@ -871,10 +723,6 @@
         },
         "last_name": {
           "type": "string"
-        },
-        "newData": {
-          "type": "object",
-          "additionalProperties": {}
         },
         "organization_id": {
           "type": "string",
@@ -886,23 +734,11 @@
         "phone": {
           "type": "string"
         },
-        "preValues": {
-          "type": "object",
-          "additionalProperties": {}
-        },
         "properties": {
           "$ref": "#/definitions/account.Properties"
         },
-        "readerSem": {
-          "type": "integer",
-          "format": "int32"
-        },
         "role": {
           "type": "integer"
-        },
-        "saveData": {
-          "type": "object",
-          "additionalProperties": {}
         },
         "signup_properties": {
           "$ref": "#/definitions/account.SignupProperties"
@@ -922,14 +758,6 @@
         },
         "urn": {
           "type": "string"
-        },
-        "v": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "writerSem": {
-          "type": "integer",
-          "format": "int32"
         }
       }
     },
@@ -1037,12 +865,6 @@
         }
       }
     },
-    "account.Client": {
-      "type": "object"
-    },
-    "account.ClientPublic": {
-      "type": "object"
-    },
     "account.Properties": {
       "type": "object",
       "properties": {
@@ -1081,10 +903,181 @@
     "account.SignupPropertiesPublic": {
       "type": "object"
     },
+    "api.APIResponse": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/account.Account"
+        },
+        "billing_plan": {
+          "$ref": "#/definitions/billing_plan.BillingPlanJoined"
+        }
+      }
+    },
     "api.TestUserInput": {
       "type": "object",
       "properties": {
         "organization_id": {
+          "type": "string"
+        }
+      }
+    },
+    "billing_plan.BillingPlanJoined": {
+      "type": "object",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "name",
+        "description",
+        "internal_name",
+        "feature_set",
+        "properties",
+        "stripe_product_id",
+        "level",
+        "is_default",
+        "created_by_name",
+        "updated_by_name"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_name": {
+          "type": "string"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "feature_set": {
+          "$ref": "#/definitions/billing_plan.FeatureSet"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "internal_name": {
+          "type": "string"
+        },
+        "is_default": {
+          "type": "integer"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "properties": {
+          "$ref": "#/definitions/billing_plan.Properties"
+        },
+        "status": {
+          "type": "integer"
+        },
+        "stripe_product_id": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_name": {
+          "type": "string"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "billing_plan.BillingPlanJoinedPublic": {
+      "type": "object",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "name",
+        "description",
+        "feature_set",
+        "properties",
+        "stripe_product_id",
+        "level",
+        "is_default"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "feature_set": {
+          "$ref": "#/definitions/billing_plan.FeatureSetPublic"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "is_default": {
+          "type": "integer"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "properties": {
+          "$ref": "#/definitions/billing_plan.PropertiesPublic"
+        },
+        "status": {
+          "type": "integer"
+        },
+        "stripe_product_id": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
           "type": "string"
         }
       }
@@ -1121,11 +1114,31 @@
     "billing_plan.MergeableFeatureSetPublic": {
       "type": "object"
     },
-    "github.Model": {
-      "type": "object"
+    "billing_plan.Properties": {
+      "type": "object",
+      "required": [
+        "pricing_text",
+        "default_discount_code"
+      ],
+      "properties": {
+        "default_discount_code": {
+          "type": "string"
+        },
+        "pricing_text": {
+          "type": "string"
+        }
+      }
     },
-    "github.ModelPublic": {
-      "type": "object"
+    "billing_plan.PropertiesPublic": {
+      "type": "object",
+      "required": [
+        "pricing_text"
+      ],
+      "properties": {
+        "pricing_text": {
+          "type": "string"
+        }
+      }
     },
     "response.ErrorResponse": {
       "type": "object",

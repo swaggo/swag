@@ -369,19 +369,20 @@ func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spe
 		jsonTag = tags["column"]
 	}
 	if jsonTag == "" {
-		// Use field name as fallback
-		propName = this.Name
-	} else {
-		parts := strings.Split(jsonTag, ",")
-		propName = parts[0]
+		// Skip fields without json or column tags - these are likely unexported
+		// embedded fields that shouldn't be in the API schema
+		return "", nil, false, nil, nil
+	}
+	
+	parts := strings.Split(jsonTag, ",")
+	propName = parts[0]
 
-		// Check for omitempty to determine required
-		required = true
-		for _, part := range parts[1:] {
-			if strings.TrimSpace(part) == "omitempty" {
-				required = false
-				break
-			}
+	// Check for omitempty to determine required
+	required = true
+	for _, part := range parts[1:] {
+		if strings.TrimSpace(part) == "omitempty" {
+			required = false
+			break
 		}
 	}
 
