@@ -5,11 +5,14 @@ import (
 	"os"
 	"testing"
 
+	"github.com/griffnb/core/lib/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCoreModelsIntegration(t *testing.T) {
+	log.Debugf("Starting TestCoreModelsIntegration")
+
 	searchDir := "testdata/core_models"
 	mainAPIFile := "main.go"
 
@@ -118,9 +121,9 @@ func TestCoreModelsIntegration(t *testing.T) {
 		dataSchema, hasData := response200.Schema.AllOf[1].Properties["data"]
 		require.True(t, hasData, "Should have data property")
 
-		// Data property should reference account.AccountJoinedPublic (not base AccountJoined)
-		assert.Equal(t, "#/definitions/account.AccountJoinedPublic", dataSchema.Ref.String(),
-			"@Public endpoint should reference AccountJoinedPublic")
+		// Data property should reference account.AccountWithFeaturesPublic (not base AccountWithFeatures)
+		assert.Equal(t, "#/definitions/account.AccountWithFeaturesPublic", dataSchema.Ref.String(),
+			"@Public endpoint should reference AccountWithFeaturesPublic")
 
 		// Test /admin/testUser endpoint (no @Public annotation)
 		// This should use base schemas, not Public variants

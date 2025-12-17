@@ -113,10 +113,10 @@ func TestBuildAllSchemas_WithPackageQualifiedNested(t *testing.T) {
 	assert.Contains(t, schemas, "account.AccountWithFeatures")
 	assert.Contains(t, schemas, "account.AccountWithFeaturesPublic")
 
-	// Check that nested FeatureSet is included
-	// When embedded in account package types, FeatureSet gets prefixed with account
-	assert.Contains(t, schemas, "account.FeatureSet")
-	assert.Contains(t, schemas, "account.FeatureSetPublic")
+	// Check that nested FeatureSet is included with correct package prefix
+	// FeatureSet comes from billing_plan package, so should be billing_plan.FeatureSet
+	assert.Contains(t, schemas, "billing_plan.FeatureSet")
+	assert.Contains(t, schemas, "billing_plan.FeatureSetPublic")
 }
 
 func TestBuildAllSchemas_InvalidType(t *testing.T) {

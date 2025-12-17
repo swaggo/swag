@@ -57,7 +57,7 @@ func internalAPIAccount(_ http.ResponseWriter, req *http.Request) {
 //	@Tags			accounts
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	response.SuccessResponse{data=account.AccountJoined}
+//	@Success		200	{object}	response.SuccessResponse{data=account.AccountWithFeatures}
 //	@Failure		400	{object}	response.ErrorResponse
 //	@Router			/auth/me [get]
 func Me(_ http.ResponseWriter, req *http.Request) {

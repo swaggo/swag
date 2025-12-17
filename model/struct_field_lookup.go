@@ -23,18 +23,32 @@ func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName s
 	builder := &StructBuilder{}
 
 	cfg := &packages.Config{
-		Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedName,
+		Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedName | packages.NeedImports | packages.NeedDeps,
 		Fset: token.NewFileSet(),
 	}
-	// Load the main package, base package, and all model packages
-	pkgs, err := packages.Load(cfg, importPath, fmt.Sprintf("%s/internal/models/base", baseModule), fmt.Sprintf("%s/internal/models/...", baseModule))
+	// Load the main package with all its dependencies
+	pkgs, err := packages.Load(cfg, importPath)
 	if err != nil || len(pkgs) == 0 {
 		log.Fatalf("failed to load package %s: %v", importPath, err)
 	}
 	packageMap := make(map[string]*packages.Package)
-	for _, pkg := range pkgs {
-		// fmt.Printf("Package Path: %s\n", pkg.PkgPath)
+
+	// Recursively add all packages including imports and dependencies
+	var addPackage func(*packages.Package)
+	addPackage = func(pkg *packages.Package) {
+		if pkg == nil || packageMap[pkg.PkgPath] != nil {
+			return
+		}
 		packageMap[pkg.PkgPath] = pkg
+
+		// Add all imports
+		for _, imp := range pkg.Imports {
+			addPackage(imp)
+		}
+	}
+
+	for _, pkg := range pkgs {
+		addPackage(pkg)
 	}
 
 	// Set the packageMap on the parser so checkNamed can use it
@@ -434,28 +448,51 @@ func buildSchemasRecursive(builder *StructBuilder, schemaName string, public boo
 
 	// Recursively process nested types
 	for _, nestedTypeName := range nestedTypes {
-		// Strip package prefix if present (nested types come with package prefix from buildSchemaForType)
-		// e.g., "account.Properties" -> "Properties"
-		baseNestedType := nestedTypeName
-		if strings.Contains(baseNestedType, ".") {
-			parts := strings.Split(baseNestedType, ".")
+		// Parse package name and type name from nested type
+		// e.g., "account.Properties" -> package="account", type="Properties"
+		// e.g., "billing_plan.FeatureSet" -> package="billing_plan", type="FeatureSet"
+		var nestedPackageName, baseNestedType string
+		if strings.Contains(nestedTypeName, ".") {
+			parts := strings.Split(nestedTypeName, ".")
+			nestedPackageName = parts[0]
 			baseNestedType = parts[len(parts)-1]
+		} else {
+			// No package prefix, use current package
+			nestedPackageName = packageName
+			baseNestedType = nestedTypeName
 		}
 
-		// Need to lookup the nested type's fields using the base name
-		nestedBuilder := parser.LookupStructFields(baseModule, pkgPath, baseNestedType)
+		// Determine the full package path for the nested type
+		// If it's from the same package, use the current pkgPath
+		// Otherwise, construct the path by replacing the last segment
+		nestedPkgPath := pkgPath
+		if nestedPackageName != packageName {
+			// Different package - need to construct the full path
+			// e.g., if pkgPath is "github.com/swaggo/swag/testdata/core_models/account"
+			// and nestedPackageName is "billing_plan"
+			// then nestedPkgPath should be "github.com/swaggo/swag/testdata/core_models/billing_plan"
+			if idx := strings.LastIndex(pkgPath, "/"); idx >= 0 {
+				nestedPkgPath = pkgPath[:idx+1] + nestedPackageName
+			} else {
+				nestedPkgPath = nestedPackageName
+			}
+		}
+
+		// Need to lookup the nested type's fields using the correct package path
+		nestedBuilder := parser.LookupStructFields(baseModule, nestedPkgPath, baseNestedType)
 		if nestedBuilder == nil {
-			console.Printf("$Yellow{Warning: Could not lookup nested type %s}\n", baseNestedType)
+			console.Printf("$Yellow{Warning: Could not lookup nested type %s in package %s}\n", baseNestedType, nestedPkgPath)
 			continue
 		}
 
 		// Generate both public and non-public variants for nested types
-		err = buildSchemasRecursive(nestedBuilder, baseNestedType, false, allSchemas, processed, parser, baseModule, pkgPath, packageName)
+		// Use the nested package name when storing schemas
+		err = buildSchemasRecursive(nestedBuilder, baseNestedType, false, allSchemas, processed, parser, baseModule, nestedPkgPath, nestedPackageName)
 		if err != nil {
 			return err
 		}
 
-		err = buildSchemasRecursive(nestedBuilder, baseNestedType+"Public", true, allSchemas, processed, parser, baseModule, pkgPath, packageName)
+		err = buildSchemasRecursive(nestedBuilder, baseNestedType+"Public", true, allSchemas, processed, parser, baseModule, nestedPkgPath, nestedPackageName)
 		if err != nil {
 			return err
 		}
