@@ -22,6 +22,8 @@ type CoreStructParser struct {
 func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName string) *StructBuilder {
 	builder := &StructBuilder{}
 
+	console.Printf("$Green{[LookupStructFields] Starting lookup for %s in %s}\n", typeName, importPath)
+
 	cfg := &packages.Config{
 		Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedName,
 		Fset: token.NewFileSet(),
@@ -56,6 +58,8 @@ func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName s
 		//	fmt.Println("Parsed file:", pkg.Fset.Position(f.Pos()).Filename)
 		//}
 		fields := c.ExtractFieldsRecursive(pkg, typeName, packageMap, visited)
+
+		console.Printf("$Green{[LookupStructFields] ExtractFieldsRecursive returned %d fields for %s}\n", len(fields), typeName)
 
 		for _, f := range fields {
 			fmt.Printf("Field: %s, Type: %s, Tag: %s\n", f.Name, f.Type, f.Tag)
@@ -386,6 +390,12 @@ func (c *CoreStructParser) checkMap(fieldType types.Type) ([]*StructField, strin
 func BuildAllSchemas(baseModule, pkgPath, typeName string) (map[string]*spec.Schema, error) {
 	parser := &CoreStructParser{}
 
+	// Extract package name from pkgPath (last segment)
+	packageName := pkgPath
+	if idx := strings.LastIndex(pkgPath, "/"); idx >= 0 {
+		packageName = pkgPath[idx+1:]
+	}
+
 	// Lookup struct fields using existing LookupStructFields
 	builder := parser.LookupStructFields(baseModule, pkgPath, typeName)
 	if builder == nil {
@@ -395,22 +405,23 @@ func BuildAllSchemas(baseModule, pkgPath, typeName string) (map[string]*spec.Sch
 	allSchemas := make(map[string]*spec.Schema)
 	processed := make(map[string]bool) // Track processed types to avoid infinite recursion
 
-	// Generate schemas for the main type
-	err := buildSchemasRecursive(builder, typeName, false, allSchemas, processed, parser, baseModule, pkgPath)
+	// Generate schemas for the main type with package prefix
+	fullTypeName := packageName + "." + typeName
+	err := buildSchemasRecursive(builder, typeName, false, allSchemas, processed, parser, baseModule, pkgPath, packageName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build schemas for %s: %w", typeName, err)
+		return nil, fmt.Errorf("failed to build schemas for %s: %w", fullTypeName, err)
 	}
 
-	err = buildSchemasRecursive(builder, typeName+"Public", true, allSchemas, processed, parser, baseModule, pkgPath)
+	err = buildSchemasRecursive(builder, typeName+"Public", true, allSchemas, processed, parser, baseModule, pkgPath, packageName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build public schemas for %s: %w", typeName, err)
+		return nil, fmt.Errorf("failed to build public schemas for %s: %w", fullTypeName, err)
 	}
 
 	return allSchemas, nil
 }
 
 // buildSchemasRecursive recursively builds schemas for a type and all its nested types
-func buildSchemasRecursive(builder *StructBuilder, schemaName string, public bool, allSchemas map[string]*spec.Schema, processed map[string]bool, parser *CoreStructParser, baseModule, pkgPath string) error {
+func buildSchemasRecursive(builder *StructBuilder, schemaName string, public bool, allSchemas map[string]*spec.Schema, processed map[string]bool, parser *CoreStructParser, baseModule, pkgPath, packageName string) error {
 	// Avoid infinite recursion
 	if processed[schemaName] {
 		return nil
@@ -429,8 +440,9 @@ func buildSchemasRecursive(builder *StructBuilder, schemaName string, public boo
 		return fmt.Errorf("failed to build schema for %s: %w", schemaName, err)
 	}
 
-	// Store the schema
-	allSchemas[schemaName] = schema
+	// Store the schema with package prefix
+	fullSchemaName := packageName + "." + schemaName
+	allSchemas[fullSchemaName] = schema
 
 	// Recursively process nested types
 	for _, nestedTypeName := range nestedTypes {
@@ -442,12 +454,12 @@ func buildSchemasRecursive(builder *StructBuilder, schemaName string, public boo
 		}
 
 		// Generate both public and non-public variants for nested types
-		err = buildSchemasRecursive(nestedBuilder, nestedTypeName, false, allSchemas, processed, parser, baseModule, pkgPath)
+		err = buildSchemasRecursive(nestedBuilder, nestedTypeName, false, allSchemas, processed, parser, baseModule, pkgPath, packageName)
 		if err != nil {
 			return err
 		}
 
-		err = buildSchemasRecursive(nestedBuilder, nestedTypeName+"Public", true, allSchemas, processed, parser, baseModule, pkgPath)
+		err = buildSchemasRecursive(nestedBuilder, nestedTypeName+"Public", true, allSchemas, processed, parser, baseModule, pkgPath, packageName)
 		if err != nil {
 			return err
 		}

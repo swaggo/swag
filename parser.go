@@ -1533,8 +1533,39 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		// Determine base module - try to extract from PkgPath
 		baseModule := parser.getBaseModule(typeSpecDef.PkgPath)
 
+		// Construct full package path
+		pkgPath := typeSpecDef.PkgPath
+		// If PkgPath looks like a relative package name (doesn't contain /), try to find the full path
+		if !strings.Contains(pkgPath, "/") {
+			parser.debug.Printf("Package '%s' looks relative, searching imports for full path", pkgPath)
+
+			// Search through all files for imports that end with this package name
+			found := false
+			err := parser.packages.RangeFiles(func(fileInfo *AstFileInfo) error {
+				if found {
+					return nil
+				}
+				for _, imp := range fileInfo.File.Imports {
+					impPath := strings.Trim(imp.Path.Value, "\"")
+					// Check if this import ends with /pkgPath
+					if strings.HasSuffix(impPath, "/"+pkgPath) {
+						pkgPath = impPath
+						parser.debug.Printf("Resolved package path for '%s' to '%s' from imports", typeSpecDef.PkgPath, pkgPath)
+						found = true
+						return nil
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				parser.debug.Printf("Error searching for package path: %s", err)
+			}
+		}
+
+		parser.debug.Printf("typeSpecDef.PkgPath='%s', resolved pkgPath='%s', baseModule='%s'", typeSpecDef.PkgPath, pkgPath, baseModule)
+
 		// Call BuildAllSchemas to get all schema variants
-		allSchemas, err := model.BuildAllSchemas(baseModule, typeSpecDef.PkgPath, typeSpecDef.Name())
+		allSchemas, err := model.BuildAllSchemas(baseModule, pkgPath, typeSpecDef.Name())
 		if err != nil {
 			parser.debug.Printf("Error using custom parser for '%s': %s", typeName, err)
 			// Fall back to standard parsing if custom parser fails

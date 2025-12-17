@@ -200,49 +200,50 @@
       ],
       "properties": {
         "email": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "email_verified_at_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "external_id": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "first_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "hashed_password": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "is_super_user_session": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "last_login_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "last_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "organization_id": {
-          "$ref": "#/definitions/UUIDField"
+          "type": "string",
+          "format": "uuid"
         },
         "password_updated_at_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "phone": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "properties": {
           "$ref": "#/definitions/Properties"
         },
         "role": {
-          "$ref": "#/definitions/Role%5D"
+          "type": "integer"
         },
         "signup_properties": {
           "$ref": "#/definitions/SignupProperties"
         },
         "test_user_type": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         }
       }
     },
@@ -271,61 +272,62 @@
       ],
       "properties": {
         "created_by_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "email": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "email_verified_at_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "external_id": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "first_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "hashed_password": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "is_super_user_session": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "last_login_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "last_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "organization_id": {
-          "$ref": "#/definitions/UUIDField"
+          "type": "string",
+          "format": "uuid"
         },
         "organization_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "password_updated_at_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "phone": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "properties": {
           "$ref": "#/definitions/Properties"
         },
         "role": {
-          "$ref": "#/definitions/Role%5D"
+          "type": "integer"
         },
         "signup_properties": {
           "$ref": "#/definitions/SignupProperties"
         },
         "test_user_type": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "updated_by_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         }
       }
     },
@@ -344,31 +346,32 @@
       ],
       "properties": {
         "email": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "external_id": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "first_name": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "is_super_user_session": {
-          "$ref": "#/definitions/IntFieldPublic"
+          "type": "integer"
         },
         "last_name": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "organization_id": {
-          "$ref": "#/definitions/UUIDFieldPublic"
+          "type": "string",
+          "format": "uuid"
         },
         "phone": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/Role%5DPublic"
+          "type": "integer"
         },
         "test_user_type": {
-          "$ref": "#/definitions/IntFieldPublic"
+          "type": "integer"
         }
       }
     },
@@ -387,39 +390,34 @@
       ],
       "properties": {
         "email": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "external_id": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "first_name": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "is_super_user_session": {
-          "$ref": "#/definitions/IntFieldPublic"
+          "type": "integer"
         },
         "last_name": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "organization_id": {
-          "$ref": "#/definitions/UUIDFieldPublic"
+          "type": "string",
+          "format": "uuid"
         },
         "phone": {
-          "$ref": "#/definitions/StringFieldPublic"
+          "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/Role%5DPublic"
+          "type": "integer"
         },
         "test_user_type": {
-          "$ref": "#/definitions/IntFieldPublic"
+          "type": "integer"
         }
       }
-    },
-    "IntField": {
-      "type": "object"
-    },
-    "IntFieldPublic": {
-      "type": "object"
     },
     "Properties": {
       "type": "object",
@@ -446,12 +444,6 @@
     "PropertiesPublic": {
       "type": "object"
     },
-    "Role]": {
-      "type": "object"
-    },
-    "Role]Public": {
-      "type": "object"
-    },
     "SignupProperties": {
       "type": "object",
       "required": [
@@ -465,18 +457,6 @@
       }
     },
     "SignupPropertiesPublic": {
-      "type": "object"
-    },
-    "StringField": {
-      "type": "object"
-    },
-    "StringFieldPublic": {
-      "type": "object"
-    },
-    "UUIDField": {
-      "type": "object"
-    },
-    "UUIDFieldPublic": {
       "type": "object"
     },
     "account.Account": {
@@ -500,49 +480,50 @@
       ],
       "properties": {
         "email": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "email_verified_at_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "external_id": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "first_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "hashed_password": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "is_super_user_session": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "last_login_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "last_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "organization_id": {
-          "$ref": "#/definitions/UUIDField"
+          "type": "string",
+          "format": "uuid"
         },
         "password_updated_at_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "phone": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "properties": {
           "$ref": "#/definitions/Properties"
         },
         "role": {
-          "$ref": "#/definitions/Role%5D"
+          "type": "integer"
         },
         "signup_properties": {
           "$ref": "#/definitions/SignupProperties"
         },
         "test_user_type": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         }
       }
     },
@@ -571,61 +552,62 @@
       ],
       "properties": {
         "created_by_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "email": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "email_verified_at_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "external_id": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "first_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "hashed_password": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "is_super_user_session": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "last_login_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "last_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "organization_id": {
-          "$ref": "#/definitions/UUIDField"
+          "type": "string",
+          "format": "uuid"
         },
         "organization_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "password_updated_at_ts": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "phone": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         },
         "properties": {
           "$ref": "#/definitions/Properties"
         },
         "role": {
-          "$ref": "#/definitions/Role%5D"
+          "type": "integer"
         },
         "signup_properties": {
           "$ref": "#/definitions/SignupProperties"
         },
         "test_user_type": {
-          "$ref": "#/definitions/IntField"
+          "type": "integer"
         },
         "updated_by_name": {
-          "$ref": "#/definitions/StringField"
+          "type": "string"
         }
       }
     },

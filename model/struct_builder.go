@@ -86,7 +86,10 @@ func (this *StructBuilder) BuildSpecSchema(typeName string, public bool) (*spec.
 	var required []string
 	nestedStructs := make(map[string]bool) // Use map to deduplicate
 
+	fmt.Printf("[BuildSpecSchema] Building schema for '%s' (public=%v) with %d fields\n", typeName, public, len(this.Fields))
+
 	for _, field := range this.Fields {
+		fmt.Printf("[BuildSpecSchema] Processing field: Name=%s, Type=%v, TypeString=%s\n", field.Name, field.Type, field.TypeString)
 		propName, propSchema, isRequired, nestedTypes, err := field.ToSpecSchema(public)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to build schema for field %s: %w", field.Name, err)
@@ -94,8 +97,10 @@ func (this *StructBuilder) BuildSpecSchema(typeName string, public bool) (*spec.
 
 		// Skip if field was filtered (e.g., not public when public=true)
 		if propName == "" || propSchema == nil {
+			fmt.Printf("[BuildSpecSchema] Field %s skipped (propName=%s, propSchema=%v)\n", field.Name, propName, propSchema)
 			continue
 		}
+		fmt.Printf("[BuildSpecSchema] Field %s -> property %s (required=%v, nestedTypes=%v)\n", field.Name, propName, isRequired, nestedTypes)
 
 		// Add property to schema
 		schema.Properties[propName] = *propSchema

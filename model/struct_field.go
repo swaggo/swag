@@ -424,6 +424,8 @@ func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spe
 // extractTypeParameter extracts the type parameter T from StructField[T]
 // Handles nested brackets like StructField[map[string][]User]
 func extractTypeParameter(typeStr string) (string, error) {
+	fmt.Printf("[extractTypeParameter] Input: %s\n", typeStr)
+
 	// Find the opening bracket for StructField[
 	idx := strings.Index(typeStr, "StructField[")
 	if idx == -1 {
@@ -454,8 +456,12 @@ func extractTypeParameter(typeStr string) (string, error) {
 
 	extracted := typeStr[start:end]
 
+	fmt.Printf("[extractTypeParameter] Extracted from [%d:%d]: '%s'\n", start, end, extracted)
+
 	// Remove leading * if it's a pointer
 	extracted = strings.TrimPrefix(extracted, "*")
+
+	fmt.Printf("[extractTypeParameter] After trim: '%s'\n", extracted)
 
 	return extracted, nil
 }
@@ -465,10 +471,19 @@ func extractTypeParameter(typeStr string) (string, error) {
 func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, error) {
 	var nestedTypes []string
 
+	fmt.Printf("[buildSchemaForType] Input: typeStr='%s', public=%v\n", typeStr, public)
+
 	// Remove pointer prefix
 	isPointer := strings.HasPrefix(typeStr, "*")
 	if isPointer {
 		typeStr = strings.TrimPrefix(typeStr, "*")
+	}
+
+	// Check if this is a fields wrapper type (StringField, IntField, etc.)
+	// These should be treated as primitives, not struct types
+	if isFieldsWrapperType(typeStr) {
+		fmt.Printf("[buildSchemaForType] Detected fields wrapper type, using primitive schema\n")
+		return getPrimitiveSchemaForFieldType(typeStr)
 	}
 
 	// Handle primitive types
@@ -548,6 +563,44 @@ func isPrimitiveType(typeStr string) bool {
 		"time.Time": true,
 	}
 	return primitives[typeStr]
+}
+
+// isFieldsWrapperType checks if a type is a fields package wrapper type
+// like fields.StringField, fields.IntField, fields.StructField[T], etc.
+func isFieldsWrapperType(typeStr string) bool {
+	// Check for various field wrapper patterns
+	return strings.Contains(typeStr, "fields.StringField") ||
+		strings.Contains(typeStr, "fields.IntField") ||
+		strings.Contains(typeStr, "fields.UUIDField") ||
+		strings.Contains(typeStr, "fields.BoolField") ||
+		strings.Contains(typeStr, "fields.FloatField") ||
+		strings.Contains(typeStr, "fields.TimeField") ||
+		strings.Contains(typeStr, "fields.IntConstantField") ||
+		strings.Contains(typeStr, "fields.StringConstantField")
+}
+
+// getPrimitiveSchemaForFieldType returns the appropriate schema for a fields wrapper type
+func getPrimitiveSchemaForFieldType(typeStr string) (*spec.Schema, []string, error) {
+	if strings.Contains(typeStr, "fields.StringField") || strings.Contains(typeStr, "fields.StringConstantField") {
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}, nil, nil
+	}
+	if strings.Contains(typeStr, "fields.IntField") || strings.Contains(typeStr, "fields.IntConstantField") {
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}}}, nil, nil
+	}
+	if strings.Contains(typeStr, "fields.UUIDField") {
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: "uuid"}}, nil, nil
+	}
+	if strings.Contains(typeStr, "fields.BoolField") {
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"boolean"}}}, nil, nil
+	}
+	if strings.Contains(typeStr, "fields.FloatField") {
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"number"}}}, nil, nil
+	}
+	if strings.Contains(typeStr, "fields.TimeField") {
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: "date-time"}}, nil, nil
+	}
+	// Default to string for unknown field types
+	return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}, nil, nil
 }
 
 // primitiveTypeToSchema converts a Go primitive type to OpenAPI schema
