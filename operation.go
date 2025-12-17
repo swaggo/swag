@@ -408,11 +408,13 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 const (
 	formTag             = "form"
+	columnTag           = "column"
+	publicTag           = "public"
 	jsonTag             = "json"
 	uriTag              = "uri"
 	headerTag           = "header"
 	bindingTag          = "binding"
-	defaultTag          = "default"
+	defaultTag          = "defaults"
 	enumsTag            = "enums"
 	exampleTag          = "example"
 	schemaExampleTag    = "schemaExample"

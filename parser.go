@@ -1573,6 +1573,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 	return parser.parseGenericTypeExpr(file, typeExpr)
 }
 
+// TODO WIP
 func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
 	required, properties := make([]string, 0), make(map[string]spec.Schema)
 
