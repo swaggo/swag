@@ -561,14 +561,7 @@ func isPrimitiveType(typeStr string) bool {
 // like fields.StringField, fields.IntField, fields.StructField[T], etc.
 func isFieldsWrapperType(typeStr string) bool {
 	// Check for various field wrapper patterns
-	return strings.Contains(typeStr, "fields.StringField") ||
-		strings.Contains(typeStr, "fields.IntField") ||
-		strings.Contains(typeStr, "fields.UUIDField") ||
-		strings.Contains(typeStr, "fields.BoolField") ||
-		strings.Contains(typeStr, "fields.FloatField") ||
-		strings.Contains(typeStr, "fields.TimeField") ||
-		strings.Contains(typeStr, "fields.IntConstantField") ||
-		strings.Contains(typeStr, "fields.StringConstantField")
+	return strings.Contains(typeStr, "fields.")
 }
 
 // getPrimitiveSchemaForFieldType returns the appropriate schema for a fields wrapper type
@@ -576,7 +569,7 @@ func getPrimitiveSchemaForFieldType(typeStr string) (*spec.Schema, []string, err
 	if strings.Contains(typeStr, "fields.StringField") || strings.Contains(typeStr, "fields.StringConstantField") {
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}, nil, nil
 	}
-	if strings.Contains(typeStr, "fields.IntField") || strings.Contains(typeStr, "fields.IntConstantField") {
+	if strings.Contains(typeStr, "fields.IntField") || strings.Contains(typeStr, "fields.IntConstantField") || strings.Contains(typeStr, "fields.DecimalField") {
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}}}, nil, nil
 	}
 	if strings.Contains(typeStr, "fields.UUIDField") {
