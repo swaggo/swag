@@ -45,7 +45,6 @@ type APIResponse struct {
 //	@Success		200	{object}	response.SuccessResponse{data=APIResponse}
 //	@Failure		400	{object}	response.ErrorResponse
 //	@Router			/api/account/{id} [get]
-
 func internalAPIAccount(_ http.ResponseWriter, req *http.Request) {
 }
 

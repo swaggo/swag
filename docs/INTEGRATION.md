@@ -199,6 +199,91 @@ Create comprehensive integration test that:
 3. Benchmark performance impact on large projects with many types
 4. Test with swag CLI on real project to validate integration
 
+---
+
+## Bug Fixes and Enhancements (December 17, 2025)
+
+### Cross-Package @Public Schema Generation Fix
+
+**Issue**: When a `StructField[T]` referenced a type from a different package (e.g., `account.AccountWithFeatures` containing `StructField[*billing_plan.FeatureSet]`), the Public variant schema (`billing_plan.FeatureSetPublic`) was not being generated, causing "Could not resolve reference" errors.
+
+**Root Causes Identified**:
+1. **Package Loading Issue**: `LookupStructFields()` was only loading packages matching hardcoded patterns like `fmt.Sprintf("%s/internal/models/...", baseModule)`, which didn't work for arbitrary project structures or testdata directories
+2. **Cross-Package Type Resolution**: `buildSchemasRecursive()` was stripping package prefixes from nested types and always looking them up in the original package, instead of parsing the package name and constructing the correct package path
+
+**Solutions Implemented**:
+
+#### 1. Dynamic Package Loading (model/struct_field_lookup.go:283-303)
+```go
+// Changed from hardcoded pattern to dynamic import resolution
+cfg := &packages.Config{
+    Mode: packages.NeedName | packages.NeedFiles | packages.NeedTypes | 
+          packages.NeedImports | packages.NeedDeps,  // ← Added NeedImports | NeedDeps
+    Dir:  dir,
+}
+
+// Recursively add all imported packages
+visited := make(map[string]bool)
+var addPackage func(*packages.Package)
+addPackage = func(pkg *packages.Package) {
+    if visited[pkg.PkgPath] {
+        return
+    }
+    visited[pkg.PkgPath] = true
+    result.packageMap[pkg.PkgPath] = pkg
+    for _, imp := range pkg.Imports {
+        addPackage(imp)
+    }
+}
+```
+
+#### 2. Cross-Package Nested Type Resolution (model/struct_field_lookup.go:453-495)
+```go
+// Parse package name from nested type string (e.g., "billing_plan.FeatureSet")
+parts := strings.Split(nestedType, ".")
+var nestedPkgName string
+var nestedTypeName string
+
+if len(parts) == 2 {
+    // Package-qualified type (e.g., "billing_plan.FeatureSet")
+    nestedPkgName = parts[0]
+    nestedTypeName = parts[1]
+    
+    // Construct nested package path
+    nestedPkgPath = filepath.Join(filepath.Dir(pkgPath), nestedPkgName)
+} else {
+    // Same-package type
+    nestedPkgName = pkgName
+    nestedTypeName = nestedType
+    nestedPkgPath = pkgPath
+}
+```
+
+**Test Coverage**:
+- ✅ Updated `TestBuildAllSchemas_WithPackageQualifiedNested` to validate cross-package schema generation
+- ✅ Updated `TestCoreModelsIntegration` to test `AccountWithFeatures` with cross-package `billing_plan.FeatureSet` reference
+- ✅ All tests passing with proper `billing_plan.FeatureSet` and `billing_plan.FeatureSetPublic` schemas generated
+
+**Validation**:
+```
+// Before fix:
+"WARNING: Package not found in map for github.com/swaggo/swag/testdata/core_models/billing_plan"
+Error: Could not resolve reference: /definitions/billing_plan.FeatureSetPublic
+
+// After fix:
+✓ billing_plan.FeatureSet schema generated with 3 fields
+✓ billing_plan.FeatureSetPublic schema generated with 1 field (advanced_analytics only)
+✓ account.AccountWithFeaturesPublic correctly references #/definitions/billing_plan.FeatureSetPublic
+✓ No package loading warnings
+```
+
+**Files Modified**:
+- `model/struct_field_lookup.go` - Package loading and nested type resolution logic
+- `model/struct_field_lookup_test.go` - Updated test expectations for cross-package types
+- `core_models_integration_test.go` - Updated to test `AccountWithFeatures` instead of `AccountJoined`
+
+**Impact**: This fix enables the @Public annotation system to work correctly with any project structure where types reference other types across package boundaries, which is essential for real-world modular Go applications.
+
 #### Code Quality
 
 - All functions include error handling with descriptive messages
@@ -589,4 +674,3 @@ if !strings.Contains(pkgPath, "/") {
 - Nested generic types handled properly
 - Package qualification correct
 
-**Outstanding Work:** @Public annotation application to operations (infrastructure exists, needs integration)
