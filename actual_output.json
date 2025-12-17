@@ -55,7 +55,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/definitions/account.AccountJoined"
+                        "$ref": "#/definitions/account.AccountJoinedPublic"
                       }
                     }
                   }
@@ -161,7 +161,7 @@
                   "type": "object",
                   "properties": {
                     "data": {
-                      "$ref": "#/definitions/account.AccountJoined"
+                      "$ref": "#/definitions/account.AccountJoinedPublic"
                     }
                   }
                 }
@@ -234,13 +234,13 @@
           "type": "string"
         },
         "properties": {
-          "$ref": "#/definitions/Properties"
+          "$ref": "#/definitions/account.Properties"
         },
         "role": {
           "type": "integer"
         },
         "signup_properties": {
-          "$ref": "#/definitions/SignupProperties"
+          "$ref": "#/definitions/account.SignupProperties"
         },
         "test_user_type": {
           "type": "integer"
@@ -315,13 +315,13 @@
           "type": "string"
         },
         "properties": {
-          "$ref": "#/definitions/Properties"
+          "$ref": "#/definitions/account.Properties"
         },
         "role": {
           "type": "integer"
         },
         "signup_properties": {
-          "$ref": "#/definitions/SignupProperties"
+          "$ref": "#/definitions/account.SignupProperties"
         },
         "test_user_type": {
           "type": "integer"

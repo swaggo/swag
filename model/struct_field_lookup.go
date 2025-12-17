@@ -89,30 +89,24 @@ func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName s
 					packageName := dotParts[0]            // "billing_plan"
 					typeName := dotParts[len(dotParts)-1] // "FeatureSet"
 
+					// Always use package.Type format for consistency with schema storage
+					originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
+
 					// Check if it's from the same module
 					fullPackagePath := strings.Join(pathParts[:len(pathParts)-1], "/") + "/" + packageName
-
-					// Check if in same package as the model being built
-					isLocalToCurrentPackage := fullPackagePath == importPath
-
-					if isLocalToCurrentPackage {
-						// Same package - just use type name without package prefix
-						originalTypeName = typeName
-					} else {
-						// Different package - use package.Type format
-						originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
-					}
 
 					subTypePackage = fullPackagePath
 					subTypeName = typeName
 				} else if strings.Contains(subTypeName, ".") {
-					// Has package prefix but no path like "billing_plan.FeatureSet"
+					// Already in package.Type format like "billing_plan.FeatureSet"
 					subParts := strings.Split(subTypeName, ".")
 					if len(subParts) < 2 {
 						continue
 					}
 					packageName := subParts[len(subParts)-2]
 					typeName := subParts[len(subParts)-1]
+
+					// Use package.Type format
 					originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
 
 					subTypePackage = strings.Join(subParts[:len(subParts)-1], ".")
@@ -440,20 +434,28 @@ func buildSchemasRecursive(builder *StructBuilder, schemaName string, public boo
 
 	// Recursively process nested types
 	for _, nestedTypeName := range nestedTypes {
-		// Need to lookup the nested type's fields
-		nestedBuilder := parser.LookupStructFields(baseModule, pkgPath, nestedTypeName)
+		// Strip package prefix if present (nested types come with package prefix from buildSchemaForType)
+		// e.g., "account.Properties" -> "Properties"
+		baseNestedType := nestedTypeName
+		if strings.Contains(baseNestedType, ".") {
+			parts := strings.Split(baseNestedType, ".")
+			baseNestedType = parts[len(parts)-1]
+		}
+
+		// Need to lookup the nested type's fields using the base name
+		nestedBuilder := parser.LookupStructFields(baseModule, pkgPath, baseNestedType)
 		if nestedBuilder == nil {
-			console.Printf("$Yellow{Warning: Could not lookup nested type %s}\n", nestedTypeName)
+			console.Printf("$Yellow{Warning: Could not lookup nested type %s}\n", baseNestedType)
 			continue
 		}
 
 		// Generate both public and non-public variants for nested types
-		err = buildSchemasRecursive(nestedBuilder, nestedTypeName, false, allSchemas, processed, parser, baseModule, pkgPath, packageName)
+		err = buildSchemasRecursive(nestedBuilder, baseNestedType, false, allSchemas, processed, parser, baseModule, pkgPath, packageName)
 		if err != nil {
 			return err
 		}
 
-		err = buildSchemasRecursive(nestedBuilder, nestedTypeName+"Public", true, allSchemas, processed, parser, baseModule, pkgPath, packageName)
+		err = buildSchemasRecursive(nestedBuilder, baseNestedType+"Public", true, allSchemas, processed, parser, baseModule, pkgPath, packageName)
 		if err != nil {
 			return err
 		}

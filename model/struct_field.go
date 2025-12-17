@@ -392,7 +392,10 @@ func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spe
 
 	// Detect StructField[T] pattern and extract type parameter T
 	typeStr := this.TypeString
-	if this.Type != nil {
+	// Only use Type.String() if TypeString is empty or not set
+	// This preserves manually set TypeString values (like "account.Properties")
+	// instead of overriding with full path from Type.String()
+	if this.Type != nil && this.TypeString == "" {
 		typeStr = this.Type.String()
 	}
 
@@ -524,12 +527,9 @@ func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, er
 		return &spec.Schema{}, nil, nil
 	}
 
-	// Extract just the type name (last part after .)
+	// Keep the full type name (including package prefix if present)
+	// e.g., "account.Properties" should remain "account.Properties"
 	typeName := typeStr
-	if strings.Contains(typeName, ".") {
-		parts := strings.Split(typeName, ".")
-		typeName = parts[len(parts)-1]
-	}
 
 	// Add Public suffix if in public mode
 	refName := typeName
@@ -537,7 +537,7 @@ func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, er
 		refName = typeName + "Public"
 	}
 
-	// Create reference schema
+	// Create reference schema using the full type name
 	schema := spec.RefSchema("#/definitions/" + refName)
 	nestedTypes = append(nestedTypes, typeName)
 

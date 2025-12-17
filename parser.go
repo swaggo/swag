@@ -1265,9 +1265,38 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return PrimitiveSchema(schemaType), nil
 	}
 
-	typeSpecDef := parser.packages.FindTypeSpec(typeName, file)
+	// Check if this is a Public variant request (e.g., "account.AccountPublic")
+	// If so, we need to find the base type and ensure it's parsed
+	baseTypeName := typeName
+	isPublicVariant := false
+	if strings.HasSuffix(typeName, "Public") {
+		// Extract package prefix if present
+		lastDot := strings.LastIndex(typeName, ".")
+		if lastDot >= 0 {
+			// Has package prefix like "account.AccountPublic"
+			potentialBaseType := typeName[:len(typeName)-len("Public")]
+			// Try to find the base type
+			baseTypeSpec := parser.packages.FindTypeSpec(potentialBaseType, file)
+			if baseTypeSpec != nil {
+				isPublicVariant = true
+				baseTypeName = potentialBaseType
+				parser.debug.Printf("Detected Public variant request '%s', looking for base type '%s'", typeName, baseTypeName)
+			}
+		} else {
+			// No package prefix, just type name like "AccountPublic"
+			potentialBaseType := typeName[:len(typeName)-len("Public")]
+			baseTypeSpec := parser.packages.FindTypeSpec(potentialBaseType, file)
+			if baseTypeSpec != nil {
+				isPublicVariant = true
+				baseTypeName = potentialBaseType
+				parser.debug.Printf("Detected Public variant request '%s', looking for base type '%s'", typeName, baseTypeName)
+			}
+		}
+	}
+
+	typeSpecDef := parser.packages.FindTypeSpec(baseTypeName, file)
 	if typeSpecDef == nil {
-		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
+		return nil, fmt.Errorf("cannot find type definition: %s", baseTypeName)
 	}
 
 	if override, ok := parser.Overrides[typeSpecDef.FullPath()]; ok {
@@ -1303,6 +1332,29 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 			}
 			return nil, fmt.Errorf("%s: %w", typeName, err)
 		}
+	}
+
+	// If this is a Public variant request, look up the Public schema from definitions
+	if isPublicVariant {
+		publicSchema, exists := parser.swagger.Definitions[typeName]
+		if !exists {
+			// Public variant doesn't exist - this is OK if the type doesn't use custom parser
+			// Fall back to base schema (Public variant would be identical anyway)
+			parser.debug.Printf("Public variant '%s' not found, using base schema '%s'", typeName, baseTypeName)
+			if ref {
+				if IsComplexSchema(schema.Schema) {
+					return parser.getRefTypeSchema(typeSpecDef, schema), nil
+				}
+				// if it is a simple schema, just return a copy
+				newSchema := *schema.Schema
+				return &newSchema, nil
+			}
+			return schema.Schema, nil
+		}
+		if ref {
+			return RefSchema(typeName), nil
+		}
+		return &publicSchema, nil
 	}
 
 	if ref {

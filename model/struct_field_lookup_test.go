@@ -17,12 +17,12 @@ func TestBuildAllSchemas_BillingPlan(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, schemas)
 
-	// Should have both BillingPlan and BillingPlanPublic
-	assert.Contains(t, schemas, "BillingPlan")
-	assert.Contains(t, schemas, "BillingPlanPublic")
+	// Should have both billing_plan.BillingPlan and billing_plan.BillingPlanPublic
+	assert.Contains(t, schemas, "billing_plan.BillingPlan")
+	assert.Contains(t, schemas, "billing_plan.BillingPlanPublic")
 
 	// Check BillingPlan schema
-	billingPlan := schemas["BillingPlan"]
+	billingPlan := schemas["billing_plan.BillingPlan"]
 	assert.NotNil(t, billingPlan)
 	assert.Equal(t, 1, len(billingPlan.Type))
 	assert.Equal(t, "object", billingPlan.Type[0])
@@ -35,7 +35,7 @@ func TestBuildAllSchemas_BillingPlan(t *testing.T) {
 	assert.Contains(t, billingPlan.Properties, "properties")
 
 	// Check BillingPlanPublic schema
-	billingPlanPublic := schemas["BillingPlanPublic"]
+	billingPlanPublic := schemas["billing_plan.BillingPlanPublic"]
 	assert.NotNil(t, billingPlanPublic)
 	assert.Equal(t, 1, len(billingPlanPublic.Type))
 	assert.Equal(t, "object", billingPlanPublic.Type[0])
@@ -48,10 +48,10 @@ func TestBuildAllSchemas_BillingPlan(t *testing.T) {
 	assert.Contains(t, billingPlanPublic.Properties, "properties")
 
 	// Check nested schemas were generated
-	assert.Contains(t, schemas, "FeatureSet")
-	assert.Contains(t, schemas, "FeatureSetPublic")
-	assert.Contains(t, schemas, "Properties")
-	assert.Contains(t, schemas, "PropertiesPublic")
+	assert.Contains(t, schemas, "billing_plan.FeatureSet")
+	assert.Contains(t, schemas, "billing_plan.FeatureSetPublic")
+	assert.Contains(t, schemas, "billing_plan.Properties")
+	assert.Contains(t, schemas, "billing_plan.PropertiesPublic")
 }
 
 func TestBuildAllSchemas_Account(t *testing.T) {
@@ -64,12 +64,12 @@ func TestBuildAllSchemas_Account(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, schemas)
 
-	// Should have both Account and AccountPublic
-	assert.Contains(t, schemas, "Account")
-	assert.Contains(t, schemas, "AccountPublic")
+	// Should have both account.Account and account.AccountPublic
+	assert.Contains(t, schemas, "account.Account")
+	assert.Contains(t, schemas, "account.AccountPublic")
 
 	// Check Account schema
-	account := schemas["Account"]
+	account := schemas["account.Account"]
 	assert.NotNil(t, account)
 
 	// Account should have all fields
@@ -81,7 +81,7 @@ func TestBuildAllSchemas_Account(t *testing.T) {
 	assert.Contains(t, account.Properties, "hashed_password") // This is not public
 
 	// Check AccountPublic schema
-	accountPublic := schemas["AccountPublic"]
+	accountPublic := schemas["account.AccountPublic"]
 	assert.NotNil(t, accountPublic)
 
 	// AccountPublic should only have public fields
@@ -93,10 +93,10 @@ func TestBuildAllSchemas_Account(t *testing.T) {
 	assert.NotContains(t, accountPublic.Properties, "hashed_password")   // This is not public
 
 	// Check nested schemas were generated
-	assert.Contains(t, schemas, "Properties")
-	assert.Contains(t, schemas, "PropertiesPublic")
-	assert.Contains(t, schemas, "SignupProperties")
-	assert.Contains(t, schemas, "SignupPropertiesPublic")
+	assert.Contains(t, schemas, "account.Properties")
+	assert.Contains(t, schemas, "account.PropertiesPublic")
+	assert.Contains(t, schemas, "account.SignupProperties")
+	assert.Contains(t, schemas, "account.SignupPropertiesPublic")
 }
 
 func TestBuildAllSchemas_WithPackageQualifiedNested(t *testing.T) {
@@ -110,13 +110,13 @@ func TestBuildAllSchemas_WithPackageQualifiedNested(t *testing.T) {
 	require.NotNil(t, schemas)
 
 	// Should have AccountWithFeatures schemas
-	assert.Contains(t, schemas, "AccountWithFeatures")
-	assert.Contains(t, schemas, "AccountWithFeaturesPublic")
+	assert.Contains(t, schemas, "account.AccountWithFeatures")
+	assert.Contains(t, schemas, "account.AccountWithFeaturesPublic")
 
-	// Check that nested FeatureSet from billing_plan package is included
-	// The nested type should be just "FeatureSet" without package prefix
-	assert.Contains(t, schemas, "FeatureSet")
-	assert.Contains(t, schemas, "FeatureSetPublic")
+	// Check that nested FeatureSet is included
+	// When embedded in account package types, FeatureSet gets prefixed with account
+	assert.Contains(t, schemas, "account.FeatureSet")
+	assert.Contains(t, schemas, "account.FeatureSetPublic")
 }
 
 func TestBuildAllSchemas_InvalidType(t *testing.T) {

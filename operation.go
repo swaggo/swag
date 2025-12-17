@@ -895,19 +895,19 @@ func parseObjectSchemaWithPublic(parser *Parser, refType string, astFile *ast.Fi
 	case strings.Contains(refType, "{"):
 		return parseCombinedObjectSchemaWithPublic(parser, refType, astFile, public)
 	default:
+		// Add Public suffix for struct types when in public mode
+		schemaRefType := refType
+		if public && !IsGolangPrimitiveType(refType) && !IsPrimitiveType(refType) {
+			schemaRefType = refType + "Public"
+		}
+
 		if parser != nil { // checking refType has existing in 'TypeDefinitions'
-			schema, err := parser.getTypeSchema(refType, astFile, true)
+			schema, err := parser.getTypeSchema(schemaRefType, astFile, true)
 			if err != nil {
 				return nil, err
 			}
 
 			return schema, nil
-		}
-
-		// Add Public suffix for struct types when in public mode
-		schemaRefType := refType
-		if public && !IsGolangPrimitiveType(refType) && !IsPrimitiveType(refType) {
-			schemaRefType = refType + "Public"
 		}
 
 		return RefSchema(schemaRefType), nil
@@ -942,7 +942,9 @@ func parseCombinedObjectSchemaWithPublic(parser *Parser, refType string, astFile
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 
-	schema, err := parseObjectSchemaWithPublic(parser, matches[1], astFile, public)
+	// For combined schemas, don't apply public to outer type (it's a container/wrapper)
+	// Only apply public to nested field types
+	schema, err := parseObjectSchemaWithPublic(parser, matches[1], astFile, false)
 	if err != nil {
 		return nil, err
 	}
@@ -952,6 +954,7 @@ func parseCombinedObjectSchemaWithPublic(parser *Parser, refType string, astFile
 	for _, field := range fields {
 		keyVal := strings.SplitN(field, "=", 2)
 		if len(keyVal) == 2 {
+			// Apply public flag to nested field types
 			schema, err := parseObjectSchemaWithPublic(parser, keyVal[1], astFile, public)
 			if err != nil {
 				return nil, err

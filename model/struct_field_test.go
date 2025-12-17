@@ -257,8 +257,8 @@ func TestBuildSchemaForType(t *testing.T) {
 			name:       "package qualified struct",
 			typeStr:    "billing_plan.FeatureSet",
 			public:     true,
-			wantRef:    "#/definitions/FeatureSetPublic",
-			wantNested: []string{"FeatureSet"},
+			wantRef:    "#/definitions/billing_plan.FeatureSetPublic",
+			wantNested: []string{"billing_plan.FeatureSet"},
 		},
 		{
 			name:     "array of strings",
