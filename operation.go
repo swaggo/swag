@@ -174,7 +174,7 @@ func (operation *Operation) ParseCodeSample(attribute, _, lineRemainder string) 
 			return err
 		}
 
-		var valueJSON interface{}
+		var valueJSON any
 
 		err = json.Unmarshal(data, &valueJSON)
 		if err != nil {
@@ -215,7 +215,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 			return fmt.Errorf("annotation %s need a value", attribute)
 		}
 
-		var valueJSON interface{}
+		var valueJSON any
 
 		err := json.Unmarshal([]byte(lineRemainder), &valueJSON)
 		if err != nil {
@@ -269,7 +269,7 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		objectType = PRIMITIVE
 	}
 
-	var enums []interface{}
+	var enums []any
 	if !IsPrimitiveType(refType) {
 		schema, _ := operation.parser.getTypeSchema(refType, astFile, false)
 		if schema != nil && len(schema.Type) == 1 && schema.Enum != nil {
@@ -646,7 +646,7 @@ func setExample(param *spec.Parameter, schemaType string, value string) error {
 }
 
 // defineType enum value define the type (object and array unsupported).
-func defineType(schemaType string, value string) (v interface{}, err error) {
+func defineType(schemaType string, value string) (v any, err error) {
 	schemaType = TransToValidSchemeType(schemaType)
 
 	switch schemaType {
@@ -1186,7 +1186,7 @@ func (operation *Operation) AddResponse(code int, response *spec.Response) {
 }
 
 // createParameter returns swagger spec.Parameter for given  paramType, description, paramName, schemaType, required.
-func createParameter(paramType, description, paramName, objectType, schemaType string, format string, required bool, enums []interface{}, collectionFormat string) spec.Parameter {
+func createParameter(paramType, description, paramName, objectType, schemaType string, format string, required bool, enums []any, collectionFormat string) spec.Parameter {
 	// //five possible parameter types. 	query, path, body, header, form
 	result := spec.Parameter{
 		ParamProps: spec.ParamProps{

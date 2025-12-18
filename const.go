@@ -13,7 +13,7 @@ import (
 type ConstVariable struct {
 	Name    *ast.Ident
 	Type    ast.Expr
-	Value   interface{}
+	Value   any
 	Comment string
 	File    *ast.File
 	Pkg     *PackageDefinitions
@@ -101,7 +101,7 @@ func EvaluateEscapedString(text string) string {
 }
 
 // EvaluateDataConversion evaluate the type a explicit type conversion
-func EvaluateDataConversion(x interface{}, typeName string) interface{} {
+func EvaluateDataConversion(x any, typeName string) any {
 	switch value := x.(type) {
 	case int:
 		switch typeName {
@@ -385,7 +385,7 @@ func EvaluateDataConversion(x interface{}, typeName string) interface{} {
 }
 
 // EvaluateUnary evaluate the type and value of a unary expression
-func EvaluateUnary(x interface{}, operator token.Token, xtype ast.Expr) (interface{}, ast.Expr) {
+func EvaluateUnary(x any, operator token.Token, xtype ast.Expr) (any, ast.Expr) {
 	switch operator {
 	case token.SUB:
 		switch value := x.(type) {
@@ -428,7 +428,7 @@ func EvaluateUnary(x interface{}, operator token.Token, xtype ast.Expr) (interfa
 }
 
 // EvaluateBinary evaluate the type and value of a binary expression
-func EvaluateBinary(x, y interface{}, operator token.Token, xtype, ytype ast.Expr) (interface{}, ast.Expr) {
+func EvaluateBinary(x, y any, operator token.Token, xtype, ytype ast.Expr) (any, ast.Expr) {
 	if operator == token.SHR || operator == token.SHL {
 		var rightOperand uint64
 		yValue := reflect.ValueOf(y)

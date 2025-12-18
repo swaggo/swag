@@ -26,12 +26,12 @@ func (i *Spec) ReadDoc() string {
 	i.Description = strings.ReplaceAll(i.Description, "\n", "\\n")
 
 	tpl := template.New("swagger_info").Funcs(template.FuncMap{
-		"marshal": func(v interface{}) string {
+		"marshal": func(v any) string {
 			a, _ := json.Marshal(v)
 
 			return string(a)
 		},
-		"escape": func(v interface{}) string {
+		"escape": func(v any) string {
 			// escape tabs
 			var str = strings.ReplaceAll(v.(string), "\t", "\\t")
 			// replace " with \", and if that results in \\", replace that with \\\"
