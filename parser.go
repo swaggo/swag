@@ -1835,6 +1835,11 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 		return result, nil
 	case OBJECT:
+		// Handle empty object "{}" as a special case
+		if exampleValue == "{}" {
+			return map[string]any{}, nil
+		}
+
 		if arrayType == "" {
 			return nil, fmt.Errorf("%s is unsupported type in example value `%s`", schemaType, exampleValue)
 		}
