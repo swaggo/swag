@@ -68,6 +68,17 @@ const (
 	SecurityClearanceSecret                             // @name SuperSecret This one has a name override and a comment
 )
 
+type (
+	GenericDifficulty[T any] string
+	Level                    int
+)
+
+const (
+	GenericDifficultyEasy   GenericDifficulty[Level] = "g_easy"   // @name GenericEasy
+	GenericDifficultyMedium GenericDifficulty[Level] = "g_medium" // @name GenericMedium This one also has a comment
+	GenericDifficultyHard   GenericDifficulty[Level] = "g_hard"   // This means really hard
+)
+
 type Person struct {
 	Name              string
 	Class             Class
@@ -75,6 +86,7 @@ type Person struct {
 	Type              Type
 	Sex               Sex
 	Difficulty        Difficulty
+	GenericDifficulty GenericDifficulty[Level]
 	SecurityClearance SecurityClearance
 }
 
@@ -83,6 +95,7 @@ type PersonWithArrayEnum struct {
 	Class             []Class
 	Mask              []Mask
 	Difficulty        []Difficulty
+	GenericDifficulty []GenericDifficulty[Level]
 	SecurityClearance []SecurityClearance
 	Type              Type
 }

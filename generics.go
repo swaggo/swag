@@ -183,6 +183,7 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 	parametrizedTypeSpec := &TypeSpecDef{
 		File:    original.File,
 		PkgPath: original.PkgPath,
+		Enums:   original.Enums,
 		TypeSpec: &ast.TypeSpec{
 			Name: &ast.Ident{
 				Name:    name,

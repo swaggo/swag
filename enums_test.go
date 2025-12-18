@@ -45,6 +45,14 @@ func TestParseGlobalEnums(t *testing.T) {
 	assert.Equal(t, "DifficultyHard", difficultyEnums[2].key)
 	assert.Equal(t, "This means really hard", difficultyEnums[2].Comment)
 
+	genericDifficultyEnums := p.packages.packages[typesPath].TypeDefinitions["GenericDifficulty"].Enums
+	assert.Equal(t, "GenericEasy", genericDifficultyEnums[0].key)
+	assert.Equal(t, "", genericDifficultyEnums[0].Comment)
+	assert.Equal(t, "GenericMedium", genericDifficultyEnums[1].key)
+	assert.Equal(t, "This one also has a comment", genericDifficultyEnums[1].Comment)
+	assert.Equal(t, "GenericDifficultyHard", genericDifficultyEnums[2].key)
+	assert.Equal(t, "This means really hard", genericDifficultyEnums[2].Comment)
+
 	securityLevelEnums := p.packages.packages[typesPath].TypeDefinitions["SecurityClearance"].Enums
 	assert.Equal(t, "Public", securityLevelEnums[0].key)
 	assert.Equal(t, "", securityLevelEnums[0].Comment)
