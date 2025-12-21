@@ -560,7 +560,7 @@ func isPrimitiveType(typeStr string) bool {
 		"uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
 		"byte": true, "rune": true,
 		"float32": true, "float64": true,
-		"time.Time": true,
+		"time.Time": true, "*time.Time": true,
 	}
 	return primitives[typeStr]
 }
@@ -613,7 +613,7 @@ func primitiveTypeToSchema(typeStr string) *spec.Schema {
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"number"}, Format: "float"}}
 	case "float64":
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"number"}, Format: "double"}}
-	case "time.Time":
+	case "time.Time", "*time.Time":
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}, Format: "date-time"}}
 	default:
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{typeStr}}}
