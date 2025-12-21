@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-openapi/spec"
+	"github.com/swaggo/swag/console"
 )
 
 type StructField struct {
@@ -78,7 +79,7 @@ func (this *StructField) BuildStructDef(public bool) string {
 
 	tags := this.GetTags()
 
-	jsonKey := ""
+	var jsonKey string
 
 	if tags["column"] != "" {
 		jsonKey = tags["column"]
@@ -86,7 +87,7 @@ func (this *StructField) BuildStructDef(public bool) string {
 		jsonKey = tags["json"]
 	}
 
-	fieldType := ""
+	var fieldType string
 	if strings.Contains(this.TypeString, "fields.") {
 		fieldType = this.GetGoType()
 	} else {
@@ -362,8 +363,14 @@ func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spe
 		return "", nil, false, nil, nil
 	}
 
-	// Extract property name from json tag
+	// Check for swaggerignore tag
 	tags := this.GetTags()
+	if swaggerIgnore, ok := tags["swaggerignore"]; ok && strings.EqualFold(swaggerIgnore, "true") {
+		console.Printf("$Red{$Bold{Ignoring field %s due to swaggerignore tag}}\n", this.Name)
+		return "", nil, false, nil, nil
+	}
+
+	// Extract property name from json tag
 	jsonTag := tags["json"]
 	if jsonTag == "" {
 		jsonTag = tags["column"]
@@ -373,7 +380,7 @@ func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spe
 		// embedded fields that shouldn't be in the API schema
 		return "", nil, false, nil, nil
 	}
-	
+
 	parts := strings.Split(jsonTag, ",")
 	propName = parts[0]
 

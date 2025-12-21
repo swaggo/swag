@@ -42,6 +42,7 @@ type DBColumns struct {
 	PasswordUpdatedAtTS *fields.IntField                         `              column:"password_updated_at_ts" type:"bigint"   default:"0"`
 	EmailVerifiedAtTS   *fields.IntField                         `              column:"email_verified_at_ts"   type:"bigint"   default:"0"`
 	LastLoginTS         *fields.IntField                         `              column:"last_login_ts"          type:"bigint"   default:"0"                  index:"true"`
+	Authentication      *fields.StructField[*Authentication]     `              column:"authentication"  type:"jsonb"    default:"{}" swaggerignore:"true"`
 }
 
 type JoinData struct {

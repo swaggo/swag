@@ -54,6 +54,9 @@ func TestCoreModelsIntegration(t *testing.T) {
 		assert.Contains(t, props, "properties", "Should have properties field (private struct)")
 		assert.Contains(t, props, "signup_properties", "Should have signup_properties field (private struct)")
 
+		// Verify swaggerignore:"true" tag is respected
+		assert.NotContains(t, props, "authentication", "Should NOT have authentication field (swaggerignore:true)")
+
 		// Log all properties for debugging
 		t.Logf("Base Account properties (%d total):", len(props))
 		for propName := range props {
@@ -77,12 +80,22 @@ func TestCoreModelsIntegration(t *testing.T) {
 		assert.NotContains(t, props, "hashed_password", "Should NOT have hashed_password field (no public tag)")
 		assert.NotContains(t, props, "properties", "Should NOT have properties field (no public tag)")
 		assert.NotContains(t, props, "signup_properties", "Should NOT have signup_properties field (no public tag)")
+		assert.NotContains(t, props, "authentication", "Should NOT have authentication field (swaggerignore:true)")
 
 		// Log all properties for debugging
 		t.Logf("Public Account properties (%d total):", len(props))
 		for propName := range props {
 			t.Logf("  - %s", propName)
 		}
+	})
+
+	// Test that swaggerignore schemas are not generated
+	t.Run("swaggerignore fields should not generate schemas", func(t *testing.T) {
+		definitions := p.GetSwagger().Definitions
+
+		// Authentication has swaggerignore:"true", so its schema should not be generated
+		assert.NotContains(t, definitions, "account.Authentication", "Should NOT have Authentication schema (field has swaggerignore:true)")
+		assert.NotContains(t, definitions, "account.AuthenticationPublic", "Should NOT have AuthenticationPublic schema (field has swaggerignore:true)")
 	})
 
 	// Test operations and their schema references
