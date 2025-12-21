@@ -2466,6 +2466,133 @@ func TestParseDeprecationDescription(t *testing.T) {
 	}
 }
 
+func TestParsePublicAnnotation(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Public`
+	operation := NewOperation(nil)
+
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+
+	if !operation.IsPublic {
+		t.Error("Failed to parse @public comment")
+	}
+}
+
+func TestParsePublicWithResponseSchema(t *testing.T) {
+	t.Parallel()
+
+	parser := New()
+
+	// Add base type and its Public variant to definitions
+	parser.swagger.Definitions["model.User"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"id":       {SchemaProps: spec.SchemaProps{Type: []string{"integer"}}},
+				"name":     {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+				"password": {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+			},
+		},
+	}
+	parser.swagger.Definitions["model.UserPublic"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"id":   {SchemaProps: spec.SchemaProps{Type: []string{"integer"}}},
+				"name": {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+				// password field excluded in Public variant
+			},
+		},
+	}
+
+	parser.addTestType("model.User")
+	parser.addTestType("model.UserPublic")
+
+	operation := NewOperation(parser)
+
+	// Parse @Public annotation
+	err := operation.ParseComment(`@Public`, nil)
+	assert.NoError(t, err)
+	assert.True(t, operation.IsPublic)
+
+	// Parse @Success with object type - should use Public variant
+	err = operation.ParseComment(`@Success 200 {object} model.User`, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.NotNil(t, response.Schema)
+
+	// Verify it references the Public variant
+	assert.Equal(t, "#/definitions/model.UserPublic", response.Schema.Ref.String())
+}
+
+func TestParsePublicWithCombinedSchema(t *testing.T) {
+	t.Parallel()
+
+	parser := New()
+
+	// Add response envelope (no Public variant)
+	parser.swagger.Definitions["response.Success"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"data": {SchemaProps: spec.SchemaProps{Type: []string{"object"}}},
+			},
+		},
+	}
+	parser.addTestType("response.Success")
+
+	// Add data type with Public variant
+	parser.swagger.Definitions["model.Account"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"id":       {SchemaProps: spec.SchemaProps{Type: []string{"integer"}}},
+				"email":    {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+				"password": {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+			},
+		},
+	}
+	parser.swagger.Definitions["model.AccountPublic"] = spec.Schema{
+		SchemaProps: spec.SchemaProps{
+			Type: []string{"object"},
+			Properties: map[string]spec.Schema{
+				"id":    {SchemaProps: spec.SchemaProps{Type: []string{"integer"}}},
+				"email": {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+				// password excluded
+			},
+		},
+	}
+	parser.addTestType("model.Account")
+	parser.addTestType("model.AccountPublic")
+
+	operation := NewOperation(parser)
+
+	// Parse @Public annotation
+	err := operation.ParseComment(`@Public`, nil)
+	assert.NoError(t, err)
+	assert.True(t, operation.IsPublic)
+
+	// Parse @Success with combined schema - outer type should use base, nested should use Public
+	err = operation.ParseComment(`@Success 200 {object} response.Success{data=model.Account}`, nil)
+	assert.NoError(t, err)
+
+	response := operation.Responses.StatusCodeResponses[200]
+	assert.NotNil(t, response.Schema)
+
+	// The response should be a composed schema
+	assert.NotNil(t, response.Schema.AllOf)
+
+	// First part should reference response.Success (base, not Public)
+	assert.Equal(t, "#/definitions/response.Success", response.Schema.AllOf[0].Ref.String())
+
+	// Second part should have data property referencing model.AccountPublic
+	dataSchema := response.Schema.AllOf[1].Properties["data"]
+	assert.Equal(t, "#/definitions/model.AccountPublic", dataSchema.Ref.String())
+}
+
 func TestParseExtentions(t *testing.T) {
 	t.Parallel()
 	// Fail if there are no args for attributes.
