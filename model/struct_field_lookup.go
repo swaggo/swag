@@ -189,13 +189,23 @@ func (c *CoreStructParser) processStructField(f *StructField, packageMap map[str
 	}
 
 	subTypeName := strings.TrimSuffix(parts[1], "]")
-	subTypeName = strings.TrimPrefix(subTypeName, "*")
+
+	// Handle array and pointer prefixes - keep them in originalTypeName but strip for type lookup
+	arrayPrefix := ""
+	if strings.HasPrefix(subTypeName, "[]") {
+		arrayPrefix = "[]"
+		subTypeName = strings.TrimPrefix(subTypeName, "[]")
+	}
+	if strings.HasPrefix(subTypeName, "*") {
+		arrayPrefix = arrayPrefix + "*"
+		subTypeName = strings.TrimPrefix(subTypeName, "*")
+	}
 
 	// Store the original full type name with package path
 	originalTypeName := subTypeName
 	var subTypePackage string
 
-	debugLog("----Sub Type Name: %s\n", subTypeName)
+	debugLog("----Sub Type Name: %s (arrayPrefix: %s)\n", subTypeName, arrayPrefix)
 
 	// Parse package and type name
 	if strings.Contains(subTypeName, "/") {
@@ -212,7 +222,7 @@ func (c *CoreStructParser) processStructField(f *StructField, packageMap map[str
 
 		packageName := dotParts[0]
 		typeName := dotParts[len(dotParts)-1]
-		originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
+		originalTypeName = arrayPrefix + fmt.Sprintf("%s.%s", packageName, typeName)
 		fullPackagePath := strings.Join(pathParts[:len(pathParts)-1], "/") + "/" + packageName
 
 		subTypePackage = fullPackagePath
@@ -227,12 +237,12 @@ func (c *CoreStructParser) processStructField(f *StructField, packageMap map[str
 		}
 		packageName := subParts[len(subParts)-2]
 		typeName := subParts[len(subParts)-1]
-		originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
+		originalTypeName = arrayPrefix + fmt.Sprintf("%s.%s", packageName, typeName)
 
 		subTypePackage = strings.Join(subParts[:len(subParts)-1], ".")
 		subTypeName = typeName
 	} else {
-		f.TypeString = subTypeName
+		f.TypeString = arrayPrefix + subTypeName
 		builder.Fields = append(builder.Fields, f)
 		return
 	}
@@ -400,10 +410,43 @@ func (c *CoreStructParser) ExtractFieldsRecursive(pkg *packages.Package, typeNam
 	return fields
 }
 
+// shouldTreatAsSwaggerPrimitive checks if a named type should be treated as a primitive in Swagger
+// even though it might be a struct in Go (like time.Time or decimal.Decimal)
+func shouldTreatAsSwaggerPrimitive(named *types.Named) bool {
+	if named.Obj().Pkg() == nil {
+		return false
+	}
+
+	pkgPath := named.Obj().Pkg().Path()
+	typeName := named.Obj().Name()
+
+	// Types that are structs in Go but should be primitives in Swagger
+	primitiveTypes := map[string][]string{
+		"time":                          {"Time"},
+		"github.com/shopspring/decimal": {"Decimal"},
+		"gopkg.in/guregu/null.v4":       {"String", "Int", "Float", "Bool", "Time"},
+		"database/sql":                  {"NullString", "NullInt64", "NullFloat64", "NullBool", "NullTime"},
+	}
+
+	if typeNames, ok := primitiveTypes[pkgPath]; ok {
+		for _, name := range typeNames {
+			if typeName == name {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func (c *CoreStructParser) checkNamed(fieldType types.Type) ([]*StructField, *types.Named, bool) {
 	named, ok := fieldType.(*types.Named)
 	if ok {
 		if strings.Contains(named.Obj().Pkg().Path(), "/lib/model/fields") {
+			return nil, nil, false
+		}
+		// Skip types that should be treated as primitives in Swagger
+		if shouldTreatAsSwaggerPrimitive(named) {
 			return nil, nil, false
 		}
 		if _, ok := named.Underlying().(*types.Struct); ok {

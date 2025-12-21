@@ -368,7 +368,8 @@
         "name",
         "organization_name",
         "created_by_name",
-        "updated_by_name"
+        "updated_by_name",
+        "tags"
       ],
       "properties": {
         "created_at": {
@@ -443,6 +444,12 @@
         "status": {
           "type": "integer"
         },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/account.IconTagJoin"
+          }
+        },
         "test_user_type": {
           "type": "integer"
         },
@@ -482,7 +489,8 @@
         "test_user_type",
         "organization_id",
         "role",
-        "is_super_user_session"
+        "is_super_user_session",
+        "tags"
       ],
       "properties": {
         "created_at": {
@@ -529,6 +537,12 @@
         },
         "status": {
           "type": "integer"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/account.IconTagJoinPublic"
+          }
         },
         "test_user_type": {
           "type": "integer"
@@ -870,6 +884,46 @@
           "type": "string"
         }
       }
+    },
+    "account.IconTagJoin": {
+      "type": "object",
+      "title": "AccountIconTagJoin",
+      "required": [
+        "id",
+        "name",
+        "urn",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "account.IconTagJoinPublic": {
+      "type": "object",
+      "title": "AccountIconTagJoinPublic"
     },
     "account.Properties": {
       "type": "object",

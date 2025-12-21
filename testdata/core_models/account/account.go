@@ -49,8 +49,9 @@ type JoinData struct {
 	Name             *fields.StringField `json:"name"              type:"text"`
 	OrganizationName *fields.StringField `json:"organization_name" type:"text"`
 
-	CreatedByName *fields.StringField `json:"created_by_name" type:"text"`
-	UpdatedByName *fields.StringField `json:"updated_by_name" type:"text"`
+	CreatedByName *fields.StringField                 `json:"created_by_name" type:"text"`
+	UpdatedByName *fields.StringField                 `json:"updated_by_name" type:"text"`
+	Tags          *fields.StructField[[]*IconTagJoin] `public:"view" json:"tags"            type:"jsonb"`
 }
 
 type ManualFields struct {

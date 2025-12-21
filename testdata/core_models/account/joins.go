@@ -1,6 +1,8 @@
 package account
 
 import (
+	"time"
+
 	"github.com/griffnb/core/lib/model"
 	"github.com/griffnb/core/lib/model/fields"
 	"github.com/swaggo/swag/testdata/core_models/billing_plan"
@@ -43,4 +45,13 @@ func AddPlans(options *model.Options) *model.Options {
 		"organizations.feature_set_overrides as feature_set_overrides",
 	}...)
 	return options
+}
+
+type IconTagJoin struct {
+	ID        int64      `json:"id"`
+	Name      string     `json:"name"`
+	URN       string     `json:"urn"`
+	Status    int64      `json:"status"`
+	CreatedAt *time.Time `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
 }
