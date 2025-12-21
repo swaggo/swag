@@ -7,16 +7,25 @@ import (
 	"go/token"
 	"go/types"
 	"strings"
+	"sync"
 
 	"github.com/swaggo/swag/console"
 	"golang.org/x/tools/go/packages"
 )
 
+// Global package cache for enum lookup
+var (
+	enumPackageCache = make(map[string]*packages.Package)
+	enumCacheMutex   sync.RWMutex
+)
+
 // ParserEnumLookup implements TypeEnumLookup using CoreStructParser
 type ParserEnumLookup struct {
-	Parser     *CoreStructParser
-	BaseModule string
-	PkgPath    string
+	Parser       *CoreStructParser
+	BaseModule   string
+	PkgPath      string
+	packageCache map[string]*packages.Package // Local cache for loaded packages
+	cacheMutex   sync.RWMutex                 // Protect local cache
 }
 
 // GetEnumsForType looks up enum values for a given type name
@@ -27,55 +36,68 @@ func (p *ParserEnumLookup) GetEnumsForType(typeName string, file *ast.File) ([]E
 		return nil, fmt.Errorf("parser is nil")
 	}
 
-	// Parse the type name to extract package and type
+	// Parse the type name to extract package path and type name
 	// Handle both "constants.Role" and "github.com/.../constants.Role"
-	// We want to extract "constants" and "Role"
-	var pkgName, baseTypeName string
+	var targetPkgPath, baseTypeName string
 	lastDot := strings.LastIndex(typeName, ".")
 	if lastDot == -1 {
-		// No dot, just a type name
+		// No dot, just a type name - use the current package path
 		baseTypeName = typeName
+		targetPkgPath = p.PkgPath
 	} else {
 		baseTypeName = typeName[lastDot+1:]
-		// Find the package name - it's the last path segment before the type
-		remaining := typeName[:lastDot]
-		lastSlash := strings.LastIndex(remaining, "/")
-		if lastSlash == -1 {
-			// No slash, so it's just "package.Type"
-			pkgName = remaining
-		} else {
-			// It's a full path like "github.com/.../constants"
-			pkgName = remaining[lastSlash+1:]
+		// Everything before the last dot is the package path
+		targetPkgPath = typeName[:lastDot]
+	}
+
+	console.Printf("$Bold{$Red{Looking up enums for type: %s in package: %s (path: %s)}}\n", baseTypeName, "", targetPkgPath)
+
+	// Initialize local cache if needed
+	p.cacheMutex.Lock()
+	if p.packageCache == nil {
+		p.packageCache = make(map[string]*packages.Package)
+	}
+	p.cacheMutex.Unlock()
+
+	// Check global cache first
+	enumCacheMutex.RLock()
+	pkg, pkgCached := enumPackageCache[targetPkgPath]
+	enumCacheMutex.RUnlock()
+
+	if !pkgCached {
+		// Check local cache
+		p.cacheMutex.RLock()
+		pkg, pkgCached = p.packageCache[targetPkgPath]
+		p.cacheMutex.RUnlock()
+	}
+
+	if !pkgCached {
+		// Load the package
+		cfg := &packages.Config{
+			Mode: packages.NeedName | packages.NeedFiles | packages.NeedSyntax |
+				packages.NeedTypes | packages.NeedTypesInfo | packages.NeedImports,
 		}
-	}
 
-	// Load the packages
-	cfg := &packages.Config{
-		Mode: packages.NeedName | packages.NeedFiles | packages.NeedSyntax |
-			packages.NeedTypes | packages.NeedTypesInfo | packages.NeedImports,
-	}
+		pkgs, err := packages.Load(cfg, targetPkgPath)
+		if err != nil {
+			return nil, err
+		}
 
-	// Construct the package path
-	var targetPkgPath string
-	if pkgName != "" {
-		// Try to find the package - assume it's in the same module
-		targetPkgPath = p.BaseModule + "/testdata/core_models/" + pkgName
-		console.Printf("$Bold{$Red{Looking up enums for type: %s in package: %s (path: %s)}}\n", baseTypeName, pkgName, targetPkgPath)
-	} else {
-		targetPkgPath = p.PkgPath
-		console.Printf("$Bold{$Red{Looking up enums for type: %s in package path: %s}}\n", baseTypeName, targetPkgPath)
-	}
+		if len(pkgs) == 0 {
+			return nil, fmt.Errorf("no packages found for %s", targetPkgPath)
+		}
 
-	pkgs, err := packages.Load(cfg, targetPkgPath)
-	if err != nil {
-		return nil, err
-	}
+		pkg = pkgs[0]
 
-	if len(pkgs) == 0 {
-		return nil, fmt.Errorf("no packages found for %s", targetPkgPath)
-	}
+		// Store in both caches
+		enumCacheMutex.Lock()
+		enumPackageCache[targetPkgPath] = pkg
+		enumCacheMutex.Unlock()
 
-	pkg := pkgs[0]
+		p.cacheMutex.Lock()
+		p.packageCache[targetPkgPath] = pkg
+		p.cacheMutex.Unlock()
+	}
 
 	// Look for the type definition and collect const values
 	var enums []EnumValue
