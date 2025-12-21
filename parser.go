@@ -21,6 +21,7 @@ import (
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
+	"github.com/swaggo/swag/model"
 )
 
 const (
@@ -68,6 +69,7 @@ const (
 	xCodeSamplesAttr        = "@x-codesamples"
 	scopeAttrPrefix         = "@scope."
 	stateAttr               = "@state"
+	publicAttr              = "@public"
 )
 
 // ParseFlag determine what to parse
@@ -1263,9 +1265,38 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return PrimitiveSchema(schemaType), nil
 	}
 
-	typeSpecDef := parser.packages.FindTypeSpec(typeName, file)
+	// Check if this is a Public variant request (e.g., "account.AccountPublic")
+	// If so, we need to find the base type and ensure it's parsed
+	baseTypeName := typeName
+	isPublicVariant := false
+	if strings.HasSuffix(typeName, "Public") {
+		// Extract package prefix if present
+		lastDot := strings.LastIndex(typeName, ".")
+		if lastDot >= 0 {
+			// Has package prefix like "account.AccountPublic"
+			potentialBaseType := typeName[:len(typeName)-len("Public")]
+			// Try to find the base type
+			baseTypeSpec := parser.packages.FindTypeSpec(potentialBaseType, file)
+			if baseTypeSpec != nil {
+				isPublicVariant = true
+				baseTypeName = potentialBaseType
+				parser.debug.Printf("Detected Public variant request '%s', looking for base type '%s'", typeName, baseTypeName)
+			}
+		} else {
+			// No package prefix, just type name like "AccountPublic"
+			potentialBaseType := typeName[:len(typeName)-len("Public")]
+			baseTypeSpec := parser.packages.FindTypeSpec(potentialBaseType, file)
+			if baseTypeSpec != nil {
+				isPublicVariant = true
+				baseTypeName = potentialBaseType
+				parser.debug.Printf("Detected Public variant request '%s', looking for base type '%s'", typeName, baseTypeName)
+			}
+		}
+	}
+
+	typeSpecDef := parser.packages.FindTypeSpec(baseTypeName, file)
 	if typeSpecDef == nil {
-		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
+		return nil, fmt.Errorf("cannot find type definition: %s", baseTypeName)
 	}
 
 	if override, ok := parser.Overrides[typeSpecDef.FullPath()]; ok {
@@ -1301,6 +1332,29 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 			}
 			return nil, fmt.Errorf("%s: %w", typeName, err)
 		}
+	}
+
+	// If this is a Public variant request, look up the Public schema from definitions
+	if isPublicVariant {
+		publicSchema, exists := parser.swagger.Definitions[typeName]
+		if !exists {
+			// Public variant doesn't exist - this is OK if the type doesn't use custom parser
+			// Fall back to base schema (Public variant would be identical anyway)
+			parser.debug.Printf("Public variant '%s' not found, using base schema '%s'", typeName, baseTypeName)
+			if ref {
+				if IsComplexSchema(schema.Schema) {
+					return parser.getRefTypeSchema(typeSpecDef, schema), nil
+				}
+				// if it is a simple schema, just return a copy
+				newSchema := *schema.Schema
+				return &newSchema, nil
+			}
+			return schema.Schema, nil
+		}
+		if ref {
+			return RefSchema(typeName), nil
+		}
+		return &publicSchema, nil
 	}
 
 	if ref {
@@ -1342,6 +1396,151 @@ func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
 	return false
 }
 
+// getBaseModule extracts the base module path from a package path
+// For example: "github.com/swaggo/swag/testdata/core_models/account" -> "github.com/swaggo/swag"
+func (parser *Parser) getBaseModule(pkgPath string) string {
+	// Try to find a common base pattern
+	// Look for patterns like /testdata/, /internal/, /cmd/, etc.
+	patterns := []string{"/testdata/", "/internal/", "/cmd/", "/pkg/"}
+
+	for _, pattern := range patterns {
+		if idx := strings.Index(pkgPath, pattern); idx >= 0 {
+			return pkgPath[:idx]
+		}
+	}
+
+	// If no pattern found, try to extract first 3 path segments
+	// e.g., "github.com/user/repo/..." -> "github.com/user/repo"
+	parts := strings.Split(pkgPath, "/")
+	if len(parts) >= 3 {
+		return strings.Join(parts[:3], "/")
+	}
+
+	// Fall back to the whole path
+	return pkgPath
+}
+
+// requiresCustomParser checks if a type definition requires the custom struct parser
+// Returns true if the struct has fields that use fields.StructField types
+func (parser *Parser) requiresCustomParser(typeSpecDef *TypeSpecDef) bool {
+	// Only check struct types
+	structType, ok := typeSpecDef.TypeSpec.Type.(*ast.StructType)
+	if !ok {
+		return false
+	}
+
+	// Simple check: if the file imports "github.com/griffnb/core/lib/model/fields", use custom parser
+	if typeSpecDef.File != nil {
+		for _, imp := range typeSpecDef.File.Imports {
+			impPath := strings.Trim(imp.Path.Value, "\"")
+			if strings.Contains(impPath, "/model/fields") {
+				parser.debug.Printf("Type '%s' imports fields package, using custom parser", typeSpecDef.TypeName())
+				return true
+			}
+		}
+	}
+
+	// Check if any field uses fields.StructField
+	for _, field := range structType.Fields.List {
+		// Check field type for StructField pattern
+		if parser.hasStructFieldType(field.Type, typeSpecDef) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// hasStructFieldType recursively checks if a type expression contains fields.StructField
+func (parser *Parser) hasStructFieldType(expr ast.Expr, currentTypeSpecDef *TypeSpecDef) bool {
+	switch t := expr.(type) {
+	case *ast.StarExpr:
+		return parser.hasStructFieldType(t.X, currentTypeSpecDef)
+	case *ast.SelectorExpr:
+		// Check for fields.StructField pattern
+		if ident, ok := t.X.(*ast.Ident); ok {
+			if ident.Name == "fields" {
+				// Any fields.* type indicates we need custom parser
+				return true
+			}
+			// This might be a package-qualified type like base.Structure
+			// Try to resolve it and check if IT contains StructField types
+			pkgName := ident.Name
+			typeName := t.Sel.Name
+
+			// Look up the embedded type
+			if embeddedType := parser.findTypeSpec(pkgName, typeName, currentTypeSpecDef.File); embeddedType != nil {
+				return parser.requiresCustomParser(embeddedType)
+			}
+		}
+		return false
+	case *ast.IndexExpr:
+		// Generic type like StructField[T]
+		return parser.hasStructFieldType(t.X, currentTypeSpecDef)
+	case *ast.ArrayType:
+		return parser.hasStructFieldType(t.Elt, currentTypeSpecDef)
+	case *ast.MapType:
+		return parser.hasStructFieldType(t.Value, currentTypeSpecDef)
+	case *ast.Ident:
+		// This might be an embedded type from the same package
+		// Try to resolve it
+		if embeddedType := parser.findTypeSpec("", t.Name, currentTypeSpecDef.File); embeddedType != nil {
+			return parser.requiresCustomParser(embeddedType)
+		}
+		return false
+	case *ast.StructType:
+		// Embedded struct - check its fields
+		for _, field := range t.Fields.List {
+			if parser.hasStructFieldType(field.Type, currentTypeSpecDef) {
+				return true
+			}
+		}
+		return false
+	}
+	return false
+}
+
+// findTypeSpec tries to find a type specification by package and name
+func (parser *Parser) findTypeSpec(pkgName, typeName string, currentFile *ast.File) *TypeSpecDef {
+	// First check if it's in the same package (pkgName is empty or matches current package)
+	if pkgName == "" || (currentFile != nil && currentFile.Name != nil && pkgName == currentFile.Name.Name) {
+		// Look in parsed schemas for same-package type
+		for typeSpecDef := range parser.parsedSchemas {
+			if typeSpecDef.Name() == typeName {
+				return typeSpecDef
+			}
+		}
+	}
+
+	// Check imports to resolve package path
+	if currentFile != nil && pkgName != "" {
+		for _, imp := range currentFile.Imports {
+			impPath := strings.Trim(imp.Path.Value, "\"")
+
+			// Check if this import matches the package name we're looking for
+			var importName string
+			if imp.Name != nil {
+				importName = imp.Name.Name
+			} else {
+				// Extract package name from import path
+				parts := strings.Split(impPath, "/")
+				importName = parts[len(parts)-1]
+			}
+
+			if importName == pkgName {
+				// Try to find the type in this package's unique definitions
+				fullTypeName := impPath + "." + typeName
+				if typeSpecDef, exists := parser.packages.uniqueDefinitions[fullTypeName]; exists {
+					return typeSpecDef
+				}
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 // ParseDefinition parses given type spec that corresponds to the type under
 // given name and package, and populates swagger schema definitions registry
 // with a schema for the given type
@@ -1378,6 +1577,96 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	parser.structStack = append(parser.structStack, typeSpecDef)
 
 	parser.debug.Printf("Generating %s", typeName)
+
+	// Check if this type requires custom parsing (has fields.StructField types)
+	if parser.requiresCustomParser(typeSpecDef) {
+		parser.debug.Printf("Using custom parser for '%s' (contains StructField types)", typeName)
+
+		// Determine base module - try to extract from PkgPath
+		baseModule := parser.getBaseModule(typeSpecDef.PkgPath)
+
+		// Construct full package path
+		pkgPath := typeSpecDef.PkgPath
+		// If PkgPath looks like a relative package name (doesn't contain /), try to find the full path
+		if !strings.Contains(pkgPath, "/") {
+			parser.debug.Printf("Package '%s' looks relative, searching imports for full path", pkgPath)
+
+			// Search through all files for imports that end with this package name
+			found := false
+			err := parser.packages.RangeFiles(func(fileInfo *AstFileInfo) error {
+				if found {
+					return nil
+				}
+				for _, imp := range fileInfo.File.Imports {
+					impPath := strings.Trim(imp.Path.Value, "\"")
+					// Check if this import ends with /pkgPath
+					if strings.HasSuffix(impPath, "/"+pkgPath) {
+						pkgPath = impPath
+						parser.debug.Printf("Resolved package path for '%s' to '%s' from imports", typeSpecDef.PkgPath, pkgPath)
+						found = true
+						return nil
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				parser.debug.Printf("Error searching for package path: %s", err)
+			}
+		}
+
+		parser.debug.Printf("typeSpecDef.PkgPath='%s', resolved pkgPath='%s', baseModule='%s'", typeSpecDef.PkgPath, pkgPath, baseModule)
+
+		// Call BuildAllSchemas to get all schema variants
+		allSchemas, err := model.BuildAllSchemas(baseModule, pkgPath, typeSpecDef.Name())
+		if err != nil {
+			parser.debug.Printf("Error using custom parser for '%s': %s", typeName, err)
+			// Fall back to standard parsing if custom parser fails
+		} else {
+			// Store all generated schemas in definitions
+			for schemaName, schemaSpec := range allSchemas {
+				// Check if there's a @Name override
+				if alias := typeSpecDef.Alias(); alias != "" {
+					// Apply @Name override to the schema title
+					// Only override the base schema, not Public variants
+					if !strings.HasSuffix(schemaName, "Public") {
+						schemaSpec.Title = alias
+					} else {
+						// For Public variant, append "Public" to the alias
+						schemaSpec.Title = alias + "Public"
+					}
+				}
+				
+				parser.swagger.Definitions[schemaName] = *schemaSpec
+				parser.debug.Printf("Added schema '%s' to definitions", schemaName)
+			}
+
+			// Find the base schema - it should be package-qualified
+			// Extract package name from pkgPath (last segment)
+			packageName := pkgPath
+			if idx := strings.LastIndex(pkgPath, "/"); idx >= 0 {
+				packageName = pkgPath[idx+1:]
+			}
+			baseSchemaKey := packageName + "." + typeSpecDef.Name()
+
+			baseSchema := allSchemas[baseSchemaKey]
+			if baseSchema == nil {
+				parser.debug.Printf("Warning: base schema not found for key '%s' (tried unqualified '%s'), using empty object", baseSchemaKey, typeSpecDef.Name())
+				baseSchema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{OBJECT}}}
+			}
+
+			schema := &Schema{
+				Name:    typeSpecDef.SchemaName,
+				PkgPath: typeSpecDef.PkgPath,
+				Schema:  baseSchema,
+			}
+			parser.parsedSchemas[typeSpecDef] = schema
+
+			// Pop from struct stack
+			parser.structStack = parser.structStack[:len(parser.structStack)-1]
+
+			return schema, nil
+		}
+	}
 
 	definition, err := parser.parseTypeExpr(typeSpecDef.File, typeSpecDef.TypeSpec.Type, false)
 	if err != nil {
@@ -1573,6 +1862,7 @@ func (parser *Parser) parseTypeExpr(file *ast.File, typeExpr ast.Expr, ref bool)
 	return parser.parseGenericTypeExpr(file, typeExpr)
 }
 
+// TODO WIP
 func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.Schema, error) {
 	required, properties := make([]string, 0), make(map[string]spec.Schema)
 
