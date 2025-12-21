@@ -210,8 +210,8 @@ func TestAccountJoinedSchema(t *testing.T) {
 }
 
 func TestBillingPlanSchema(t *testing.T) {
-	searchDir := filepath.Join("..")
-	mainAPIFile := "core_models/main.go"
+	searchDir := "."
+	mainAPIFile := "main.go"
 
 	p := swag.New()
 	err := p.ParseAPI(searchDir, mainAPIFile, 100)
@@ -232,5 +232,36 @@ func TestBillingPlanSchema(t *testing.T) {
 		assert.Contains(t, props, "description", "Should have description")
 
 		t.Logf("BillingPlanJoined has %d properties", len(props))
+	})
+
+	// Test cleanup removes unused definitions
+	t.Run("RemoveUnusedDefinitions should remove unreferenced schemas", func(t *testing.T) {
+		swagger := p.GetSwagger()
+		
+		// Count definitions before cleanup
+		beforeCount := len(swagger.Definitions)
+		t.Logf("Definitions before cleanup: %d", beforeCount)
+		
+		// Apply cleanup
+		swag.RemoveUnusedDefinitions(swagger)
+		
+		// Count definitions after cleanup
+		afterCount := len(swagger.Definitions)
+		t.Logf("Definitions after cleanup: %d", afterCount)
+		t.Logf("Removed %d unused definitions", beforeCount-afterCount)
+		
+		// Should have removed some definitions
+		assert.Less(t, afterCount, beforeCount, "Should remove some unused definitions")
+		
+		// Verify that used schemas still exist
+		assert.Contains(t, swagger.Definitions, "account.Account", "Used schema should still exist")
+		assert.Contains(t, swagger.Definitions, "response.ErrorResponse", "Used schema should still exist")
+		assert.Contains(t, swagger.Definitions, "response.SuccessResponse", "Used schema should still exist")
+		
+		// Log remaining definitions
+		t.Log("Remaining definitions:")
+		for name := range swagger.Definitions {
+			t.Logf("  - %s", name)
+		}
 	})
 }
