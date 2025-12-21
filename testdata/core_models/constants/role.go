@@ -7,10 +7,10 @@ const (
 	ROLE_ANY_AUTHORIZED Role = 0  // Any Authorized
 	ROLE_USER           Role = 1  // User
 
-	ROLE_ORG_ADMIN Role = 40
-	ROLE_ORG_OWNER Role = 50
+	ROLE_ORG_ADMIN Role = 40 // Org Admin
+	ROLE_ORG_OWNER Role = 50 // Org Owner
 
-	ROLE_READ_ADMIN      = 90
+	ROLE_READ_ADMIN      = 90  // Read-Only Admin
 	ROLE_ADMIN      Role = 100 // System Admin
 
 )

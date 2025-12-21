@@ -6,6 +6,7 @@ import (
 	"github.com/griffnb/core/lib/model"
 	"github.com/griffnb/core/lib/model/fields"
 	"github.com/swaggo/swag/testdata/core_models/billing_plan"
+	"github.com/swaggo/swag/testdata/core_models/constants"
 )
 
 // AddJoinData adds in the join data
@@ -48,10 +49,11 @@ func AddPlans(options *model.Options) *model.Options {
 }
 
 type IconTagJoin struct {
-	ID        int64      `json:"id"`
-	Name      string     `json:"name"`
-	URN       string     `json:"urn"`
-	Status    int64      `json:"status"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
+	ID        int64          `json:"id"`
+	Name      string         `json:"name"`
+	URN       string         `json:"urn"`
+	Status    int64          `json:"status"`
+	CreatedAt *time.Time     `json:"created_at"`
+	UpdatedAt *time.Time     `json:"updated_at"`
+	Role      constants.Role `json:"role"`
 }
