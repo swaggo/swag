@@ -21,6 +21,7 @@ import (
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
+	"github.com/swaggo/swag/console"
 	"github.com/swaggo/swag/model"
 )
 
@@ -1006,7 +1007,6 @@ func getTagsFromComment(comment string) (tags []string) {
 		}
 	}
 	return
-
 }
 
 func (parser *Parser) matchTag(tag string) bool {
@@ -1401,10 +1401,17 @@ func (parser *Parser) isInStructStack(typeSpecDef *TypeSpecDef) bool {
 func (parser *Parser) getBaseModule(pkgPath string) string {
 	// Try to find a common base pattern
 	// Look for patterns like /testdata/, /internal/, /cmd/, etc.
-	patterns := []string{"/testdata/", "/internal/", "/cmd/", "/pkg/"}
+	patterns := []string{"/testdata/", "/internal/", "/applications/", "/cmd/", "/pkg/"}
 
 	for _, pattern := range patterns {
+		var debug bool
+		if pattern == "/applications/" && strings.Contains(pkgPath, "/applications/") {
+			debug = true
+		}
 		if idx := strings.Index(pkgPath, pattern); idx >= 0 {
+			if debug {
+				console.Printf("$Red{Getting path for applications folder: %s -> %s}", pkgPath, pkgPath[:idx])
+			}
 			return pkgPath[:idx]
 		}
 	}
@@ -1565,13 +1572,9 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 	}
 
 	if parser.UseStructName {
-		schemaName := strings.Split(typeSpecDef.SchemaName, ".")
-		if len(schemaName) > 1 {
-			typeSpecDef.SchemaName = schemaName[len(schemaName)-1]
-			typeName = typeSpecDef.SchemaName
-		} else {
-			parser.debug.Printf("Could not strip type name of %s", typeName)
-		}
+		// Use simplified name instead of full path
+		typeSpecDef.SetSchemaNameSimple()
+		typeName = typeSpecDef.SchemaName
 	}
 
 	parser.structStack = append(parser.structStack, typeSpecDef)
@@ -1624,6 +1627,39 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 		} else {
 			// Store all generated schemas in definitions
 			for schemaName, schemaSpec := range allSchemas {
+				// Apply UseStructName simplification if enabled
+				finalSchemaName := schemaName
+				if parser.UseStructName {
+					// Convert "packageName.TypeName" to just "TypeName"
+					// or "packageName.TypeNamePublic" to "TypeNamePublic"
+					parts := strings.Split(schemaName, ".")
+					if len(parts) > 1 {
+						finalSchemaName = parts[len(parts)-1]
+
+						// Also fix the Title if it has duplication
+						// e.g., "MarketingContentMarketingContent" -> "MarketingContent"
+						if schemaSpec.Title != "" {
+							// Extract the type name from the schema name (last part)
+							typeName := parts[len(parts)-1]
+							// Check if Title is duplicated (Title contains typeName twice)
+							// This handles cases like marketing_content.MarketingContent
+							// where Title might be "MarketingContentMarketingContent"
+							if strings.HasSuffix(schemaSpec.Title, typeName) {
+								prefix := strings.TrimSuffix(schemaSpec.Title, typeName)
+								// Remove common separators that might have been converted
+								prefix = strings.Trim(prefix, "_-")
+								// If the prefix (when lowercased and separators removed) matches
+								// the start of typeName, use just typeName
+								prefixClean := strings.ReplaceAll(strings.ReplaceAll(strings.ToLower(prefix), "_", ""), "-", "")
+								typeNameLower := strings.ToLower(typeName)
+								if strings.HasPrefix(typeNameLower, prefixClean) && prefixClean != "" {
+									schemaSpec.Title = typeName
+								}
+							}
+						}
+					}
+				}
+
 				// Check if there's a @Name override
 				if alias := typeSpecDef.Alias(); alias != "" {
 					// Apply @Name override to the schema title
@@ -1635,9 +1671,9 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 						schemaSpec.Title = alias + "Public"
 					}
 				}
-				
-				parser.swagger.Definitions[schemaName] = *schemaSpec
-				parser.debug.Printf("Added schema '%s' to definitions", schemaName)
+
+				parser.swagger.Definitions[finalSchemaName] = *schemaSpec
+				parser.debug.Printf("Added schema '%s' to definitions", finalSchemaName)
 			}
 
 			// Find the base schema - it should be package-qualified
@@ -1648,14 +1684,19 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 			}
 			baseSchemaKey := packageName + "." + typeSpecDef.Name()
 
-			baseSchema := allSchemas[baseSchemaKey]
+			// If UseStructName is enabled, use simplified key
+			if parser.UseStructName {
+				baseSchemaKey = typeSpecDef.Name()
+			}
+
+			baseSchema := allSchemas[packageName+"."+typeSpecDef.Name()]
 			if baseSchema == nil {
 				parser.debug.Printf("Warning: base schema not found for key '%s' (tried unqualified '%s'), using empty object", baseSchemaKey, typeSpecDef.Name())
 				baseSchema = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{OBJECT}}}
 			}
 
 			schema := &Schema{
-				Name:    typeSpecDef.SchemaName,
+				Name:    baseSchemaKey,
 				PkgPath: typeSpecDef.PkgPath,
 				Schema:  baseSchema,
 			}
@@ -1683,8 +1724,8 @@ func (parser *Parser) ParseDefinition(typeSpecDef *TypeSpecDef) (*Schema, error)
 
 	if len(typeSpecDef.Enums) > 0 {
 		var varnames []string
-		var enumComments = make(map[string]string)
-		var enumDescriptions = make([]string, 0, len(typeSpecDef.Enums))
+		enumComments := make(map[string]string)
+		enumDescriptions := make([]string, 0, len(typeSpecDef.Enums))
 		for _, value := range typeSpecDef.Enums {
 			definition.Enum = append(definition.Enum, value.Value)
 			varnames = append(varnames, value.key)
@@ -1750,8 +1791,7 @@ func (parser *Parser) fillDefinitionDescription(definition *spec.Schema, file *a
 			if typeSpec.Name != nil {
 				typeName = typeSpec.Name.Name
 			}
-			definition.Description, err =
-				parser.extractDeclarationDescription(typeName, typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
+			definition.Description, err = parser.extractDeclarationDescription(typeName, typeSpec.Doc, typeSpec.Comment, generalDeclaration.Doc)
 			if err != nil {
 				return
 			}
