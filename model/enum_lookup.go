@@ -129,46 +129,53 @@ func (p *ParserEnumLookup) GetEnumsForType(typeName string, file *ast.File) ([]E
 						continue
 					}
 
-					// Check if this const is of the target type
-					if valueSpec.Type != nil {
-						if ident, ok := valueSpec.Type.(*ast.Ident); ok && ident.Name == baseTypeName {
-							// Evaluate the const value
-							for i, name := range valueSpec.Names {
-								if i < len(valueSpec.Values) {
-									// Try to get the value from TypesInfo
-									if pkg.TypesInfo != nil {
-										if constObj, ok := pkg.TypesInfo.Defs[name].(*types.Const); ok {
-											value := constObj.Val()
-											comment := ""
-											if valueSpec.Comment != nil && len(valueSpec.Comment.List) > 0 {
-												comment = strings.TrimSpace(strings.TrimPrefix(valueSpec.Comment.List[0].Text, "//"))
-											} else if valueSpec.Doc != nil && len(valueSpec.Doc.List) > 0 {
-												comment = strings.TrimSpace(strings.TrimPrefix(valueSpec.Doc.List[len(valueSpec.Doc.List)-1].Text, "//"))
-											}
+					// Check each name in the value spec
+					for _, name := range valueSpec.Names {
+						// Use TypesInfo to determine the actual type of the constant
+						// This handles both explicit types and iota expressions
+						if pkg.TypesInfo != nil {
+							if constObj, ok := pkg.TypesInfo.Defs[name].(*types.Const); ok {
+								// Check if this constant is of the target type
+								typeName := constObj.Type().String()
+								// Extract the base type name from the full type path
+								lastDotIdx := strings.LastIndex(typeName, ".")
+								var constTypeName string
+								if lastDotIdx != -1 {
+									constTypeName = typeName[lastDotIdx+1:]
+								} else {
+									constTypeName = typeName
+								}
 
-											// Convert constant value to the appropriate Go type
-											var enumValue interface{}
-											switch value.Kind() {
-											case constant.Int:
-												// Convert to int64 then to int
-												if v, ok := constant.Int64Val(value); ok {
-													enumValue = int(v)
-												}
-											case constant.String:
-												// ExactString includes quotes, so use StringVal
-												enumValue = constant.StringVal(value)
-											default:
-												// Fallback to string representation
-												enumValue = value.ExactString()
-											}
-
-											enums = append(enums, EnumValue{
-												Key:     name.Name,
-												Value:   enumValue,
-												Comment: comment,
-											})
-										}
+								if constTypeName == baseTypeName {
+									value := constObj.Val()
+									comment := ""
+									if valueSpec.Comment != nil && len(valueSpec.Comment.List) > 0 {
+										comment = strings.TrimSpace(strings.TrimPrefix(valueSpec.Comment.List[0].Text, "//"))
+									} else if valueSpec.Doc != nil && len(valueSpec.Doc.List) > 0 {
+										comment = strings.TrimSpace(strings.TrimPrefix(valueSpec.Doc.List[len(valueSpec.Doc.List)-1].Text, "//"))
 									}
+
+									// Convert constant value to the appropriate Go type
+									var enumValue interface{}
+									switch value.Kind() {
+									case constant.Int:
+										// Convert to int64 then to int
+										if v, ok := constant.Int64Val(value); ok {
+											enumValue = int(v)
+										}
+									case constant.String:
+										// ExactString includes quotes, so use StringVal
+										enumValue = constant.StringVal(value)
+									default:
+										// Fallback to string representation
+										enumValue = value.ExactString()
+									}
+
+									enums = append(enums, EnumValue{
+										Key:     name.Name,
+										Value:   enumValue,
+										Comment: comment,
+									})
 								}
 							}
 						}
