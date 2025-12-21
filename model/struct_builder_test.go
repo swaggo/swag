@@ -27,7 +27,7 @@ func TestBuildSpecSchema_Simple(t *testing.T) {
 		},
 	}
 
-	schema, nestedTypes, err := builder.BuildSpecSchema("User", false)
+	schema, nestedTypes, err := builder.BuildSpecSchema("User", false, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, schema)
 	assert.Equal(t, 1, len(schema.Type))
@@ -65,7 +65,7 @@ func TestBuildSpecSchema_WithNestedStruct(t *testing.T) {
 		},
 	}
 
-	schema, nestedTypes, err := builder.BuildSpecSchema("User", false)
+	schema, nestedTypes, err := builder.BuildSpecSchema("User", false, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, schema)
 	assert.Equal(t, 2, len(schema.Properties))
@@ -95,7 +95,7 @@ func TestBuildSpecSchema_PublicMode(t *testing.T) {
 		},
 	}
 
-	schema, nestedTypes, err := builder.BuildSpecSchema("User", true)
+	schema, nestedTypes, err := builder.BuildSpecSchema("User", true, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, schema)
 
@@ -129,7 +129,7 @@ func TestBuildSpecSchema_PublicModeWithNestedStruct(t *testing.T) {
 		},
 	}
 
-	schema, nestedTypes, err := builder.BuildSpecSchema("User", true)
+	schema, nestedTypes, err := builder.BuildSpecSchema("User", true, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, schema)
 
@@ -170,7 +170,7 @@ func TestBuildSpecSchema_MultipleNestedStructs(t *testing.T) {
 		},
 	}
 
-	schema, nestedTypes, err := builder.BuildSpecSchema("Contact", false)
+	schema, nestedTypes, err := builder.BuildSpecSchema("Contact", false, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, schema)
 
@@ -202,7 +202,7 @@ func TestBuildSpecSchema_ArrayOfStructs(t *testing.T) {
 		},
 	}
 
-	schema, nestedTypes, err := builder.BuildSpecSchema("Order", false)
+	schema, nestedTypes, err := builder.BuildSpecSchema("Order", false, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, schema)
 	assert.Equal(t, 2, len(schema.Properties))
@@ -225,7 +225,7 @@ func TestBuildSpecSchema_EmptyBuilder(t *testing.T) {
 		Fields: []*StructField{},
 	}
 
-	schema, nestedTypes, err := builder.BuildSpecSchema("Empty", false)
+	schema, nestedTypes, err := builder.BuildSpecSchema("Empty", false, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, schema)
 	assert.Equal(t, 1, len(schema.Type))

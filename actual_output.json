@@ -256,9 +256,29 @@
         "password_updated_at_ts",
         "email_verified_at_ts",
         "last_login_ts",
+        "config_key",
         "is_super_user_session"
       ],
       "properties": {
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -314,13 +334,55 @@
           "$ref": "#/definitions/account.Properties"
         },
         "role": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
         },
         "signup_properties": {
           "$ref": "#/definitions/account.SignupProperties"
         },
         "status": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
         },
         "test_user_type": {
           "type": "integer"
@@ -364,14 +426,35 @@
         "password_updated_at_ts",
         "email_verified_at_ts",
         "last_login_ts",
+        "config_key",
         "is_super_user_session",
         "name",
         "organization_name",
         "created_by_name",
         "updated_by_name",
-        "tags"
+        "tags",
+        "nested_settings"
       ],
       "properties": {
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -419,6 +502,9 @@
         "name": {
           "type": "string"
         },
+        "nested_settings": {
+          "$ref": "#/definitions/account.NestedSettings"
+        },
         "organization_id": {
           "type": "string",
           "format": "uuid"
@@ -436,13 +522,55 @@
           "$ref": "#/definitions/account.Properties"
         },
         "role": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
         },
         "signup_properties": {
           "$ref": "#/definitions/account.SignupProperties"
         },
         "status": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
         },
         "tags": {
           "type": "array",
@@ -489,10 +617,31 @@
         "test_user_type",
         "organization_id",
         "role",
+        "config_key",
         "is_super_user_session",
-        "tags"
+        "tags",
+        "nested_settings"
       ],
       "properties": {
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -525,6 +674,9 @@
         "last_name": {
           "type": "string"
         },
+        "nested_settings": {
+          "$ref": "#/definitions/account.NestedSettingsPublic"
+        },
         "organization_id": {
           "type": "string",
           "format": "uuid"
@@ -533,10 +685,52 @@
           "type": "string"
         },
         "role": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
         },
         "status": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
         },
         "tags": {
           "type": "array",
@@ -580,9 +774,29 @@
         "test_user_type",
         "organization_id",
         "role",
+        "config_key",
         "is_super_user_session"
       ],
       "properties": {
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
         "created_at": {
           "type": "string",
           "format": "date-time"
@@ -623,10 +837,52 @@
           "type": "string"
         },
         "role": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
         },
         "status": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
         },
         "test_user_type": {
           "type": "integer"
@@ -670,6 +926,7 @@
         "password_updated_at_ts",
         "email_verified_at_ts",
         "last_login_ts",
+        "config_key",
         "is_super_user_session",
         "billing_plan_level",
         "billing_plan_price",
@@ -695,6 +952,25 @@
         },
         "billing_plan_price": {
           "type": "integer"
+        },
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
         },
         "created_at": {
           "type": "string",
@@ -757,13 +1033,55 @@
           "$ref": "#/definitions/account.Properties"
         },
         "role": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
         },
         "signup_properties": {
           "$ref": "#/definitions/account.SignupProperties"
         },
         "status": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
         },
         "test_user_type": {
           "type": "integer"
@@ -801,6 +1119,7 @@
         "test_user_type",
         "organization_id",
         "role",
+        "config_key",
         "is_super_user_session",
         "billing_plan_level",
         "billing_plan_price",
@@ -821,6 +1140,25 @@
         },
         "billing_plan_price": {
           "type": "integer"
+        },
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
         },
         "created_at": {
           "type": "string",
@@ -865,10 +1203,52 @@
           "type": "string"
         },
         "role": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
         },
         "status": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
         },
         "test_user_type": {
           "type": "integer"
@@ -894,7 +1274,8 @@
         "urn",
         "status",
         "created_at",
-        "updated_at"
+        "updated_at",
+        "role"
       ],
       "properties": {
         "created_at": {
@@ -907,6 +1288,41 @@
         },
         "name": {
           "type": "string"
+        },
+        "role": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
         },
         "status": {
           "type": "integer",
@@ -924,6 +1340,28 @@
     "account.IconTagJoinPublic": {
       "type": "object",
       "title": "AccountIconTagJoinPublic"
+    },
+    "account.NestedSettings": {
+      "type": "object",
+      "title": "AccountNestedSettings",
+      "required": [
+        "role"
+      ],
+      "properties": {
+        "role": {
+          "type": "integer",
+          "enum": [
+            1
+          ],
+          "x-enum-varnames": [
+            "STYLE_TYPE_MIX_IT_UP"
+          ]
+        }
+      }
+    },
+    "account.NestedSettingsPublic": {
+      "type": "object",
+      "title": "AccountNestedSettingsPublic"
     },
     "account.Properties": {
       "type": "object",
@@ -1053,7 +1491,17 @@
           "$ref": "#/definitions/billing_plan.Properties"
         },
         "status": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
         },
         "stripe_product_id": {
           "type": "string"
@@ -1131,7 +1579,17 @@
           "$ref": "#/definitions/billing_plan.PropertiesPublic"
         },
         "status": {
-          "type": "integer"
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
         },
         "stripe_product_id": {
           "type": "string"

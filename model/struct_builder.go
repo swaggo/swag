@@ -12,7 +12,7 @@ type StructBuilder struct {
 
 // BuildSpecSchema builds an OpenAPI spec.Schema for the struct
 // Returns the schema, a list of nested struct type names, and any error
-func (this *StructBuilder) BuildSpecSchema(typeName string, public bool) (*spec.Schema, []string, error) {
+func (this *StructBuilder) BuildSpecSchema(typeName string, public bool, enumLookup TypeEnumLookup) (*spec.Schema, []string, error) {
 	schema := &spec.Schema{
 		SchemaProps: spec.SchemaProps{
 			Type:       []string{"object"},
@@ -24,7 +24,7 @@ func (this *StructBuilder) BuildSpecSchema(typeName string, public bool) (*spec.
 	nestedStructs := make(map[string]bool) // Use map to deduplicate
 
 	for _, field := range this.Fields {
-		propName, propSchema, isRequired, nestedTypes, err := field.ToSpecSchema(public)
+		propName, propSchema, isRequired, nestedTypes, err := field.ToSpecSchema(public, enumLookup)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to build schema for field %s: %w", field.Name, err)
 		}

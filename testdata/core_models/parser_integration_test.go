@@ -237,27 +237,27 @@ func TestBillingPlanSchema(t *testing.T) {
 	// Test cleanup removes unused definitions
 	t.Run("RemoveUnusedDefinitions should remove unreferenced schemas", func(t *testing.T) {
 		swagger := p.GetSwagger()
-		
+
 		// Count definitions before cleanup
 		beforeCount := len(swagger.Definitions)
 		t.Logf("Definitions before cleanup: %d", beforeCount)
-		
+
 		// Apply cleanup
 		swag.RemoveUnusedDefinitions(swagger)
-		
+
 		// Count definitions after cleanup
 		afterCount := len(swagger.Definitions)
 		t.Logf("Definitions after cleanup: %d", afterCount)
 		t.Logf("Removed %d unused definitions", beforeCount-afterCount)
-		
+
 		// Should have removed some definitions
 		assert.Less(t, afterCount, beforeCount, "Should remove some unused definitions")
-		
+
 		// Verify that used schemas still exist
 		assert.Contains(t, swagger.Definitions, "account.Account", "Used schema should still exist")
 		assert.Contains(t, swagger.Definitions, "response.ErrorResponse", "Used schema should still exist")
 		assert.Contains(t, swagger.Definitions, "response.SuccessResponse", "Used schema should still exist")
-		
+
 		// Log remaining definitions
 		t.Log("Remaining definitions:")
 		for name := range swagger.Definitions {
