@@ -282,7 +282,12 @@ func (c *CoreStructParser) processStructField(f *StructField, packageMap map[str
 	fmt.Println("-------- End Sub Package Struct --------")
 }
 
-func (c *CoreStructParser) ExtractFieldsRecursive(pkg *packages.Package, typeName string, packageMap map[string]*packages.Package, visited map[string]bool) []*StructField {
+func (c *CoreStructParser) ExtractFieldsRecursive(
+	pkg *packages.Package,
+	typeName string,
+	packageMap map[string]*packages.Package,
+	visited map[string]bool,
+) []*StructField {
 	// Create a unique cache key with package path
 	cacheKey := pkg.PkgPath + ":" + typeName
 	if visited[cacheKey] {
@@ -554,7 +559,15 @@ func BuildAllSchemas(baseModule, pkgPath, typeName string) (map[string]*spec.Sch
 }
 
 // buildSchemasRecursive recursively builds schemas for a type and all its nested types
-func buildSchemasRecursive(builder *StructBuilder, schemaName string, public bool, allSchemas map[string]*spec.Schema, processed map[string]bool, parser *CoreStructParser, baseModule, pkgPath, packageName string) error {
+func buildSchemasRecursive(
+	builder *StructBuilder,
+	schemaName string,
+	public bool,
+	allSchemas map[string]*spec.Schema,
+	processed map[string]bool,
+	parser *CoreStructParser,
+	baseModule, pkgPath, packageName string,
+) error {
 	// Avoid infinite recursion
 	if processed[schemaName] {
 		return nil
@@ -652,7 +665,17 @@ func buildSchemasRecursive(builder *StructBuilder, schemaName string, public boo
 			return err
 		}
 
-		err = buildSchemasRecursive(nestedBuilder, baseNestedType+"Public", true, allSchemas, processed, parser, baseModule, nestedPkgPath, nestedPackageName)
+		err = buildSchemasRecursive(
+			nestedBuilder,
+			baseNestedType+"Public",
+			true,
+			allSchemas,
+			processed,
+			parser,
+			baseModule,
+			nestedPkgPath,
+			nestedPackageName,
+		)
 		if err != nil {
 			return err
 		}

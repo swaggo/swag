@@ -54,7 +54,10 @@ type EnumValue struct {
 // schema: the OpenAPI schema for this field
 // required: true if omitempty is absent from json tag
 // nestedTypes: list of struct type names encountered for recursive definition generation
-func (this *StructField) ToSpecSchema(public bool, enumLookup TypeEnumLookup) (propName string, schema *spec.Schema, required bool, nestedTypes []string, err error) {
+func (this *StructField) ToSpecSchema(
+	public bool,
+	enumLookup TypeEnumLookup,
+) (propName string, schema *spec.Schema, required bool, nestedTypes []string, err error) {
 	// Filter field if public mode and field is not public
 	if public && !this.IsPublic() {
 		return "", nil, false, nil, nil
@@ -230,6 +233,30 @@ func buildSchemaForType(typeStr string, public bool, originalTypeStr string, enu
 	if typeStr == "any" || typeStr == "interface{}" {
 		// Return a generic object schema, don't add to nestedTypes
 		return &spec.Schema{}, nil, nil
+	}
+
+	// Check if this is an enum type - if so, inline the enum values instead of creating a reference
+	if enumLookup != nil {
+		enums, err := enumLookup.GetEnumsForType(typeStr, nil)
+		if err == nil && len(enums) > 0 {
+			// This is an enum type - create an inline schema with enum values
+			// Determine the base type from the first enum value
+			schema := &spec.Schema{}
+			if len(enums) > 0 {
+				switch enums[0].Value.(type) {
+				case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+					schema.Type = []string{"integer"}
+				case string:
+					schema.Type = []string{"string"}
+				case float32, float64:
+					schema.Type = []string{"number"}
+				default:
+					schema.Type = []string{"integer"} // default fallback
+				}
+			}
+			applyEnumsToSchema(schema, enums)
+			return schema, nil, nil
+		}
 	}
 
 	// Keep the full type name (including package prefix if present)

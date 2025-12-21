@@ -1282,7 +1282,39 @@
           "type": "string"
         },
         "role": {
-          "$ref": "#/definitions/github.com/swaggo/swag/testdata/core_models/constants.Role"
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
         },
         "status": {
           "type": "integer",
@@ -1607,14 +1639,6 @@
           "type": "string"
         }
       }
-    },
-    "github.Role": {
-      "type": "object",
-      "title": "GithubRole"
-    },
-    "github.RolePublic": {
-      "type": "object",
-      "title": "GithubRolePublic"
     },
     "response.ErrorResponse": {
       "type": "object",
