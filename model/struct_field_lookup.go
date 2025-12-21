@@ -7,16 +7,35 @@ import (
 	"go/types"
 	"log"
 	"strings"
+	"sync"
 
 	"github.com/go-openapi/spec"
 	"github.com/swaggo/swag/console"
 	"golang.org/x/tools/go/packages"
 )
 
+// Global package cache shared across all parsers
+var (
+	globalPackageCache = make(map[string]*packages.Package)
+	globalCacheMutex   sync.RWMutex
+	debugMode          = false // Set to true to enable debug logging
+)
+
 type CoreStructParser struct {
-	basePackage *packages.Package
-	packageMap  map[string]*packages.Package
-	visited     map[string]bool
+	basePackage   *packages.Package
+	packageMap    map[string]*packages.Package
+	visited       map[string]bool
+	packageCache  map[string]*packages.Package // Cache loaded packages
+	typeCache     map[string]*StructBuilder    // Cache processed types
+	cacheMutex    sync.RWMutex                 // Protect caches
+	packageLoader sync.Once                    // Load packages only once
+}
+
+// debugLog prints debug messages only when debugMode is enabled
+func debugLog(format string, args ...interface{}) {
+	if debugMode {
+		fmt.Printf(format, args...)
+	}
 }
 
 // toPascalCase converts package_name or package-name to PascalCase (PackageName)
@@ -45,175 +64,221 @@ func toPascalCase(s string) string {
 }
 
 func (c *CoreStructParser) LookupStructFields(baseModule, importPath, typeName string) *StructBuilder {
+	// Check type cache first
+	cacheKey := importPath + ":" + typeName
+	c.cacheMutex.RLock()
+	if cached, exists := c.typeCache[cacheKey]; exists {
+		c.cacheMutex.RUnlock()
+		debugLog("Using cached type: %s\n", cacheKey)
+		return cached
+	}
+	c.cacheMutex.RUnlock()
+
 	builder := &StructBuilder{}
 
-	cfg := &packages.Config{
-		Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedName | packages.NeedImports | packages.NeedDeps,
-		Fset: token.NewFileSet(),
+	// Initialize caches if needed
+	c.cacheMutex.Lock()
+	if c.packageCache == nil {
+		c.packageCache = make(map[string]*packages.Package)
 	}
-	// Load the main package with all its dependencies
-	pkgs, err := packages.Load(cfg, importPath)
-	if err != nil || len(pkgs) == 0 {
-		log.Fatalf("failed to load package %s: %v", importPath, err)
+	if c.typeCache == nil {
+		c.typeCache = make(map[string]*StructBuilder)
 	}
-	packageMap := make(map[string]*packages.Package)
+	c.cacheMutex.Unlock()
 
-	// Recursively add all packages including imports and dependencies
-	var addPackage func(*packages.Package)
-	addPackage = func(pkg *packages.Package) {
-		if pkg == nil || packageMap[pkg.PkgPath] != nil {
-			return
+	// Check global cache first
+	globalCacheMutex.RLock()
+	pkg, pkgCached := globalPackageCache[importPath]
+	globalCacheMutex.RUnlock()
+
+	var packageMap map[string]*packages.Package
+
+	if !pkgCached {
+		debugLog("Loading package: %s\n", importPath)
+		cfg := &packages.Config{
+			Mode: packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo | packages.NeedName | packages.NeedImports | packages.NeedDeps,
+			Fset: token.NewFileSet(),
 		}
-		packageMap[pkg.PkgPath] = pkg
-
-		// Add all imports
-		for _, imp := range pkg.Imports {
-			addPackage(imp)
+		// Load the main package with all its dependencies
+		pkgs, err := packages.Load(cfg, importPath)
+		if err != nil || len(pkgs) == 0 {
+			log.Fatalf("failed to load package %s: %v", importPath, err)
 		}
-	}
+		packageMap = make(map[string]*packages.Package)
 
-	for _, pkg := range pkgs {
-		addPackage(pkg)
+		// Recursively add all packages including imports and dependencies
+		var addPackage func(*packages.Package)
+		addPackage = func(p *packages.Package) {
+			if p == nil || packageMap[p.PkgPath] != nil {
+				return
+			}
+			packageMap[p.PkgPath] = p
+
+			// Add all imports
+			for _, imp := range p.Imports {
+				addPackage(imp)
+			}
+		}
+
+		for _, p := range pkgs {
+			addPackage(p)
+		}
+
+		// Cache all loaded packages in both local and global cache
+		globalCacheMutex.Lock()
+		c.cacheMutex.Lock()
+		for path, p := range packageMap {
+			globalPackageCache[path] = p
+			c.packageCache[path] = p
+		}
+		pkg = packageMap[importPath]
+		c.cacheMutex.Unlock()
+		globalCacheMutex.Unlock()
+		debugLog("Cached %d packages from %s\n", len(packageMap), importPath)
+	} else {
+		debugLog("Using globally cached package: %s\n", importPath)
+		// Use cached packages from global cache
+		globalCacheMutex.RLock()
+		packageMap = make(map[string]*packages.Package)
+		for k, v := range globalPackageCache {
+			packageMap[k] = v
+		}
+		globalCacheMutex.RUnlock()
 	}
 
 	// Set the packageMap on the parser so checkNamed can use it
 	c.packageMap = packageMap
 
-	for _, pkg := range pkgs {
-		if pkg.PkgPath != importPath {
-			continue
-		}
-
-		log.Printf("Processing package: %+v\n", pkg)
-
-		visited := make(map[string]bool)
-		c.visited = visited
-		//fmt.Printf("\n\n-------Package: %s------- \n", pkg.PkgPath)
-		//for _, f := range pkg.Syntax {
-		//	fmt.Println("Parsed file:", pkg.Fset.Position(f.Pos()).Filename)
-		//}
-		fields := c.ExtractFieldsRecursive(pkg, typeName, packageMap, visited)
-
-		for _, f := range fields {
-			fmt.Printf("Field: %s, Type: %s, Tag: %s\n", f.Name, f.Type, f.Tag)
-
-			if f.Type != nil && strings.Contains(f.Type.String(), "fields.StructField") {
-
-				parts := strings.Split(f.Type.String(), ".StructField[")
-				if len(parts) != 2 {
-					continue
-				}
-
-				subTypeName := strings.TrimSuffix(parts[1], "]")
-				// Remove leading * if it's a pointer
-				subTypeName = strings.TrimPrefix(subTypeName, "*")
-
-				// Store the original full type name with package path
-				var originalTypeName = subTypeName
-
-				var subTypePackage string
-				fmt.Printf("----Sub Type Name: %s\n", subTypeName)
-				if strings.Contains(subTypeName, "/") {
-					// Has a full package path like "github.com/griffnb/assettradingdesk-go/internal/models/billing_plan.FeatureSet"
-					// Split by "/" to get path segments
-					pathParts := strings.Split(subTypeName, "/")
-					lastPart := pathParts[len(pathParts)-1] // "billing_plan.FeatureSet"
-
-					// Split the last part by "." to separate package and type
-					dotParts := strings.Split(lastPart, ".")
-					if len(dotParts) < 2 {
-						continue
-					}
-
-					packageName := dotParts[0]            // "billing_plan"
-					typeName := dotParts[len(dotParts)-1] // "FeatureSet"
-
-					// Always use package.Type format for consistency with schema storage
-					originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
-
-					// Check if it's from the same module
-					fullPackagePath := strings.Join(pathParts[:len(pathParts)-1], "/") + "/" + packageName
-
-					subTypePackage = fullPackagePath
-					subTypeName = typeName
-				} else if strings.Contains(subTypeName, ".") {
-					// Already in package.Type format like "billing_plan.FeatureSet"
-					subParts := strings.Split(subTypeName, ".")
-					if len(subParts) < 2 {
-						continue
-					}
-					packageName := subParts[len(subParts)-2]
-					typeName := subParts[len(subParts)-1]
-
-					// Use package.Type format
-					originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
-
-					subTypePackage = strings.Join(subParts[:len(subParts)-1], ".")
-					subTypeName = typeName
-				} else {
-					f.TypeString = subTypeName
-					builder.Fields = append(builder.Fields, f)
-					continue
-				}
-				fmt.Printf("-----Final Sub type Package %s\n Final Sub Type Name: %s\n", subTypePackage, subTypeName)
-
-				// If the field is a StructField, we can extract its fields
-				fmt.Printf("\n\n-------Sub Package Struct-----: \n%s\n", subTypeName)
-
-				// Try to find the package that contains this type
-				var targetPkg *packages.Package
-				if subTypePackage != "" {
-					targetPkg = packageMap[subTypePackage]
-					if targetPkg == nil {
-						fmt.Printf("WARNING: Package not found in map for %s\n", subTypePackage)
-						fmt.Printf("Available packages: %v\n", func() []string {
-							keys := make([]string, 0, len(packageMap))
-							for k := range packageMap {
-								keys = append(keys, k)
-							}
-							return keys
-						}())
-					} else {
-						fmt.Printf("-----Found target package: %s\n", targetPkg.PkgPath)
-					}
-				}
-				if targetPkg == nil {
-					targetPkg = pkg
-					fmt.Printf("------Using current package as fallback: %s\n", pkg.PkgPath)
-				}
-
-				subFields := c.ExtractFieldsRecursive(targetPkg, subTypeName, packageMap, make(map[string]bool))
-				fmt.Printf("--------Extracted %d subfields for %s\n", len(subFields), subTypeName)
-				for _, subField := range subFields {
-					fmt.Printf("Sub Field: %s, Type: %s, Tag: %s\n", subField.Name, subField.Type, subField.Tag)
-				}
-
-				// Use the original type name with package path
-				f.TypeString = originalTypeName
-				f.Fields = subFields
-
-				fmt.Printf("-------Set field %s with TypeString=%s and %d Fields\n", f.Name, f.TypeString, len(f.Fields))
-
-				builder.Fields = append(builder.Fields, f)
-
-				fmt.Println("-------- End Sub Package Struct --------")
-
-			} else {
-				builder.Fields = append(builder.Fields, f)
-			}
-
-		}
-
+	if pkg == nil || pkg.PkgPath != importPath {
+		debugLog("Package not found or mismatch: %v\n", importPath)
+		return builder
 	}
+
+	debugLog("Processing package: %+v %s\n", pkg, typeName)
+
+	visited := make(map[string]bool)
+	c.visited = visited
+	fields := c.ExtractFieldsRecursive(pkg, typeName, packageMap, visited)
+
+	// Process all fields
+	for _, f := range fields {
+		debugLog("Field: %s, Type: %s, Tag: %s\n", f.Name, f.Type, f.Tag)
+
+		// Check if it's a special StructField type that needs expansion
+		if f.Type != nil && strings.Contains(f.Type.String(), "fields.StructField") {
+			c.processStructField(f, packageMap, builder)
+		} else {
+			builder.Fields = append(builder.Fields, f)
+		}
+	}
+
+	// Cache the result before returning
+	c.cacheMutex.Lock()
+	c.typeCache[cacheKey] = builder
+	c.cacheMutex.Unlock()
 
 	return builder
 }
 
+// processStructField handles the expansion of StructField[T] types
+func (c *CoreStructParser) processStructField(f *StructField, packageMap map[string]*packages.Package, builder *StructBuilder) {
+	parts := strings.Split(f.Type.String(), ".StructField[")
+	if len(parts) != 2 {
+		builder.Fields = append(builder.Fields, f)
+		return
+	}
+
+	subTypeName := strings.TrimSuffix(parts[1], "]")
+	subTypeName = strings.TrimPrefix(subTypeName, "*")
+
+	// Store the original full type name with package path
+	originalTypeName := subTypeName
+	var subTypePackage string
+
+	debugLog("----Sub Type Name: %s\n", subTypeName)
+
+	// Parse package and type name
+	if strings.Contains(subTypeName, "/") {
+		// Full package path like "github.com/griffnb/project/internal/models/billing_plan.FeatureSet"
+		pathParts := strings.Split(subTypeName, "/")
+		lastPart := pathParts[len(pathParts)-1]
+
+		dotParts := strings.Split(lastPart, ".")
+		if len(dotParts) < 2 {
+			f.TypeString = subTypeName
+			builder.Fields = append(builder.Fields, f)
+			return
+		}
+
+		packageName := dotParts[0]
+		typeName := dotParts[len(dotParts)-1]
+		originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
+		fullPackagePath := strings.Join(pathParts[:len(pathParts)-1], "/") + "/" + packageName
+
+		subTypePackage = fullPackagePath
+		subTypeName = typeName
+	} else if strings.Contains(subTypeName, ".") {
+		// Already in package.Type format
+		subParts := strings.Split(subTypeName, ".")
+		if len(subParts) < 2 {
+			f.TypeString = subTypeName
+			builder.Fields = append(builder.Fields, f)
+			return
+		}
+		packageName := subParts[len(subParts)-2]
+		typeName := subParts[len(subParts)-1]
+		originalTypeName = fmt.Sprintf("%s.%s", packageName, typeName)
+
+		subTypePackage = strings.Join(subParts[:len(subParts)-1], ".")
+		subTypeName = typeName
+	} else {
+		f.TypeString = subTypeName
+		builder.Fields = append(builder.Fields, f)
+		return
+	}
+
+	debugLog("-----Final Sub type Package %s\n Final Sub Type Name: %s\n", subTypePackage, subTypeName)
+
+	// Find the target package
+	targetPkg := packageMap[subTypePackage]
+	if targetPkg == nil {
+		debugLog("WARNING: Package not found in map for %s\n", subTypePackage)
+		targetPkg = c.basePackage
+	} else {
+		debugLog("-----Found target package: %s\n", targetPkg.PkgPath)
+	}
+
+	if targetPkg == nil {
+		debugLog("------No package available\n")
+		f.TypeString = originalTypeName
+		builder.Fields = append(builder.Fields, f)
+		return
+	}
+
+	// Extract subfields
+	debugLog("\n\n-------Sub Package Struct-----: \n%s\n", subTypeName)
+	subFields := c.ExtractFieldsRecursive(targetPkg, subTypeName, packageMap, make(map[string]bool))
+	debugLog("--------Extracted %d subfields for %s\n", len(subFields), subTypeName)
+
+	for _, subField := range subFields {
+		debugLog("Sub Field: %s, Type: %s, Tag: %s\n", subField.Name, subField.Type, subField.Tag)
+	}
+
+	f.TypeString = originalTypeName
+	f.Fields = subFields
+	debugLog("-------Set field %s with TypeString=%s and %d Fields\n", f.Name, f.TypeString, len(f.Fields))
+
+	builder.Fields = append(builder.Fields, f)
+	fmt.Println("-------- End Sub Package Struct --------")
+}
+
 func (c *CoreStructParser) ExtractFieldsRecursive(pkg *packages.Package, typeName string, packageMap map[string]*packages.Package, visited map[string]bool) []*StructField {
-	if visited[typeName] {
+	// Create a unique cache key with package path
+	cacheKey := pkg.PkgPath + ":" + typeName
+	if visited[cacheKey] {
 		return nil
 	}
-	visited[typeName] = true
+	visited[cacheKey] = true
 
 	var fields []*StructField
 
@@ -233,7 +298,7 @@ func (c *CoreStructParser) ExtractFieldsRecursive(pkg *packages.Package, typeNam
 				if !ok {
 					continue
 				}
-				fmt.Printf("----Matched StructType & Processing: %s (has %d fields)\n", ts.Name.Name, len(st.Fields.List))
+				debugLog("----Matched StructType & Processing: %s (has %d fields)\n", ts.Name.Name, len(st.Fields.List))
 				for i, field := range st.Fields.List {
 					var fieldName string
 					if len(field.Names) > 0 {
@@ -266,7 +331,7 @@ func (c *CoreStructParser) ExtractFieldsRecursive(pkg *packages.Package, typeNam
 						}
 					}
 
-					fmt.Printf(
+					debugLog(
 						"----[Field %d/%d] Validating Field Name: %s, Type: %s (%T), Tag: %s\n",
 						i+1,
 						len(st.Fields.List),
@@ -280,7 +345,7 @@ func (c *CoreStructParser) ExtractFieldsRecursive(pkg *packages.Package, typeNam
 					if subFields, _, ok := c.checkNamed(fieldType); ok {
 
 						if len(subFields) == 0 {
-							fmt.Printf("Skipping empty embedded field: %s\n", fieldName)
+							debugLog("Skipping empty embedded field: %s\n", fieldName)
 							continue
 						}
 						fields = append(fields, subFields...)
@@ -296,11 +361,9 @@ func (c *CoreStructParser) ExtractFieldsRecursive(pkg *packages.Package, typeNam
 							Fields:     subFields,
 						})
 
-						fmt.Printf("----Added Struct Field: %s of type %s with %d subfields\n", fieldName, typeName, len(subFields))
-
+						debugLog("----Added Struct Field: %s of type %s with %d subfields\n", fieldName, typeName, len(subFields))
 						continue
 					}
-
 					if subFields, typeName, ok := c.checkSlice(fieldType); ok {
 						fields = append(fields, &StructField{
 							Name:       fieldName,
@@ -340,17 +403,17 @@ func (c *CoreStructParser) ExtractFieldsRecursive(pkg *packages.Package, typeNam
 func (c *CoreStructParser) checkNamed(fieldType types.Type) ([]*StructField, *types.Named, bool) {
 	named, ok := fieldType.(*types.Named)
 	if ok {
-		if named.Obj().Pkg().Path() == "github.com/griffnb/core/lib/model/fields" {
+		if strings.Contains(named.Obj().Pkg().Path(), "/lib/model/fields") {
 			return nil, nil, false
 		}
 		if _, ok := named.Underlying().(*types.Struct); ok {
-			fmt.Printf("Found sub type Package %s Name %s\n", named.Obj().Pkg().Path(), named.Obj().Name())
+			debugLog("Found sub type Package %s Name %s\n", named.Obj().Pkg().Path(), named.Obj().Name())
 			nextPackage, ok := c.packageMap[named.Obj().Pkg().Path()]
 			if !ok {
-				fmt.Printf("Package not found for %s\n", named.Obj().Pkg().Path())
+				debugLog("Package not found for %s\n", named.Obj().Pkg().Path())
 				return nil, nil, true
 			}
-			fmt.Printf("Next Package: %s\n", nextPackage.PkgPath)
+			debugLog("Next Package: %s\n", nextPackage.PkgPath)
 			subFields := c.ExtractFieldsRecursive(nextPackage, named.Obj().Name(), c.packageMap, c.visited)
 			return subFields, named, true
 		}
