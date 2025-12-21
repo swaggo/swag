@@ -568,7 +568,9 @@ func buildSchemasRecursive(builder *StructBuilder, schemaName string, public boo
 	}
 
 	// Build schema for current type
-	schema, nestedTypes, err := builder.BuildSpecSchema(baseTypeName, public)
+	// Create a parser-based enum lookup that can access the packages
+	enumLookup := &ParserEnumLookup{Parser: parser, BaseModule: baseModule, PkgPath: pkgPath}
+	schema, nestedTypes, err := builder.BuildSpecSchema(baseTypeName, public, enumLookup)
 	if err != nil {
 		return fmt.Errorf("failed to build schema for %s: %w", schemaName, err)
 	}

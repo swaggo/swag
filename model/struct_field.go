@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"go/ast"
 	"go/types"
 	"strings"
 
@@ -36,12 +37,24 @@ func (this *StructField) GetTags() map[string]string {
 	return result
 }
 
+// TypeEnumLookup is an interface for looking up enum values for a type
+type TypeEnumLookup interface {
+	GetEnumsForType(typeName string, file *ast.File) ([]EnumValue, error)
+}
+
+// EnumValue represents an enum constant
+type EnumValue struct {
+	Key     string
+	Value   interface{}
+	Comment string
+}
+
 // ToSpecSchema converts a StructField to OpenAPI spec.Schema
 // propName: extracted from json tag (first part before comma)
 // schema: the OpenAPI schema for this field
 // required: true if omitempty is absent from json tag
 // nestedTypes: list of struct type names encountered for recursive definition generation
-func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spec.Schema, required bool, nestedTypes []string, err error) {
+func (this *StructField) ToSpecSchema(public bool, enumLookup TypeEnumLookup) (propName string, schema *spec.Schema, required bool, nestedTypes []string, err error) {
 	// Filter field if public mode and field is not public
 	if public && !this.IsPublic() {
 		return "", nil, false, nil, nil
@@ -103,7 +116,7 @@ func (this *StructField) ToSpecSchema(public bool) (propName string, schema *spe
 	}
 
 	// Build schema for the extracted type
-	schema, nestedTypes, err = buildSchemaForType(extractedType, public)
+	schema, nestedTypes, err = buildSchemaForType(extractedType, public, this.TypeString, enumLookup)
 	if err != nil {
 		return "", nil, false, nil, fmt.Errorf("failed to build schema for type %s: %w", extractedType, err)
 	}
@@ -152,7 +165,7 @@ func extractTypeParameter(typeStr string) (string, error) {
 
 // buildSchemaForType builds an OpenAPI schema for a Go type string
 // Returns schema, list of nested struct type names, and error
-func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, error) {
+func buildSchemaForType(typeStr string, public bool, originalTypeStr string, enumLookup TypeEnumLookup) (*spec.Schema, []string, error) {
 	var nestedTypes []string
 
 	// Remove pointer prefix
@@ -164,7 +177,7 @@ func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, er
 	// Check if this is a fields wrapper type (StringField, IntField, etc.)
 	// These should be treated as primitives, not struct types
 	if isFieldsWrapperType(typeStr) {
-		return getPrimitiveSchemaForFieldType(typeStr)
+		return getPrimitiveSchemaForFieldType(typeStr, originalTypeStr, enumLookup)
 	}
 
 	// Handle primitive types
@@ -176,7 +189,7 @@ func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, er
 	// Handle arrays
 	if strings.HasPrefix(typeStr, "[]") {
 		elemType := strings.TrimPrefix(typeStr, "[]")
-		elemSchema, elemNestedTypes, err := buildSchemaForType(elemType, public)
+		elemSchema, elemNestedTypes, err := buildSchemaForType(elemType, public, originalTypeStr, enumLookup)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -204,7 +217,7 @@ func buildSchemaForType(typeStr string, public bool) (*spec.Schema, []string, er
 			return nil, nil, fmt.Errorf("invalid map type: %s", typeStr)
 		}
 		valueType := typeStr[valueStart:]
-		valueSchema, valueNestedTypes, err := buildSchemaForType(valueType, public)
+		valueSchema, valueNestedTypes, err := buildSchemaForType(valueType, public, originalTypeStr, enumLookup)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -257,11 +270,38 @@ func isFieldsWrapperType(typeStr string) bool {
 }
 
 // getPrimitiveSchemaForFieldType returns the appropriate schema for a fields wrapper type
-func getPrimitiveSchemaForFieldType(typeStr string) (*spec.Schema, []string, error) {
-	if strings.Contains(typeStr, "fields.StringField") || strings.Contains(typeStr, "fields.StringConstantField") {
+func getPrimitiveSchemaForFieldType(typeStr string, originalTypeStr string, enumLookup TypeEnumLookup) (*spec.Schema, []string, error) {
+	// Check for IntConstantField and StringConstantField with enum type parameters
+	if strings.Contains(typeStr, "fields.IntConstantField[") {
+		// Extract enum type: fields.IntConstantField[constants.Role] -> constants.Role
+		enumType := extractConstantFieldEnumType(originalTypeStr)
+		if enumType != "" && enumLookup != nil {
+			enums, err := enumLookup.GetEnumsForType(enumType, nil)
+			if err == nil && len(enums) > 0 {
+				schema := &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}}}
+				applyEnumsToSchema(schema, enums)
+				return schema, nil, nil
+			}
+		}
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}}}, nil, nil
+	}
+	if strings.Contains(typeStr, "fields.StringConstantField[") {
+		// Extract enum type: fields.StringConstantField[constants.GlobalConfigKey] -> constants.GlobalConfigKey
+		enumType := extractConstantFieldEnumType(originalTypeStr)
+		if enumType != "" && enumLookup != nil {
+			enums, err := enumLookup.GetEnumsForType(enumType, nil)
+			if err == nil && len(enums) > 0 {
+				schema := &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}
+				applyEnumsToSchema(schema, enums)
+				return schema, nil, nil
+			}
+		}
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}, nil, nil
 	}
-	if strings.Contains(typeStr, "fields.IntField") || strings.Contains(typeStr, "fields.IntConstantField") || strings.Contains(typeStr, "fields.DecimalField") {
+	if strings.Contains(typeStr, "fields.StringField") {
+		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}, nil, nil
+	}
+	if strings.Contains(typeStr, "fields.IntField") || strings.Contains(typeStr, "fields.DecimalField") {
 		return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}}}, nil, nil
 	}
 	if strings.Contains(typeStr, "fields.UUIDField") {
@@ -278,6 +318,52 @@ func getPrimitiveSchemaForFieldType(typeStr string) (*spec.Schema, []string, err
 	}
 	// Default to string for unknown field types
 	return &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}, nil, nil
+}
+
+// extractConstantFieldEnumType extracts the enum type from IntConstantField[T] or StringConstantField[T]
+func extractConstantFieldEnumType(typeStr string) string {
+	// Look for pattern like "*fields.IntConstantField[constants.Role]" or "*fields.StringConstantField[constants.GlobalConfigKey]"
+	if strings.Contains(typeStr, "ConstantField[") {
+		start := strings.Index(typeStr, "[")
+		end := strings.LastIndex(typeStr, "]")
+		if start != -1 && end != -1 && end > start {
+			return typeStr[start+1 : end]
+		}
+	}
+	return ""
+}
+
+// applyEnumsToSchema applies enum values to a schema
+func applyEnumsToSchema(schema *spec.Schema, enums []EnumValue) {
+	if len(enums) == 0 {
+		return
+	}
+
+	var enumValues []interface{}
+	var varNames []string
+	enumComments := make(map[string]string)
+	var enumDescriptions []string
+
+	for _, enum := range enums {
+		enumValues = append(enumValues, enum.Value)
+		varNames = append(varNames, enum.Key)
+		enumDescriptions = append(enumDescriptions, enum.Comment)
+		if enum.Comment != "" {
+			enumComments[enum.Key] = enum.Comment
+		}
+	}
+
+	schema.Enum = enumValues
+
+	if schema.Extensions == nil {
+		schema.Extensions = make(spec.Extensions)
+	}
+	schema.Extensions["x-enum-varnames"] = varNames
+
+	if len(enumComments) > 0 {
+		schema.Extensions["x-enum-comments"] = enumComments
+		schema.Extensions["x-enum-descriptions"] = enumDescriptions
+	}
 }
 
 // primitiveTypeToSchema converts a Go primitive type to OpenAPI schema
