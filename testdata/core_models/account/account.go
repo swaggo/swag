@@ -42,17 +42,8 @@ type DBColumns struct {
 	PasswordUpdatedAtTS *fields.IntField                                    `              column:"password_updated_at_ts" type:"bigint"   default:"0"`
 	EmailVerifiedAtTS   *fields.IntField                                    `              column:"email_verified_at_ts"   type:"bigint"   default:"0"`
 	LastLoginTS         *fields.IntField                                    `              column:"last_login_ts"          type:"bigint"   default:"0"                  index:"true"`
-	Authentication      *fields.StructField[*Authentication]                `              column:"authentication"  type:"jsonb"    default:"{}" swaggerignore:"true"`
-	GlobalConfigKey     *fields.IntConstantField[constants.GlobalConfigKey] `public:"view" column:"config_key"                   type:"text" default:""                  index:"true"`
-}
-
-type JoinData struct {
-	Name             *fields.StringField `json:"name"              type:"text"`
-	OrganizationName *fields.StringField `json:"organization_name" type:"text"`
-
-	CreatedByName *fields.StringField                 `json:"created_by_name" type:"text"`
-	UpdatedByName *fields.StringField                 `json:"updated_by_name" type:"text"`
-	Tags          *fields.StructField[[]*IconTagJoin] `public:"view" json:"tags"            type:"jsonb"`
+	Authentication      *fields.StructField[*Authentication]                `              column:"authentication"         type:"jsonb"    default:"{}"                                          swaggerignore:"true"`
+	GlobalConfigKey     *fields.IntConstantField[constants.GlobalConfigKey] `public:"view" column:"config_key"             type:"text"     default:""                   index:"true"`
 }
 
 type ManualFields struct {

@@ -432,7 +432,8 @@
         "organization_name",
         "created_by_name",
         "updated_by_name",
-        "tags"
+        "tags",
+        "nested_settings"
       ],
       "properties": {
         "config_key": {
@@ -500,6 +501,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "nested_settings": {
+          "$ref": "#/definitions/account.NestedSettings"
         },
         "organization_id": {
           "type": "string",
@@ -615,7 +619,8 @@
         "role",
         "config_key",
         "is_super_user_session",
-        "tags"
+        "tags",
+        "nested_settings"
       ],
       "properties": {
         "config_key": {
@@ -668,6 +673,9 @@
         },
         "last_name": {
           "type": "string"
+        },
+        "nested_settings": {
+          "$ref": "#/definitions/account.NestedSettingsPublic"
         },
         "organization_id": {
           "type": "string",
@@ -1332,6 +1340,28 @@
     "account.IconTagJoinPublic": {
       "type": "object",
       "title": "AccountIconTagJoinPublic"
+    },
+    "account.NestedSettings": {
+      "type": "object",
+      "title": "AccountNestedSettings",
+      "required": [
+        "role"
+      ],
+      "properties": {
+        "role": {
+          "type": "integer",
+          "enum": [
+            1
+          ],
+          "x-enum-varnames": [
+            "STYLE_TYPE_MIX_IT_UP"
+          ]
+        }
+      }
+    },
+    "account.NestedSettingsPublic": {
+      "type": "object",
+      "title": "AccountNestedSettingsPublic"
     },
     "account.Properties": {
       "type": "object",

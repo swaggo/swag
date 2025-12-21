@@ -8,6 +8,7 @@ import (
 	"go/types"
 	"strings"
 
+	"github.com/swaggo/swag/console"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -59,8 +60,10 @@ func (p *ParserEnumLookup) GetEnumsForType(typeName string, file *ast.File) ([]E
 	if pkgName != "" {
 		// Try to find the package - assume it's in the same module
 		targetPkgPath = p.BaseModule + "/testdata/core_models/" + pkgName
+		console.Printf("$Bold{$Red{Looking up enums for type: %s in package: %s (path: %s)}}\n", baseTypeName, pkgName, targetPkgPath)
 	} else {
 		targetPkgPath = p.PkgPath
+		console.Printf("$Bold{$Red{Looking up enums for type: %s in package path: %s}}\n", baseTypeName, targetPkgPath)
 	}
 
 	pkgs, err := packages.Load(cfg, targetPkgPath)

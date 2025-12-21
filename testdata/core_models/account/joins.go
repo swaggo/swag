@@ -9,6 +9,20 @@ import (
 	"github.com/swaggo/swag/testdata/core_models/constants"
 )
 
+type JoinData struct {
+	Name             *fields.StringField `json:"name"              type:"text"`
+	OrganizationName *fields.StringField `json:"organization_name" type:"text"`
+
+	CreatedByName  *fields.StringField                  `json:"created_by_name" type:"text"`
+	UpdatedByName  *fields.StringField                  `json:"updated_by_name" type:"text"`
+	Tags           *fields.StructField[[]*IconTagJoin]  `json:"tags"            type:"jsonb" public:"view"`
+	NestedSettings *fields.StructField[*NestedSettings] `json:"nested_settings" type:"jsonb" public:"view"`
+}
+
+type NestedSettings struct {
+	Role constants.StyleType `json:"role"`
+}
+
 // AddJoinData adds in the join data
 func AddJoinData(options *model.Options) {
 	options.WithPrependJoins([]string{

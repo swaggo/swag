@@ -170,6 +170,13 @@ func extractTypeParameter(typeStr string) (string, error) {
 // Returns schema, list of nested struct type names, and error
 func buildSchemaForType(typeStr string, public bool, originalTypeStr string, enumLookup TypeEnumLookup) (*spec.Schema, []string, error) {
 	var nestedTypes []string
+	var debug bool
+	if strings.Contains(typeStr, "constants.") {
+		debug = true
+	}
+	if debug {
+		console.Printf("Building schema for type: $Bold{%s} (original: $Bold{%s})\n", typeStr, originalTypeStr)
+	}
 
 	// Remove pointer prefix
 	isPointer := strings.HasPrefix(typeStr, "*")
@@ -180,12 +187,18 @@ func buildSchemaForType(typeStr string, public bool, originalTypeStr string, enu
 	// Check if this is a fields wrapper type (StringField, IntField, etc.)
 	// These should be treated as primitives, not struct types
 	if isFieldsWrapperType(typeStr) {
+		if debug {
+			console.Printf("Detected fields wrapper type: $Bold{%s}\n", typeStr)
+		}
 		return getPrimitiveSchemaForFieldType(typeStr, originalTypeStr, enumLookup)
 	}
 
 	// Handle primitive types
 	if isPrimitiveType(typeStr) {
 		schema := primitiveTypeToSchema(typeStr)
+		if debug {
+			console.Printf("Detected Is Primitive type: $Bold{%s} Schema %+v\n", typeStr, schema)
+		}
 		return schema, nil, nil
 	}
 
@@ -237,8 +250,14 @@ func buildSchemaForType(typeStr string, public bool, originalTypeStr string, enu
 
 	// Check if this is an enum type - if so, inline the enum values instead of creating a reference
 	if enumLookup != nil {
+		if debug {
+			console.Printf("Checking enum for type: $Bold{%s}\n", typeStr)
+		}
 		enums, err := enumLookup.GetEnumsForType(typeStr, nil)
 		if err == nil && len(enums) > 0 {
+			if debug {
+				console.Printf("Detected Enum type: $Bold{%s} with %d values\n", typeStr, len(enums))
+			}
 			// This is an enum type - create an inline schema with enum values
 			// Determine the base type from the first enum value
 			schema := &spec.Schema{}
@@ -257,6 +276,15 @@ func buildSchemaForType(typeStr string, public bool, originalTypeStr string, enu
 			applyEnumsToSchema(schema, enums)
 			return schema, nil, nil
 		}
+		if debug {
+			if err != nil {
+				console.Printf("Error looking up enums for type: $Bold{%s}: $Red{%s}\n", typeStr, err.Error())
+			}
+		}
+	} else {
+		if debug {
+			console.Printf("No enumLookup provided, skipping enum check for type: $Bold{%s}\n", typeStr)
+		}
 	}
 
 	// Keep the full type name (including package prefix if present)
@@ -272,7 +300,9 @@ func buildSchemaForType(typeStr string, public bool, originalTypeStr string, enu
 	// Create reference schema using the full type name
 	schema := spec.RefSchema("#/definitions/" + refName)
 	nestedTypes = append(nestedTypes, typeName)
-
+	if debug {
+		console.Printf("Created Ref Schema for type: $Bold{$Red{%s}} Ref: $Bold{#/definitions/%s}\n", typeStr, refName)
+	}
 	return schema, nestedTypes, nil
 }
 
