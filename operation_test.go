@@ -226,6 +226,15 @@ func TestParseRouterCommentWithTilde(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestParseRouterCommentWithAt(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Router /users/@{id} [get]`
+	operation := NewOperation(nil)
+	err := operation.ParseComment(comment, nil)
+	assert.NoError(t, err)
+}
+
 func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
 	t.Parallel()
 
