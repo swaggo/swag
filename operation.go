@@ -417,7 +417,8 @@ const (
 	uriTag              = "uri"
 	headerTag           = "header"
 	bindingTag          = "binding"
-	defaultTag          = "swag_default"
+	defaultTag          = "swag_default" // Field default value tag
+	defaultResponseCode = "default"      // OpenAPI/Swagger default response code keyword
 	enumsTag            = "enums"
 	exampleTag          = "example"
 	schemaExampleTag    = "schemaExample"
@@ -1036,7 +1037,7 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 	}
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, defaultTag) {
+		if strings.EqualFold(codeStr, defaultResponseCode) {
 			operation.DefaultResponse().WithSchema(schema).WithDescription(description)
 
 			continue
@@ -1113,7 +1114,7 @@ func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *as
 	}
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, defaultTag) {
+		if strings.EqualFold(codeStr, defaultResponseCode) {
 			if operation.Responses.Default != nil {
 				operation.Responses.Default.Headers[headerKey] = header
 			}
@@ -1151,7 +1152,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 	description := strings.Trim(matches[2], "\"")
 
 	for _, codeStr := range strings.Split(matches[1], ",") {
-		if strings.EqualFold(codeStr, defaultTag) {
+		if strings.EqualFold(codeStr, defaultResponseCode) {
 			operation.DefaultResponse().WithDescription(description)
 
 			continue
@@ -1171,7 +1172,7 @@ func (operation *Operation) ParseEmptyResponseComment(commentLine string) error 
 // ParseEmptyResponseOnly parse only comment out status code ,eg: @Success 200.
 func (operation *Operation) ParseEmptyResponseOnly(commentLine string) error {
 	for _, codeStr := range strings.Split(commentLine, ",") {
-		if strings.EqualFold(codeStr, defaultTag) {
+		if strings.EqualFold(codeStr, defaultResponseCode) {
 			_ = operation.DefaultResponse()
 
 			continue

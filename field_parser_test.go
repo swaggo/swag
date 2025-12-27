@@ -251,7 +251,7 @@ func TestDefaultFieldParser(t *testing.T) {
 		err := newTagBaseFieldParser(
 			&Parser{},
 			&ast.Field{Tag: &ast.BasicLit{
-				Value: `json:"test" default:"pass"`,
+				Value: `json:"test" swag_default:"pass"`,
 			}},
 		).ComplementSchema(&schema)
 		assert.NoError(t, err)
@@ -262,7 +262,7 @@ func TestDefaultFieldParser(t *testing.T) {
 		err = newTagBaseFieldParser(
 			&Parser{},
 			&ast.Field{Tag: &ast.BasicLit{
-				Value: `json:"test" default:"pass"`,
+				Value: `json:"test" swag_default:"pass"`,
 			}},
 		).ComplementSchema(&schema)
 		assert.Error(t, err)

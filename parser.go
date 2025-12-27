@@ -1430,6 +1430,18 @@ func (parser *Parser) getBaseModule(pkgPath string) string {
 // requiresCustomParser checks if a type definition requires the custom struct parser
 // Returns true if the struct has fields that use fields.StructField types
 func (parser *Parser) requiresCustomParser(typeSpecDef *TypeSpecDef) bool {
+	visited := make(map[*TypeSpecDef]bool)
+	return parser.requiresCustomParserWithVisited(typeSpecDef, visited)
+}
+
+// requiresCustomParserWithVisited checks with cycle detection
+func (parser *Parser) requiresCustomParserWithVisited(typeSpecDef *TypeSpecDef, visited map[*TypeSpecDef]bool) bool {
+	// Check for cycles
+	if visited[typeSpecDef] {
+		return false
+	}
+	visited[typeSpecDef] = true
+
 	// Only check struct types
 	structType, ok := typeSpecDef.TypeSpec.Type.(*ast.StructType)
 	if !ok {
@@ -1450,7 +1462,7 @@ func (parser *Parser) requiresCustomParser(typeSpecDef *TypeSpecDef) bool {
 	// Check if any field uses fields.StructField
 	for _, field := range structType.Fields.List {
 		// Check field type for StructField pattern
-		if parser.hasStructFieldType(field.Type, typeSpecDef) {
+		if parser.hasStructFieldTypeWithVisited(field.Type, typeSpecDef, visited) {
 			return true
 		}
 	}
@@ -1460,9 +1472,15 @@ func (parser *Parser) requiresCustomParser(typeSpecDef *TypeSpecDef) bool {
 
 // hasStructFieldType recursively checks if a type expression contains fields.StructField
 func (parser *Parser) hasStructFieldType(expr ast.Expr, currentTypeSpecDef *TypeSpecDef) bool {
+	visited := make(map[*TypeSpecDef]bool)
+	return parser.hasStructFieldTypeWithVisited(expr, currentTypeSpecDef, visited)
+}
+
+// hasStructFieldTypeWithVisited recursively checks with cycle detection
+func (parser *Parser) hasStructFieldTypeWithVisited(expr ast.Expr, currentTypeSpecDef *TypeSpecDef, visited map[*TypeSpecDef]bool) bool {
 	switch t := expr.(type) {
 	case *ast.StarExpr:
-		return parser.hasStructFieldType(t.X, currentTypeSpecDef)
+		return parser.hasStructFieldTypeWithVisited(t.X, currentTypeSpecDef, visited)
 	case *ast.SelectorExpr:
 		// Check for fields.StructField pattern
 		if ident, ok := t.X.(*ast.Ident); ok {
@@ -1477,28 +1495,28 @@ func (parser *Parser) hasStructFieldType(expr ast.Expr, currentTypeSpecDef *Type
 
 			// Look up the embedded type
 			if embeddedType := parser.findTypeSpec(pkgName, typeName, currentTypeSpecDef.File); embeddedType != nil {
-				return parser.requiresCustomParser(embeddedType)
+				return parser.requiresCustomParserWithVisited(embeddedType, visited)
 			}
 		}
 		return false
 	case *ast.IndexExpr:
 		// Generic type like StructField[T]
-		return parser.hasStructFieldType(t.X, currentTypeSpecDef)
+		return parser.hasStructFieldTypeWithVisited(t.X, currentTypeSpecDef, visited)
 	case *ast.ArrayType:
-		return parser.hasStructFieldType(t.Elt, currentTypeSpecDef)
+		return parser.hasStructFieldTypeWithVisited(t.Elt, currentTypeSpecDef, visited)
 	case *ast.MapType:
-		return parser.hasStructFieldType(t.Value, currentTypeSpecDef)
+		return parser.hasStructFieldTypeWithVisited(t.Value, currentTypeSpecDef, visited)
 	case *ast.Ident:
 		// This might be an embedded type from the same package
 		// Try to resolve it
 		if embeddedType := parser.findTypeSpec("", t.Name, currentTypeSpecDef.File); embeddedType != nil {
-			return parser.requiresCustomParser(embeddedType)
+			return parser.requiresCustomParserWithVisited(embeddedType, visited)
 		}
 		return false
 	case *ast.StructType:
 		// Embedded struct - check its fields
 		for _, field := range t.Fields.List {
-			if parser.hasStructFieldType(field.Type, currentTypeSpecDef) {
+			if parser.hasStructFieldTypeWithVisited(field.Type, currentTypeSpecDef, visited) {
 				return true
 			}
 		}
