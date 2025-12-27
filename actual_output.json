@@ -1351,10 +1351,40 @@
         "role": {
           "type": "integer",
           "enum": [
-            1
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
           ],
           "x-enum-varnames": [
-            "STYLE_TYPE_MIX_IT_UP"
+            "STYLE_TYPE_MIX_IT_UP",
+            "STYLE_TYPE_IMAGINATIVE",
+            "STYLE_TYPE_FUTURISTIC",
+            "STYLE_TYPE_RETRO",
+            "STYLE_TYPE_PHOTOREALISTIC",
+            "STYLE_TYPE_ABSTRACT",
+            "STYLE_TYPE_MINIMALIST",
+            "STYLE_TYPE_POP_ART",
+            "STYLE_TYPE_3D_ANIMATED",
+            "STYLE_TYPE_ANIME",
+            "STYLE_TYPE_SYNTHWAVE",
+            "STYLE_TYPE_WATERCOLOR",
+            "STYLE_TYPE_IMPRESSIONISM",
+            "STYLE_TYPE_VECTOR_ART",
+            "STYLE_TYPE_STEAMPUNK",
+            "STYLE_TYPE_CUSTOM"
           ]
         }
       }
