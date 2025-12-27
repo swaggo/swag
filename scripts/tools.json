@@ -74,58 +74,7 @@
         },
         "required": ["package"]
       },
-      "command": "make test PKG=\"{{package:=./...}}\" RUN=\"{{test:=\"\"}}\""
-    },
-
-    {
-      "name": "rebuild_unit_test_db",
-      "description": "Initializes Or Rebuilds the unit test database.  Use when starting a new project or if there is a schema mismatch in the unit tests.\n\nThis command drops and recreates the unit test database to ensure it matches the current schema.",
-      "inputSchema": { "type": "object", "properties": {}, "required": [] },
-      "command": "make rebuild-unit-test-db"
-    },
-
-    {
-      "name": "make_object",
-      "description": "Code generates a new internal only model / controller / and migration",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "model_name": {
-            "title": "Model Name",
-            "type": "string",
-            "description": "Name of the model to create in snake case."
-          },
-          "model_plural": {
-            "title": "Model Plural",
-            "type": "string",
-            "description": "Name of the model in plural form using snake case."
-          }
-        },
-        "required": ["model_name", "model_plural"]
-      },
-      "command": "make code-gen-object model_name=\"{{model_name}}\" model_plural=\"{{model_plural}}\""
-    },
-
-    {
-      "name": "make_public_object",
-      "description": "Code generates a new public facing model / controller / and migration",
-      "inputSchema": {
-        "type": "object",
-        "properties": {
-          "model_name": {
-            "title": "Model Name",
-            "type": "string",
-            "description": "Name of the model to create in snake case."
-          },
-          "model_plural": {
-            "title": "Model Plural",
-            "type": "string",
-            "description": "Name of the model in plural form using snake case."
-          }
-        },
-        "required": ["model_name", "model_plural"]
-      },
-      "command": "make code-gen-public-object model_name=\"{{model_name}}\" model_plural=\"{{model_plural}}\""
+      "command": "make unit_test PKG=\"{{package:=./...}}\" RUN=\"{{test:=\"\"}}\""
     }
   ]
 }

@@ -17,6 +17,13 @@ BINARY_NAME:=swag
 PACKAGES:=$(shell $(GOLIST) github.com/swaggo/swag github.com/swaggo/swag/cmd/swag github.com/swaggo/swag/gen github.com/swaggo/swag/format)
 GOFILES:=$(shell find . -name "*.go" -type f)
 
+
+
+
+# Include standard makes
+include ./scripts/makes/core.mk
+
+
 all: test build
 
 .PHONY: build
