@@ -53,3 +53,28 @@ func TestParseGlobalEnums(t *testing.T) {
 	assert.Equal(t, "SuperSecret", securityLevelEnums[2].key)
 	assert.Equal(t, "This one has a name override and a comment", securityLevelEnums[2].Comment)
 }
+
+func TestParseEnumDeduplication(t *testing.T) {
+	searchDir := "testdata/enums_duplicate"
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	assert.NoError(t, err)
+
+	p := New()
+	err = p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	b, err := json.MarshalIndent(p.swagger, "", "    ")
+	assert.NoError(t, err)
+	assert.Equal(t, string(expected), string(b))
+
+	typesPath := "github.com/swaggo/swag/testdata/enums_duplicate/types"
+	languageEnums := p.packages.packages[typesPath].TypeDefinitions["Language"].Enums
+
+	// Should have 3 enum values (En, De, Zh)
+	// DefaultLanguage = En should be deduplicated
+	// Fr should be excluded via @swaggerignore
+	assert.Equal(t, 3, len(languageEnums))
+	assert.Equal(t, "En", languageEnums[0].key)
+	assert.Equal(t, "DE", languageEnums[1].Value)
+	assert.Equal(t, "ZH", languageEnums[2].Value)
+}
