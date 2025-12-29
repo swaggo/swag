@@ -502,12 +502,31 @@ func (pkgDefs *PackagesDefinitions) collectConstEnums(parsedSchemas map[*TypeSpe
 				continue
 			}
 
+			if strings.Contains(strings.ToLower(constVar.Comment), "@swaggerignore") {
+				continue
+			}
+
 			enumValue := EnumValue{
 				key:     name,
 				Value:   constVar.Value,
 				Comment: commentWithoutNameOverride(constVar.Comment),
 			}
-			typeDef.Enums = append(typeDef.Enums, enumValue)
+
+			// Check for duplicate enum values to avoid duplicates from aliased constants
+			isDuplicate := false
+			for _, existing := range typeDef.Enums {
+				if existing.Value == constVar.Value {
+					isDuplicate = true
+					if pkgDefs.debug != nil {
+						pkgDefs.debug.Printf("Skipping duplicate enum value '%v' for constant %s.%s (already defined by %s)", enumValue.Value, pkg.Path, name, existing.key)
+					}
+					break
+				}
+			}
+
+			if !isDuplicate {
+				typeDef.Enums = append(typeDef.Enums, enumValue)
+			}
 		}
 	}
 }
