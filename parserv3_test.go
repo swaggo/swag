@@ -244,6 +244,7 @@ func TestParserParseGeneralAPIInfoMarkdownV3(t *testing.T) {
 	err := p.ParseGeneralAPIInfo(mainAPIFile)
 	assert.NoError(t, err)
 
+	assert.Equal(t, "Swagger Example API Markdown Description", p.openAPI.Info.Spec.Description)
 	assert.Equal(t, "users", p.openAPI.Tags[0].Spec.Name)
 	assert.Equal(t, "Users Tag Markdown Description", p.openAPI.Tags[0].Spec.Description)
 

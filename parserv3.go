@@ -72,7 +72,8 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 				return err
 			}
 
-			setspecInfo(p.openAPI, attr, string(commentInfo))
+			// @description.markdown is an alternative to @description; it populates info.description.
+			setspecInfo(p.openAPI, descriptionAttr, string(commentInfo))
 		case "@host":
 			if len(p.openAPI.Servers) == 0 {
 				server := spec.NewServer()
