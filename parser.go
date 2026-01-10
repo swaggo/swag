@@ -21,6 +21,7 @@ import (
 
 	"github.com/KyleBanks/depth"
 	"github.com/go-openapi/spec"
+	"golang.org/x/mod/modfile"
 )
 
 const (
@@ -498,6 +499,18 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 }
 
 func getPkgName(searchDir string) (string, error) {
+	// If go.mod exists in the search directory, parse it to get the module name.
+	// This avoids errors when there are no Go files in the directory.
+	gomodPath := filepath.Join(searchDir, "go.mod")
+	if data, err := os.ReadFile(gomodPath); err == nil {
+		modFile, err := modfile.Parse(gomodPath, data, nil)
+		if err != nil {
+			return "", fmt.Errorf("parse go.mod: %w", err)
+		}
+
+		return modFile.Module.Mod.Path, nil
+	}
+
 	cmd := exec.Command("go", "list", "-f={{.ImportPath}}")
 	cmd.Dir = searchDir
 
@@ -510,7 +523,7 @@ func getPkgName(searchDir string) (string, error) {
 		return "", fmt.Errorf("execute go list command, %s, stdout:%s, stderr:%s", err, stdout.String(), stderr.String())
 	}
 
-	outStr, _ := stdout.String(), stderr.String()
+	outStr := stdout.String()
 
 	if outStr[0] == '_' { // will shown like _/{GOPATH}/src/{YOUR_PACKAGE} when NOT enable GO MODULE.
 		outStr = strings.TrimPrefix(outStr, "_"+build.Default.GOPATH+"/src/")

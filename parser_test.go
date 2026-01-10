@@ -4507,3 +4507,56 @@ func TestParser_DescriptionLineContinuation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
+
+func TestGetPkgName(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		searchDir string
+		want      string
+		wantErr   bool
+	}{
+		{
+			name:      "with go.mod in directory",
+			searchDir: "testdata/gomod_no_root_go_files",
+			want:      "example.com/gomod_no_root_go_files",
+			wantErr:   false,
+		},
+		{
+			name:      "with go files in directory",
+			searchDir: "testdata/simple",
+			want:      "github.com/swaggo/swag/testdata/simple",
+			wantErr:   false,
+		},
+		{
+			name:      "non-existent directory",
+			searchDir: "testdata/non_existent",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := getPkgName(tt.searchDir)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestParseGoModWithoutRootGoFiles(t *testing.T) {
+	t.Parallel()
+
+	p := New()
+	err := p.ParseAPI("testdata/gomod_no_root_go_files", "cmd/main.go", defaultParseDepth)
+	assert.NoError(t, err)
+	assert.Equal(t, "Test API", p.swagger.Info.Title)
+}
