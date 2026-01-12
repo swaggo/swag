@@ -4507,3 +4507,62 @@ func TestParser_DescriptionLineContinuation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, string(expected), string(b))
 }
+
+// TestParser_ParseDefinitionWithRecursiveTypeAndNameAnnotation tests that @name annotations
+// are properly respected for recursive types
+func TestParser_ParseDefinitionWithRecursiveTypeAndNameAnnotation(t *testing.T) {
+	src := `package api
+
+// TreeNode represents a node in a tree structure
+type TreeNode struct {
+	Value    string     ` + "`json:\"value\"`" + `
+	Children []TreeNode ` + "`json:\"children\"`" + `
+} // @name TreeNode
+
+// LinkedNode represents a node in a linked structure
+type LinkedNode struct {
+	Data string       ` + "`json:\"data\"`" + `
+	Next *LinkedNode  ` + "`json:\"next\"`" + `
+} // @name CustomLinkedNode
+`
+
+	p := New()
+	err := p.packages.ParseFile("api", "api/tree.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	// Find the TreeNode type
+	treeNodeDef := p.packages.FindTypeSpec("api.TreeNode", nil)
+	assert.NotNil(t, treeNodeDef)
+
+	// Parse the TreeNode definition
+	schema, err := p.ParseDefinition(treeNodeDef)
+	assert.NoError(t, err)
+	assert.NotNil(t, schema)
+	assert.Equal(t, "TreeNode", schema.Name) // Should use @name annotation
+
+	// Find the LinkedNode type
+	linkedNodeDef := p.packages.FindTypeSpec("api.LinkedNode", nil)
+	assert.NotNil(t, linkedNodeDef)
+
+	// Parse the LinkedNode definition
+	schema2, err := p.ParseDefinition(linkedNodeDef)
+	assert.NoError(t, err)
+	assert.NotNil(t, schema2)
+	assert.Equal(t, "CustomLinkedNode", schema2.Name) // Should use @name annotation
+
+	// Verify the definitions were added to swagger with correct names
+	assert.NotNil(t, p.swagger.Definitions["TreeNode"])
+	assert.NotNil(t, p.swagger.Definitions["CustomLinkedNode"])
+
+	// The fix is working if the definitions use the @name annotation
+	// TreeNode should be "TreeNode", not "api.TreeNode"
+	// LinkedNode should be "CustomLinkedNode", not "api.LinkedNode"
+	for name := range p.swagger.Definitions {
+		// Ensure no definitions use the full package path format
+		assert.NotContains(t, name, "api.TreeNode")
+		assert.NotContains(t, name, "api.LinkedNode")
+	}
+}
