@@ -325,6 +325,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 				// load overridden type specific name from extensions if exists
 				if nameVal, ok := item.Schema.Extensions.GetString(nameOverrideType); ok {
 					name = nameVal
+					if name == "-" {
+						continue
+					}
 				}
 
 				switch {

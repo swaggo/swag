@@ -1350,6 +1350,31 @@ func TestParseParamCommentQueryArrayFormatWithStructTag(t *testing.T) {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseParamCommentQuerySkipWithStructTag(t *testing.T) {
+	t.Parallel()
+
+	parser := New()
+	parser.packages.ParseFile("test",
+		"/test/test.go",
+		"package test\ntype MyQueryParam struct{Param string `form:\"param\"`\nSkipField string `form:\"-\"`}",
+		ParseAll)
+	parser.packages.ParseTypes()
+	comment := `@Param anyWhat query test.MyQueryParam true "Parameter"`
+	operation := NewOperation(parser)
+	err := operation.ParseComment(comment, nil)
+
+	assert.NoError(t, err)
+	b, _ := json.MarshalIndent(operation.Parameters, "", "    ")
+	expected := `[
+    {
+        "type": "string",
+        "name": "param",
+        "in": "query"
+    }
+]`
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentByID(t *testing.T) {
 	t.Parallel()
 
