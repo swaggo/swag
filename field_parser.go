@@ -21,6 +21,7 @@ const (
 	omitEmptyLabel   = "omitempty"
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
+	swaggerNeedTag   = "swaggerneedtag"
 )
 
 type tagBaseFieldParser struct {
@@ -63,6 +64,19 @@ func (ps *tagBaseFieldParser) ShouldSkip() bool {
 		return true
 	}
 
+	// swaggerneedtag:[!]needtag
+	needTag := ps.tag.Get(swaggerNeedTag)
+	if len(needTag) > 0 {
+		if needTag[0] != '!' {
+			if !ps.p.matchTag(needTag) {
+				return true
+			}
+		} else {
+			if ps.p.matchTag(needTag[1:]) {
+				return true
+			}
+		}
+	}
 	return false
 }
 
