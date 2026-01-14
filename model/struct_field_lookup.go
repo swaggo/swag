@@ -470,17 +470,34 @@ func (c *CoreStructParser) checkNamed(fieldType types.Type) ([]*StructField, *ty
 	return nil, nil, false
 }
 
+// getQualifiedTypeName returns the type name with package prefix if the type is from a different package
+// e.g., if we're processing the "account" package and we find a type from "address" package,
+// it returns "address.TypeName" instead of just "TypeName"
+func getQualifiedTypeName(namedType *types.Named) string {
+	if namedType == nil {
+		return ""
+	}
+	pkg := namedType.Obj().Pkg()
+	if pkg == nil {
+		return namedType.Obj().Name()
+	}
+	// Use the package name (last segment of the path) as prefix
+	pkgName := pkg.Name()
+	return fmt.Sprintf("%s.%s", pkgName, namedType.Obj().Name())
+}
+
 func (c *CoreStructParser) checkStruct(fieldType types.Type) ([]*StructField, string, bool) {
 	pointer, isPointer := fieldType.(*types.Pointer)
 	if isPointer {
 		fields, namedType, ok := c.checkNamed(pointer.Elem())
 		if ok && namedType != nil {
-			return fields, fmt.Sprintf("*%s", namedType.Obj().Name()), true
+			qualifiedName := getQualifiedTypeName(namedType)
+			return fields, fmt.Sprintf("*%s", qualifiedName), true
 		}
 	} else {
 		fields, namedType, ok := c.checkNamed(fieldType)
-		if ok {
-			return fields, namedType.Obj().Name(), true
+		if ok && namedType != nil {
+			return fields, getQualifiedTypeName(namedType), true
 		}
 	}
 

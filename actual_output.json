@@ -257,6 +257,7 @@
         "email_verified_at_ts",
         "last_login_ts",
         "config_key",
+        "verification",
         "is_super_user_session"
       ],
       "properties": {
@@ -396,6 +397,9 @@
         },
         "urn": {
           "type": "string"
+        },
+        "verification": {
+          "$ref": "#/definitions/address.Verification"
         }
       }
     },
@@ -427,6 +431,7 @@
         "email_verified_at_ts",
         "last_login_ts",
         "config_key",
+        "verification",
         "is_super_user_session",
         "name",
         "organization_name",
@@ -593,6 +598,9 @@
         },
         "urn": {
           "type": "string"
+        },
+        "verification": {
+          "$ref": "#/definitions/address.Verification"
         }
       }
     },
@@ -618,6 +626,7 @@
         "organization_id",
         "role",
         "config_key",
+        "verification",
         "is_super_user_session",
         "tags",
         "nested_settings"
@@ -750,6 +759,9 @@
         },
         "urn": {
           "type": "string"
+        },
+        "verification": {
+          "$ref": "#/definitions/address.VerificationPublic"
         }
       }
     },
@@ -775,6 +787,7 @@
         "organization_id",
         "role",
         "config_key",
+        "verification",
         "is_super_user_session"
       ],
       "properties": {
@@ -896,6 +909,9 @@
         },
         "urn": {
           "type": "string"
+        },
+        "verification": {
+          "$ref": "#/definitions/address.VerificationPublic"
         }
       }
     },
@@ -927,6 +943,7 @@
         "email_verified_at_ts",
         "last_login_ts",
         "config_key",
+        "verification",
         "is_super_user_session",
         "billing_plan_level",
         "billing_plan_price",
@@ -1095,6 +1112,9 @@
         },
         "urn": {
           "type": "string"
+        },
+        "verification": {
+          "$ref": "#/definitions/address.Verification"
         }
       }
     },
@@ -1120,6 +1140,7 @@
         "organization_id",
         "role",
         "config_key",
+        "verification",
         "is_super_user_session",
         "billing_plan_level",
         "billing_plan_price",
@@ -1262,6 +1283,9 @@
         },
         "urn": {
           "type": "string"
+        },
+        "verification": {
+          "$ref": "#/definitions/address.VerificationPublic"
         }
       }
     },
@@ -1434,6 +1458,246 @@
     "account.SignupPropertiesPublic": {
       "type": "object",
       "title": "AccountSignupPropertiesPublic"
+    },
+    "address.FieldVerification": {
+      "type": "object",
+      "title": "AddressFieldVerification",
+      "required": [
+        "value",
+        "google_value",
+        "confirmation_level",
+        "is_different",
+        "is_unconfirmed"
+      ],
+      "properties": {
+        "confirmation_level": {
+          "type": "string"
+        },
+        "google_value": {
+          "type": "string"
+        },
+        "is_different": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "is_unconfirmed": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "address.FieldVerificationPublic": {
+      "type": "object",
+      "title": "AddressFieldVerificationPublic",
+      "required": [
+        "value",
+        "google_value",
+        "confirmation_level",
+        "is_different",
+        "is_unconfirmed"
+      ],
+      "properties": {
+        "confirmation_level": {
+          "type": "string"
+        },
+        "google_value": {
+          "type": "string"
+        },
+        "is_different": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "is_unconfirmed": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "address.Verification": {
+      "type": "object",
+      "title": "AddressVerification",
+      "required": [
+        "street",
+        "street_2",
+        "city",
+        "state",
+        "postal_code",
+        "google_formatted_address",
+        "google_street_number",
+        "google_route",
+        "google_subpremise",
+        "google_neighborhood",
+        "google_locality",
+        "google_sublocality",
+        "google_administrative_area_level_1",
+        "google_administrative_area_level_2",
+        "google_postal_code",
+        "google_postal_code_suffix",
+        "google_country",
+        "is_match",
+        "is_unconfirmed",
+        "external_id"
+      ],
+      "properties": {
+        "city": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "google_administrative_area_level_1": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_administrative_area_level_2": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_country": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_formatted_address": {
+          "type": "string"
+        },
+        "google_locality": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_neighborhood": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_postal_code": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_postal_code_suffix": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_route": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_street_number": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_sublocality": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "google_subpremise": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "is_match": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "is_unconfirmed": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "postal_code": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "state": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "street": {
+          "$ref": "#/definitions/address.FieldVerification"
+        },
+        "street_2": {
+          "$ref": "#/definitions/address.FieldVerification"
+        }
+      }
+    },
+    "address.VerificationPublic": {
+      "type": "object",
+      "title": "AddressVerificationPublic",
+      "required": [
+        "street",
+        "street_2",
+        "city",
+        "state",
+        "postal_code",
+        "google_formatted_address",
+        "google_street_number",
+        "google_route",
+        "google_subpremise",
+        "google_neighborhood",
+        "google_locality",
+        "google_sublocality",
+        "google_administrative_area_level_1",
+        "google_administrative_area_level_2",
+        "google_postal_code",
+        "google_postal_code_suffix",
+        "google_country",
+        "is_match",
+        "is_unconfirmed",
+        "external_id"
+      ],
+      "properties": {
+        "city": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "google_administrative_area_level_1": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_administrative_area_level_2": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_country": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_formatted_address": {
+          "type": "string"
+        },
+        "google_locality": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_neighborhood": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_postal_code": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_postal_code_suffix": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_route": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_street_number": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_sublocality": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "google_subpremise": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "is_match": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "is_unconfirmed": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "postal_code": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "state": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "street": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        },
+        "street_2": {
+          "$ref": "#/definitions/address.FieldVerificationPublic"
+        }
+      }
     },
     "api.APIResponse": {
       "type": "object",
