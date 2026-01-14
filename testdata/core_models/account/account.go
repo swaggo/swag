@@ -7,6 +7,7 @@ import (
 	"github.com/griffnb/core/lib/model"
 	"github.com/griffnb/core/lib/model/coremodel"
 	"github.com/griffnb/core/lib/model/fields"
+	"github.com/swaggo/swag/testdata/core_models/address"
 	"github.com/swaggo/swag/testdata/core_models/base"
 	"github.com/swaggo/swag/testdata/core_models/constants"
 )
@@ -44,6 +45,7 @@ type DBColumns struct {
 	LastLoginTS         *fields.IntField                                    `              column:"last_login_ts"          type:"bigint"   default:"0"                  index:"true"`
 	Authentication      *fields.StructField[*Authentication]                `              column:"authentication"         type:"jsonb"    default:"{}"                                          swaggerignore:"true"`
 	GlobalConfigKey     *fields.IntConstantField[constants.GlobalConfigKey] `public:"view" column:"config_key"             type:"text"     default:""                   index:"true"`
+	AddressVerification *fields.StructField[*address.Verification]          `public:"view" column:"verification"           type:"jsonb"    default:"{}"`
 }
 
 type ManualFields struct {
