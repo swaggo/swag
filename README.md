@@ -534,14 +534,17 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 | securitydefinitions.bearerauth          | [Bearer Authentication](https://swagger.io/docs/specification/authentication/bearer-authentication/) auth. supported in Swagger v3.x|                                                | // @securitydefinitions.bearerauth BearerAuth                |
 
 
-| parameters annotation           | example                                                                 |
-|---------------------------------|-------------------------------------------------------------------------|
-| in                              | // @in header                                                           |
-| name                            | // @name Authorization                                                  |
-| tokenUrl                        | // @tokenUrl https://example.com/oauth/token                            |
-| authorizationurl                | // @authorizationurl https://example.com/oauth/authorize                |
-| scope.hoge                      | // @scope.write Grants write access                                     |
-| description                     | // @description OAuth protects our entity endpoints                     |
+| Parameter Annotation | Example                                                    |
+| -------------------- | ---------------------------------------------------------- |
+| name                 | `// @name Authorization`                                   |
+| tokenUrl             | `// @tokenUrl https://example.com/oauth/token`             |
+| authorizationurl     | `// @authorizationurl https://example.com/oauth/authorize` |
+| scope.write          | `// @scope.write Grants write access`                      |
+| scope.openid         | `// @scope.openid Grants access to OpenID information`     |
+| scope.email          | `// @scope.email Grants access to user's email`            |
+| scope.profile        | `// @scope.profile Grants access to user's profile`        |
+| description          | `// @description OAuth protects the entity’s endpoints`    |
+
 
 ## Attribute
 
