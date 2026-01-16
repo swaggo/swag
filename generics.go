@@ -27,10 +27,6 @@ func (t *genericTypeSpec) TypeName() string {
 	return t.Name
 }
 
-func normalizeGenericTypeName(name string) string {
-	return strings.Replace(name, ".", "_", -1)
-}
-
 func (pkgDefs *PackagesDefinitions) getTypeFromGenericParam(genericParam string, file *ast.File) (typeSpecDef *TypeSpecDef) {
 	if strings.HasPrefix(genericParam, "[]") {
 		typeSpecDef = pkgDefs.getTypeFromGenericParam(genericParam[2:], file)
@@ -173,8 +169,8 @@ func (pkgDefs *PackagesDefinitions) parametrizeGenericType(file *ast.File, origi
 		}
 	}
 
-	name += normalizeGenericTypeName(strings.Join(nameParts, "-"))
-	schemaName += normalizeGenericTypeName(strings.Join(schemaNameParts, "-"))
+	name += strings.Join(nameParts, "-")
+	schemaName += strings.Join(schemaNameParts, "-")
 
 	if typeSpec, ok := pkgDefs.uniqueDefinitions[name]; ok {
 		return typeSpec
