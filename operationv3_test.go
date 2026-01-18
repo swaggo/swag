@@ -1029,6 +1029,50 @@ func TestParseParamCommentQueryArrayFormatV3(t *testing.T) {
 
 }
 
+func TestParseParamCommentExplodeV3(t *testing.T) {
+	t.Parallel()
+
+	t.Run("explode true", func(t *testing.T) {
+		comment := `@Param ids query []string true "ID List" explode(true)`
+		operation := NewOperationV3(New())
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		parameters := operation.Operation.Parameters
+		assert.NotNil(t, parameters)
+
+		parameterSpec := parameters[0].Spec.Spec
+		assert.NotNil(t, parameterSpec)
+		assert.Equal(t, "ids", parameterSpec.Name)
+		assert.Equal(t, "query", parameterSpec.In)
+		assert.Equal(t, true, parameterSpec.Explode)
+	})
+
+	t.Run("explode false", func(t *testing.T) {
+		comment := `@Param ids query []string true "ID List" explode(false)`
+		operation := NewOperationV3(New())
+		err := operation.ParseComment(comment, nil)
+		assert.NoError(t, err)
+
+		parameters := operation.Operation.Parameters
+		assert.NotNil(t, parameters)
+
+		parameterSpec := parameters[0].Spec.Spec
+		assert.NotNil(t, parameterSpec)
+		assert.Equal(t, "ids", parameterSpec.Name)
+		assert.Equal(t, "query", parameterSpec.In)
+		assert.Equal(t, false, parameterSpec.Explode)
+	})
+
+	t.Run("explode invalid value", func(t *testing.T) {
+		comment := `@Param ids query []string true "ID List" explode(invalid)`
+		operation := NewOperationV3(New())
+		err := operation.ParseComment(comment, nil)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "explode must be 'true' or 'false'")
+	})
+}
+
 func TestParseParamCommentByIDV3(t *testing.T) {
 	t.Parallel()
 

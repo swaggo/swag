@@ -561,6 +561,8 @@ func (o *OperationV3) parseParamAttribute(comment, objectType, schemaType string
 			param.Schema.Spec.Extensions = setExtensionParam(attr)
 		case collectionFormatTag:
 			err = setCollectionFormatParamV3(param, attrKey, objectType, attr, comment)
+		case explodeTag:
+			err = setExplodeParamV3(param, attr, comment)
 		}
 
 		if err != nil {
@@ -614,6 +616,18 @@ func setCollectionFormatParamV3(param *spec.Parameter, name, schemaType, attr, c
 	}
 
 	return fmt.Errorf("%s is attribute to set to an array. comment=%s got=%s", name, commentLine, schemaType)
+}
+
+func setExplodeParamV3(param *spec.Parameter, attr, commentLine string) error {
+	switch strings.ToLower(attr) {
+	case "true":
+		param.Explode = true
+	case "false":
+		param.Explode = false
+	default:
+		return fmt.Errorf("explode must be 'true' or 'false', got '%s' in comment: %s", attr, commentLine)
+	}
+	return nil
 }
 
 func setSchemaExampleV3(param *spec.Schema, schemaType string, value string) error {
