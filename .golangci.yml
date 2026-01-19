@@ -1,0 +1,54 @@
+version: "2"
+run:
+  modules-download-mode: readonly
+linters:
+  enable:
+    - gosec
+    - predeclared
+    - revive
+    - unparam
+    - wrapcheck
+  settings:
+    wrapcheck:
+      ignore-package-globs:
+        - github.com/griffnb/*
+  exclusions:
+    generated: lax
+    rules:
+      - path: (.+)\.go$
+        text: blank-imports
+      - path: (.+)\.go$
+        text: ST1006
+      - path: (.+)\.go$
+        text: ST1000
+      - path: (.+)\.go$
+        text: ST1003
+      - path: (.+)\.go$
+        text: receiver-naming
+      - path: (.+)\.go$
+        text: exported
+      - path: (.+)\.go$
+        text: package-comments
+      - path: (.+)\.go$
+        text: var-naming
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - goimports
+    - gofumpt
+    - golines
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+  settings:
+    golines:
+      max-len: 150

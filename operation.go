@@ -32,6 +32,7 @@ type Operation struct {
 	spec.Operation
 	RouterProperties []RouteProperties
 	State            string
+	IsPublic         bool // Set to true when @public annotation is present
 }
 
 var mimeTypeAliases = map[string]string{
@@ -122,6 +123,8 @@ func (operation *Operation) ParseComment(comment string, astFile *ast.File) erro
 		lineRemainder = fields[1]
 	}
 	switch lowerAttribute {
+	case publicAttr:
+		operation.IsPublic = true
 	case stateAttr:
 		operation.ParseStateComment(lineRemainder)
 	case descriptionAttr:
@@ -411,11 +414,13 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 
 const (
 	formTag             = "form"
+	columnTag           = "column"
+	publicTag           = "public"
 	jsonTag             = "json"
 	uriTag              = "uri"
 	headerTag           = "header"
 	bindingTag          = "binding"
-	defaultTag          = "default"
+	defaultTag          = "swag_default"
 	enumsTag            = "enums"
 	exampleTag          = "example"
 	schemaExampleTag    = "schemaExample"
@@ -842,10 +847,18 @@ var responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\
 var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
 
 func (operation *Operation) parseObjectSchema(refType string, astFile *ast.File) (*spec.Schema, error) {
-	return parseObjectSchema(operation.parser, refType, astFile)
+	return operation.parseObjectSchemaWithPublic(refType, astFile, operation.IsPublic)
+}
+
+func (operation *Operation) parseObjectSchemaWithPublic(refType string, astFile *ast.File, public bool) (*spec.Schema, error) {
+	return parseObjectSchemaWithPublic(operation.parser, refType, astFile, public)
 }
 
 func parseObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec.Schema, error) {
+	return parseObjectSchemaWithPublic(parser, refType, astFile, false)
+}
+
+func parseObjectSchemaWithPublic(parser *Parser, refType string, astFile *ast.File, public bool) (*spec.Schema, error) {
 	switch {
 	case refType == NIL:
 		return nil, nil
@@ -858,7 +871,7 @@ func parseObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec
 	case IsPrimitiveType(refType):
 		return PrimitiveSchema(refType), nil
 	case strings.HasPrefix(refType, "[]"):
-		schema, err := parseObjectSchema(parser, refType[2:], astFile)
+		schema, err := parseObjectSchemaWithPublic(parser, refType[2:], astFile, public)
 		if err != nil {
 			return nil, err
 		}
@@ -876,17 +889,23 @@ func parseObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec
 			return spec.MapProperty(nil), nil
 		}
 
-		schema, err := parseObjectSchema(parser, refType, astFile)
+		schema, err := parseObjectSchemaWithPublic(parser, refType, astFile, public)
 		if err != nil {
 			return nil, err
 		}
 
 		return spec.MapProperty(schema), nil
 	case strings.Contains(refType, "{"):
-		return parseCombinedObjectSchema(parser, refType, astFile)
+		return parseCombinedObjectSchemaWithPublic(parser, refType, astFile, public)
 	default:
+		// Add Public suffix for struct types when in public mode
+		schemaRefType := refType
+		if public && !IsGolangPrimitiveType(refType) && !IsPrimitiveType(refType) {
+			schemaRefType = refType + "Public"
+		}
+
 		if parser != nil { // checking refType has existing in 'TypeDefinitions'
-			schema, err := parser.getTypeSchema(refType, astFile, true)
+			schema, err := parser.getTypeSchema(schemaRefType, astFile, true)
 			if err != nil {
 				return nil, err
 			}
@@ -894,7 +913,7 @@ func parseObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec
 			return schema, nil
 		}
 
-		return RefSchema(refType), nil
+		return RefSchema(schemaRefType), nil
 	}
 }
 
@@ -917,12 +936,18 @@ func parseFields(s string) []string {
 }
 
 func parseCombinedObjectSchema(parser *Parser, refType string, astFile *ast.File) (*spec.Schema, error) {
+	return parseCombinedObjectSchemaWithPublic(parser, refType, astFile, false)
+}
+
+func parseCombinedObjectSchemaWithPublic(parser *Parser, refType string, astFile *ast.File, public bool) (*spec.Schema, error) {
 	matches := combinedPattern.FindStringSubmatch(refType)
 	if len(matches) != 3 {
 		return nil, fmt.Errorf("invalid type: %s", refType)
 	}
 
-	schema, err := parseObjectSchema(parser, matches[1], astFile)
+	// For combined schemas, don't apply public to outer type (it's a container/wrapper)
+	// Only apply public to nested field types
+	schema, err := parseObjectSchemaWithPublic(parser, matches[1], astFile, false)
 	if err != nil {
 		return nil, err
 	}
@@ -932,7 +957,8 @@ func parseCombinedObjectSchema(parser *Parser, refType string, astFile *ast.File
 	for _, field := range fields {
 		keyVal := strings.SplitN(field, "=", 2)
 		if len(keyVal) == 2 {
-			schema, err := parseObjectSchema(parser, keyVal[1], astFile)
+			// Apply public flag to nested field types
+			schema, err := parseObjectSchemaWithPublic(parser, keyVal[1], astFile, public)
 			if err != nil {
 				return nil, err
 			}
