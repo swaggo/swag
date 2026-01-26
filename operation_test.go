@@ -1968,6 +1968,7 @@ func TestParseParamCommentByDefault(t *testing.T) {
 func TestParseParamCommentByExampleInt(t *testing.T) {
 	t.Parallel()
 
+	// Swagger 2.0: query parameters use x-example vendor extension
 	comment := `@Param some_id query int true "Some ID" Example(10)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1977,7 +1978,7 @@ func TestParseParamCommentByExampleInt(t *testing.T) {
 	expected := `[
     {
         "type": "integer",
-        "example": 10,
+        "x-example": 10,
         "description": "Some ID",
         "name": "some_id",
         "in": "query",
@@ -1990,6 +1991,7 @@ func TestParseParamCommentByExampleInt(t *testing.T) {
 func TestParseParamCommentByExampleString(t *testing.T) {
 	t.Parallel()
 
+	// Swagger 2.0: query parameters use x-example vendor extension
 	comment := `@Param some_id query string true "Some ID" Example(True feelings)`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -1999,7 +2001,7 @@ func TestParseParamCommentByExampleString(t *testing.T) {
 	expected := `[
     {
         "type": "string",
-        "example": "True feelings",
+        "x-example": "True feelings",
         "description": "Some ID",
         "name": "some_id",
         "in": "query",
@@ -2012,6 +2014,7 @@ func TestParseParamCommentByExampleString(t *testing.T) {
 func TestParseParamCommentByExampleStringComplex(t *testing.T) {
 	t.Parallel()
 
+	// Swagger 2.0: query parameters use x-example vendor extension
 	comment := `@Param some_id query string true "Some ID" Example(user_id.eq(1))`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
@@ -2021,7 +2024,7 @@ func TestParseParamCommentByExampleStringComplex(t *testing.T) {
 	expected := `[
     {
         "type": "string",
-        "example": "user_id.eq(1)",
+        "x-example": "user_id.eq(1)",
         "description": "Some ID",
         "name": "some_id",
         "in": "query",
@@ -2033,19 +2036,70 @@ func TestParseParamCommentByExampleStringComplex(t *testing.T) {
 
 func TestParseParamCommentByExampleUnsupportedType(t *testing.T) {
 	t.Parallel()
+
+	// For body parameters, example should be set directly on param.Example
+	var bodyParam spec.Parameter
+	bodyParam.In = "body"
+
+	setExample(&bodyParam, "something", "random value")
+	assert.Equal(t, bodyParam.Example, nil)
+
+	setExample(&bodyParam, STRING, "string value")
+	assert.Equal(t, bodyParam.Example, "string value")
+
+	setExample(&bodyParam, INTEGER, "10")
+	assert.Equal(t, bodyParam.Example, 10)
+
+	setExample(&bodyParam, NUMBER, "10")
+	assert.Equal(t, bodyParam.Example, float64(10))
+}
+
+func TestSetExample_NonBodyParameter_UsesVendorExtension(t *testing.T) {
+	t.Parallel()
+
+	// Swagger 2.0: 'example' is not valid for query/path/header/form parameters.
+	// Use 'x-example' vendor extension instead.
+	testCases := []struct {
+		name      string
+		paramIn   string
+		paramType string
+		value     string
+		expected  any
+	}{
+		{"query string", "query", STRING, "test-value", "test-value"},
+		{"query integer", "query", INTEGER, "42", 42},
+		{"path string", "path", STRING, "abc123", "abc123"},
+		{"header string", "header", STRING, "Bearer token", "Bearer token"},
+		{"formData string", "formData", STRING, "form-value", "form-value"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			var param spec.Parameter
+			param.In = tc.paramIn
+
+			err := setExample(&param, tc.paramType, tc.value)
+
+			assert.NoError(t, err)
+			assert.Nil(t, param.Example, "param.Example should be nil for non-body parameters")
+			assert.Equal(t, tc.expected, param.Extensions["x-example"])
+		})
+	}
+}
+
+func TestSetExample_BodyParameter_UsesExample(t *testing.T) {
+	t.Parallel()
+
+	// Body parameters use Schema Object where 'example' is valid
 	var param spec.Parameter
+	param.In = "body"
 
-	setExample(&param, "something", "random value")
-	assert.Equal(t, param.Example, nil)
+	err := setExample(&param, STRING, "body-value")
 
-	setExample(&param, STRING, "string value")
-	assert.Equal(t, param.Example, "string value")
-
-	setExample(&param, INTEGER, "10")
-	assert.Equal(t, param.Example, 10)
-
-	setExample(&param, NUMBER, "10")
-	assert.Equal(t, param.Example, float64(10))
+	assert.NoError(t, err)
+	assert.Equal(t, "body-value", param.Example)
+	assert.Nil(t, param.Extensions)
 }
 
 func TestParseParamCommentBySchemaExampleString(t *testing.T) {
