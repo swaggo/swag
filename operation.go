@@ -643,7 +643,17 @@ func setExample(param *spec.Parameter, schemaType string, value string) error {
 		return nil // Don't set a example value if it's not valid
 	}
 
-	param.Example = val
+	// Swagger 2.0: 'example' field is only valid in Schema Object (body parameters).
+	// For query/path/header/form parameters, use 'x-example' vendor extension.
+	// Reference: https://swagger.io/specification/v2/#parameter-object
+	if param.In == "body" {
+		param.Example = val
+	} else {
+		if param.Extensions == nil {
+			param.Extensions = make(spec.Extensions)
+		}
+		param.Extensions["x-example"] = val
+	}
 
 	return nil
 }
