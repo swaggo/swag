@@ -475,9 +475,10 @@ func (ps *tagBaseFieldParserV3) ShouldSkip() bool {
 		return true
 	}
 
-	// json:"tag,hoge"
-	name := ps.JsonName()
-	if name == "" {
+	// json:"tag,hoge" or json:"-"
+	// Only skip if explicitly marked with json:"-", not for fields with other tags like yaml:",inline"
+	name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0])
+	if name == "-" {
 		return true
 	}
 

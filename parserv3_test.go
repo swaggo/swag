@@ -598,6 +598,42 @@ func TestParseInterface(t *testing.T) {
 	assert.JSONEq(t, string(expected), string(result))
 }
 
+func TestParseCompositionInlineV3(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/v3/composition_inline"
+
+	p := New(GenerateOpenAPI3Doc(true))
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	require.NoError(t, err)
+
+	// Check that ServerMetadata has all the expected properties (including embedded BaseMetadata fields)
+	assert.Contains(t, p.openAPI.Components.Spec.Schemas, "api.ServerMetadata")
+	schema := p.openAPI.Components.Spec.Schemas["api.ServerMetadata"].Spec
+	assert.Contains(t, schema.Properties, "name", "embedded field 'name' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "description", "embedded field 'description' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "status", "embedded field 'status' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "image", "direct field 'image' should be present")
+
+	// Check that ServerMetadataJSONInline also has all the expected properties
+	assert.Contains(t, p.openAPI.Components.Spec.Schemas, "api.ServerMetadataJSONInline")
+	schema = p.openAPI.Components.Spec.Schemas["api.ServerMetadataJSONInline"].Spec
+	assert.Contains(t, schema.Properties, "name", "embedded field 'name' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "description", "embedded field 'description' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "status", "embedded field 'status' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "image", "direct field 'image' should be present")
+
+	// Check that ServerMetadataWithIgnored has embedded fields but NOT the json:"-" field
+	assert.Contains(t, p.openAPI.Components.Spec.Schemas, "api.ServerMetadataWithIgnored")
+	schema = p.openAPI.Components.Spec.Schemas["api.ServerMetadataWithIgnored"].Spec
+	assert.Contains(t, schema.Properties, "name", "embedded field 'name' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "description", "embedded field 'description' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "status", "embedded field 'status' from BaseMetadata should be present")
+	assert.Contains(t, schema.Properties, "image", "direct field 'image' should be present")
+	assert.NotContains(t, schema.Properties, "secret", "field with json:\"-\" should be skipped")
+}
+
 func TestParseRecursionWithSchemaName(t *testing.T) {
 	t.Parallel()
 
