@@ -403,7 +403,6 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 	}
 
 	err := operation.parseParamAttribute(commentLine, objectType, refType, paramType, &param)
-
 	if err != nil {
 		return err
 	}
@@ -842,7 +841,7 @@ func findTypeDef(importPath, typeName string) (*ast.TypeSpec, error) {
 	return nil, fmt.Errorf("type spec not found")
 }
 
-var responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+([\w\-.\\{}=,\[\s\]]+)\s*(".*)?`)
+var responsePattern = regexp.MustCompile(`^([\w,]+)\s+([\w{}]+)\s+(\([\w.+\-]+/[\w.+\-]+\)\s+)?([\w\-.\\{}=,\[\s\]]+)\s*(".*)?`)
 
 // ResponseType{data1=Type1,data2=Type2}.
 var combinedPattern = regexp.MustCompile(`^([\w\-./\[\]]+){(.*)}$`)
@@ -1003,8 +1002,9 @@ func (operation *Operation) parseAPIObjectSchema(commentLine, schemaType, refTyp
 
 // ParseResponseComment parses comment for given `response` comment string.
 func (operation *Operation) ParseResponseComment(commentLine string, astFile *ast.File) error {
+	// matches[3] is an optional per-response MIME type; ignored for Swagger v2.
 	matches := responsePattern.FindStringSubmatch(commentLine)
-	if len(matches) != 5 {
+	if len(matches) != 6 {
 		err := operation.ParseEmptyResponseComment(commentLine)
 		if err != nil {
 			return operation.ParseEmptyResponseOnly(commentLine)
@@ -1013,9 +1013,9 @@ func (operation *Operation) ParseResponseComment(commentLine string, astFile *as
 		return err
 	}
 
-	description := strings.Trim(matches[4], "\"")
+	description := strings.Trim(matches[5], "\"")
 
-	schema, err := operation.parseAPIObjectSchema(commentLine, strings.Trim(matches[2], "{}"), strings.TrimSpace(matches[3]), astFile)
+	schema, err := operation.parseAPIObjectSchema(commentLine, strings.Trim(matches[2], "{}"), strings.TrimSpace(matches[4]), astFile)
 	if err != nil {
 		return err
 	}
@@ -1074,13 +1074,13 @@ func newHeaderSpec(schemaType, description string) spec.Header {
 // ParseResponseHeaderComment parses comment for given `response header` comment string.
 func (operation *Operation) ParseResponseHeaderComment(commentLine string, _ *ast.File) error {
 	matches := responsePattern.FindStringSubmatch(commentLine)
-	if len(matches) != 5 {
+	if len(matches) != 6 {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
-	header := newHeaderSpec(strings.Trim(matches[2], "{}"), strings.Trim(matches[4], "\""))
+	header := newHeaderSpec(strings.Trim(matches[2], "{}"), strings.Trim(matches[5], "\""))
 
-	headerKey := strings.TrimSpace(matches[3])
+	headerKey := strings.TrimSpace(matches[4])
 
 	if strings.EqualFold(matches[1], "all") {
 		if operation.Responses.Default != nil {

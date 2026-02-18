@@ -470,8 +470,8 @@ The following annotations are only available if you set the -v3.1 flag in the CL
 | produce              | A list of MIME types the APIs can produce. Value MUST be as described under [Mime Types](#mime-types).                                                                                            |
 | param                | Parameters that separated by spaces. `param name`,`param type`,`data type`,`is mandatory?`,`comment` `attribute(optional)`                                                                        |
 | security             | [Security](#security) to each API operation.                                                                                                                                                      |
-| success              | Success response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                                                                                          |
-| failure              | Failure response that separated by spaces. `return code or default`,`{param type}`,`data type`,`comment`                                                                                          |
+| success              | Success response that separated by spaces. `return code or default`,`{param type}`,`(mimetype)`, `data type`,`comment`                                                                                          |
+| failure              | Failure response that separated by spaces. `return code or default`,`{param type}`,`(mimetype)`, `data type`,`comment`                                                                                          |
 | response             | As same as `success` and `failure`                                                                                                                                                                |
 | header               | Header in response that separated by spaces. `return code`,`{param type}`,`data type`,`comment`                                                                                                   |
 | router               | Path definition that separated by spaces. `path`,`[httpMethod]`                                                                                                                                   |
@@ -691,8 +691,8 @@ type DeepObject struct { //in `proto` package
 ### Add response headers
 
 ```go
-// @Success      200              {string}  string    "ok"
-// @failure      400              {string}  string    "error"
+// @Success      200              {string}  (application/pdf) string    "ok"
+// @failure      400              {string}  (application/xml) string    "error"
 // @response     default          {string}  string    "other error"
 // @Header       200              {string}  Location  "/entity/1"
 // @Header       200,400,default  {string}  Token     "token"

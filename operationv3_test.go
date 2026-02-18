@@ -11,13 +11,15 @@ import (
 	"github.com/sv-tools/openapi/spec"
 )
 
-var typeObject = spec.SingleOrArray[string](spec.SingleOrArray[string]{OBJECT})
-var typeArray = spec.SingleOrArray[string](spec.SingleOrArray[string]{ARRAY})
-var typeInteger = spec.SingleOrArray[string](spec.SingleOrArray[string]{INTEGER})
-var typeString = spec.SingleOrArray[string](spec.SingleOrArray[string]{STRING})
-var typeFile = spec.SingleOrArray[string](spec.SingleOrArray[string]{"file"})
-var typeNumber = spec.SingleOrArray[string](spec.SingleOrArray[string]{NUMBER})
-var typeBool = spec.SingleOrArray[string](spec.SingleOrArray[string]{BOOLEAN})
+var (
+	typeObject  = spec.SingleOrArray[string](spec.SingleOrArray[string]{OBJECT})
+	typeArray   = spec.SingleOrArray[string](spec.SingleOrArray[string]{ARRAY})
+	typeInteger = spec.SingleOrArray[string](spec.SingleOrArray[string]{INTEGER})
+	typeString  = spec.SingleOrArray[string](spec.SingleOrArray[string]{STRING})
+	typeFile    = spec.SingleOrArray[string](spec.SingleOrArray[string]{"file"})
+	typeNumber  = spec.SingleOrArray[string](spec.SingleOrArray[string]{NUMBER})
+	typeBool    = spec.SingleOrArray[string](spec.SingleOrArray[string]{BOOLEAN})
+)
 
 func TestParseEmptyCommentV3(t *testing.T) {
 	t.Parallel()
@@ -490,7 +492,6 @@ func TestParseResponseCommentWithArrayTypeV3(t *testing.T) {
 	assert.Equal(t, `Error message, if code != 200`, response.Spec.Spec.Description)
 	assert.Equal(t, &typeArray, response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.Type)
 	assert.Equal(t, "#/components/schemas/model.OrderRow", response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.Items.Schema.Ref.Ref)
-
 }
 
 func TestParseResponseCommentWithBasicTypeV3(t *testing.T) {
@@ -507,6 +508,47 @@ func TestParseResponseCommentWithBasicTypeV3(t *testing.T) {
 
 	assert.Equal(t, "it's ok'", response.Spec.Spec.Description)
 	assert.Equal(t, &typeString, response.Spec.Spec.Content["application/json"].Spec.Schema.Spec.Type)
+}
+
+func TestParseResponseCommentWithExplicitMimeTypeV3(t *testing.T) {
+	t.Parallel()
+
+	comment := `@Success 200 {string} (application/pdf) string "binary content"`
+	operation := NewOperationV3(nil)
+	err := operation.ParseComment(comment, nil)
+	require.NoError(t, err, "ParseComment should not fail")
+
+	response := operation.Responses.Spec.Response["200"]
+	assert.NotNil(t, response)
+	assert.Equal(t, "binary content", response.Spec.Spec.Description)
+	assert.NotNil(t, response.Spec.Spec.Content["application/pdf"], "explicit mime type should be used")
+	assert.Nil(t, response.Spec.Spec.Content["application/json"], "default mime type should not appear")
+}
+
+func TestParseResponseCommentMimeTypeOverridesProduceV3(t *testing.T) {
+	t.Parallel()
+
+	// @Produce application/pdf applies to success, but error responses override
+	// it explicitly with application/json to avoid the content-type bleeding.
+	operation := NewOperationV3(New())
+	operation.parser.addTestType("web.ErrorResponse")
+
+	err := operation.ParseComment("/@Produce application/pdf", nil)
+	require.NoError(t, err)
+
+	err = operation.ParseComment("/@Success 200 {string} string \"pdf content\"", nil)
+	require.NoError(t, err)
+
+	err = operation.ParseComment("/@Failure 400 {object} (application/json) web.ErrorResponse \"bad request\"", nil)
+	require.NoError(t, err)
+
+	success := operation.Responses.Spec.Response["200"]
+	assert.NotNil(t, success.Spec.Spec.Content["application/pdf"], "200 should use @Produce mime type")
+	assert.Nil(t, success.Spec.Spec.Content["application/json"])
+
+	failure := operation.Responses.Spec.Response["400"]
+	assert.NotNil(t, failure.Spec.Spec.Content["application/json"], "400 should use explicit mime type override")
+	assert.Nil(t, failure.Spec.Spec.Content["application/pdf"], "400 should not inherit application/pdf from @Produce")
 }
 
 func TestParseResponseCommentWithBasicTypeAndCodesV3(t *testing.T) {
@@ -1026,7 +1068,6 @@ func TestParseParamCommentQueryArrayFormatV3(t *testing.T) {
 	assert.Equal(t, "query", parameterSpec.In)
 	assert.Equal(t, &typeString, parameterSpec.Schema.Spec.Items.Schema.Spec.Type)
 	assert.Equal(t, "form", parameterSpec.Style)
-
 }
 
 func TestParseParamCommentByIDV3(t *testing.T) {
@@ -1922,7 +1963,6 @@ func TestParseCodeSamplesV3(t *testing.T) {
 	t.Parallel()
 	const comment = `@x-codeSamples file`
 	t.Run("Find sample by file", func(t *testing.T) {
-
 		operation := NewOperationV3(New(), SetCodeExampleFilesDirectoryV3("testdata/code_examples"))
 		operation.Summary = "example"
 
@@ -1991,7 +2031,8 @@ func TestParseAcceptCommentV3(t *testing.T) {
 		"image/jpeg",
 		"image/gif",
 		"application/xhtml+xml",
-		"application/health+json"}
+		"application/health+json",
+	}
 
 	content := operation.RequestBody.Spec.Spec.Content
 	for _, key := range resultMapKeys {
