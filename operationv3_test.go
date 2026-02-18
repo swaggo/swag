@@ -1091,6 +1091,31 @@ func TestParseParamCommentByIDV3(t *testing.T) {
 	assert.Equal(t, "query", parameterSpec.In)
 }
 
+func TestParseParamCommentByBodyTypeV3WithAcceptDefaultSchema(t *testing.T) {
+	t.Parallel()
+
+	acceptComment := `//@Accept json`
+	bodyComment := `@Param request body model.OrderRow true "Some ID"`
+	operation := NewOperationV3(New())
+
+	operation.parser.addTestType("model.OrderRow")
+
+	err := operation.ParseComment(acceptComment, nil)
+	require.NoError(t, err)
+
+	err = operation.ParseComment(bodyComment, nil)
+	require.NoError(t, err)
+
+	requestBody := operation.RequestBody
+	require.NotNil(t, requestBody)
+
+	schema := requestBody.Spec.Spec.Content["application/json"].Spec.Schema
+	require.NotNil(t, schema)
+	require.NotNil(t, schema.Ref)
+	assert.Equal(t, "#/components/schemas/model.OrderRow", schema.Ref.Ref)
+	assert.Nil(t, schema.Spec)
+}
+
 func TestParseParamCommentByQueryTypeV3(t *testing.T) {
 	t.Parallel()
 
