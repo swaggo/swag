@@ -240,7 +240,7 @@ func (operation *Operation) ParseMetadata(attribute, lowerAttribute, lineRemaind
 	return nil
 }
 
-var paramPattern = regexp.MustCompile(`(\S+)\s+(\w+)\s+([\S. ]+?)\s+(\w+)\s+"([^"]+)"`)
+var paramPattern = regexp.MustCompile(`(\S+)\s+(\w+)\s+([\S. ]+?)\s+(\([\w.+\-]+/[\w.+\-]+\)\s+)?(\w+)\s+"([^"]+)"`)
 
 func findInSlice(arr []string, target string) bool {
 	for _, str := range arr {
@@ -255,12 +255,13 @@ func findInSlice(arr []string, target string) bool {
 // ParseParamComment parses params return []string of param properties
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
 //
-//	[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
+//	[param name]    [paramType] [data type]  [optional mime type]  [is mandatory?]   [Comment]
 //
-// E.g. @Param   some_id     path    int     true        "Some ID".
+// E.g. @Param   some_id     path    int     true        "Some ID"
+// E.g. @Param   file        formData    file    (application/pdf)    true    "Upload file"
 func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.File) error {
 	matches := paramPattern.FindStringSubmatch(commentLine)
-	if len(matches) != 6 {
+	if len(matches) != 7 {
 		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
 	}
 
@@ -292,9 +293,9 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 		}
 	}
 
-	requiredText := strings.ToLower(matches[4])
+	requiredText := strings.ToLower(matches[5])
 	required := requiredText == "true" || requiredText == requiredLabel
-	description := strings.Join(strings.Split(matches[5], "\\n"), "\n")
+	description := strings.Join(strings.Split(matches[6], "\\n"), "\n")
 
 	param := createParameter(paramType, description, name, objectType, refType, required, enums, operation.parser.collectionFormatInQuery)
 
