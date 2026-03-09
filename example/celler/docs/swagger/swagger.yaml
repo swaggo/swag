@@ -1,65 +1,89 @@
 basePath: /api/v1
 definitions:
   controller.Message:
+    description: Generic message response returned by various endpoints
     properties:
       message:
-        example: message
+        description: The response message content
+        example: account image uploaded successfully
         type: string
     type: object
   httputil.HTTPError:
+    description: Error response returned when a request fails
     properties:
       code:
+        description: HTTP status code
         example: 400
         type: integer
       message:
+        description: Human-readable error message describing the failure
         example: status bad request
         type: string
     type: object
   model.Account:
+    description: Account represents a user account in the system
     properties:
       id:
+        description: Unique identifier for the account
         example: 1
         format: int64
         type: integer
       name:
+        description: Display name of the account
         example: account name
         type: string
       uuid:
+        description: Universally unique identifier for the account
         example: 550e8400-e29b-41d4-a716-446655440000
         format: uuid
         type: string
     type: object
   model.AddAccount:
+    description: Request body for creating a new account
     properties:
       name:
+        description: Name for the new account
         example: account name
         type: string
+    required:
+    - name
     type: object
   model.Admin:
+    description: Admin represents an administrator user
     properties:
       id:
+        description: Unique identifier for the admin
         example: 1
         type: integer
       name:
+        description: Display name of the admin
         example: admin name
         type: string
     type: object
   model.Bottle:
+    description: Bottle represents a bottle entity associated with an account
     properties:
       account:
         $ref: '#/definitions/model.Account'
+        description: The account this bottle belongs to
       id:
+        description: Unique identifier for the bottle
         example: 1
         type: integer
       name:
+        description: Name of the bottle
         example: bottle_name
         type: string
     type: object
   model.UpdateAccount:
+    description: Request body for updating an existing account
     properties:
       name:
+        description: Updated name for the account
         example: account name
         type: string
+    required:
+    - name
     type: object
 host: localhost:8080
 info:
@@ -81,7 +105,8 @@ paths:
       - application/json
       description: get accounts
       parameters:
-      - description: name search by q
+      - description: Filter accounts by name or email
+        example: user@example.com
         format: email
         in: query
         name: q
@@ -91,20 +116,40 @@ paths:
       responses:
         "200":
           description: OK
+          examples:
+            application/json:
+            - id: 1
+              name: Alice Smith
+              uuid: 550e8400-e29b-41d4-a716-446655440000
+            - id: 2
+              name: Bob Johnson
+              uuid: 660e8400-e29b-41d4-a716-446655440001
           schema:
             items:
               $ref: '#/definitions/model.Account'
             type: array
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: invalid query parameter
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: no accounts found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: internal server error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       summary: List accounts
@@ -126,18 +171,35 @@ paths:
       responses:
         "200":
           description: OK
+          examples:
+            application/json:
+              id: 1
+              name: New Account
+              uuid: 550e8400-e29b-41d4-a716-446655440000
           schema:
             $ref: '#/definitions/model.Account'
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: "invalid request body: name is required"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: resource not found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: failed to create account
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       summary: Add an account
@@ -150,6 +212,7 @@ paths:
       description: Delete by account ID
       parameters:
       - description: Account ID
+        example: 1
         format: int64
         in: path
         name: id
@@ -164,14 +227,26 @@ paths:
             $ref: '#/definitions/model.Account'
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: "invalid account ID: must be a positive integer"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: "account not found: id 123"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: failed to delete account
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       summary: Delete an account
@@ -183,6 +258,7 @@ paths:
       description: get string by ID
       parameters:
       - description: Account ID
+        example: 1
         in: path
         name: id
         required: true
@@ -192,18 +268,35 @@ paths:
       responses:
         "200":
           description: OK
+          examples:
+            application/json:
+              id: 1
+              name: Alice Smith
+              uuid: 550e8400-e29b-41d4-a716-446655440000
           schema:
             $ref: '#/definitions/model.Account'
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: "invalid account ID: must be a positive integer"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: "account not found: id 1"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: internal server error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       summary: Show an account
@@ -215,6 +308,7 @@ paths:
       description: Update by json account
       parameters:
       - description: Account ID
+        example: 1
         in: path
         name: id
         required: true
@@ -230,18 +324,35 @@ paths:
       responses:
         "200":
           description: OK
+          examples:
+            application/json:
+              id: 1
+              name: Updated Account Name
+              uuid: 550e8400-e29b-41d4-a716-446655440000
           schema:
             $ref: '#/definitions/model.Account'
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: "invalid request body: name is required"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: "account not found: id 1"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: failed to update account
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       summary: Update an account
@@ -254,6 +365,7 @@ paths:
       description: Upload file
       parameters:
       - description: Account ID
+        example: 1
         in: path
         name: id
         required: true
@@ -268,18 +380,33 @@ paths:
       responses:
         "200":
           description: OK
+          examples:
+            application/json:
+              message: account image uploaded successfully
           schema:
             $ref: '#/definitions/controller.Message'
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: "invalid file: file is required"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: "account not found: id 1"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: failed to upload image
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       summary: Upload account image
@@ -295,22 +422,42 @@ paths:
       responses:
         "200":
           description: OK
+          examples:
+            application/json:
+              id: 1
+              name: admin name
           schema:
             $ref: '#/definitions/model.Admin'
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: invalid request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "401":
           description: Unauthorized
+          examples:
+            application/json:
+              code: 401
+              message: "unauthorized: invalid or missing API key"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: admin not found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: internal server error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       security:
@@ -329,20 +476,46 @@ paths:
       responses:
         "200":
           description: OK
+          examples:
+            application/json:
+            - account:
+                id: 1
+                name: Alice Smith
+                uuid: 550e8400-e29b-41d4-a716-446655440000
+              id: 1
+              name: Merlot Reserve
+            - account:
+                id: 2
+                name: Bob Johnson
+                uuid: 660e8400-e29b-41d4-a716-446655440001
+              id: 2
+              name: Chardonnay Classic
           schema:
             items:
               $ref: '#/definitions/model.Bottle'
             type: array
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: invalid request
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: no bottles found
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: internal server error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       summary: List bottles
@@ -356,6 +529,7 @@ paths:
       operationId: get-string-by-int
       parameters:
       - description: Bottle ID
+        example: 1
         in: path
         name: id
         required: true
@@ -365,18 +539,38 @@ paths:
       responses:
         "200":
           description: OK
+          examples:
+            application/json:
+              account:
+                id: 1
+                name: Alice Smith
+                uuid: 550e8400-e29b-41d4-a716-446655440000
+              id: 1
+              name: Merlot Reserve
           schema:
             $ref: '#/definitions/model.Bottle'
         "400":
           description: Bad Request
+          examples:
+            application/json:
+              code: 400
+              message: "invalid bottle ID: must be a positive integer"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "404":
           description: Not Found
+          examples:
+            application/json:
+              code: 404
+              message: "bottle not found: id 1"
           schema:
             $ref: '#/definitions/httputil.HTTPError'
         "500":
           description: Internal Server Error
+          examples:
+            application/json:
+              code: 500
+              message: internal server error
           schema:
             $ref: '#/definitions/httputil.HTTPError'
       summary: Show a bottle
@@ -393,6 +587,7 @@ paths:
         - A
         - B
         - C
+        example: A
         in: query
         name: enumstring
         type: string
@@ -401,6 +596,7 @@ paths:
         - 1
         - 2
         - 3
+        example: 1
         in: query
         name: enumint
         type: integer
@@ -409,16 +605,19 @@ paths:
         - 1.1
         - 1.2
         - 1.3
+        example: 1.1
         in: query
         name: enumnumber
         type: number
       - description: string valid
+        example: abcde
         in: query
         maxLength: 10
         minLength: 5
         name: string
         type: string
       - description: int valid
+        example: 5
         in: query
         maximum: 10
         minimum: 1
@@ -426,6 +625,7 @@ paths:
         type: integer
       - default: A
         description: string default
+        example: A
         in: query
         name: default
         type: string
@@ -434,18 +634,26 @@ paths:
       responses:
         "200":
           description: answer
+          examples:
+            application/json: attribute response
           schema:
             type: string
         "400":
-          description: ok
+          description: Bad Request
+          examples:
+            application/json: invalid attribute parameters
           schema:
             type: string
         "404":
-          description: ok
+          description: Not Found
+          examples:
+            application/json: attribute not found
           schema:
             type: string
         "500":
-          description: ok
+          description: Internal Server Error
+          examples:
+            application/json: internal server error
           schema:
             type: string
       summary: attribute example
@@ -457,12 +665,14 @@ paths:
       - application/json
       description: plus
       parameters:
-      - description: used for calc
+      - description: First operand for addition
+        example: 10
         in: query
         name: val1
         required: true
         type: integer
-      - description: used for calc
+      - description: Second operand for addition
+        example: 20
         in: query
         name: val2
         required: true
@@ -472,18 +682,26 @@ paths:
       responses:
         "200":
           description: answer
+          examples:
+            application/json: 30
           schema:
             type: integer
         "400":
-          description: ok
+          description: Bad Request
+          examples:
+            application/json: "invalid parameters: val1 and val2 are required"
           schema:
             type: string
         "404":
-          description: ok
+          description: Not Found
+          examples:
+            application/json: not found
           schema:
             type: string
         "500":
-          description: ok
+          description: Internal Server Error
+          examples:
+            application/json: internal server error
           schema:
             type: string
       summary: calc example
@@ -496,11 +714,13 @@ paths:
       description: path params
       parameters:
       - description: Group ID
+        example: 10
         in: path
         name: group_id
         required: true
         type: integer
       - description: Account ID
+        example: 5
         in: path
         name: account_id
         required: true
@@ -510,18 +730,26 @@ paths:
       responses:
         "200":
           description: answer
+          examples:
+            application/json: "group_id=10, account_id=5"
           schema:
             type: string
         "400":
-          description: ok
+          description: Bad Request
+          examples:
+            application/json: invalid path parameters
           schema:
             type: string
         "404":
-          description: ok
+          description: Not Found
+          examples:
+            application/json: group or account not found
           schema:
             type: string
         "500":
-          description: ok
+          description: Internal Server Error
+          examples:
+            application/json: internal server error
           schema:
             type: string
       summary: path params example
@@ -534,6 +762,7 @@ paths:
       description: custome header
       parameters:
       - description: Authentication header
+        example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         in: header
         name: Authorization
         required: true
@@ -543,18 +772,26 @@ paths:
       responses:
         "200":
           description: answer
+          examples:
+            application/json: authorized
           schema:
             type: string
         "400":
-          description: ok
+          description: Bad Request
+          examples:
+            application/json: invalid header format
           schema:
             type: string
         "404":
-          description: ok
+          description: Not Found
+          examples:
+            application/json: not found
           schema:
             type: string
         "500":
-          description: ok
+          description: Internal Server Error
+          examples:
+            application/json: internal server error
           schema:
             type: string
       summary: custome header example
@@ -570,18 +807,26 @@ paths:
       responses:
         "200":
           description: pong
+          examples:
+            application/json: pong
           schema:
             type: string
         "400":
-          description: ok
+          description: Bad Request
+          examples:
+            application/json: bad request
           schema:
             type: string
         "404":
-          description: ok
+          description: Not Found
+          examples:
+            application/json: not found
           schema:
             type: string
         "500":
-          description: ok
+          description: Internal Server Error
+          examples:
+            application/json: internal server error
           schema:
             type: string
       summary: ping example
@@ -604,10 +849,14 @@ paths:
       responses:
         "200":
           description: success
+          examples:
+            text/plain: account created successfully
           schema:
             type: string
         "500":
           description: fail
+          examples:
+            text/plain: failed to process request
           schema:
             type: string
       summary: post request example
@@ -618,6 +867,7 @@ paths:
       description: custome header
       parameters:
       - description: Authentication header
+        example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         in: header
         name: Authorization
         required: true
@@ -627,18 +877,26 @@ paths:
       responses:
         "200":
           description: answer
+          examples:
+            application/json: authenticated successfully
           schema:
             type: string
         "400":
-          description: ok
+          description: Bad Request
+          examples:
+            application/json: invalid request
           schema:
             type: string
         "404":
-          description: ok
+          description: Not Found
+          examples:
+            application/json: not found
           schema:
             type: string
         "500":
-          description: ok
+          description: Internal Server Error
+          examples:
+            application/json: internal server error
           schema:
             type: string
       security:
