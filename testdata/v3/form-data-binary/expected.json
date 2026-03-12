@@ -1,0 +1,98 @@
+{
+  "components": {},
+  "info": {
+    "contact": {
+      "email": "support@swagger.io",
+      "name": "API Support",
+      "url": "http://www.swagger.io/support"
+    },
+    "description": "This is a sample server Petstore server.",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "termsOfService": "http://swagger.io/terms/",
+    "title": "Swagger Example API",
+    "version": "1.0"
+  },
+  "externalDocs": {
+    "description": "",
+    "url": ""
+  },
+  "paths": {
+    "/upload": {
+      "post": {
+        "description": "Upload a file.",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "file",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          },
+          "description": "attachment file",
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "400": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Bad Request"
+          },
+          "422": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Upload",
+        "tags": [
+          "Some section"
+        ]
+      }
+    }
+  },
+  "openapi": "3.1.0",
+  "servers": [
+    {
+      "url": "petstore.swagger.io/v2"
+    }
+  ]
+}

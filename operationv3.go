@@ -423,30 +423,30 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 			return nil
 		}
 	case "body", "formData":
-		if objectType == PRIMITIVE {
-			schema := PrimitiveSchemaV3(refType)
+		var finalSchema *spec.RefOrSpec[spec.Schema]
+		isPrimitive := false
 
-			err := o.parseParamAttributeForBody(commentLine, objectType, refType, schema.Spec)
+		if paramType == "formData" && refType == "file" {
+			finalSchema = spec.NewSchemaSpec()
+			finalSchema.Spec.Type = &spec.SingleOrArray[string]{"file"}
+			finalSchema.Spec.Format = "binary"
+			isPrimitive = true // Treat as primitive for fillRequestBody
+		} else if objectType == PRIMITIVE {
+			finalSchema = PrimitiveSchemaV3(refType)
+			isPrimitive = true
+		} else { // objectType == OBJECT or ARRAY
+			var err error
+			finalSchema, err = o.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
 			if err != nil {
 				return err
 			}
-
-			o.fillRequestBody(name, schema, required, description, true, paramType == "formData")
-
-			return nil
-
 		}
 
-		schema, err := o.parseAPIObjectSchema(commentLine, objectType, refType, astFile)
+		err := o.parseParamAttributeForBody(commentLine, objectType, refType, finalSchema.Spec)
 		if err != nil {
 			return err
 		}
-
-		err = o.parseParamAttributeForBody(commentLine, objectType, refType, schema.Spec)
-		if err != nil {
-			return err
-		}
-		o.fillRequestBody(name, schema, required, description, false, paramType == "formData")
+		o.fillRequestBody(name, finalSchema, required, description, isPrimitive, paramType == "formData")
 
 		return nil
 
@@ -472,55 +472,72 @@ func (o *OperationV3) fillRequestBody(name string, schema *spec.RefOrSpec[spec.S
 	if o.RequestBody == nil {
 		o.RequestBody = spec.NewRequestBodySpec()
 		o.RequestBody.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType])
-
-		if primitive && !formData {
-			o.RequestBody.Spec.Spec.Content["text/plain"] = spec.NewMediaType()
-		} else if formData {
-			o.RequestBody.Spec.Spec.Content["application/x-www-form-urlencoded"] = spec.NewMediaType()
-		} else {
-			o.RequestBody.Spec.Spec.Content["application/json"] = spec.NewMediaType()
-		}
 	}
 
 	o.RequestBody.Spec.Spec.Required = required
-
-	// Append description to existing description if this is not the first body
 	if o.RequestBody.Spec.Spec.Description != "" && description != "" {
 		o.RequestBody.Spec.Spec.Description += " | " + description
 	} else if description != "" {
 		o.RequestBody.Spec.Spec.Description = description
 	}
 
-	// Handle oneOf merging for request body schemas
-	contentType := "application/json"
-	if primitive && !formData {
-		contentType = "text/plain"
-	} else if formData {
-		contentType = "application/x-www-form-urlencoded"
+	// Determine content types to process
+	contentTypesToProcess := []string{}
+	if len(o.RequestBody.Spec.Spec.Content) == 0 { // No @Accept specified
+		if formData {
+			contentTypesToProcess = append(contentTypesToProcess, "multipart/form-data", "application/x-www-form-urlencoded")
+		} else if primitive {
+			contentTypesToProcess = append(contentTypesToProcess, "text/plain")
+		} else {
+			contentTypesToProcess = append(contentTypesToProcess, "application/json")
+		}
+	} else { // @Accept specified, use those
+		for ct := range o.RequestBody.Spec.Spec.Content {
+			contentTypesToProcess = append(contentTypesToProcess, ct)
+		}
 	}
 
-	mediaType := o.RequestBody.Spec.Spec.Content[contentType]
-	if mediaType == nil {
-		mediaType = spec.NewMediaType()
-		o.RequestBody.Spec.Spec.Content[contentType] = mediaType
-	}
-	if schema.Ref != nil {
-		schema.Ref.Summary = name
-		schema.Ref.Description = description
-	}
-	if schema.Spec != nil {
-		schema.Spec.Title = name
-	}
-	if mediaType.Spec.Schema == nil {
-		mediaType.Spec.Schema = schema
-	} else if mediaType.Spec.Schema.Ref != nil || mediaType.Spec.Schema.Spec.OneOf == nil {
-		// If there's an existing schema that doesn't have oneOf, create a oneOf schema
-		oneOfSchema := spec.NewSchemaSpec()
-		oneOfSchema.Spec.OneOf = []*spec.RefOrSpec[spec.Schema]{mediaType.Spec.Schema, schema}
-		mediaType.Spec.Schema = oneOfSchema
-	} else {
-		// If there's already a oneOf schema, append to it
-		mediaType.Spec.Schema.Spec.OneOf = append(mediaType.Spec.Schema.Spec.OneOf, schema)
+	for _, contentType := range contentTypesToProcess {
+		mediaType := o.RequestBody.Spec.Spec.Content[contentType]
+		if mediaType == nil {
+			mediaType = spec.NewMediaType()
+			if o.RequestBody.Spec.Spec.Content == nil {
+				o.RequestBody.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType])
+			}
+			o.RequestBody.Spec.Spec.Content[contentType] = mediaType
+		}
+
+		// Special handling for formData file in multipart/form-data
+		if formData && contentType == "multipart/form-data" && schema.Spec != nil && schema.Spec.Format == "binary" {
+			if mediaType.Spec.Schema == nil {
+				mediaType.Spec.Schema = spec.NewSchemaSpec()
+				mediaType.Spec.Schema.Spec.Type = &spec.SingleOrArray[string]{OBJECT}
+				mediaType.Spec.Schema.Spec.Properties = make(map[string]*spec.RefOrSpec[spec.Schema])
+			} else if mediaType.Spec.Schema.Spec.Properties == nil {
+				mediaType.Spec.Schema.Spec.Properties = make(map[string]*spec.RefOrSpec[spec.Schema])
+			}
+			mediaType.Spec.Schema.Spec.Properties[name] = schema // Add the file schema as a property
+		} else {
+			// For other content types (e.g., application/x-www-form-urlencoded for file)
+			// or non-file schemas, use the schema directly or merge with oneOf.
+			// The `schema` passed here is already `type: string, format: binary` for files.
+			if schema.Ref != nil {
+				schema.Ref.Summary = name
+				schema.Ref.Description = description
+			}
+			if schema.Spec != nil {
+				schema.Spec.Title = name
+			}
+			if mediaType.Spec.Schema == nil {
+				mediaType.Spec.Schema = schema
+			} else if mediaType.Spec.Schema.Ref != nil || mediaType.Spec.Schema.Spec.OneOf == nil {
+				oneOfSchema := spec.NewSchemaSpec()
+				oneOfSchema.Spec.OneOf = []*spec.RefOrSpec[spec.Schema]{mediaType.Spec.Schema, schema}
+				mediaType.Spec.Schema = oneOfSchema
+			} else {
+				mediaType.Spec.Schema.Spec.OneOf = append(mediaType.Spec.Schema.Spec.OneOf, schema)
+			}
+		}
 	}
 }
 
