@@ -653,3 +653,23 @@ func TestGetSchemaByRef(t *testing.T) {
 		assert.Equal(t, &spec.Schema{}, result)
 	})
 }
+
+func TestFormDataBinary(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/v3/form-data-binary"
+	p := New(GenerateOpenAPI3Doc(true))
+	p.PropNamingStrategy = PascalCase
+	p.openAPI.OpenAPI = "3.1.0"
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	expected, err := os.ReadFile(filepath.Join(searchDir, "expected.json"))
+	require.NoError(t, err)
+
+	result, err := json.Marshal(p.openAPI)
+	require.NoError(t, err)
+
+	assert.JSONEq(t, string(expected), string(result))
+}
