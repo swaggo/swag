@@ -484,6 +484,40 @@ func TestParseSimpleApiV3(t *testing.T) {
 		}, rootSchema.OneOf)
 
 	})
+
+	t.Run("Test parse discriminator with mapping", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Contains(t, paths, "/pets/{id}/discriminated")
+		path := paths["/pets/{id}/discriminated"]
+		require.NotNil(t, path.Spec.Spec.Get)
+		assert.Contains(t, path.Spec.Spec.Get.Spec.Responses.Spec.Response, "200")
+		response := path.Spec.Spec.Get.Spec.Responses.Spec.Response["200"]
+		mediaType := response.Spec.Spec.Content["application/json"]
+		require.NotNil(t, mediaType)
+		rootSchema := mediaType.Spec.Schema.Spec
+		require.NotNil(t, rootSchema.Discriminator, "discriminator should be set")
+		assert.Equal(t, "pet_type", rootSchema.Discriminator.PropertyName)
+		require.NotNil(t, rootSchema.Discriminator.Mapping)
+		assert.Equal(t, "#/components/schemas/web.Cat", rootSchema.Discriminator.Mapping["cat"])
+		assert.Equal(t, "#/components/schemas/web.Dog", rootSchema.Discriminator.Mapping["dog"])
+	})
+
+	t.Run("Test parse discriminator without mapping", func(t *testing.T) {
+		t.Parallel()
+
+		assert.Contains(t, paths, "/pets/{id}/no-mapping")
+		path := paths["/pets/{id}/no-mapping"]
+		require.NotNil(t, path.Spec.Spec.Get)
+		assert.Contains(t, path.Spec.Spec.Get.Spec.Responses.Spec.Response, "200")
+		response := path.Spec.Spec.Get.Spec.Responses.Spec.Response["200"]
+		mediaType := response.Spec.Spec.Content["application/json"]
+		require.NotNil(t, mediaType)
+		rootSchema := mediaType.Spec.Schema.Spec
+		require.NotNil(t, rootSchema.Discriminator, "discriminator should be set")
+		assert.Equal(t, "pet_type", rootSchema.Discriminator.PropertyName)
+		assert.Nil(t, rootSchema.Discriminator.Mapping)
+	})
 }
 
 func TestParserParseServers(t *testing.T) {
