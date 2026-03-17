@@ -3241,6 +3241,68 @@ func Fun()  {
 	assert.Equal(t, expected, string(b))
 }
 
+func TestParseStructParamCommentByQueryTypeWithQueryTag(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+type Student struct {
+	ProjectID int ` + "`" + `query:"projectId"` + "`" + `
+	Name      string ` + "`" + `query:"name"` + "`" + `
+	SkipField string ` + "`" + `query:"-"` + "`" + `
+}
+
+// @Param request query Student true "query params"
+// @Success 200
+// @Router /test [get]
+func Fun()  {
+
+}
+`
+	expected := `{
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/test": {
+            "get": {
+                "parameters": [
+                    {
+                        "type": "string",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "projectId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    }
+}`
+
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	b, _ := json.MarshalIndent(p.swagger, "", "    ")
+	assert.Equal(t, expected, string(b))
+}
+
 func TestParseParamCommentExtension(t *testing.T) {
 	t.Parallel()
 

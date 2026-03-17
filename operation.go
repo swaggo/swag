@@ -317,13 +317,21 @@ func (operation *Operation) ParseParamComment(commentLine string, astFile *ast.F
 					}
 				}
 
-				nameOverrideType := paramType
-				// query also uses formData tags
-				if paramType == "query" {
-					nameOverrideType = "formData"
-				}
 				// load overridden type specific name from extensions if exists
-				if nameVal, ok := item.Schema.Extensions.GetString(nameOverrideType); ok {
+				// query params check "query" extension first, then fall back to "formData"
+				if paramType == "query" {
+					if nameVal, ok := item.Schema.Extensions.GetString(queryTag); ok {
+						name = nameVal
+						if name == "-" {
+							continue
+						}
+					} else if nameVal, ok := item.Schema.Extensions.GetString("formData"); ok {
+						name = nameVal
+						if name == "-" {
+							continue
+						}
+					}
+				} else if nameVal, ok := item.Schema.Extensions.GetString(paramType); ok {
 					name = nameVal
 					if name == "-" {
 						continue
@@ -414,6 +422,8 @@ const (
 	jsonTag             = "json"
 	uriTag              = "uri"
 	headerTag           = "header"
+	queryTag            = "query"
+	paramTag            = "param"
 	bindingTag          = "binding"
 	defaultTag          = "default"
 	enumsTag            = "enums"
