@@ -111,12 +111,20 @@ func (ps *tagBaseFieldParser) FormName() string {
 	return ps.FirstTagValue(formTag)
 }
 
+func (ps *tagBaseFieldParser) QueryName() string {
+	return ps.FirstTagValue(queryTag)
+}
+
 func (ps *tagBaseFieldParser) HeaderName() string {
 	return ps.FirstTagValue(headerTag)
 }
 
 func (ps *tagBaseFieldParser) PathName() string {
 	return ps.FirstTagValue(uriTag)
+}
+
+func (ps *tagBaseFieldParser) ParamName() string {
+	return ps.FirstTagValue(paramTag)
 }
 
 func toSnakeCase(in string) string {
