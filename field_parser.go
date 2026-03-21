@@ -418,7 +418,9 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 	schema.Example = field.exampleValue
 
 	if field.schemaType != ARRAY {
-		schema.Format = field.formatType
+		if field.formatType != "" {
+			schema.Format = field.formatType
+		}
 	}
 	schema.Title = field.title
 
@@ -467,7 +469,9 @@ func (ps *tagBaseFieldParser) complementSchema(schema *spec.Schema, types []stri
 			eleSchema = schema.Items.Schema
 		}
 
-		eleSchema.Format = field.formatType
+		if field.formatType != "" {
+			eleSchema.Format = field.formatType
+		}
 	}
 
 	eleSchema.Maximum = field.maximum
