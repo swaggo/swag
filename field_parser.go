@@ -19,6 +19,7 @@ const (
 	requiredLabel    = "required"
 	optionalLabel    = "optional"
 	omitEmptyLabel   = "omitempty"
+	omitZeroLabel    = "omitzero"
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
 )
@@ -545,7 +546,7 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 	jsonTag := ps.tag.Get(jsonTag)
 	if jsonTag != "" {
 		for _, val := range strings.Split(jsonTag, ",") {
-			if val == omitEmptyLabel {
+			if val == omitEmptyLabel || val == omitZeroLabel {
 				return false, nil
 			}
 		}
