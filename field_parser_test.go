@@ -160,6 +160,39 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.False(t, got)
 	})
 
+	t.Run("Pointer type is optional", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := newTagBaseFieldParser(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.Field{
+				Type: &ast.StarExpr{X: &ast.Ident{Name: "string"}},
+				Tag: &ast.BasicLit{
+					Value: `json:"test"`,
+				},
+			},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+
+		// Explicit required tag should override pointer optionality
+		got, err = newTagBaseFieldParser(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.Field{
+				Type: &ast.StarExpr{X: &ast.Ident{Name: "string"}},
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required"`,
+				},
+			},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.True(t, got)
+	})
+
 	t.Run("Extensions tag", func(t *testing.T) {
 		t.Parallel()
 

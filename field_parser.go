@@ -552,6 +552,11 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 		}
 	}
 
+	// Pointer types are inherently optional.
+	if _, ok := ps.field.Type.(*ast.StarExpr); ok {
+		return false, nil
+	}
+
 	return ps.p.RequiredByDefault, nil
 }
 
