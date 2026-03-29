@@ -1204,11 +1204,33 @@ func TestParseParamCommentByFormDataTypeV3(t *testing.T) {
 	requestBody := operation.RequestBody
 	assert.True(t, requestBody.Spec.Spec.Required)
 	assert.Equal(t, "this is a test file", requestBody.Spec.Spec.Description)
-	assert.NotNil(t, requestBody)
 
 	requestBodySpec := requestBody.Spec.Spec
 	assert.NotNil(t, requestBodySpec)
-	assert.Equal(t, &typeFile, requestBodySpec.Content["application/x-www-form-urlencoded"].Spec.Schema.Spec.Type)
+
+	media := requestBodySpec.Content["multipart/form-data"]
+	if assert.NotNil(t, media) {
+		if assert.NotNil(t, media.Spec.Schema) && assert.NotNil(t, media.Spec.Schema.Spec) {
+			assert.Equal(
+				t,
+				&spec.SingleOrArray[string]{OBJECT},
+				media.Spec.Schema.Spec.Type,
+			)
+
+			prop := media.Spec.Schema.Spec.Properties["file"]
+			if assert.NotNil(t, prop) && assert.NotNil(t, prop.Spec) {
+				assert.Equal(
+					t,
+					&spec.SingleOrArray[string]{STRING},
+					prop.Spec.Type,
+				)
+				assert.Equal(t, "binary", prop.Spec.Format)
+				assert.Equal(t, "this is a test file", prop.Spec.Description)
+			}
+
+			assert.Contains(t, media.Spec.Schema.Spec.Required, "file")
+		}
+	}
 }
 
 func TestParseParamCommentByFormDataTypeUint64V3(t *testing.T) {
@@ -1228,7 +1250,14 @@ func TestParseParamCommentByFormDataTypeUint64V3(t *testing.T) {
 
 	requestBodySpec := requestBody.Spec.Spec.Content["application/x-www-form-urlencoded"].Spec
 	assert.NotNil(t, requestBodySpec)
-	assert.Equal(t, &typeInteger, requestBodySpec.Schema.Spec.Type)
+	assert.Equal(t, &typeObject, requestBodySpec.Schema.Spec.Type)
+
+	prop := requestBodySpec.Schema.Spec.Properties["file"]
+	if assert.NotNil(t, prop) && assert.NotNil(t, prop.Spec) {
+		assert.Equal(t, &typeInteger, prop.Spec.Type)
+	}
+
+	assert.Contains(t, requestBodySpec.Schema.Spec.Required, "file")
 }
 
 func TestParseParamCommentByNotSupportedTypeV3(t *testing.T) {
