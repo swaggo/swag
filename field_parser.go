@@ -18,6 +18,8 @@ var _ FieldParser = (*tagBaseFieldParser)(nil)
 const (
 	requiredLabel    = "required"
 	optionalLabel    = "optional"
+	omitEmptyLabel   = "omitempty"
+	omitZeroLabel    = "omitzero"
 	swaggerTypeTag   = "swaggertype"
 	swaggerIgnoreTag = "swaggerignore"
 )
@@ -539,6 +541,20 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 				return false, nil
 			}
 		}
+	}
+
+	jsonTag := ps.tag.Get(jsonTag)
+	if jsonTag != "" {
+		for _, val := range strings.Split(jsonTag, ",") {
+			if val == omitEmptyLabel || val == omitZeroLabel {
+				return false, nil
+			}
+		}
+	}
+
+	// Pointer types are inherently optional.
+	if _, ok := ps.field.Type.(*ast.StarExpr); ok {
+		return false, nil
 	}
 
 	return ps.p.RequiredByDefault, nil

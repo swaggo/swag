@@ -130,6 +130,65 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		).IsRequired()
 		assert.NoError(t, err)
 		assert.False(t, got)
+
+		got, err = newTagBaseFieldParserV3(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test,omitempty"`,
+			}},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+
+		got, err = newTagBaseFieldParserV3(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test,omitzero"`,
+			}},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+
+	t.Run("Pointer type is optional", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := newTagBaseFieldParserV3(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{
+				Type: &ast.StarExpr{X: &ast.Ident{Name: "string"}},
+				Tag: &ast.BasicLit{
+					Value: `json:"test"`,
+				},
+			},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+
+		// Explicit required tag should override pointer optionality
+		got, err = newTagBaseFieldParserV3(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{
+				Type: &ast.StarExpr{X: &ast.Ident{Name: "string"}},
+				Tag: &ast.BasicLit{
+					Value: `json:"test" validate:"required"`,
+				},
+			},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.True(t, got)
 	})
 
 	t.Run("Skipped tag", func(t *testing.T) {

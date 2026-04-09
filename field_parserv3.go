@@ -562,5 +562,19 @@ func (ps *tagBaseFieldParserV3) IsRequired() (bool, error) {
 		}
 	}
 
+	jsonTag := ps.tag.Get(jsonTag)
+	if jsonTag != "" {
+		for _, val := range strings.Split(jsonTag, ",") {
+			if val == omitEmptyLabel || val == omitZeroLabel {
+				return false, nil
+			}
+		}
+	}
+
+	// Pointer types are inherently optional.
+	if _, ok := ps.field.Type.(*ast.StarExpr); ok {
+		return false, nil
+	}
+
 	return ps.p.RequiredByDefault, nil
 }
