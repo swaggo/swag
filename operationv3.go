@@ -320,20 +320,22 @@ func parseMimeTypeListV3(mimeTypeList string, format string) ([]string, error) {
 // ParseParamComment parses params return []string of param properties
 // E.g. @Param	queryText		formData	      string	  true		        "The email for login"
 //
-//	[param name]    [paramType] [data type]  [is mandatory?]   [Comment]
-//
-// E.g. @Param   some_id     path    int     true        "Some ID".
+// E.g. @Param   [param name] [paramType] [data type] (mimetype (optional, body only)) [is mandatory?]   [Comment]
+// E.g. @Param   file         formData    file        (application/pdf)                true              "Upload file"
 func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) error {
 	matches := paramPattern.FindStringSubmatch(commentLine)
-	if len(matches) != 6 {
+	if len(matches) != 7 {
 		return fmt.Errorf("missing required param comment parameters \"%s\"", commentLine)
 	}
 
 	name := matches[1]
 	paramType := matches[2]
 	refType := TransToValidSchemeType(matches[3])
+	mimeType := ""
+	if matches[4] != "" {
+		mimeType = strings.Trim(strings.TrimSpace(matches[4]), "()")
+	}
 
-	// Detect refType
 	objectType := OBJECT
 
 	if strings.HasPrefix(refType, "[]") {
@@ -360,9 +362,9 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 		}
 	}
 
-	requiredText := strings.ToLower(matches[4])
+	requiredText := strings.ToLower(matches[5])
 	required := requiredText == "true" || requiredText == requiredLabel
-	description := matches[5]
+	description := matches[6]
 
 	param := createParameterV3(paramType, description, name, objectType, refType, required, enums, o.parser.collectionFormatInQuery)
 
@@ -440,7 +442,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 				return err
 			}
 
-			o.fillRequestBody(name, schema, required, description, true, paramType == "formData")
+			o.fillRequestBody(name, schema, required, description, true, paramType == "formData", mimeType)
 
 			return nil
 
@@ -455,7 +457,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 		if err != nil {
 			return err
 		}
-		o.fillRequestBody(name, schema, required, description, false, paramType == "formData")
+		o.fillRequestBody(name, schema, required, description, false, paramType == "formData", mimeType)
 
 		return nil
 
@@ -477,18 +479,10 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 	return nil
 }
 
-func (o *OperationV3) fillRequestBody(name string, schema *spec.RefOrSpec[spec.Schema], required bool, description string, primitive, formData bool) {
+func (o *OperationV3) fillRequestBody(name string, schema *spec.RefOrSpec[spec.Schema], required bool, description string, primitive, formData bool, mimeType string) {
 	if o.RequestBody == nil {
 		o.RequestBody = spec.NewRequestBodySpec()
 		o.RequestBody.Spec.Spec.Content = make(map[string]*spec.Extendable[spec.MediaType])
-
-		if primitive && !formData {
-			o.RequestBody.Spec.Spec.Content["text/plain"] = spec.NewMediaType()
-		} else if formData {
-			o.RequestBody.Spec.Spec.Content["application/x-www-form-urlencoded"] = spec.NewMediaType()
-		} else {
-			o.RequestBody.Spec.Spec.Content["application/json"] = spec.NewMediaType()
-		}
 	}
 
 	o.RequestBody.Spec.Spec.Required = required
@@ -501,11 +495,15 @@ func (o *OperationV3) fillRequestBody(name string, schema *spec.RefOrSpec[spec.S
 	}
 
 	// Handle oneOf merging for request body schemas
-	contentType := "application/json"
-	if primitive && !formData {
+	contentType := ""
+	if mimeType != "" {
+		contentType = mimeType
+	} else if primitive && !formData {
 		contentType = "text/plain"
 	} else if formData {
 		contentType = "application/x-www-form-urlencoded"
+	} else {
+		contentType = "application/json"
 	}
 
 	mediaType := o.RequestBody.Spec.Spec.Content[contentType]
@@ -927,13 +925,13 @@ func parseObjectSchemaV3(parser *Parser, refType string, astFile *ast.File) (*sp
 // ParseResponseHeaderComment parses comment for given `response header` comment string.
 func (o *OperationV3) ParseResponseHeaderComment(commentLine string, _ *ast.File) error {
 	matches := responsePattern.FindStringSubmatch(commentLine)
-	if len(matches) != 5 {
+	if len(matches) != 6 {
 		return fmt.Errorf("can not parse response comment \"%s\"", commentLine)
 	}
 
-	header := newHeaderSpecV3(strings.Trim(matches[2], "{}"), strings.Trim(matches[4], "\""))
+	header := newHeaderSpecV3(strings.Trim(matches[2], "{}"), strings.Trim(matches[5], "\""))
 
-	headerKey := strings.TrimSpace(matches[3])
+	headerKey := strings.TrimSpace(matches[4])
 
 	if strings.EqualFold(matches[1], "all") {
 		if o.Responses.Spec.Default != nil {
@@ -943,7 +941,6 @@ func (o *OperationV3) ParseResponseHeaderComment(commentLine string, _ *ast.File
 		if o.Responses.Spec.Response != nil {
 			for _, v := range o.Responses.Spec.Response {
 				v.Spec.Spec.Headers[headerKey] = header
-
 			}
 		}
 
@@ -989,7 +986,7 @@ func newHeaderSpecV3(schemaType, description string) *spec.RefOrSpec[spec.Extend
 // ParseResponseComment parses comment for given `response` comment string.
 func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File) error {
 	matches := responsePattern.FindStringSubmatch(commentLine)
-	if len(matches) != 5 {
+	if len(matches) != 6 {
 		err := o.ParseEmptyResponseComment(commentLine)
 		if err != nil {
 			return o.ParseEmptyResponseOnly(commentLine)
@@ -998,9 +995,10 @@ func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File
 		return err
 	}
 
-	description := strings.Trim(matches[4], "\"")
+	perResponseMimeType := strings.Trim(strings.TrimSpace(matches[3]), "()")
+	description := strings.Trim(matches[5], "\"")
 
-	schema, err := o.parseAPIObjectSchema(commentLine, strings.Trim(matches[2], "{}"), strings.TrimSpace(matches[3]), astFile)
+	schema, err := o.parseAPIObjectSchema(commentLine, strings.Trim(matches[2], "{}"), strings.TrimSpace(matches[4]), astFile)
 	if err != nil {
 		return err
 	}
@@ -1021,9 +1019,18 @@ func (o *OperationV3) ParseResponseComment(commentLine string, astFile *ast.File
 		response := spec.NewResponseSpec()
 		response.Spec.Spec.Description = description
 
+		mimeTypes := o.responseMimeTypes
+		if perResponseMimeType != "" {
+			perResponseMimeTypes, err := parseMimeTypeListV3(perResponseMimeType, "%v response mime type is invalid")
+			if err != nil {
+				return err
+			}
+			mimeTypes = perResponseMimeTypes
+		}
+
 		// Add the schema to all specified response MIME types
-		if len(o.responseMimeTypes) > 0 {
-			for _, mimeType := range o.responseMimeTypes {
+		if len(mimeTypes) > 0 {
+			for _, mimeType := range mimeTypes {
 				setResponseSchema(response.Spec.Spec, mimeType, schema)
 			}
 		} else {
