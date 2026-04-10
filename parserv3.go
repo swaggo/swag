@@ -353,7 +353,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	case secImplicitAttr:
 		search = []string{authorizationURL, in}
 	case secAccessCodeAttr:
-		search = []string{tokenURL, authorizationURL, in}
+		search = []string{tokenURL, authorizationURL}
 	case secBearerAuthAttr:
 		// Support Bearer scheme with parameters
 		scheme := spec.SecurityScheme{
@@ -491,11 +491,15 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 
 	case secAccessCodeAttr:
 		scheme.Type = "oauth2"
-		scheme.In = attrMap[in]
 		scheme.Flows = spec.NewOAuthFlows()
 		scheme.Flows.Spec.AuthorizationCode = spec.NewOAuthFlow()
 		scheme.Flows.Spec.AuthorizationCode.Spec.AuthorizationURL = attrMap[authorizationURL]
 		scheme.Flows.Spec.AuthorizationCode.Spec.TokenURL = attrMap[tokenURL]
+
+		scheme.Flows.Spec.AuthorizationCode.Spec.Scopes = make(map[string]string)
+		for k, v := range scopes {
+			scheme.Flows.Spec.AuthorizationCode.Spec.Scopes[k] = v
+		}
 	}
 
 	scheme.Description = description
