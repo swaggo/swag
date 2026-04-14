@@ -2163,6 +2163,19 @@ func TestParseComposition(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseCompositionWithRequiredByDefault(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/required_by_default_with_composition"
+	p := New()
+	p.RequiredByDefault = true
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	schema := p.swagger.Definitions["api.Parent"]
+	assert.Equal(t, []string{"bar", "foo", "name"}, schema.Required)
+}
+
 func TestParseImportAliases(t *testing.T) {
 	t.Parallel()
 
