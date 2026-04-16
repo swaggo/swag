@@ -434,6 +434,7 @@ const (
 	readOnlyTag         = "readonly"
 	extensionsTag       = "extensions"
 	collectionFormatTag = "collectionFormat"
+	explodeTag          = "explode"
 	patternTag          = "pattern"
 	oneOfTag            = "oneOf"
 )
@@ -457,6 +458,8 @@ var regexAttributes = map[string]*regexp.Regexp{
 	extensionsTag: regexp.MustCompile(`(?i)\s+extensions\(.*\)`),
 	// for collectionFormat(csv)
 	collectionFormatTag: regexp.MustCompile(`(?i)\s+collectionFormat\(.*\)`),
+	// for explode(true) or explode(false)
+	explodeTag: regexp.MustCompile(`(?i)\s+explode\(.*\)`),
 	// example(0)
 	exampleTag: regexp.MustCompile(`(?i)\s+example\(.*\)`),
 	// schemaExample(0)
