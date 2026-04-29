@@ -1606,6 +1606,18 @@ func (parser *Parser) parseStruct(file *ast.File, fields *ast.FieldList) (*spec.
 		}
 	}
 
+	// Deduplicate required: a field that shadows an embedded field may appear in
+	// both the embedded struct's required list and the parent's own required list.
+	seen := make(map[string]struct{}, len(required))
+	uniqueRequired := required[:0]
+	for _, r := range required {
+		if _, ok := seen[r]; !ok {
+			seen[r] = struct{}{}
+			uniqueRequired = append(uniqueRequired, r)
+		}
+	}
+	required = uniqueRequired
+
 	sort.Strings(required)
 
 	return &spec.Schema{
