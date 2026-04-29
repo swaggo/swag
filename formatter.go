@@ -123,7 +123,7 @@ func formatFuncDoc(fileSet *token.FileSet, commentList []*ast.Comment, edits *ed
 	for commentIndex, comment := range commentList {
 		text := comment.Text
 		if attr, body, found := swagComment(text); found {
-			formatted := "//\t" + attr
+			formatted := "// " + attr
 			if body != "" {
 				formatted += "\t" + splitComment2(attr, body)
 			}
