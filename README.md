@@ -848,6 +848,21 @@ type Account struct {
 }
 ```
 
+### Use swaggerneedtag tag to exclude a field depending on tags
+
+```go
+type Account struct {
+    ID   string    `json:"id"`
+    Name string     `json:"name"`
+    OnlyAdmin int   `json:"onlyadmin" swaggerneedtag:"admin"`
+    NotAdmin  int   `json:"notadmin" swaggerneedtag:"!admin"`
+}
+```
+
+will include `onlyadmin` only if `--tags` contains `admin`,
+
+and `notadmin` only if `--tags` does not contain `admin`.
+
 ### Add extension info to struct field
 
 ```go
