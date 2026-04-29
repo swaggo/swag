@@ -69,8 +69,8 @@ func TestNew(t *testing.T) {
 func TestSetOverrides(t *testing.T) {
 	t.Parallel()
 
-	overrides := map[string]string{
-		"foo": "bar",
+	overrides := map[string]Override{
+		"foo": {Type: "bar"},
 	}
 
 	p := New(SetOverrides(overrides))
@@ -80,8 +80,8 @@ func TestSetOverrides(t *testing.T) {
 func TestOverrides_getTypeSchema(t *testing.T) {
 	t.Parallel()
 
-	overrides := map[string]string{
-		"sql.NullString": "string",
+	overrides := map[string]Override{
+		"sql.NullString": {Type: "string"},
 	}
 
 	p := New(SetOverrides(overrides))
@@ -102,6 +102,130 @@ func TestOverrides_getTypeSchema(t *testing.T) {
 		if assert.Error(t, err) {
 			assert.Equal(t, "cannot find type definition: sql.NullInt64", err.Error())
 		}
+	})
+}
+
+func TestOverrides_nullable(t *testing.T) {
+	t.Parallel()
+
+	overrides := map[string]Override{
+		"sql.NullString": {Type: "string", Attrs: map[string]string{"nullable": "true"}},
+	}
+
+	p := New(SetOverrides(overrides))
+
+	s, err := p.getTypeSchema("sql.NullString", nil, false)
+	if assert.NoError(t, err) {
+		assert.Truef(t, s.Type.Contains("string"), "type sql.NullString should be overridden by string")
+		assert.Equal(t, true, s.Extensions["x-nullable"])
+	}
+}
+
+func TestOverrides_format(t *testing.T) {
+	t.Parallel()
+
+	overrides := map[string]Override{
+		"sql.NullTime": {Type: "string", Attrs: map[string]string{"format": "date-time"}},
+	}
+
+	p := New(SetOverrides(overrides))
+
+	s, err := p.getTypeSchema("sql.NullTime", nil, false)
+	if assert.NoError(t, err) {
+		assert.Truef(t, s.Type.Contains("string"), "type sql.NullTime should be overridden by string")
+		assert.Equal(t, "date-time", s.Format)
+	}
+}
+
+func TestOverrides_placeholder(t *testing.T) {
+	t.Parallel()
+
+	overrides := map[string]Override{
+		"pkg.Wrapper[$T]": {Type: "$T", Attrs: map[string]string{"nullable": "true"}},
+	}
+
+	p := New(SetOverrides(overrides))
+
+	t.Run("Placeholder resolves string", func(t *testing.T) {
+		t.Parallel()
+
+		s, err := p.getTypeSchema("pkg.Wrapper[string]", nil, false)
+		if assert.NoError(t, err) {
+			assert.Truef(t, s.Type.Contains("string"), "pkg.Wrapper[string] should resolve to string")
+			assert.Equal(t, true, s.Extensions["x-nullable"])
+		}
+	})
+
+	t.Run("Placeholder resolves number", func(t *testing.T) {
+		t.Parallel()
+
+		s, err := p.getTypeSchema("pkg.Wrapper[number]", nil, false)
+		if assert.NoError(t, err) {
+			assert.Truef(t, s.Type.Contains("number"), "pkg.Wrapper[number] should resolve to number")
+			assert.Equal(t, true, s.Extensions["x-nullable"])
+		}
+	})
+
+	t.Run("No match for different type", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := p.getTypeSchema("other.Type", nil, false)
+		assert.Error(t, err)
+	})
+}
+
+func TestOverrides_matchOverride(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Exact match takes priority over placeholder", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(SetOverrides(map[string]Override{
+			"pkg.Wrapper[string]": {Type: "string"},
+			"pkg.Wrapper[$T]":     {Type: "$T", Attrs: map[string]string{"nullable": "true"}},
+		}))
+
+		o := p.matchOverride("pkg.Wrapper[string]")
+		if assert.NotNil(t, o) {
+			assert.Equal(t, "string", o.Type)
+			assert.False(t, o.IsNullable(), "exact match should not have nullable attr")
+		}
+	})
+
+	t.Run("Placeholder captures type parameter", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(SetOverrides(map[string]Override{
+			"pkg.Wrapper[$T]": {Type: "$T", Attrs: map[string]string{"nullable": "true"}},
+		}))
+
+		o := p.matchOverride("pkg.Wrapper[custom.Type]")
+		if assert.NotNil(t, o) {
+			assert.Equal(t, "custom.Type", o.Type)
+			assert.True(t, o.IsNullable())
+		}
+	})
+
+	t.Run("No match returns nil", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(SetOverrides(map[string]Override{
+			"pkg.Wrapper[$T]": {Type: "$T"},
+		}))
+
+		o := p.matchOverride("other.Type")
+		assert.Nil(t, o)
+	})
+
+	t.Run("Empty capture is skipped", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(SetOverrides(map[string]Override{
+			"pkg.Wrapper[$T]": {Type: "$T"},
+		}))
+
+		o := p.matchOverride("pkg.Wrapper[]")
+		assert.Nil(t, o)
 	})
 }
 
@@ -2196,10 +2320,10 @@ func TestParseTypeOverrides(t *testing.T) {
 	t.Parallel()
 
 	searchDir := "testdata/global_override"
-	p := New(SetOverrides(map[string]string{
-		"github.com/swaggo/swag/testdata/global_override/types.Application":  "string",
-		"github.com/swaggo/swag/testdata/global_override/types.Application2": "github.com/swaggo/swag/testdata/global_override/othertypes.Application",
-		"github.com/swaggo/swag/testdata/global_override/types.ShouldSkip":   "",
+	p := New(SetOverrides(map[string]Override{
+		"github.com/swaggo/swag/testdata/global_override/types.Application":  {Type: "string"},
+		"github.com/swaggo/swag/testdata/global_override/types.Application2": {Type: "github.com/swaggo/swag/testdata/global_override/othertypes.Application"},
+		"github.com/swaggo/swag/testdata/global_override/types.ShouldSkip":   {},
 	}))
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)

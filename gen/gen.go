@@ -183,7 +183,7 @@ func (g *Gen) Build(config *Config) error {
 		config.RightTemplateDelim = "}}"
 	}
 
-	var overrides map[string]string
+	var overrides map[string]swag.Override
 
 	if config.OverridesFile != "" {
 		overridesFile, err := open(config.OverridesFile)
@@ -379,8 +379,8 @@ func (g *Gen) formatSource(src []byte) []byte {
 }
 
 // Read and parse the overrides file.
-func parseOverrides(r io.Reader) (map[string]string, error) {
-	overrides := make(map[string]string)
+func parseOverrides(r io.Reader) (map[string]swag.Override, error) {
+	overrides := make(map[string]swag.Override)
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
@@ -393,24 +393,31 @@ func parseOverrides(r io.Reader) (map[string]string, error) {
 
 		parts := strings.Fields(line)
 
-		switch len(parts) {
-		case 0:
-			// only whitespace
+		if len(parts) == 0 {
 			continue
-		case 2:
-			// either a skip or malformed
-			if parts[0] != "skip" {
+		}
+
+		switch parts[0] {
+		case "skip":
+			if len(parts) != 2 {
+				return nil, fmt.Errorf("could not parse override: '%s'", line)
+			}
+			overrides[parts[1]] = swag.Override{}
+		case "replace":
+			if len(parts) < 3 {
 				return nil, fmt.Errorf("could not parse override: '%s'", line)
 			}
 
-			overrides[parts[1]] = ""
-		case 3:
-			// either a replace or malformed
-			if parts[0] != "replace" {
-				return nil, fmt.Errorf("could not parse override: '%s'", line)
+			attrs := make(map[string]string)
+			for _, attr := range parts[3:] {
+				kv := strings.SplitN(attr, ":", 2)
+				if len(kv) != 2 {
+					return nil, fmt.Errorf("malformed attribute '%s' in override: '%s'", attr, line)
+				}
+				attrs[kv[0]] = kv[1]
 			}
 
-			overrides[parts[1]] = parts[2]
+			overrides[parts[1]] = swag.Override{Type: parts[2], Attrs: attrs}
 		default:
 			return nil, fmt.Errorf("could not parse override: '%s'", line)
 		}
