@@ -87,9 +87,10 @@ func (f *Format) Build(config *Config) error {
 }
 
 func (f *Format) excludeDir(path string) bool {
-	return f.exclude[path] ||
-		filepath.Base(path)[0] == '.' &&
-			len(filepath.Base(path)) > 1 // exclude hidden folders
+	base := filepath.Base(path)
+	// exclude hidden folders (starting with .) but not "." or ".."
+	isHidden := len(base) > 1 && base[0] == '.' && base != ".."
+	return f.exclude[path] || isHidden
 }
 
 func (f *Format) excludeFile(path string) bool {
