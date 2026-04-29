@@ -169,7 +169,7 @@ type Parser struct {
 	fieldParserFactory FieldParserFactory
 
 	// Overrides allows global replacements of types. A blank replacement will be skipped.
-	Overrides map[string]string
+	Overrides map[string]Override
 
 	// parseGoList whether swag use go list to parse dependency
 	parseGoList bool
@@ -192,6 +192,23 @@ type Parser struct {
 	// UseStructName Dont use those ugly full-path names when using dependency flag
 	UseStructName bool
 }
+
+// Override represents a type override with optional attributes.
+type Override struct {
+	// Type is the replacement type (e.g. "string", "number"). Empty means skip.
+	Type string
+	// Attrs holds key:value attributes (e.g. optional:true, nullable:true, format:date-time).
+	Attrs map[string]string
+}
+
+// IsOptional returns true if the override marks the field as optional.
+func (o Override) IsOptional() bool { return o.Attrs["optional"] == "true" }
+
+// IsNullable returns true if the override marks the field as nullable.
+func (o Override) IsNullable() bool { return o.Attrs["nullable"] == "true" }
+
+// Format returns the format attribute value, if any.
+func (o Override) Format() string { return o.Attrs["format"] }
 
 // FieldParserFactory create FieldParser.
 type FieldParserFactory func(ps *Parser, field *ast.Field) FieldParser
@@ -250,7 +267,7 @@ func New(options ...func(*Parser)) *Parser {
 		excludes:           make(map[string]struct{}),
 		tags:               make(map[string]struct{}),
 		fieldParserFactory: newTagBaseFieldParser,
-		Overrides:          make(map[string]string),
+		Overrides:          make(map[string]Override),
 	}
 
 	for _, option := range options {
@@ -363,12 +380,55 @@ func SetFieldParserFactory(factory FieldParserFactory) func(parser *Parser) {
 }
 
 // SetOverrides allows the use of user-defined global type overrides.
-func SetOverrides(overrides map[string]string) func(parser *Parser) {
+func SetOverrides(overrides map[string]Override) func(parser *Parser) {
 	return func(p *Parser) {
 		for k, v := range overrides {
 			p.Overrides[k] = v
 		}
 	}
+}
+
+// matchOverride tries exact match first, then placeholder patterns containing $T.
+func (parser *Parser) matchOverride(typeName string) *Override {
+	// 1. Exact match (highest priority)
+	if o, ok := parser.Overrides[typeName]; ok {
+		return &o
+	}
+
+	// 2. Placeholder match — find keys containing $T
+	for key, o := range parser.Overrides {
+		if !strings.Contains(key, "$T") {
+			continue
+		}
+		parts := strings.SplitN(key, "$T", 2)
+		prefix, suffix := parts[0], parts[1]
+		if strings.HasPrefix(typeName, prefix) && strings.HasSuffix(typeName, suffix) {
+			captured := typeName[len(prefix) : len(typeName)-len(suffix)]
+			if captured == "" {
+				continue
+			}
+			resolved := Override{
+				Type:  strings.ReplaceAll(o.Type, "$T", captured),
+				Attrs: o.Attrs,
+			}
+			return &resolved
+		}
+	}
+
+	return nil
+}
+
+// getOverrideForType resolves an override for a type by trying the short name first, then the full path.
+func (parser *Parser) getOverrideForType(typeName string, file *ast.File) *Override {
+	if o := parser.matchOverride(typeName); o != nil {
+		return o
+	}
+	if typeSpecDef := parser.packages.FindTypeSpec(typeName, file); typeSpecDef != nil {
+		if o := parser.matchOverride(typeSpecDef.FullPath()); o != nil {
+			return o
+		}
+	}
+	return nil
 }
 
 // SetCollectionFormat set default collection format
@@ -1247,10 +1307,29 @@ func convertFromSpecificToPrimitive(typeName string) (string, error) {
 	return typeName, ErrFailedConvertPrimitiveType
 }
 
+// applyOverrideAttrs applies nullable and format attributes from an override to a schema.
+func applyOverrideAttrs(schema *spec.Schema, override *Override) {
+	if override.IsNullable() {
+		schema.AddExtension("x-nullable", true)
+	}
+	if f := override.Format(); f != "" {
+		schema.Format = f
+	}
+}
+
 func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (*spec.Schema, error) {
-	if override, ok := parser.Overrides[typeName]; ok {
-		parser.debug.Printf("Override detected for %s: using %s instead", typeName, override)
-		return parseObjectSchema(parser, override, file)
+	if override := parser.matchOverride(typeName); override != nil {
+		if override.Type == "" {
+			parser.debug.Printf("Override detected for %s: ignoring", typeName)
+			return nil, ErrSkippedField
+		}
+		parser.debug.Printf("Override detected for %s: using %s instead", typeName, override.Type)
+		schema, err := parseObjectSchema(parser, override.Type, file)
+		if err != nil {
+			return nil, err
+		}
+		applyOverrideAttrs(schema, override)
+		return schema, nil
 	}
 
 	if IsInterfaceLike(typeName) {
@@ -1270,24 +1349,27 @@ func (parser *Parser) getTypeSchema(typeName string, file *ast.File, ref bool) (
 		return nil, fmt.Errorf("cannot find type definition: %s", typeName)
 	}
 
-	if override, ok := parser.Overrides[typeSpecDef.FullPath()]; ok {
-		if override == "" {
+	if override := parser.matchOverride(typeSpecDef.FullPath()); override != nil {
+		if override.Type == "" {
 			parser.debug.Printf("Override detected for %s: ignoring", typeSpecDef.FullPath())
-
 			return nil, ErrSkippedField
 		}
 
-		parser.debug.Printf("Override detected for %s: using %s instead", typeSpecDef.FullPath(), override)
+		parser.debug.Printf("Override detected for %s: using %s instead", typeSpecDef.FullPath(), override.Type)
 
-		separator := strings.LastIndex(override, ".")
+		separator := strings.LastIndex(override.Type, ".")
 		if separator == -1 {
 			// treat as a swaggertype tag
-			parts := strings.Split(override, ",")
-
-			return BuildCustomSchema(parts)
+			parts := strings.Split(override.Type, ",")
+			schema, err := BuildCustomSchema(parts)
+			if err != nil {
+				return nil, err
+			}
+			applyOverrideAttrs(schema, override)
+			return schema, nil
 		}
 
-		typeSpecDef = parser.packages.findTypeSpec(override[0:separator], override[separator+1:])
+		typeSpecDef = parser.packages.findTypeSpec(override.Type[0:separator], override.Type[separator+1:])
 	}
 
 	parser.packages.CheckTypeSpec(typeSpecDef)
@@ -1710,6 +1792,13 @@ func (parser *Parser) parseStructField(file *ast.File, field *ast.Field) (map[st
 
 	if required {
 		tagRequired = append(tagRequired, fieldNames...)
+	}
+
+	// Check if override marks this field as optional
+	if typeName, err := getFieldType(file, field.Type, nil); err == nil {
+		if override := parser.getOverrideForType(typeName, file); override != nil && override.IsOptional() {
+			tagRequired = nil
+		}
 	}
 
 	if formName := ps.FormName(); len(formName) > 0 {

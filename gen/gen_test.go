@@ -684,43 +684,43 @@ func TestGen_parseOverrides(t *testing.T) {
 	testCases := []struct {
 		Name          string
 		Data          string
-		Expected      map[string]string
+		Expected      map[string]swag.Override
 		ExpectedError error
 	}{
 		{
 			Name: "replace",
 			Data: `replace github.com/foo/bar baz`,
-			Expected: map[string]string{
-				"github.com/foo/bar": "baz",
+			Expected: map[string]swag.Override{
+				"github.com/foo/bar": {Type: "baz", Attrs: map[string]string{}},
 			},
 		},
 		{
 			Name: "skip",
 			Data: `skip github.com/foo/bar`,
-			Expected: map[string]string{
-				"github.com/foo/bar": "",
+			Expected: map[string]swag.Override{
+				"github.com/foo/bar": {},
 			},
 		},
 		{
 			Name: "generic-simple",
 			Data: `replace types.Field[string] string`,
-			Expected: map[string]string{
-				"types.Field[string]": "string",
+			Expected: map[string]swag.Override{
+				"types.Field[string]": {Type: "string", Attrs: map[string]string{}},
 			},
 		},
 		{
 			Name: "generic-double",
 			Data: `replace types.Field[string,string] string`,
-			Expected: map[string]string{
-				"types.Field[string,string]": "string",
+			Expected: map[string]swag.Override{
+				"types.Field[string,string]": {Type: "string", Attrs: map[string]string{}},
 			},
 		},
 		{
 			Name: "comment",
 			Data: `// this is a comment
 			replace foo bar`,
-			Expected: map[string]string{
-				"foo": "bar",
+			Expected: map[string]swag.Override{
+				"foo": {Type: "bar", Attrs: map[string]string{}},
 			},
 		},
 		{
@@ -728,14 +728,40 @@ func TestGen_parseOverrides(t *testing.T) {
 			Data: `
 
 			replace foo bar`,
-			Expected: map[string]string{
-				"foo": "bar",
+			Expected: map[string]swag.Override{
+				"foo": {Type: "bar", Attrs: map[string]string{}},
 			},
 		},
 		{
 			Name:          "unknown directive",
 			Data:          `foo`,
 			ExpectedError: fmt.Errorf("could not parse override: 'foo'"),
+		},
+		{
+			Name: "replace with attrs",
+			Data: `replace pkg.Optional[string] string optional:true nullable:true`,
+			Expected: map[string]swag.Override{
+				"pkg.Optional[string]": {Type: "string", Attrs: map[string]string{"optional": "true", "nullable": "true"}},
+			},
+		},
+		{
+			Name: "replace with format attr",
+			Data: `replace pkg.Optional[time.Time] string optional:true nullable:true format:date-time`,
+			Expected: map[string]swag.Override{
+				"pkg.Optional[time.Time]": {Type: "string", Attrs: map[string]string{"optional": "true", "nullable": "true", "format": "date-time"}},
+			},
+		},
+		{
+			Name:          "malformed attr",
+			Data:          `replace pkg.Foo string badattr`,
+			ExpectedError: fmt.Errorf("malformed attribute 'badattr' in override: 'replace pkg.Foo string badattr'"),
+		},
+		{
+			Name: "placeholder in key",
+			Data: `replace pkg.Wrapper[$T] $T nullable:true`,
+			Expected: map[string]swag.Override{
+				"pkg.Wrapper[$T]": {Type: "$T", Attrs: map[string]string{"nullable": "true"}},
+			},
 		},
 	}
 
