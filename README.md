@@ -500,6 +500,7 @@ Besides that, `swag` also accepts aliases for some MIME Types as follows:
 | securitydefinitions.oauth2.implicit     | [OAuth2 implicit](https://swagger.io/docs/specification/authentication/oauth2/) auth.          | authorizationUrl, scope, description           | // @securitydefinitions.oauth2.implicit OAuth2Implicit       |
 | securitydefinitions.oauth2.password     | [OAuth2 password](https://swagger.io/docs/specification/authentication/oauth2/) auth.          | tokenUrl, scope, description                   | // @securitydefinitions.oauth2.password OAuth2Password       |
 | securitydefinitions.oauth2.accessCode   | [OAuth2 access code](https://swagger.io/docs/specification/authentication/oauth2/) auth.       | tokenUrl, authorizationUrl, scope, description | // @securitydefinitions.oauth2.accessCode OAuth2AccessCode   |
+| securitydefinitions.bearerauth   | [Bearer Authentication auth.](https://swagger.io/docs/specification/authentication/bearer-authentication/) auth. | | // @securitydefinitions.bearerauth BearerAuth
 
 
 | parameters annotation           | example                                                                 |
