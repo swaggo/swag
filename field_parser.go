@@ -554,7 +554,10 @@ func (ps *tagBaseFieldParser) IsRequired() (bool, error) {
 		}
 	}
 
-	if ps.p.RequiredByDefaultMode == "pointer" {
+	switch ps.p.RequiredByDefaultMode {
+	case "all":
+		return true, nil
+	case "pointer":
 		_, isPointer := ps.field.Type.(*ast.StarExpr)
 		return !isPointer, nil
 	}
