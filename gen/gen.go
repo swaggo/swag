@@ -123,6 +123,10 @@ type Config struct {
 	// RequiredByDefault set validation required for all fields by default
 	RequiredByDefault bool
 
+	// RequiredByDefaultMode controls which fields are required when RequiredByDefault is not set.
+	// "all" marks all fields as required; "pointer" marks only non-pointer fields as required.
+	RequiredByDefaultMode string
+
 	// OverridesFile defines global type overrides.
 	OverridesFile string
 
@@ -224,6 +228,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseVendor = config.ParseVendor
 	p.ParseInternal = config.ParseInternal
 	p.RequiredByDefault = config.RequiredByDefault
+	p.RequiredByDefaultMode = config.RequiredByDefaultMode
 	p.HostState = config.State
 	p.ParseFuncBody = config.ParseFuncBody
 	p.ParseGoPackages = config.ParseGoPackages
