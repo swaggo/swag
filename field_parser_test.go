@@ -149,6 +149,70 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.False(t, got)
 	})
 
+	t.Run("RequiredByDefaultMode pointer - non-pointer field is required", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := newTagBaseFieldParser(
+			&Parser{
+				RequiredByDefaultMode: "pointer",
+			},
+			&ast.Field{
+				Tag:  &ast.BasicLit{Value: `json:"test"`},
+				Type: &ast.Ident{Name: "string"},
+			},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.True(t, got)
+	})
+
+	t.Run("RequiredByDefaultMode pointer - pointer field is not required", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := newTagBaseFieldParser(
+			&Parser{
+				RequiredByDefaultMode: "pointer",
+			},
+			&ast.Field{
+				Tag:  &ast.BasicLit{Value: `json:"test"`},
+				Type: &ast.StarExpr{X: &ast.Ident{Name: "string"}},
+			},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+
+	t.Run("RequiredByDefaultMode pointer - omitempty overrides non-pointer", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := newTagBaseFieldParser(
+			&Parser{
+				RequiredByDefaultMode: "pointer",
+			},
+			&ast.Field{
+				Tag:  &ast.BasicLit{Value: `json:"test,omitempty"`},
+				Type: &ast.Ident{Name: "string"},
+			},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+
+	t.Run("RequiredByDefaultMode pointer - optional tag overrides non-pointer", func(t *testing.T) {
+		t.Parallel()
+
+		got, err := newTagBaseFieldParser(
+			&Parser{
+				RequiredByDefaultMode: "pointer",
+			},
+			&ast.Field{
+				Tag:  &ast.BasicLit{Value: `json:"test" binding:"optional"`},
+				Type: &ast.Ident{Name: "string"},
+			},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+	})
+
 	t.Run("Extensions tag", func(t *testing.T) {
 		t.Parallel()
 

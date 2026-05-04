@@ -30,7 +30,8 @@ const (
 	codeExampleFilesFlag     = "codeExampleFiles"
 	parseInternalFlag        = "parseInternal"
 	generatedTimeFlag        = "generatedTime"
-	requiredByDefaultFlag    = "requiredByDefault"
+	requiredByDefaultFlag        = "requiredByDefault"
+	requiredByDefaultModeFlag    = "requiredByDefaultMode"
 	parseDepthFlag           = "parseDepth"
 	instanceNameFlag         = "instanceName"
 	overridesFileFlag        = "overridesFile"
@@ -134,6 +135,10 @@ var initFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:  requiredByDefaultFlag,
 		Usage: "Set validation required for all fields by default",
+	},
+	&cli.StringFlag{
+		Name:  requiredByDefaultModeFlag,
+		Usage: `Set the mode for --requiredByDefault. "all" (default) requires all fields, "pointer" requires only non-pointer fields`,
 	},
 	&cli.StringFlag{
 		Name:  instanceNameFlag,
@@ -264,7 +269,8 @@ func initAction(ctx *cli.Context) error {
 		ParseInternal:       ctx.Bool(parseInternalFlag),
 		UseStructNames:      ctx.Bool(useStructNameFlag),
 		GeneratedTime:       ctx.Bool(generatedTimeFlag),
-		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
+		RequiredByDefault:     ctx.Bool(requiredByDefaultFlag),
+		RequiredByDefaultMode: ctx.String(requiredByDefaultModeFlag),
 		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
 		ParseDepth:          ctx.Int(parseDepthFlag),
 		InstanceName:        ctx.String(instanceNameFlag),
