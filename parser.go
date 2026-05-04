@@ -141,7 +141,7 @@ type Parser struct {
 	RequiredByDefault bool
 
 	// RequiredByDefaultMode controls which fields are required when RequiredByDefault is not set.
-	// "pointer" marks only non-pointer fields as required.
+	// "all" marks all fields as required; "pointer" marks only non-pointer fields as required.
 	RequiredByDefaultMode string
 
 	// structStack stores full names of the structures that were already parsed or are being parsed now

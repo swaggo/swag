@@ -124,7 +124,7 @@ type Config struct {
 	RequiredByDefault bool
 
 	// RequiredByDefaultMode controls which fields are required when RequiredByDefault is not set.
-	// "pointer" marks only non-pointer fields as required.
+	// "all" marks all fields as required; "pointer" marks only non-pointer fields as required.
 	RequiredByDefaultMode string
 
 	// OverridesFile defines global type overrides.
