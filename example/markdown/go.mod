@@ -1,6 +1,6 @@
 module github.com/swaggo/swag/example/markdown
 
-go 1.18
+go 1.25.0
 
 require (
 	github.com/gorilla/mux v1.8.0
