@@ -348,6 +348,7 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 	}
 
 	elemSchema := schema
+	var itemRef *spec.Ref
 
 	if field.schemaType == ARRAY {
 		// For Array only
@@ -355,9 +356,11 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 		schema.MinItems = field.minItems
 		schema.UniqueItems = &field.unique
 
-		elemSchema = schema.Items.Schema.Spec
-		if elemSchema == nil {
-			elemSchema = ps.p.getSchemaByRef(schema.Items.Schema.Ref)
+		if schema.Items.Schema.Ref != nil {
+			itemRef = schema.Items.Schema.Ref
+			elemSchema = &spec.Schema{}
+		} else {
+			elemSchema = schema.Items.Schema.Spec
 		}
 
 		elemSchema.Format = field.formatType
@@ -371,6 +374,11 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 	elemSchema.Enum = append(elemSchema.Enum, field.enums...)
 	elemSchema.Pattern = field.pattern
 	elemSchema.OneOf = oneOfSchemas
+
+	if itemRef != nil && !reflect.ValueOf(*elemSchema).IsZero() {
+		elemSchema.AllOf = []*spec.RefOrSpec[spec.Schema]{{Ref: itemRef}}
+		schema.Items.Schema = spec.NewRefOrSpec[spec.Schema](nil, elemSchema)
+	}
 
 	return nil
 }
