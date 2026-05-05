@@ -274,10 +274,8 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		assert.Equal(t, []string{"PostTypeImage", "PostTypeVideo"}, componentSchema.Spec.Extensions[enumVarNamesExtension])
 		if assert.NotNil(t, schema.Spec) {
 			assert.Equal(t, "video", schema.Spec.Example)
-			if assert.Len(t, schema.Spec.AllOf, 1) {
-				assert.Equal(t, "#/components/schemas/PostType", schema.Spec.AllOf[0].Ref.Ref)
-			}
-			assert.Equal(t, []interface{}{"video", "image"}, schema.Spec.Enum)
+			assert.Equal(t, "#/components/schemas/PostType", schema.Spec.Extensions["$ref"])
+			assert.Empty(t, schema.Spec.Enum)
 		}
 	})
 
@@ -311,12 +309,8 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, []interface{}{"image", "video"}, componentSchema.Spec.Enum)
-		if assert.NotNil(t, schema.Spec.Items.Schema.Spec) {
-			assert.Equal(t, []interface{}{"video", "image"}, schema.Spec.Items.Schema.Spec.Enum)
-			if assert.Len(t, schema.Spec.Items.Schema.Spec.AllOf, 1) {
-				assert.Equal(t, "#/components/schemas/PostType", schema.Spec.Items.Schema.Spec.AllOf[0].Ref.Ref)
-			}
-		}
+		assert.Equal(t, "#/components/schemas/PostType", schema.Spec.Items.Schema.Ref.Ref)
+		assert.Nil(t, schema.Spec.Items.Schema.Spec)
 	})
 
 	t.Run("EnumVarNames tag", func(t *testing.T) {
