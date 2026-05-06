@@ -240,6 +240,79 @@ func TestDefaultFieldParserV3(t *testing.T) {
 
 	})
 
+	t.Run("Enums tag on ref schema does not mutate component schema", func(t *testing.T) {
+		t.Parallel()
+
+		parser := New()
+		parser.openAPIVersion = true
+
+		componentSchema := spec.NewSchemaSpec()
+		componentSchema.Spec.Type = &spec.SingleOrArray[string]{STRING}
+		componentSchema.Spec.Enum = []interface{}{"image", "video"}
+		componentSchema.Spec.Extensions = map[string]any{
+			enumVarNamesExtension: []string{"PostTypeImage", "PostTypeVideo"},
+		}
+		parser.openAPI.Components.Spec.Schemas = map[string]*spec.RefOrSpec[spec.Schema]{
+			"PostType": componentSchema,
+		}
+
+		schema := spec.NewRefOrSpec[spec.Schema](spec.NewRef("#/components/schemas/PostType"), nil)
+
+		err := newTagBaseFieldParserV3(
+			parser,
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{
+				Names: []*ast.Ident{{Name: "Type"}},
+				Tag: &ast.BasicLit{
+					Value: `json:"type" validate:"oneof=video image" example:"video"`,
+				},
+			},
+		).ComplementSchema(schema)
+		assert.NoError(t, err)
+
+		assert.Equal(t, []interface{}{"image", "video"}, componentSchema.Spec.Enum)
+		assert.Equal(t, []string{"PostTypeImage", "PostTypeVideo"}, componentSchema.Spec.Extensions[enumVarNamesExtension])
+		if assert.NotNil(t, schema.Spec) {
+			assert.Equal(t, "video", schema.Spec.Example)
+			assert.Equal(t, "#/components/schemas/PostType", schema.Spec.Extensions["$ref"])
+			assert.Empty(t, schema.Spec.Enum)
+		}
+	})
+
+	t.Run("Enums tag on array item ref schema does not mutate component schema", func(t *testing.T) {
+		t.Parallel()
+
+		parser := New()
+		parser.openAPIVersion = true
+
+		componentSchema := spec.NewSchemaSpec()
+		componentSchema.Spec.Type = &spec.SingleOrArray[string]{STRING}
+		componentSchema.Spec.Enum = []interface{}{"image", "video"}
+		parser.openAPI.Components.Spec.Schemas = map[string]*spec.RefOrSpec[spec.Schema]{
+			"PostType": componentSchema,
+		}
+
+		schema := spec.NewSchemaSpec()
+		schema.Spec.Type = &spec.SingleOrArray[string]{ARRAY}
+		schema.Spec.Items = spec.NewBoolOrSchema(false, spec.NewRefOrSpec[spec.Schema](spec.NewRef("#/components/schemas/PostType"), nil))
+
+		err := newTagBaseFieldParserV3(
+			parser,
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{
+				Names: []*ast.Ident{{Name: "Types"}},
+				Tag: &ast.BasicLit{
+					Value: `json:"types" validate:"oneof=video image"`,
+				},
+			},
+		).ComplementSchema(schema)
+		assert.NoError(t, err)
+
+		assert.Equal(t, []interface{}{"image", "video"}, componentSchema.Spec.Enum)
+		assert.Equal(t, "#/components/schemas/PostType", schema.Spec.Items.Schema.Ref.Ref)
+		assert.Nil(t, schema.Spec.Items.Schema.Spec)
+	})
+
 	t.Run("EnumVarNames tag", func(t *testing.T) {
 		t.Parallel()
 
