@@ -186,6 +186,37 @@ func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	}
 }
 
+func TestParserParseGeneralApiInfoV3GroupedSecurityDefinitions(t *testing.T) {
+	t.Parallel()
+
+	p := New(GenerateOpenAPI3Doc(true))
+
+	err := p.ParseGeneralAPIInfo("testdata/v3/security_grouped.go")
+	require.NoError(t, err)
+
+	security := p.openAPI.Components.Spec.SecuritySchemes
+	require.Len(t, security, 3)
+
+	if v, ok := security["BearerAuth"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "http", v.Spec.Spec.Type)
+		assert.Equal(t, "bearer", v.Spec.Spec.Scheme)
+		assert.Equal(t, "JWT", v.Spec.Spec.BearerFormat)
+		assert.Equal(t, "Bearer access token.", v.Spec.Spec.Description)
+	}
+	if v, ok := security["APIKeyAuth"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "apiKey", v.Spec.Spec.Type)
+		assert.Equal(t, "header", v.Spec.Spec.In)
+		assert.Equal(t, "X-API-Key", v.Spec.Spec.Name)
+		assert.Equal(t, "API key auth.", v.Spec.Spec.Description)
+	}
+	if v, ok := security["SessionCookieAuth"]; ok && v != nil && v.Spec != nil && v.Spec.Spec != nil {
+		assert.Equal(t, "apiKey", v.Spec.Spec.Type)
+		assert.Equal(t, "cookie", v.Spec.Spec.In)
+		assert.Equal(t, "session_cookie", v.Spec.Spec.Name)
+		assert.Equal(t, "Session cookie auth.", v.Spec.Spec.Description)
+	}
+}
+
 func TestParser_ParseGeneralApiInfoExtensionsV3(t *testing.T) {
 	// should return an error because extension value is not a valid json
 	t.Run("Test invalid extension value", func(t *testing.T) {
