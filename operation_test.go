@@ -35,7 +35,7 @@ func TestParseTagsComment(t *testing.T) {
 func TestParseAcceptComment(t *testing.T) {
 	t.Parallel()
 
-	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json`
+	comment := `/@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,json-patch,pdf`
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
@@ -54,7 +54,9 @@ func TestParseAcceptComment(t *testing.T) {
 			"image/jpeg",
 			"image/gif",
 			"application/xhtml+xml",
-			"application/health+json"})
+			"application/health+json",
+			"application/json-patch+json",
+			"application/pdf"})
 }
 
 func TestParseAcceptCommentErr(t *testing.T) {
@@ -82,11 +84,13 @@ func TestParseProduceComment(t *testing.T) {
 		"application/octet-stream",
 		"image/png",
 		"image/jpeg",
-		"image/gif",
-		"application/health+json"
+        "image/gif",
+		"application/health+json",
+		"application/json-patch+json",
+		"application/pdf"
     ]
 }`
-	comment := `/@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/health+json`
+	comment := `/@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/health+json,json-patch,pdf`
 	operation := new(Operation)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err, "ParseComment should not fail")
