@@ -2396,6 +2396,21 @@ function a() {}`))
 	}
 }
 
+func TestParseGoListRespectsParseDepth(t *testing.T) {
+	t.Parallel()
+
+	p := New(ParseUsingGoList(true), SetParseDependency(1))
+
+	err := p.ParseAPI("testdata/golist_parse_depth/app", "main.go", 1)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, p.swagger.Definitions["direct.Direct"])
+	transitivePkg := p.packages.packages["github.com/swaggo/swag/testdata/golist_parse_depth/transitive"]
+	if transitivePkg != nil {
+		assert.Empty(t, transitivePkg.Files)
+	}
+}
+
 func TestParser_ParseStructArrayObject(t *testing.T) {
 	t.Parallel()
 
