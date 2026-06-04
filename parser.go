@@ -439,6 +439,7 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 				return err
 			}
 
+			pkgs = filterPackagesByParseDepth(pkgs, allDir, parseDepth)
 			length := len(pkgs)
 			for i := 0; i < length; i++ {
 				err := parser.getAllGoFileInfoFromDepsByList(pkgs[i], parser.ParseDependency)

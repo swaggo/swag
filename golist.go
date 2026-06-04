@@ -77,6 +77,93 @@ func listOnePackages(ctx context.Context, dir string, env []string, args ...stri
 	return pkgs, nil
 }
 
+func filterPackagesByParseDepth(pkgs []*build.Package, rootDirs []string, parseDepth int) []*build.Package {
+	if parseDepth == 0 {
+		return pkgs
+	}
+
+	pkgsByImportPath := make(map[string]*build.Package, len(pkgs))
+	pkgsByDir := make(map[string]*build.Package, len(pkgs))
+	for _, pkg := range pkgs {
+		if pkg.ImportPath != "" {
+			pkgsByImportPath[pkg.ImportPath] = pkg
+		}
+
+		absDir, err := filepath.Abs(pkg.Dir)
+		if err == nil {
+			pkgsByDir[absDir] = pkg
+		}
+	}
+
+	type packageAtDepth struct {
+		pkg   *build.Package
+		depth int
+	}
+
+	queue := make([]packageAtDepth, 0)
+	for _, rootDir := range rootDirs {
+		absRootDir, err := filepath.Abs(rootDir)
+		if err != nil {
+			continue
+		}
+
+		rootPkg := pkgsByDir[absRootDir]
+		if rootPkg == nil {
+			continue
+		}
+
+		for _, importPath := range rootPkg.Imports {
+			if pkg := pkgsByImportPath[importPath]; pkg != nil {
+				queue = append(queue, packageAtDepth{pkg: pkg, depth: 1})
+			}
+		}
+	}
+
+	selected := make(map[string]struct{})
+	for len(queue) > 0 {
+		next := queue[0]
+		queue = queue[1:]
+
+		key := packageListKey(next.pkg)
+		if _, ok := selected[key]; ok {
+			continue
+		}
+		selected[key] = struct{}{}
+
+		if next.depth >= parseDepth {
+			continue
+		}
+
+		for _, importPath := range next.pkg.Imports {
+			if pkg := pkgsByImportPath[importPath]; pkg != nil {
+				queue = append(queue, packageAtDepth{pkg: pkg, depth: next.depth + 1})
+			}
+		}
+	}
+
+	filteredPkgs := make([]*build.Package, 0, len(selected))
+	for _, pkg := range pkgs {
+		if _, ok := selected[packageListKey(pkg)]; ok {
+			filteredPkgs = append(filteredPkgs, pkg)
+		}
+	}
+
+	return filteredPkgs
+}
+
+func packageListKey(pkg *build.Package) string {
+	if pkg.ImportPath != "" {
+		return pkg.ImportPath
+	}
+
+	absDir, err := filepath.Abs(pkg.Dir)
+	if err == nil {
+		return absDir
+	}
+
+	return pkg.Dir
+}
+
 func (parser *Parser) getAllGoFileInfoFromDepsByList(pkg *build.Package, parseFlag ParseFlag) error {
 	ignoreInternal := pkg.Goroot && !parser.ParseInternal
 	if ignoreInternal { // ignored internal

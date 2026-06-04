@@ -114,3 +114,29 @@ func TestGetAllGoFileInfoFromDepsByList(t *testing.T) {
 		})
 	}
 }
+
+func TestFilterPackagesByParseDepth(t *testing.T) {
+	rootDir := "testdata/golist_parse_depth/app"
+	absRootDir, err := filepath.Abs(rootDir)
+	assert.NoError(t, err)
+
+	pkgs, err := listPackages(context.Background(), []string{absRootDir, rootDir}, nil, "-deps")
+	assert.NoError(t, err)
+
+	filteredPkgs := filterPackagesByParseDepth(pkgs, []string{absRootDir, rootDir}, 1)
+	importPaths := make([]string, 0, len(filteredPkgs))
+	for _, pkg := range filteredPkgs {
+		importPaths = append(importPaths, pkg.ImportPath)
+	}
+
+	assert.Contains(t, importPaths, "github.com/swaggo/swag/testdata/golist_parse_depth/direct")
+	assert.NotContains(t, importPaths, "github.com/swaggo/swag/testdata/golist_parse_depth/transitive")
+
+	filteredPkgs = filterPackagesByParseDepth(pkgs, []string{absRootDir, rootDir}, 2)
+	importPaths = importPaths[:0]
+	for _, pkg := range filteredPkgs {
+		importPaths = append(importPaths, pkg.ImportPath)
+	}
+
+	assert.Contains(t, importPaths, "github.com/swaggo/swag/testdata/golist_parse_depth/transitive")
+}
