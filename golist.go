@@ -77,6 +77,71 @@ func listOnePackages(ctx context.Context, dir string, env []string, args ...stri
 	return pkgs, nil
 }
 
+func operationParsePackages(pkgs []*build.Package, rootDirs []string, parseDepth int) map[string]struct{} {
+	within := make(map[string]struct{}, len(pkgs))
+	if parseDepth <= 0 {
+		for _, pkg := range pkgs {
+			within[pkg.ImportPath] = struct{}{}
+		}
+		return within
+	}
+
+	byImportPath := make(map[string]*build.Package, len(pkgs))
+	for _, pkg := range pkgs {
+		byImportPath[pkg.ImportPath] = pkg
+	}
+
+	rootDirSet := make(map[string]struct{}, len(rootDirs))
+	for _, dir := range rootDirs {
+		if abs, err := filepath.Abs(dir); err == nil {
+			rootDirSet[abs] = struct{}{}
+		}
+	}
+
+	type pkgAtDepth struct {
+		importPath string
+		depth      int
+	}
+
+	var queue []pkgAtDepth
+	for _, pkg := range pkgs {
+		abs, err := filepath.Abs(pkg.Dir)
+		if err != nil {
+			continue
+		}
+		if _, ok := rootDirSet[abs]; ok {
+			if _, seen := within[pkg.ImportPath]; !seen {
+				within[pkg.ImportPath] = struct{}{}
+				queue = append(queue, pkgAtDepth{importPath: pkg.ImportPath, depth: 0})
+			}
+		}
+	}
+
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		if current.depth >= parseDepth {
+			continue
+		}
+		pkg := byImportPath[current.importPath]
+		if pkg == nil {
+			continue
+		}
+		for _, importPath := range pkg.Imports {
+			if _, ok := byImportPath[importPath]; !ok {
+				continue
+			}
+			if _, seen := within[importPath]; seen {
+				continue
+			}
+			within[importPath] = struct{}{}
+			queue = append(queue, pkgAtDepth{importPath: importPath, depth: current.depth + 1})
+		}
+	}
+
+	return within
+}
+
 func (parser *Parser) getAllGoFileInfoFromDepsByList(pkg *build.Package, parseFlag ParseFlag) error {
 	ignoreInternal := pkg.Goroot && !parser.ParseInternal
 	if ignoreInternal { // ignored internal
