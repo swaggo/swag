@@ -367,7 +367,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 	param := createParameterV3(paramType, description, name, objectType, refType, required, enums, o.parser.collectionFormatInQuery)
 
 	switch paramType {
-	case "path", "header":
+	case "path":
 		switch objectType {
 		case ARRAY:
 			if !IsPrimitiveType(refType) {
@@ -376,7 +376,7 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 		case OBJECT:
 			return fmt.Errorf("%s is not supported type for %s", refType, paramType)
 		}
-	case "query":
+	case "query", "header":
 		switch objectType {
 		case ARRAY:
 			if !IsPrimitiveType(refType) && !(refType == "file" && paramType == "formData") {
