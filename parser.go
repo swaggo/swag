@@ -1822,6 +1822,30 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 }
 
 // defineTypeOfExample example value define the type (object and array unsupported).
+// splitExampleValues splits a comma separated example value, treating commas
+// inside double quotes as part of the value rather than as separators.
+func splitExampleValues(value string) []string {
+	var (
+		values  []string
+		current strings.Builder
+		inQuote bool
+	)
+
+	for i := 0; i < len(value); i++ {
+		switch c := value[i]; {
+		case c == '"':
+			inQuote = !inQuote
+		case c == ',' && !inQuote:
+			values = append(values, current.String())
+			current.Reset()
+		default:
+			current.WriteByte(c)
+		}
+	}
+
+	return append(values, current.String())
+}
+
 func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{}, error) {
 	switch schemaType {
 	case STRING:
@@ -1848,7 +1872,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 
 		return v, nil
 	case ARRAY:
-		values := strings.Split(exampleValue, ",")
+		values := splitExampleValues(exampleValue)
 		result := make([]any, 0)
 		for _, value := range values {
 			v, err := defineTypeOfExample(arrayType, "", value)
@@ -1865,7 +1889,7 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 			return nil, fmt.Errorf("%s is unsupported type in example value `%s`", schemaType, exampleValue)
 		}
 
-		values := strings.Split(exampleValue, ",")
+		values := splitExampleValues(exampleValue)
 
 		result := map[string]any{}
 
