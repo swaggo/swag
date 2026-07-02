@@ -151,6 +151,17 @@ func (pkgDefs *PackagesDefinitions) ParseTypes() (map[*TypeSpecDef]*Schema, erro
 }
 
 func (pkgDefs *PackagesDefinitions) parseTypesFromFile(astFile *ast.File, packagePath string, parsedSchemas map[*TypeSpecDef]*Schema) {
+	if pkgDefs.files == nil {
+		pkgDefs.files = make(map[*ast.File]*AstFileInfo)
+	}
+
+	if _, ok := pkgDefs.files[astFile]; !ok {
+		pkgDefs.files[astFile] = &AstFileInfo{
+			File:        astFile,
+			PackagePath: packagePath,
+		}
+	}
+
 	for _, astDeclaration := range astFile.Decls {
 		generalDeclaration, ok := astDeclaration.(*ast.GenDecl)
 		if !ok {
@@ -646,7 +657,9 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 	}
 
 	if len(pkg) == 0 || file.Name.Name == pkg {
-		matchedPkgPaths = append(matchedPkgPaths, pkgDefs.files[file].PackagePath)
+		if fileInfo, ok := pkgDefs.files[file]; ok && fileInfo.PackagePath != "" {
+			matchedPkgPaths = append(matchedPkgPaths, fileInfo.PackagePath)
+		}
 	}
 
 	return
