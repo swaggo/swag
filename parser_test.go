@@ -3139,7 +3139,7 @@ func TestApiParseTag_AfterSecurityDefinitions(t *testing.T) {
 	// @tag.name/@tag.description must still be parsed when they follow a
 	// @securityDefinitions.* block in the same general API info comment group.
 	searchDir := "testdata/tags3"
-	p := New(SetParseDependency(1))
+	p := New()
 	p.PropNamingStrategy = PascalCase
 	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
 	assert.NoError(t, err)
