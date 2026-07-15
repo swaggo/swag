@@ -3133,6 +3133,28 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 	}
 }
 
+func TestApiParseTag_AfterSecurityDefinitions(t *testing.T) {
+	t.Parallel()
+
+	// @tag.name/@tag.description must still be parsed when they follow a
+	// @securityDefinitions.* block in the same general API info comment group.
+	searchDir := "testdata/tags3"
+	p := New(SetParseDependency(1))
+	p.PropNamingStrategy = PascalCase
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	assert.Len(t, p.swagger.Tags, 2)
+
+	dogs := p.swagger.Tags[0]
+	assert.Equal(t, "dogs", dogs.TagProps.Name)
+	assert.Equal(t, "Dogs are cool", dogs.TagProps.Description)
+
+	cats := p.swagger.Tags[1]
+	assert.Equal(t, "cats", cats.TagProps.Name)
+	assert.Equal(t, "Cats are the devil", cats.TagProps.Description)
+}
+
 func TestParseApiMarkdownDescription(t *testing.T) {
 	t.Parallel()
 
