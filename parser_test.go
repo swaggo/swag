@@ -3133,28 +3133,6 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 	}
 }
 
-func TestApiParseTag_AfterSecurityDefinitions(t *testing.T) {
-	t.Parallel()
-
-	// @tag.name/@tag.description must still be parsed when they follow a
-	// @securityDefinitions.* block in the same general API info comment group.
-	searchDir := "testdata/tags3"
-	p := New()
-	p.PropNamingStrategy = PascalCase
-	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
-	assert.NoError(t, err)
-
-	assert.Len(t, p.swagger.Tags, 2)
-
-	dogs := p.swagger.Tags[0]
-	assert.Equal(t, "dogs", dogs.TagProps.Name)
-	assert.Equal(t, "Dogs are cool", dogs.TagProps.Description)
-
-	cats := p.swagger.Tags[1]
-	assert.Equal(t, "cats", cats.TagProps.Name)
-	assert.Equal(t, "Cats are the devil", cats.TagProps.Description)
-}
-
 func TestParseApiMarkdownDescription(t *testing.T) {
 	t.Parallel()
 
@@ -4662,4 +4640,175 @@ type LinkedNode struct {
 		assert.NotContains(t, name, "api.TreeNode")
 		assert.NotContains(t, name, "api.LinkedNode")
 	}
+}
+
+func TestParseGeneralAPIInfo_AttributesAfterSecurityDefinitionsAreParsed(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/general_info_full"
+	p := New(SetMarkdownFileDirectory(searchDir))
+	p.PropNamingStrategy = PascalCase
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	if assert.NotNil(t, p.swagger.Info) {
+		// title, version, description, termsOfService
+		assert.Equal(t, "Some API Title", p.swagger.Info.Title)
+		assert.Equal(t, "0.0.1", p.swagger.Info.Version)
+		assert.Equal(t, "This is a sample server for a pet store.", p.swagger.Info.Description)
+		assert.Equal(t, "http://swagger.io/terms/", p.swagger.Info.TermsOfService)
+
+		// contact.*
+		if assert.NotNil(t, p.swagger.Info.Contact) {
+			assert.Equal(t, "API Support", p.swagger.Info.Contact.Name)
+			assert.Equal(t, "http://www.swagger.io/support", p.swagger.Info.Contact.URL)
+			assert.Equal(t, "support@swagger.io", p.swagger.Info.Contact.Email)
+		}
+
+		// license.*
+		if assert.NotNil(t, p.swagger.Info.License) {
+			assert.Equal(t, "Apache 2.0", p.swagger.Info.License.Name)
+			assert.Equal(t, "http://www.apache.org/licenses/LICENSE-2.0.html", p.swagger.Info.License.URL)
+		}
+	}
+
+	// host, BasePath, accept, produce, query.collection.format, schemes
+	assert.Equal(t, "localhost:8080", p.swagger.Host)
+	assert.Equal(t, "/api/v1", p.swagger.BasePath)
+	assert.Equal(t, []string{"application/json"}, p.swagger.Consumes)
+	assert.Equal(t, []string{"application/json"}, p.swagger.Produces)
+	assert.Equal(t, []string{"http", "https"}, p.swagger.Schemes)
+	assert.Equal(t, "multi", p.collectionFormatInQuery)
+
+	if assert.Len(t, p.swagger.SecurityDefinitions, 6) {
+		// securityDefinitions.basic
+		basicAuth := p.swagger.SecurityDefinitions["BasicAuth"]
+		if assert.NotNil(t, basicAuth) {
+			assert.Equal(t, "basic", basicAuth.Type)
+
+			// Basic Auth's extra attributes leak into the document's general extensions
+			// because Basic Auth is parsed as a single line with no attribute-consuming loop
+			_, onScheme := basicAuth.Extensions.GetString("x-basic-foo")
+			assert.False(t, onScheme, "BasicAuth must have no extra attributes")
+			// So any trailing @x-* lines are picked up by the outer parser rather than the security-scheme parser
+			_, onDoc := p.swagger.Extensions.GetString("x-basic-foo")
+			assert.True(t, onDoc, "@x-basic-foo missing from the top-level document")
+			_, onScheme = basicAuth.Extensions.GetString("x-foo")
+			assert.False(t, onScheme, "@x-foo ended up attached to the BasicAuth security scheme instead of the top-level document")
+		}
+
+		// securityDefinitions.apikey
+		bearer := p.swagger.SecurityDefinitions["Bearer"]
+		if assert.NotNil(t, bearer) {
+			assert.Equal(t, "apiKey", bearer.Type)
+			assert.Equal(t, "header", bearer.In)
+			assert.Equal(t, "Authorization", bearer.Name)
+			assert.Equal(t, `Type "Bearer" followed by a space and JWT token.`, bearer.Description)
+
+			_, onScheme := bearer.Extensions.GetString("x-bearer-foo")
+			assert.True(t, onScheme, "@x-bearer-foo missing from the Bearer attributes")
+			_, onScheme = bearer.Extensions.GetString("x-foo")
+			assert.False(t, onScheme, "@x-foo ended up attached to the Bearer security scheme instead of the top-level document")
+		}
+
+		// securitydefinitions.oauth2.application
+		oauth2App := p.swagger.SecurityDefinitions["OAuth2Application"]
+		if assert.NotNil(t, oauth2App) {
+			assert.Equal(t, "oauth2", oauth2App.Type)
+			assert.Equal(t, "application", oauth2App.Flow)
+			assert.Equal(t, "OAuth protects our entity endpoints", oauth2App.Description)
+			assert.Equal(t, "https://example.com/oauth/token", oauth2App.TokenURL)
+			assert.Equal(t, map[string]string{
+				"write": "Grants write access",
+				"admin": "Grants read and write access to administrative information",
+			}, oauth2App.Scopes)
+
+			_, onScheme := oauth2App.Extensions.GetString("x-oa2-application-foo")
+			assert.True(t, onScheme, "@x-oa2-application-foo missing from the OAuth2Application attributes")
+			_, onScheme = oauth2App.Extensions.GetString("x-foo")
+			assert.False(t, onScheme, "@x-foo ended up attached to the OAuth2Application security scheme instead of the top-level document")
+		}
+
+		// securitydefinitions.oauth2.implicit
+		oauth2Implicit := p.swagger.SecurityDefinitions["OAuth2Implicit"]
+		if assert.NotNil(t, oauth2Implicit) {
+			assert.Equal(t, "oauth2", oauth2Implicit.Type)
+			assert.Equal(t, "implicit", oauth2Implicit.Flow)
+			assert.Equal(t, "https://example.com/oauth/authorize", oauth2Implicit.AuthorizationURL)
+			assert.Equal(t, map[string]string{
+				"write": "Grants write access",
+				"admin": "Grants read and write access to administrative information",
+			}, oauth2Implicit.Scopes)
+
+			_, onScheme := oauth2Implicit.Extensions.GetString("x-oa2-implicit-foo")
+			assert.True(t, onScheme, "@x-oa2-implicit-foo missing from the OAuth2Implicit attributes")
+			_, onScheme = oauth2Implicit.Extensions.GetString("x-foo")
+			assert.False(t, onScheme, "@x-foo ended up attached to the OAuth2Implicit security scheme instead of the top-level document")
+		}
+
+		// securitydefinitions.oauth2.password
+		oauth2Password := p.swagger.SecurityDefinitions["OAuth2Password"]
+		if assert.NotNil(t, oauth2Password) {
+			assert.Equal(t, "oauth2", oauth2Password.Type)
+			assert.Equal(t, "password", oauth2Password.Flow)
+			assert.Equal(t, "https://example.com/oauth/token", oauth2Password.TokenURL)
+			assert.Equal(t, map[string]string{
+				"write": "Grants write access",
+				"admin": "Grants read and write access to administrative information",
+			}, oauth2Password.Scopes)
+
+			_, onScheme := oauth2Password.Extensions.GetString("x-oa2-password-foo")
+			assert.True(t, onScheme, "@x-oa2-password-foo missing from the OAuth2Password attributes")
+			_, onScheme = oauth2Password.Extensions.GetString("x-foo")
+			assert.False(t, onScheme, "@x-foo ended up attached to the OAuth2Password security scheme instead of the top-level document")
+		}
+
+		// securitydefinitions.oauth2.accessCode
+		oauth2AccessCode := p.swagger.SecurityDefinitions["OAuth2AccessCode"]
+		if assert.NotNil(t, oauth2AccessCode) {
+			assert.Equal(t, "oauth2", oauth2AccessCode.Type)
+			assert.Equal(t, "accessCode", oauth2AccessCode.Flow)
+			assert.Equal(t, "https://example.com/oauth/token", oauth2AccessCode.TokenURL)
+			assert.Equal(t, "https://example.com/oauth/authorize", oauth2AccessCode.AuthorizationURL)
+			assert.Equal(t, map[string]string{
+				"write": "Grants write access",
+				"admin": "Grants read and write access to administrative information",
+			}, oauth2AccessCode.Scopes)
+
+			_, onScheme := oauth2AccessCode.Extensions.GetString("x-oa2-accessCode-foo")
+			assert.True(t, onScheme, "@x-oa2-accessCode-foo missing from the OAuth2AccessCode attributes")
+			_, onScheme = oauth2AccessCode.Extensions.GetString("x-foo")
+			assert.False(t, onScheme, "@x-foo ended up attached to the OAuth2AccessCode security scheme instead of the top-level document")
+		}
+	}
+
+	// tag.name, tag.description, tag.docs.url, tag.docs.description
+	if assert.Len(t, p.swagger.Tags, 3) {
+		dogs := p.swagger.Tags[0]
+		assert.Equal(t, "dogs", dogs.TagProps.Name)
+		assert.Equal(t, "Dogs are cool", dogs.TagProps.Description)
+
+		apes := p.swagger.Tags[1]
+		assert.Equal(t, "apes", apes.TagProps.Name)
+		assert.Equal(t, "## Apes \n\nApes are very cool!", apes.TagProps.Description)
+
+		cats := p.swagger.Tags[2]
+		assert.Equal(t, "cats", cats.TagProps.Name)
+		assert.Equal(t, "Cats are the devil", cats.TagProps.Description)
+		if assert.NotNil(t, cats.TagProps.ExternalDocs) {
+			assert.Equal(t, "https://example.com/cats", cats.TagProps.ExternalDocs.URL)
+			assert.Equal(t, "Everything about cats", cats.TagProps.ExternalDocs.Description)
+		}
+	}
+
+	// externalDocs.description, externalDocs.url
+	if assert.NotNil(t, p.swagger.ExternalDocs) {
+		assert.Equal(t, "Some description here", p.swagger.ExternalDocs.Description)
+		assert.Equal(t, "http://some.url.com/path/here/", p.swagger.ExternalDocs.URL)
+	}
+
+	// x-name (top-level extension), and it must not leak onto the security schemes
+	topLevel, onDoc := p.swagger.Extensions.GetString("x-foo")
+	assert.True(t, onDoc, "@x-foo missing from the top-level document")
+	assert.Equal(t, "some value", topLevel)
 }
