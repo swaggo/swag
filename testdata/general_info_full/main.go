@@ -13,39 +13,39 @@ package main
 // @query.collection.format  multi
 //
 // @securityDefinitions.basic  BasicAuth
-// @x-basic-foo                "some basic value"
+// @x-basic-foo                "some value"
 //
 // @securityDefinitions.apikey  Bearer
 // @in                          header
 // @name                        Authorization
 // @description                 Type "Bearer" followed by a space and JWT token.
-// @x-bearer-foo                "some bearer value"
+// @x-b-foo                     "some value"
 //
 // @securitydefinitions.oauth2.application  OAuth2Application
 // @description                             OAuth protects our entity endpoints
 // @tokenUrl                                https://example.com/oauth/token
 // @scope.write                             Grants write access
 // @scope.admin                             Grants read and write access to administrative information
-// @x-oa2-application-foo                   "some application value"
+// @x-oa2-app-foo                           "some value"
 //
 // @securitydefinitions.oauth2.implicit  OAuth2Implicit
 // @authorizationurl                     https://example.com/oauth/authorize
 // @scope.write                          Grants write access
 // @scope.admin                          Grants read and write access to administrative information
-// @x-oa2-implicit-foo                   "some implicit value"
+// @x-oa2-imp-foo                        "some value"
 //
 // @securitydefinitions.oauth2.password  OAuth2Password
 // @tokenUrl                             https://example.com/oauth/token
 // @scope.write                          Grants write access
 // @scope.admin                          Grants read and write access to administrative information
-// @x-oa2-password-foo                   "some password value"
+// @x-oa2-pswrd-foo                      "some value"
 //
 // @securitydefinitions.oauth2.accessCode  OAuth2AccessCode
 // @tokenUrl                               https://example.com/oauth/token
 // @authorizationurl                       https://example.com/oauth/authorize
 // @scope.write                            Grants write access
 // @scope.admin                            Grants read and write access to administrative information
-// @x-oa2-accessCode-foo                   "some accessCode value"
+// @x-oa2-acc-foo                          "some value"
 //
 // @tag.name         dogs
 // @tag.description  Dogs are cool

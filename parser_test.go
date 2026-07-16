@@ -4686,13 +4686,14 @@ func TestParseGeneralAPIInfo_AttributesAfterSecurityDefinitionsAreParsed(t *test
 		if assert.NotNil(t, basicAuth) {
 			assert.Equal(t, "basic", basicAuth.Type)
 
+			extensionKey := "x-basic-foo"
 			// Basic Auth's extra attributes leak into the document's general extensions
 			// because Basic Auth is parsed as a single line with no attribute-consuming loop
-			_, onScheme := basicAuth.Extensions.GetString("x-basic-foo")
+			_, onScheme := basicAuth.Extensions.GetString(extensionKey)
 			assert.False(t, onScheme, "BasicAuth must have no extra attributes")
 			// So any trailing @x-* lines are picked up by the outer parser rather than the security-scheme parser
-			_, onDoc := p.swagger.Extensions.GetString("x-basic-foo")
-			assert.True(t, onDoc, "@x-basic-foo missing from the top-level document")
+			_, onDoc := p.swagger.Extensions.GetString(extensionKey)
+			assert.True(t, onDoc, "@%s missing from the top-level document", extensionKey)
 			_, onScheme = basicAuth.Extensions.GetString("x-foo")
 			assert.False(t, onScheme, "@x-foo ended up attached to the BasicAuth security scheme instead of the top-level document")
 		}
@@ -4705,8 +4706,8 @@ func TestParseGeneralAPIInfo_AttributesAfterSecurityDefinitionsAreParsed(t *test
 			assert.Equal(t, "Authorization", bearer.Name)
 			assert.Equal(t, `Type "Bearer" followed by a space and JWT token.`, bearer.Description)
 
-			_, onScheme := bearer.Extensions.GetString("x-bearer-foo")
-			assert.True(t, onScheme, "@x-bearer-foo missing from the Bearer attributes")
+			_, onScheme := bearer.Extensions.GetString("x-b-foo")
+			assert.True(t, onScheme, "@x-b-foo missing from the Bearer attributes")
 			_, onScheme = bearer.Extensions.GetString("x-foo")
 			assert.False(t, onScheme, "@x-foo ended up attached to the Bearer security scheme instead of the top-level document")
 		}
@@ -4723,8 +4724,8 @@ func TestParseGeneralAPIInfo_AttributesAfterSecurityDefinitionsAreParsed(t *test
 				"admin": "Grants read and write access to administrative information",
 			}, oauth2App.Scopes)
 
-			_, onScheme := oauth2App.Extensions.GetString("x-oa2-application-foo")
-			assert.True(t, onScheme, "@x-oa2-application-foo missing from the OAuth2Application attributes")
+			_, onScheme := oauth2App.Extensions.GetString("x-oa2-app-foo")
+			assert.True(t, onScheme, "@x-oa2-app-foo missing from the OAuth2Application attributes")
 			_, onScheme = oauth2App.Extensions.GetString("x-foo")
 			assert.False(t, onScheme, "@x-foo ended up attached to the OAuth2Application security scheme instead of the top-level document")
 		}
@@ -4740,8 +4741,8 @@ func TestParseGeneralAPIInfo_AttributesAfterSecurityDefinitionsAreParsed(t *test
 				"admin": "Grants read and write access to administrative information",
 			}, oauth2Implicit.Scopes)
 
-			_, onScheme := oauth2Implicit.Extensions.GetString("x-oa2-implicit-foo")
-			assert.True(t, onScheme, "@x-oa2-implicit-foo missing from the OAuth2Implicit attributes")
+			_, onScheme := oauth2Implicit.Extensions.GetString("x-oa2-imp-foo")
+			assert.True(t, onScheme, "@x-oa2-imp-foo missing from the OAuth2Implicit attributes")
 			_, onScheme = oauth2Implicit.Extensions.GetString("x-foo")
 			assert.False(t, onScheme, "@x-foo ended up attached to the OAuth2Implicit security scheme instead of the top-level document")
 		}
@@ -4757,8 +4758,8 @@ func TestParseGeneralAPIInfo_AttributesAfterSecurityDefinitionsAreParsed(t *test
 				"admin": "Grants read and write access to administrative information",
 			}, oauth2Password.Scopes)
 
-			_, onScheme := oauth2Password.Extensions.GetString("x-oa2-password-foo")
-			assert.True(t, onScheme, "@x-oa2-password-foo missing from the OAuth2Password attributes")
+			_, onScheme := oauth2Password.Extensions.GetString("x-oa2-pswrd-foo")
+			assert.True(t, onScheme, "@x-oa2-pswrd-foo missing from the OAuth2Password attributes")
 			_, onScheme = oauth2Password.Extensions.GetString("x-foo")
 			assert.False(t, onScheme, "@x-foo ended up attached to the OAuth2Password security scheme instead of the top-level document")
 		}
@@ -4775,8 +4776,8 @@ func TestParseGeneralAPIInfo_AttributesAfterSecurityDefinitionsAreParsed(t *test
 				"admin": "Grants read and write access to administrative information",
 			}, oauth2AccessCode.Scopes)
 
-			_, onScheme := oauth2AccessCode.Extensions.GetString("x-oa2-accessCode-foo")
-			assert.True(t, onScheme, "@x-oa2-accessCode-foo missing from the OAuth2AccessCode attributes")
+			_, onScheme := oauth2AccessCode.Extensions.GetString("x-oa2-acc-foo")
+			assert.True(t, onScheme, "@x-oa2-acc-foo missing from the OAuth2AccessCode attributes")
 			_, onScheme = oauth2AccessCode.Extensions.GetString("x-foo")
 			assert.False(t, onScheme, "@x-foo ended up attached to the OAuth2AccessCode security scheme instead of the top-level document")
 		}
