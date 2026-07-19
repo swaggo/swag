@@ -10,6 +10,8 @@ import (
 const (
 	// ARRAY represent a array value.
 	ARRAY = "array"
+	// NULL represent a null type in an OpenAPI 3.1 type union.
+	NULL = "null"
 	// OBJECT represent a object value.
 	OBJECT = "object"
 	// PRIMITIVE represent a primitive value.

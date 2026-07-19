@@ -174,7 +174,11 @@ func TestDefaultFieldParserV3(t *testing.T) {
 			}},
 		).ComplementSchema(schema)
 		assert.NoError(t, err)
-		assert.Equal(t, true, schema.Spec.Extensions["x-nullable"])
+		// A truthy x-nullable is expressed as the standard type union instead
+		// of a vendor extension.
+		assert.Equal(t, &spec.SingleOrArray[string]{INTEGER, NULL}, schema.Spec.Type)
+		_, hasNullableExt := schema.Spec.Extensions["x-nullable"]
+		assert.False(t, hasNullableExt)
 		assert.Equal(t, "def", schema.Spec.Extensions["x-abc"])
 		assert.Equal(t, false, schema.Spec.Extensions["x-omitempty"])
 		assert.Equal(t, "[0, 9]", schema.Spec.Extensions["x-example"])
@@ -862,5 +866,46 @@ func TestValidTagsV3(t *testing.T) {
 		).ComplementSchema(schema)
 		assert.NoError(t, err)
 		assert.Equal(t, "^[a-zA-Z0-9_]*$", schema.Spec.Pattern)
+	})
+}
+
+func TestComplementSchemaNullableExtensionV3(t *testing.T) {
+	t.Parallel()
+
+	complement := func(tag string) *spec.RefOrSpec[spec.Schema] {
+		schema := spec.NewSchemaSpec()
+		schema.Spec.Type = &spec.SingleOrArray[string]{STRING}
+		err := newTagBaseFieldParserV3(
+			&Parser{},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{
+				Names: []*ast.Ident{{Name: "Field"}},
+				Tag:   &ast.BasicLit{Value: tag},
+			},
+		).ComplementSchema(schema)
+		assert.NoError(t, err)
+		return schema
+	}
+
+	t.Run("x-nullable becomes a type union", func(t *testing.T) {
+		t.Parallel()
+		schema := complement(`json:"test" extensions:"x-nullable"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{STRING, NULL}, schema.Spec.Type)
+		_, hasExt := schema.Spec.Extensions["x-nullable"]
+		assert.False(t, hasExt)
+	})
+
+	t.Run("negated x-nullable stays an extension", func(t *testing.T) {
+		t.Parallel()
+		schema := complement(`json:"test" extensions:"!x-nullable"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{STRING}, schema.Spec.Type)
+		assert.Equal(t, false, schema.Spec.Extensions["x-nullable"])
+	})
+
+	t.Run("other extensions are preserved", func(t *testing.T) {
+		t.Parallel()
+		schema := complement(`json:"test" extensions:"x-nullable,x-abc=def"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{STRING, NULL}, schema.Spec.Type)
+		assert.Equal(t, "def", schema.Spec.Extensions["x-abc"])
 	})
 }

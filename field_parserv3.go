@@ -307,6 +307,17 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 	extensionsTagValue := ps.tag.Get(extensionsTag)
 	if extensionsTagValue != "" {
 		schema.Extensions = setExtensionParam(extensionsTagValue)
+
+		// OpenAPI 3.1 has no `nullable` keyword and ignores vendor
+		// extensions, so express extensions:"x-nullable" as the standard
+		// type union [T, "null"] instead.
+		if nullable, ok := schema.Extensions["x-nullable"]; ok {
+			if isNullable, isBool := nullable.(bool); isBool && isNullable && schema.Type != nil && len(*schema.Type) > 0 {
+				types := append(*schema.Type, NULL)
+				schema.Type = &types
+				delete(schema.Extensions, "x-nullable")
+			}
+		}
 	}
 
 	varNamesTag := ps.tag.Get("x-enum-varnames")
