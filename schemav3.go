@@ -68,10 +68,9 @@ func BuildCustomSchemaV3(types []string) (*spec.RefOrSpec[spec.Schema], error) {
 			return nil, err
 		}
 
-		// TODO: check if this is correct
 		result := spec.NewSchemaSpec()
 		result.Spec.Type = &spec.SingleOrArray[string]{ARRAY}
-		result.Spec.AdditionalProperties = spec.NewBoolOrSchema(true, schema)
+		result.Spec.Items = spec.NewBoolOrSchema(false, schema)
 
 		return result, nil
 	case OBJECT:
