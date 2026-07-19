@@ -20,7 +20,7 @@ type FieldParserFactoryV3 func(ps *Parser, file *ast.File, field *ast.Field) Fie
 // FieldParserV3 parse struct field.
 type FieldParserV3 interface {
 	ShouldSkip() bool
-	FieldName() (string, error)
+	FieldNames() ([]string, error)
 	FormName() string
 	CustomSchema() (*spec.RefOrSpec[spec.Schema], error)
 	ComplementSchema(schema *spec.RefOrSpec[spec.Schema]) error
@@ -977,12 +977,12 @@ func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[strin
 		return nil, nil, nil
 	}
 
-	fieldName, err := ps.FieldName()
+	fieldNames, err := ps.FieldNames()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if fieldName == "" {
+	if len(fieldNames) == 0 {
 		typeName, err := getFieldType(file, field.Type, nil)
 		if err != nil {
 			return nil, nil, err
@@ -1050,7 +1050,7 @@ func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[strin
 	}
 
 	if required {
-		tagRequired = append(tagRequired, fieldName)
+		tagRequired = append(tagRequired, fieldNames...)
 	}
 
 	if formName := ps.FormName(); len(formName) > 0 && schema != nil && schema.Spec != nil {
@@ -1060,7 +1060,12 @@ func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[strin
 		schema.Spec.Extensions[formTag] = formName
 	}
 
-	return map[string]*spec.RefOrSpec[spec.Schema]{fieldName: schema}, tagRequired, nil
+	fieldProps := make(map[string]*spec.RefOrSpec[spec.Schema], len(fieldNames))
+	for _, name := range fieldNames {
+		fieldProps[name] = schema
+	}
+
+	return fieldProps, tagRequired, nil
 }
 
 func (p *Parser) getRefTypeSchemaV3(typeSpecDef *TypeSpecDef, schema *SchemaV3) *spec.RefOrSpec[spec.Schema] {
