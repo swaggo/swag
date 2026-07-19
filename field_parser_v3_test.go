@@ -864,3 +864,85 @@ func TestValidTagsV3(t *testing.T) {
 		assert.Equal(t, "^[a-zA-Z0-9_]*$", schema.Spec.Pattern)
 	})
 }
+
+func TestInferNullabilityV3(t *testing.T) {
+	t.Parallel()
+
+	run := func(infer bool, fieldType ast.Expr, schemaType string, tag string) *spec.RefOrSpec[spec.Schema] {
+		schema := spec.NewSchemaSpec()
+		schema.Spec.Type = &spec.SingleOrArray[string]{schemaType}
+		if schemaType == ARRAY {
+			schema.Spec.Items = spec.NewBoolOrSchema(false, PrimitiveSchemaV3(STRING))
+		}
+		field := &ast.Field{Names: []*ast.Ident{{Name: "Field"}}, Type: fieldType}
+		if tag != "" {
+			field.Tag = &ast.BasicLit{Value: tag}
+		}
+		err := newTagBaseFieldParserV3(
+			&Parser{InferNullability: infer},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			field,
+		).ComplementSchema(schema)
+		assert.NoError(t, err)
+		return schema
+	}
+
+	ptr := &ast.StarExpr{X: ast.NewIdent("string")}
+	slice := &ast.ArrayType{Elt: ast.NewIdent("string")}
+	fixedArr := &ast.ArrayType{Len: &ast.BasicLit{Value: "2"}, Elt: ast.NewIdent("string")}
+	mp := &ast.MapType{Key: ast.NewIdent("string"), Value: ast.NewIdent("string")}
+
+	t.Run("pointer without omitempty becomes nullable", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, ptr, STRING, `json:"test"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{STRING, "null"}, schema.Spec.Type)
+	})
+
+	t.Run("untagged pointer becomes nullable", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, ptr, STRING, "")
+		assert.Equal(t, &spec.SingleOrArray[string]{STRING, "null"}, schema.Spec.Type)
+	})
+
+	t.Run("slice without omitempty becomes nullable", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, slice, ARRAY, `json:"test"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{ARRAY, "null"}, schema.Spec.Type)
+	})
+
+	t.Run("map without omitempty becomes nullable", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, mp, OBJECT, `json:"test"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{OBJECT, "null"}, schema.Spec.Type)
+	})
+
+	t.Run("omitempty pointer is omitted, never null", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, ptr, STRING, `json:"test,omitempty"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{STRING}, schema.Spec.Type)
+	})
+
+	t.Run("negated x-nullable opts out", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, slice, ARRAY, `json:"test" extensions:"!x-nullable"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{ARRAY}, schema.Spec.Type)
+	})
+
+	t.Run("fixed-size array is not nil-able", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, fixedArr, ARRAY, `json:"test"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{ARRAY}, schema.Spec.Type)
+	})
+
+	t.Run("value type is unaffected", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, ast.NewIdent("string"), STRING, `json:"test"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{STRING}, schema.Spec.Type)
+	})
+
+	t.Run("disabled by default", func(t *testing.T) {
+		t.Parallel()
+		schema := run(false, ptr, STRING, `json:"test"`)
+		assert.Equal(t, &spec.SingleOrArray[string]{STRING}, schema.Spec.Type)
+	})
+}

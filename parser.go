@@ -154,6 +154,11 @@ type Parser struct {
 	// RequiredByDefault set validation required for all fields by default
 	RequiredByDefault bool
 
+	// InferNullability adds "null" to the OpenAPI 3.1 type union of fields
+	// whose Go type marshals nil to JSON null (pointer, slice or map without
+	// json omitempty)
+	InferNullability bool
+
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []*TypeSpecDef
 

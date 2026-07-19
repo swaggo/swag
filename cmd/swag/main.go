@@ -30,6 +30,7 @@ const (
 	parseInternalFlag        = "parseInternal"
 	generatedTimeFlag        = "generatedTime"
 	requiredByDefaultFlag    = "requiredByDefault"
+	inferNullabilityFlag     = "inferNullability"
 	parseDepthFlag           = "parseDepth"
 	instanceNameFlag         = "instanceName"
 	overridesFileFlag        = "overridesFile"
@@ -128,6 +129,10 @@ var initFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:  requiredByDefaultFlag,
 		Usage: "Set validation required for all fields by default",
+	},
+	&cli.BoolFlag{
+		Name:  inferNullabilityFlag,
+		Usage: "Infer OpenAPI 3.1 null type unions from Go field types: pointer, slice and map fields without json omitempty marshal nil to JSON null",
 	},
 	&cli.StringFlag{
 		Name:  instanceNameFlag,
@@ -260,6 +265,7 @@ func initAction(ctx *cli.Context) error {
 		ParseInternal:       ctx.Bool(parseInternalFlag),
 		GeneratedTime:       ctx.Bool(generatedTimeFlag),
 		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
+		InferNullability:    ctx.Bool(inferNullabilityFlag),
 		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
 		ParseDepth:          ctx.Int(parseDepthFlag),
 		InstanceName:        ctx.String(instanceNameFlag),
