@@ -864,3 +864,42 @@ func TestValidTagsV3(t *testing.T) {
 		assert.Equal(t, "^[a-zA-Z0-9_]*$", schema.Spec.Pattern)
 	})
 }
+
+func TestShouldSkipV3(t *testing.T) {
+	t.Parallel()
+
+	parser := func(tag string) FieldParserV3 {
+		field := &ast.Field{Names: []*ast.Ident{{Name: "Field"}}}
+		if tag != "" {
+			field.Tag = &ast.BasicLit{Value: tag}
+		}
+		return newTagBaseFieldParserV3(&Parser{}, &ast.File{Name: &ast.Ident{Name: "test"}}, field)
+	}
+
+	t.Run("no tag is kept", func(t *testing.T) {
+		t.Parallel()
+		assert.False(t, parser("").ShouldSkip())
+	})
+
+	t.Run("explicit json dash is skipped", func(t *testing.T) {
+		t.Parallel()
+		assert.True(t, parser(`json:"-"`).ShouldSkip())
+	})
+
+	t.Run("json name is kept", func(t *testing.T) {
+		t.Parallel()
+		assert.False(t, parser(`json:"name"`).ShouldSkip())
+	})
+
+	t.Run("tag without json name is kept", func(t *testing.T) {
+		t.Parallel()
+		// e.g. structs serialized to both XML and JSON: encoding/json still
+		// emits the field under its Go name.
+		assert.False(t, parser(`xml:"name"`).ShouldSkip())
+	})
+
+	t.Run("swaggerignore is skipped", func(t *testing.T) {
+		t.Parallel()
+		assert.True(t, parser(`swaggerignore:"true"`).ShouldSkip())
+	})
+}
