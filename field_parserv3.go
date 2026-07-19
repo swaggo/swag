@@ -128,6 +128,18 @@ func (ps *tagBaseFieldParserV3) ComplementSchema(schema *spec.RefOrSpec[spec.Sch
 		if err != nil {
 			return err
 		}
+		if ps.typeImpliesNull() {
+			// A $ref cannot carry a type union ($ref siblings combine
+			// conjunctively), so express nullability as anyOf: [$ref, null].
+			nullSchema := spec.NewSchemaSpec()
+			nullSchema.Spec.Type = &spec.SingleOrArray[string]{"null"}
+			newSchema.AnyOf = []*spec.RefOrSpec[spec.Schema]{
+				{Ref: spec.NewRef(schema.Ref.Ref)},
+				nullSchema,
+			}
+			*schema = spec.RefOrSpec[spec.Schema]{Spec: &newSchema}
+			return nil
+		}
 		if !reflect.ValueOf(newSchema).IsZero() {
 			if newSchema.Extensions == nil {
 				newSchema.Extensions = make(map[string]any)
@@ -152,7 +164,8 @@ func (ps *tagBaseFieldParserV3) ComplementSchema(schema *spec.RefOrSpec[spec.Sch
 // omitempty option (with omitempty the field is omitted instead of null).
 // An explicit extensions:"!x-nullable" opts out, for fields provably
 // initialized on every serialization path. Only active when
-// Parser.InferNullability is set.
+// Parser.InferNullability is set. Fields rendered as a $ref are wrapped in
+// anyOf: [$ref, {type: null}] instead of a type union.
 func (ps *tagBaseFieldParserV3) typeImpliesNull() bool {
 	if !ps.p.InferNullability {
 		return false

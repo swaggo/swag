@@ -946,3 +946,56 @@ func TestInferNullabilityV3(t *testing.T) {
 		assert.Equal(t, &spec.SingleOrArray[string]{STRING}, schema.Spec.Type)
 	})
 }
+
+func TestInferNullabilityRefV3(t *testing.T) {
+	t.Parallel()
+
+	newParser := func(infer bool) *Parser {
+		p := New()
+		p.InferNullability = infer
+		component := spec.NewSchemaSpec()
+		component.Spec.Type = &spec.SingleOrArray[string]{OBJECT}
+		if p.openAPI.Components.Spec.Schemas == nil {
+			p.openAPI.Components.Spec.Schemas = make(map[string]*spec.RefOrSpec[spec.Schema])
+		}
+		p.openAPI.Components.Spec.Schemas["Foo"] = component
+		return p
+	}
+
+	run := func(infer bool, tag string) *spec.RefOrSpec[spec.Schema] {
+		schema := &spec.RefOrSpec[spec.Schema]{Ref: spec.NewRef("#/components/schemas/Foo")}
+		field := &ast.Field{
+			Names: []*ast.Ident{{Name: "Field"}},
+			Type:  &ast.StarExpr{X: ast.NewIdent("Foo")},
+		}
+		if tag != "" {
+			field.Tag = &ast.BasicLit{Value: tag}
+		}
+		err := newTagBaseFieldParserV3(newParser(infer), &ast.File{Name: &ast.Ident{Name: "test"}}, field).ComplementSchema(schema)
+		assert.NoError(t, err)
+		return schema
+	}
+
+	t.Run("pointer to struct without omitempty becomes anyOf with null", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, `json:"test"`)
+		if assert.NotNil(t, schema.Spec) && assert.Len(t, schema.Spec.AnyOf, 2) {
+			assert.Equal(t, "#/components/schemas/Foo", schema.Spec.AnyOf[0].Ref.Ref)
+			assert.Equal(t, &spec.SingleOrArray[string]{"null"}, schema.Spec.AnyOf[1].Spec.Type)
+		}
+	})
+
+	t.Run("omitempty pointer keeps the plain ref", func(t *testing.T) {
+		t.Parallel()
+		schema := run(true, `json:"test,omitempty"`)
+		assert.NotNil(t, schema.Ref)
+		assert.Nil(t, schema.Spec)
+	})
+
+	t.Run("disabled keeps the plain ref", func(t *testing.T) {
+		t.Parallel()
+		schema := run(false, `json:"test"`)
+		assert.NotNil(t, schema.Ref)
+		assert.Nil(t, schema.Spec)
+	})
+}
