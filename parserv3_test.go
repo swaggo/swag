@@ -687,3 +687,21 @@ func TestGetSchemaByRef(t *testing.T) {
 		assert.Equal(t, &spec.Schema{}, result)
 	})
 }
+
+
+func TestEmptyExternalDocsOmitted(t *testing.T) {
+	p := New()
+	assert.Nil(t, p.openAPI.ExternalDocs)
+
+	b, err := json.Marshal(p.openAPI)
+	require.NoError(t, err)
+	assert.NotContains(t, string(b), `"externalDocs"`)
+
+	// After setting a real URL, externalDocs should appear.
+	p.openAPI.ExternalDocs = spec.NewExternalDocs()
+	p.openAPI.ExternalDocs.Spec.URL = "https://example.com/docs"
+	b, err = json.Marshal(p.openAPI)
+	require.NoError(t, err)
+	assert.Contains(t, string(b), `"externalDocs"`)
+	assert.Contains(t, string(b), "https://example.com/docs")
+}

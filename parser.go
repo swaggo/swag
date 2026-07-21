@@ -255,7 +255,8 @@ func New(options ...func(*Parser)) *Parser {
 			Info:         openapi.NewInfo(),
 			OpenAPI:      "3.1.0",
 			Components:   openapi.NewComponents(),
-			ExternalDocs: openapi.NewExternalDocs(),
+			// Leave ExternalDocs nil until @externalDocs is set so empty URL is not emitted.
+			ExternalDocs: nil,
 			Paths:        openapi.NewPaths(),
 			WebHooks:     map[string]*openapi.RefOrSpec[openapi.Extendable[openapi.PathItem]]{},
 			Security:     []openapi.SecurityRequirement{},
