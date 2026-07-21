@@ -4,12 +4,7 @@
     "title": "Swagger Example API",
     "version": "1.0"
   },
-  "externalDocs": {
-    "description": "",
-    "url": ""
-  },
-  "components": {
-  },
+  "components": {},
   "paths": {
     "/test": {
       "get": {

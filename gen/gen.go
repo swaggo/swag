@@ -550,6 +550,10 @@ func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.Ope
 		return err
 	}
 
+	// Drop empty externalDocs (no URL) so validators do not reject "" as uri.
+	if openAPI.ExternalDocs != nil && openAPI.ExternalDocs.Spec != nil && openAPI.ExternalDocs.Spec.URL == "" {
+		openAPI.ExternalDocs = nil
+	}
 	openAPISpec := v3.OpenAPI{
 		Components: openAPI.Components,
 		OpenAPI:    openAPI.OpenAPI,
