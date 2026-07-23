@@ -1053,13 +1053,6 @@ func (p *Parser) parseStructFieldV3(file *ast.File, field *ast.Field) (map[strin
 		tagRequired = append(tagRequired, fieldName)
 	}
 
-	if formName := ps.FormName(); len(formName) > 0 && schema != nil && schema.Spec != nil {
-		if schema.Spec.Extensions == nil {
-			schema.Spec.Extensions = make(map[string]any)
-		}
-		schema.Spec.Extensions[formTag] = formName
-	}
-
 	return map[string]*spec.RefOrSpec[spec.Schema]{fieldName: schema}, tagRequired, nil
 }
 

@@ -106,6 +106,36 @@ func TestParserParseDefinitionV3(t *testing.T) {
 	assert.Equal(t, "model.TestFuncDecl.Test", definition.TypeName())
 }
 
+func TestParserParseDefinitionV3OmitsGinBindingFormTagFromSchema(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package api
+
+type Example struct {
+	Status string ` + "`json:\"status\" binding:\"omitempty,oneof=a b c\" form:\"status\"`" + `
+}
+`
+
+	p := New(GenerateOpenAPI3Doc(true))
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	definition := p.packages.uniqueDefinitions["api.Example"]
+	require.NotNil(t, definition)
+
+	schema, err := p.ParseDefinitionV3(definition)
+	assert.NoError(t, err)
+	status := schema.Properties["status"]
+	require.NotNil(t, status)
+
+	out, err := json.Marshal(status)
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"type":"string","enum":["a","b","c"]}`, string(out))
+}
+
 func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	t.Parallel()
 
