@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"fmt"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -1205,6 +1206,63 @@ func TestParseParamCommentByBodyTypeV3WithAcceptDefaultSchema(t *testing.T) {
 	require.NotNil(t, schema.Ref)
 	assert.Equal(t, "#/components/schemas/model.OrderRow", schema.Ref.Ref)
 	assert.Nil(t, schema.Spec)
+}
+
+func TestParseParamCommentByBodyArrayNoOneOfV3(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		comments []string
+	}{
+		{
+			name:     "single body of type array",
+			comments: []string{`@Param body body []model.OrderRow true "List of ops"`},
+		},
+		{
+			name:     "body of type array preceded by accept line",
+			comments: []string{`@Accept json`, `@Param body body []model.OrderRow true "List of ops"`},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			operation := NewOperationV3(New())
+			operation.parser.addTestType("model.OrderRow")
+
+			for _, comment := range c.comments {
+				require.NoError(t, operation.ParseComment(comment, nil))
+			}
+
+			schema := operation.RequestBody.Spec.Spec.Content["application/json"].Spec.Schema
+			require.NotNil(t, schema)
+			require.Nil(t, schema.Ref)
+			require.NotNil(t, schema.Spec)
+			assert.Nil(t, schema.Spec.OneOf)
+			require.NotNil(t, schema.Spec.Type)
+			assert.Equal(t, ARRAY, (*schema.Spec.Type)[0])
+			require.NotNil(t, schema.Spec.Items)
+			require.NotNil(t, schema.Spec.Items.Schema)
+			require.NotNil(t, schema.Spec.Items.Schema.Ref)
+			assert.Equal(t, "#/components/schemas/model.OrderRow", schema.Spec.Items.Schema.Ref.Ref)
+		})
+	}
+
+}
+
+func TestParseParamCommentByBodyManyParamsProducesOneOfV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(New())
+	for i := 0; i < 4; i++ {
+		modelType := fmt.Sprintf("model.OrderRow%d", i)
+		operation.parser.addTestType(modelType)
+		require.NoError(t, operation.ParseComment(fmt.Sprintf(`@Param a body %s true "many types"`, modelType), nil))
+	}
+	schema := operation.RequestBody.Spec.Spec.Content["application/json"].Spec.Schema
+	require.NotNil(t, schema)
+	require.NotNil(t, schema.Spec)
+	require.NotNil(t, schema.Spec.OneOf)
+	assert.Len(t, schema.Spec.OneOf, 4)
 }
 
 func TestParseParamCommentByBodyTextPlainV3(t *testing.T) {

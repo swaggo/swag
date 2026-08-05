@@ -6,7 +6,6 @@ import (
 	"go/ast"
 	"log"
 	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -25,9 +24,10 @@ type OperationV3 struct {
 	parser              *Parser
 	codeExampleFilesDir string
 	spec.Operation
-	RouterProperties  []RouteProperties
-	responseMimeTypes []string
-	discriminatorInfo *parsedDiscriminator
+	RouterProperties    []RouteProperties
+	responseMimeTypes   []string
+	discriminatorInfo   *parsedDiscriminator
+	requestBodyFilled   bool // true once fillRequestBody has set a real schema
 }
 
 // NewOperationV3 returns a new instance of OperationV3.
@@ -520,40 +520,19 @@ func (o *OperationV3) fillRequestBody(name string, schema *spec.RefOrSpec[spec.S
 	if schema.Spec != nil {
 		schema.Spec.Title = name
 	}
-	if mediaType.Spec.Schema == nil || isDefaultAcceptSchema(mediaType.Spec.Schema) {
+	if !o.requestBodyFilled {
+		// First real body param: always replace whatever @Accept may have set.
 		mediaType.Spec.Schema = schema
-	} else if mediaType.Spec.Schema.Ref != nil || mediaType.Spec.Schema.Spec.OneOf == nil {
-		// If there's an existing schema that doesn't have oneOf, create a oneOf schema
-		oneOfSchema := spec.NewSchemaSpec()
-		oneOfSchema.Spec.OneOf = []*spec.RefOrSpec[spec.Schema]{mediaType.Spec.Schema, schema}
-		mediaType.Spec.Schema = oneOfSchema
+		o.requestBodyFilled = true
 	} else {
-		// If there's already a oneOf schema, append to it
+		// Subsequent body params: ensure a oneOf wrapper exists, then append.
+		if mediaType.Spec.Schema.Spec == nil || mediaType.Spec.Schema.Spec.OneOf == nil {
+			prev := mediaType.Spec.Schema
+			mediaType.Spec.Schema = spec.NewSchemaSpec()
+			mediaType.Spec.Schema.Spec.OneOf = []*spec.RefOrSpec[spec.Schema]{prev}
+		}
 		mediaType.Spec.Schema.Spec.OneOf = append(mediaType.Spec.Schema.Spec.OneOf, schema)
 	}
-}
-
-func isDefaultAcceptSchema(schema *spec.RefOrSpec[spec.Schema]) bool {
-	if schema == nil || schema.Ref != nil || schema.Spec == nil || schema.Spec.Type == nil {
-		return false
-	}
-
-	if len(*schema.Spec.Type) != 1 {
-		return false
-	}
-
-	schemaType := (*schema.Spec.Type)[0]
-	if schemaType != OBJECT && schemaType != STRING {
-		return false
-	}
-
-	base := spec.NewSchemaSpec()
-	base.Spec.Type = &spec.SingleOrArray[string]{schemaType}
-	if schema.Spec.Format != "" {
-		base.Spec.Format = schema.Spec.Format
-	}
-
-	return reflect.DeepEqual(base.Spec, schema.Spec)
 }
 
 func (o *OperationV3) parseParamAttribute(comment, objectType, schemaType string, param *spec.Parameter) error {
