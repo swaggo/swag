@@ -445,13 +445,18 @@ Example [celler/controller](https://github.com/swaggo/swag/tree/master/example/c
 | securitydefinitions.oauth2.password    | [OAuth2 password](https://swagger.io/docs/specification/authentication/oauth2/) auth.         | tokenUrl, scope                   | // @securitydefinitions.oauth2.password OAuth2Password       |
 | securitydefinitions.oauth2.accessCode  | [OAuth2 access code](https://swagger.io/docs/specification/authentication/oauth2/) auth.      | tokenUrl, authorizationUrl, scope | // @securitydefinitions.oauth2.accessCode OAuth2AccessCode   |
 
-| 参数注释         | 示例                                                     |
-| ---------------- | -------------------------------------------------------- |
-| in               | // @in header                                            |
-| name             | // @name Authorization                                   |
-| tokenUrl         | // @tokenUrl https://example.com/oauth/token             |
-| authorizationurl | // @authorizationurl https://example.com/oauth/authorize |
-| scope.hoge       | // @scope.write Grants write access                      |
+| 参数注解             | 示例                                                     |
+| ---------------- | ---------------------------------------------------------- |
+| name             | `// @name Authorization`                                   |
+| tokenUrl         | `// @tokenUrl https://example.com/oauth/token`             |
+| authorizationurl | `// @authorizationurl https://example.com/oauth/authorize` |
+| scope.write      | `// @scope.write 授予写入权限`                               |
+| scope.openid     | `// @scope.openid 授予 OpenID 信息访问权限`                   |
+| scope.email      | `// @scope.email 授予邮箱访问权限`                            |
+| scope.profile    | `// @scope.profile 授予个人资料访问权限`                       |
+| description      | `// @description OAuth 保护我们实体的端点`                     |
+
+
 
 ## 属性
 
