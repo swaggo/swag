@@ -1,14 +1,17 @@
-build:
-  main: cmd/swag/main.go
-  goos:
-    - linux
-    - darwin
-  goarch:
-    - amd64
-    - arm64
-    - 386
-  env:
-    - CGO_ENABLED=0
+version: 2
+
+builds:
+  - id: swag
+    main: cmd/swag/main.go
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+      - 386
+    env:
+      - CGO_ENABLED=0
 
 archives:
   - id: foo
@@ -20,8 +23,10 @@ archives:
 
 checksum:
   name_template: 'checksums.txt'
+
 snapshot:
   name_template: "{{ .Tag }}-next"
+
 changelog:
   sort: asc
   filters:
