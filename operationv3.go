@@ -414,23 +414,37 @@ func (o *OperationV3) ParseParamComment(commentLine string, astFile *ast.File) e
 			}
 
 			for name, item := range schema.Spec.Properties {
-				prop := item.Spec
-				if len(*prop.Type) == 0 {
+				// a field of a named type is rendered as a $ref, so resolve it first
+				resolved := o.parser.getUnderlyingSchemaV3(item)
+				if resolved == nil || resolved.Type == nil || len(*resolved.Type) == 0 {
 					continue
+				}
+
+				// copy: the resolved schema is the shared component definition
+				propCopy := *resolved
+				prop := &propCopy
+
+				var itemSchema *spec.Schema
+				if prop.Items != nil {
+					itemSchema = o.parser.getUnderlyingSchemaV3(prop.Items.Schema)
 				}
 
 				itemParam := param // Avoid shadowed variable which could cause side effects to o.Operation.Parameters
 
 				switch {
 				case (*prop.Type)[0] == ARRAY &&
-					prop.Items.Schema != nil &&
-					len(*prop.Items.Schema.Spec.Type) > 0 &&
-					IsSimplePrimitiveType((*prop.Items.Schema.Spec.Type)[0]):
+					itemSchema != nil &&
+					itemSchema.Type != nil &&
+					len(*itemSchema.Type) > 0 &&
+					IsSimplePrimitiveType((*itemSchema.Type)[0]):
 
-					itemParam = createParameterV3(paramType, prop.Description, name, (*prop.Type)[0], (*prop.Items.Schema.Spec.Type)[0], findInSlice(schema.Spec.Required, name), enums, o.parser.collectionFormatInQuery)
+					itemParam = createParameterV3(paramType, prop.Description, name, (*prop.Type)[0], (*itemSchema.Type)[0], findInSlice(schema.Spec.Required, name), itemSchema.Enum, o.parser.collectionFormatInQuery)
+
+					// a parameter schema cannot hold a $ref, so inline the resolved items
+					prop.Items = spec.NewBoolOrSchema(false, spec.NewRefOrSpec(nil, itemSchema))
 
 				case IsSimplePrimitiveType((*prop.Type)[0]):
-					itemParam = createParameterV3(paramType, prop.Description, name, PRIMITIVE, (*prop.Type)[0], findInSlice(schema.Spec.Required, name), enums, o.parser.collectionFormatInQuery)
+					itemParam = createParameterV3(paramType, prop.Description, name, PRIMITIVE, (*prop.Type)[0], findInSlice(schema.Spec.Required, name), prop.Enum, o.parser.collectionFormatInQuery)
 				default:
 					o.parser.debug.Printf("skip field [%s] in %s is not supported type for %s", name, refType, paramType)
 

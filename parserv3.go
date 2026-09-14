@@ -1084,6 +1084,31 @@ func (p *Parser) getRefTypeSchemaV3(typeSpecDef *TypeSpecDef, schema *SchemaV3) 
 	return refSchema
 }
 
+// getUnderlyingSchemaV3 resolves a schema that may be a reference into the schema
+// specification it points at. It returns nil when the reference cannot be resolved.
+func (p *Parser) getUnderlyingSchemaV3(schema *spec.RefOrSpec[spec.Schema]) *spec.Schema {
+	if schema == nil {
+		return nil
+	}
+
+	if schema.Spec != nil {
+		return schema.Spec
+	}
+
+	if schema.Ref == nil {
+		return nil
+	}
+
+	resolved, err := schema.GetSpec(p.openAPI.Components)
+	if err != nil {
+		p.debug.Printf("cannot resolve schema reference %s: %v", schema.Ref.Ref, err)
+
+		return nil
+	}
+
+	return resolved
+}
+
 // GetSchemaTypePathV3 get path of schema type.
 func (p *Parser) GetSchemaTypePathV3(schema *spec.RefOrSpec[spec.Schema], depth int) []string {
 	if schema == nil || depth == 0 {
