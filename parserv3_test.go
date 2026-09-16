@@ -324,6 +324,95 @@ func TestGetAllGoFileInfoV3(t *testing.T) {
 	assert.Equal(t, 2, len(p.packages.files))
 }
 
+func TestParser_ParseRouterAPIInfoV3FuncBody(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package api
+
+// @Tags outside
+// @Router /outside [get]
+func Outside() {}
+
+func Register() {
+    // @Summary Read inside
+    // @Tags inside
+    // @x-internal true
+    // @Produce xml
+    // @Success 200 {string} string
+    // @Router /inside [get]
+    _ = 1
+
+    // @Tags inside
+    // @x-internal true
+    // @Success 201 {string} string
+    // @Router /inside [post]
+    _ = 2
+}
+`
+	tests := []struct {
+		name          string
+		parseFuncBody bool
+		parseFlag     ParseFlag
+		tags          string
+		extension     string
+		paths         []string
+	}{
+		{"disabled by default", false, ParseAll, "", "", []string{"/outside"}},
+		{"enabled", true, ParseAll, "", "", []string{"/outside", "/inside"}},
+		{"models only", true, ParseModels, "", "", nil},
+		{"include tag", true, ParseAll, "inside", "", []string{"/inside"}},
+		{"exclude tag", true, ParseAll, "!inside", "", []string{"/outside"}},
+		{"extension filter", true, ParseAll, "", "internal", []string{"/inside"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := New(GenerateOpenAPI3Doc(true), SetTags(tt.tags), SetParseExtension(tt.extension))
+			p.ParseFuncBody = tt.parseFuncBody
+			require.NoError(t, p.packages.ParseFile("api", "api/api.go", src, tt.parseFlag))
+			require.NoError(t, p.packages.RangeFiles(p.ParseRouterAPIInfoV3))
+
+			paths := p.openAPI.Paths.Spec.Paths
+			require.Len(t, paths, len(tt.paths))
+			for _, path := range tt.paths {
+				require.Contains(t, paths, path)
+				require.NotNil(t, paths[path].Spec.Spec.Get)
+			}
+			if inside, ok := paths["/inside"]; ok {
+				get := inside.Spec.Spec.Get.Spec
+				assert.Equal(t, "Read inside", get.Summary)
+				assert.Contains(t, get.Responses.Spec.Response["200"].Spec.Spec.Content, "text/xml")
+				require.NotNil(t, inside.Spec.Spec.Post)
+				assert.Contains(t, inside.Spec.Spec.Post.Spec.Responses.Spec.Response, "201")
+			}
+		})
+	}
+}
+
+func TestParser_ParseRouterAPIInfoV3FuncBodyError(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package api
+
+func Register() {
+    // @Param invalid
+    // @Router /inside [get]
+    _ = 1
+}
+`
+	p := New(GenerateOpenAPI3Doc(true))
+	p.ParseFuncBody = true
+	require.NoError(t, p.packages.ParseFile("api", "api/api.go", src, ParseAll))
+
+	err := p.packages.RangeFiles(p.ParseRouterAPIInfoV3)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "ParseComment error in file")
+	assert.Contains(t, err.Error(), "api/api.go")
+	assert.Contains(t, err.Error(), "missing required param comment parameters")
+}
+
 func TestParser_ParseTypeV3(t *testing.T) {
 	t.Parallel()
 
