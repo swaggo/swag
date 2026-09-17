@@ -126,6 +126,11 @@ type Config struct {
 	// RequiredByDefault set validation required for all fields by default
 	RequiredByDefault bool
 
+	// InferNullability adds "null" to the OpenAPI 3.1 type union of fields
+	// whose Go type marshals nil to JSON null (pointer, slice or map without
+	// json omitempty)
+	InferNullability bool
+
 	// OverridesFile defines global type overrides.
 	OverridesFile string
 
@@ -225,6 +230,7 @@ func (g *Gen) Build(config *Config) error {
 	p.ParseVendor = config.ParseVendor
 	p.ParseInternal = config.ParseInternal
 	p.RequiredByDefault = config.RequiredByDefault
+	p.InferNullability = config.InferNullability
 	p.HostState = config.State
 	p.ParseFuncBody = config.ParseFuncBody
 

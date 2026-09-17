@@ -128,6 +128,18 @@ func (ps *tagBaseFieldParserV3) ComplementSchema(schema *spec.RefOrSpec[spec.Sch
 		if err != nil {
 			return err
 		}
+		if ps.typeImpliesNull() {
+			// A $ref cannot carry a type union ($ref siblings combine
+			// conjunctively), so express nullability as anyOf: [$ref, null].
+			nullSchema := spec.NewSchemaSpec()
+			nullSchema.Spec.Type = &spec.SingleOrArray[string]{"null"}
+			newSchema.AnyOf = []*spec.RefOrSpec[spec.Schema]{
+				{Ref: spec.NewRef(schema.Ref.Ref)},
+				nullSchema,
+			}
+			*schema = spec.RefOrSpec[spec.Schema]{Spec: &newSchema}
+			return nil
+		}
 		if !reflect.ValueOf(newSchema).IsZero() {
 			if newSchema.Extensions == nil {
 				newSchema.Extensions = make(map[string]any)
@@ -138,7 +150,68 @@ func (ps *tagBaseFieldParserV3) ComplementSchema(schema *spec.RefOrSpec[spec.Sch
 		return nil
 	}
 
-	return ps.complementSchema(schema.Spec, types, nil)
+	if err := ps.complementSchema(schema.Spec, types, nil); err != nil {
+		return err
+	}
+
+	ps.appendInferredNull(schema.Spec)
+
+	return nil
+}
+
+// typeImpliesNull reports whether the Go field type guarantees that a nil
+// value marshals to JSON null: pointers, slices and maps without the json
+// omitempty option (with omitempty the field is omitted instead of null).
+// An explicit extensions:"!x-nullable" opts out, for fields provably
+// initialized on every serialization path. Only active when
+// Parser.InferNullability is set. Fields rendered as a $ref are wrapped in
+// anyOf: [$ref, {type: null}] instead of a type union.
+func (ps *tagBaseFieldParserV3) typeImpliesNull() bool {
+	if !ps.p.InferNullability {
+		return false
+	}
+
+	for _, ext := range strings.Split(ps.tag.Get(extensionsTag), ",") {
+		if strings.TrimSpace(ext) == "!x-nullable" {
+			return false
+		}
+	}
+
+	if opts := strings.Split(ps.tag.Get(jsonTag), ","); len(opts) > 1 {
+		for _, opt := range opts[1:] {
+			if opt == "omitempty" {
+				return false
+			}
+		}
+	}
+
+	switch t := ps.field.Type.(type) {
+	case *ast.StarExpr:
+		return true
+	case *ast.ArrayType:
+		return t.Len == nil // slices are nil-able, fixed-size arrays are not
+	case *ast.MapType:
+		return true
+	}
+
+	return false
+}
+
+// appendInferredNull adds "null" to the schema's type union when nullability
+// is inferred from the Go field type.
+func (ps *tagBaseFieldParserV3) appendInferredNull(schema *spec.Schema) {
+	if !ps.typeImpliesNull() || schema.Type == nil || len(*schema.Type) == 0 {
+		return
+	}
+
+	for _, t := range *schema.Type {
+		if t == "null" {
+			return
+		}
+	}
+
+	types := append(*schema.Type, "null")
+	schema.Type = &types
 }
 
 // complementSchema complement schema with field properties
