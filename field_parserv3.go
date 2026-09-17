@@ -528,32 +528,43 @@ func (ps *tagBaseFieldParserV3) ShouldSkip() bool {
 	return false
 }
 
-func (ps *tagBaseFieldParserV3) FieldName() (string, error) {
-	var name string
+// FieldNames returns the property names for the field. A declaration with
+// multiple names (e.g. `Space, Local string`, as in encoding/xml.Name) yields
+// one property per name, matching v1's FieldNames behavior.
+func (ps *tagBaseFieldParserV3) FieldNames() ([]string, error) {
+	if len(ps.field.Names) <= 1 {
+		// json:"tag,hoge"
+		if name := ps.JsonName(); name != "" {
+			return []string{name}, nil
+		}
 
-	// json:"tag,hoge"
-	name = ps.JsonName()
-	if name != "" {
-		return name, nil
+		// use "form" tag over json tag
+		if name := ps.FormName(); name != "" {
+			return []string{name}, nil
+		}
+
+		if len(ps.field.Names) == 0 {
+			return nil, nil
+		}
 	}
 
-	// use "form" tag over json tag
-	name = ps.FormName()
-	if name != "" {
-		return name, nil
+	names := make([]string, 0, len(ps.field.Names))
+	for _, name := range ps.field.Names {
+		names = append(names, ps.applyPropNamingStrategy(name.Name))
 	}
 
-	if ps.field.Names == nil {
-		return "", nil
-	}
+	return names, nil
+}
+
+func (ps *tagBaseFieldParserV3) applyPropNamingStrategy(name string) string {
 
 	switch ps.p.PropNamingStrategy {
 	case SnakeCase:
-		return toSnakeCase(ps.field.Names[0].Name), nil
+		return toSnakeCase(name)
 	case PascalCase:
-		return ps.field.Names[0].Name, nil
+		return name
 	default:
-		return toLowerCamelCase(ps.field.Names[0].Name), nil
+		return toLowerCamelCase(name)
 	}
 }
 

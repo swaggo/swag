@@ -143,7 +143,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `json:"-"`,
 			}},
-		).FieldName()
+		).FieldNames()
 		assert.NoError(t, err)
 		assert.Empty(t, got)
 
@@ -155,7 +155,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 			&ast.Field{Tag: &ast.BasicLit{
 				Value: `form:"-"`,
 			}},
-		).FieldName()
+		).FieldNames()
 		assert.NoError(t, err)
 		assert.Empty(t, got)
 	})
@@ -863,4 +863,26 @@ func TestValidTagsV3(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "^[a-zA-Z0-9_]*$", schema.Spec.Pattern)
 	})
+}
+
+func TestFieldNamesMultiNameV3(t *testing.T) {
+	t.Parallel()
+
+	// e.g. encoding/xml.Name: `Space, Local string` — one declaration, two fields.
+	field := &ast.Field{Names: []*ast.Ident{{Name: "Space"}, {Name: "Local"}}}
+	names, err := newTagBaseFieldParserV3(&Parser{}, &ast.File{Name: &ast.Ident{Name: "test"}}, field).FieldNames()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"space", "local"}, names)
+
+	names, err = newTagBaseFieldParserV3(&Parser{PropNamingStrategy: PascalCase}, &ast.File{Name: &ast.Ident{Name: "test"}}, field).FieldNames()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"Space", "Local"}, names)
+
+	single := &ast.Field{
+		Names: []*ast.Ident{{Name: "Field"}},
+		Tag:   &ast.BasicLit{Value: `json:"renamed"`},
+	}
+	names, err = newTagBaseFieldParserV3(&Parser{}, &ast.File{Name: &ast.Ident{Name: "test"}}, single).FieldNames()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"renamed"}, names)
 }
