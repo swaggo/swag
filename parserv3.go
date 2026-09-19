@@ -338,7 +338,7 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	var search []string
 
 	attribute := strings.ToLower(FieldsByAnySpace(lines[*index], 2)[0])
-	key := getSecurityDefinitionKey(lines)
+	key := getSecurityDefinitionKey(lines[*index])
 	switch attribute {
 	case secBasicAttr:
 		scheme := spec.SecurityScheme{
@@ -449,7 +449,6 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	}
 
 	scheme := &spec.SecurityScheme{}
-	key = getSecurityDefinitionKey(lines)
 
 	switch attribute {
 	case secAPIKeyAttr:
@@ -511,12 +510,10 @@ func parseSecAttributesV3(context string, lines []string, index *int) (string, *
 	return key, scheme, nil
 }
 
-func getSecurityDefinitionKey(lines []string) string {
-	for _, line := range lines {
-		if strings.HasPrefix(strings.TrimSpace(strings.ToLower(line)), "@securitydefinitions") {
-			splittedLine := strings.Fields(line)
-			return splittedLine[len(splittedLine)-1]
-		}
+func getSecurityDefinitionKey(line string) string {
+	if strings.HasPrefix(strings.TrimSpace(strings.ToLower(line)), "@securitydefinitions") {
+		splittedLine := strings.Fields(line)
+		return splittedLine[len(splittedLine)-1]
 	}
 
 	return ""
