@@ -1333,28 +1333,18 @@ func parseCombinedObjectSchemaV3(parser *Parser, refType string, astFile *ast.Fi
 		return schema, nil
 	}
 
-	schemaRefPath := strings.Replace(schema.Ref.Ref, "#/components/schemas/", "", 1)
-	schemaSpec := parser.openAPI.Components.Spec.Schemas[schemaRefPath]
-	schemaSpec.Spec.JsonSchemaComposition.AllOf = make([]*spec.RefOrSpec[spec.Schema], len(props))
-
-	i := 0
-	for name, prop := range props {
-		wrapperSpec := spec.NewSchemaSpec()
-		wrapperSpec.Spec = &spec.Schema{}
-		wrapperSpec.Spec.Type = &spec.SingleOrArray[string]{OBJECT}
-		wrapperSpec.Spec.Properties = map[string]*spec.RefOrSpec[spec.Schema]{
-			name: prop,
-		}
-
-		parser.openAPI.Components.Spec.Schemas[name] = wrapperSpec
-
-		ref := spec.NewRefOrSpec[spec.Schema](spec.NewRef("#/components/schemas/"+name), nil)
-
-		schemaSpec.Spec.JsonSchemaComposition.AllOf[i] = ref
-		i++
+	// Build an inline override schema with the composed properties
+	propsSchema := &spec.Schema{}
+	propsSchema.Type = &spec.SingleOrArray[string]{OBJECT}
+	propsSchema.Properties = props
+	// Return a new composed schema: allOf = [base ref, override props]
+	result := &spec.Schema{}
+	result.AllOf = []*spec.RefOrSpec[spec.Schema]{
+		schema,
+		spec.NewRefOrSpec[spec.Schema](nil, propsSchema),
 	}
 
-	return schemaSpec, nil
+	return spec.NewRefOrSpec[spec.Schema](nil, result), nil
 }
 
 // ParseSecurityComment parses comment for given `security` comment string.
