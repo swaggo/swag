@@ -540,9 +540,8 @@ func (g *Gen) writeGoDoc(packageName string, output io.Writer, swagger *v2.Swagg
 func (g *Gen) writeGoDocV3(packageName string, output io.Writer, openAPI *v3.OpenAPI, config *Config) error {
 	generator, err := template.New("oas3.tmpl").Funcs(template.FuncMap{
 		"printDoc": func(v string) string {
-			// Add schemes
-			v = "{\n    \"schemes\": " + config.LeftTemplateDelim + " marshal .Schemes " + config.RightTemplateDelim + "," + v[1:]
-			// Sanitize backticks
+			// schemes is a Swagger 2.0 field with no place in OpenAPI 3.1,
+			// so — unlike the v2 writer — don't inject it here.
 			return strings.Replace(v, "`", "`+\"`\"+`", -1)
 		},
 	}).ParseFS(tmpl, "src/*.tmpl")
