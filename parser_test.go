@@ -3113,6 +3113,22 @@ func TestParseTagMarkdownDescription(t *testing.T) {
 	}
 }
 
+func TestApiParseTag_Filtered(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/tags"
+	p := New(SetMarkdownFileDirectory(searchDir), SetTags("dogs,apes"))
+	p.PropNamingStrategy = PascalCase
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	if assert.Len(t, p.swagger.Tags, 2) {
+		assert.Equal(t, "dogs", p.swagger.Tags[0].TagProps.Name)
+		assert.Equal(t, "apes", p.swagger.Tags[1].TagProps.Name)
+	}
+}
+
 func TestParseApiMarkdownDescription(t *testing.T) {
 	t.Parallel()
 

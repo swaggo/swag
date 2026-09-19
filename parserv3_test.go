@@ -254,6 +254,21 @@ func TestParserParseGeneralAPIInfoMarkdownV3(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestParserParseGeneralAPIInfoMarkdownV3FilteredTags(t *testing.T) {
+	t.Parallel()
+
+	p := New(SetMarkdownFileDirectory("testdata"), SetTags("users"), GenerateOpenAPI3Doc(true))
+	mainAPIFile := "testdata/markdown.go"
+
+	err := p.ParseGeneralAPIInfo(mainAPIFile)
+	assert.NoError(t, err)
+
+	if assert.Len(t, p.openAPI.Tags, 1) {
+		assert.Equal(t, "users", p.openAPI.Tags[0].Spec.Name)
+		assert.Equal(t, "Users Tag Markdown Description", p.openAPI.Tags[0].Spec.Description)
+	}
+}
+
 func TestParserParseGeneralApiInfoFailedV3(t *testing.T) {
 	t.Parallel()
 
