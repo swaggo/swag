@@ -519,9 +519,10 @@ func (ps *tagBaseFieldParserV3) ShouldSkip() bool {
 		return true
 	}
 
-	// json:"tag,hoge"
-	name := ps.JsonName()
-	if name == "" {
+	// json:"tag,hoge" — skip only an explicit json:"-"; a field whose tag
+	// has no json name (e.g. only an xml or validate tag) is still serialized
+	// by encoding/json under its Go name and must keep its documentation.
+	if name := strings.TrimSpace(strings.Split(ps.tag.Get(jsonTag), ",")[0]); name == "-" {
 		return true
 	}
 
