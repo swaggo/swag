@@ -432,6 +432,95 @@ func TestDefaultFieldParser(t *testing.T) {
 		).ComplementSchema(nil)
 		assert.Error(t, err)
 	})
+
+	t.Run("Example tag on map[string]Struct field", func(t *testing.T) {
+		// makeParser returns a parser with a "Child" definition whose fields
+		// carry example values ("url" and "label").
+		makeParser := func() *Parser {
+			p := New()
+			urlProp := spec.Schema{}
+			urlProp.Type = []string{"string"}
+			urlProp.Example = "https://example.com"
+			labelProp := spec.Schema{}
+			labelProp.Type = []string{"string"}
+			labelProp.Example = "English"
+			child := spec.Schema{}
+			child.Type = []string{OBJECT}
+			child.Properties = map[string]spec.Schema{"url": urlProp, "label": labelProp}
+			p.swagger.Definitions["Child"] = child
+			return p
+		}
+
+		t.Run("plain string key-hint synthesises example from struct field examples", func(t *testing.T) {
+			t.Parallel()
+
+			schema := *spec.MapProperty(spec.RefSchema("#/definitions/Child"))
+			err := newTagBaseFieldParser(
+				makeParser(),
+				&ast.Field{Tag: &ast.BasicLit{Value: `json:"langs" example:"en"`}},
+			).ComplementSchema(&schema)
+			assert.NoError(t, err)
+
+			example, ok := schema.Example.(map[string]any)
+			assert.True(t, ok, "Example should be map[string]any")
+			en, ok := example["en"].(map[string]interface{})
+			assert.True(t, ok, "example should be keyed by 'en'")
+			assert.Equal(t, "https://example.com", en["url"])
+			assert.Equal(t, "English", en["label"])
+		})
+
+		t.Run("explicit JSON example is used verbatim", func(t *testing.T) {
+			t.Parallel()
+
+			schema := *spec.MapProperty(spec.RefSchema("#/definitions/Child"))
+			err := newTagBaseFieldParser(
+				makeParser(),
+				&ast.Field{Tag: &ast.BasicLit{Value: `json:"langs" example:"{\"en\":{\"url\":\"https://explicit.com\",\"label\":\"Explicit\"}}"`}},
+			).ComplementSchema(&schema)
+			assert.NoError(t, err)
+
+			example, ok := schema.Example.(map[string]interface{})
+			assert.True(t, ok)
+			en, ok := example["en"].(map[string]interface{})
+			assert.True(t, ok)
+			assert.Equal(t, "https://explicit.com", en["url"])
+			assert.Equal(t, "Explicit", en["label"])
+		})
+
+		t.Run("key-hint with struct having no field examples leaves Example nil", func(t *testing.T) {
+			t.Parallel()
+
+			p := New()
+			urlProp := spec.Schema{}
+			urlProp.Type = []string{"string"}
+			labelProp := spec.Schema{}
+			labelProp.Type = []string{"string"}
+			bare := spec.Schema{}
+			bare.Type = []string{OBJECT}
+			bare.Properties = map[string]spec.Schema{"url": urlProp, "label": labelProp}
+			p.swagger.Definitions["Bare"] = bare
+
+			schema := *spec.MapProperty(spec.RefSchema("#/definitions/Bare"))
+			err := newTagBaseFieldParser(
+				p,
+				&ast.Field{Tag: &ast.BasicLit{Value: `json:"langs" example:"en"`}},
+			).ComplementSchema(&schema)
+			assert.NoError(t, err)
+			assert.Nil(t, schema.Example, "key-hint string must not leak when struct has no field examples")
+		})
+
+		t.Run("no example tag leaves Example nil", func(t *testing.T) {
+			t.Parallel()
+
+			schema := *spec.MapProperty(spec.RefSchema("#/definitions/Child"))
+			err := newTagBaseFieldParser(
+				makeParser(),
+				&ast.Field{Tag: &ast.BasicLit{Value: `json:"langs"`}},
+			).ComplementSchema(&schema)
+			assert.NoError(t, err)
+			assert.Nil(t, schema.Example)
+		})
+	})
 }
 
 func TestValidTags(t *testing.T) {

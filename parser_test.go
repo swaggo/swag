@@ -2717,6 +2717,169 @@ func Test(){
 	assert.Equal(t, expected, string(out))
 }
 
+func TestParser_ParseStructMapMemberWithStructExample(t *testing.T) {
+	t.Parallel()
+
+	// Fix A: explicit JSON example tag on a map[string]Struct field.
+	// Fix B: plain-string example tag used as the key name for auto-synthesis
+	//        from the value struct's field example tags (including []Struct arrays).
+	// No tag: no example injected — no implicit behaviour.
+	src := `
+package api
+
+// Item is an array element with example tags on its fields.
+type Item struct {
+	ID   int    ` + "`" + `json:"id"   example:"1"` + "`" + `
+	Name string ` + "`" + `json:"name" example:"floor-1"` + "`" + `
+}
+
+// Child has example tags on scalar fields and an array-of-$ref field.
+type Child struct {
+	URL   string ` + "`" + `json:"url"   example:"https://example.com/doc.pdf"` + "`" + `
+	Label string ` + "`" + `json:"label" example:"English"` + "`" + `
+	Items []Item ` + "`" + `json:"items"` + "`" + `
+}
+
+type Parent struct {
+	// Fix B: plain key name — auto-synthesise example with "en" as the key.
+	Langs map[string]Child ` + "`" + `json:"langs" example:"en"` + "`" + `
+	// Fix A: full JSON example — used verbatim.
+	LangsExplicit map[string]Child ` + "`" + `json:"langsExplicit" example:"{\"en\":{\"url\":\"https://example.com/explicit.pdf\",\"label\":\"English\"}}"` + "`" + `
+	// No tag — no example should be injected.
+	LangsNoTag map[string]Child ` + "`" + `json:"langsNoTag"` + "`" + `
+}
+
+// @Success 200 {object} Parent
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	defs := p.swagger.Definitions
+	parent, ok := defs["api.Parent"]
+	assert.True(t, ok, "api.Parent definition should exist")
+
+	// Fix B: plain key name — auto-synthesised example keyed by "en".
+	langsSchema := parent.Properties["langs"]
+	assert.NotNil(t, langsSchema.Example, "langs should have an auto-synthesised example")
+	langsExample, ok := langsSchema.Example.(map[string]interface{})
+	assert.True(t, ok)
+	en, ok := langsExample["en"].(map[string]interface{})
+	assert.True(t, ok, "example should be keyed by 'en'")
+	assert.Equal(t, "https://example.com/doc.pdf", en["url"])
+	assert.Equal(t, "English", en["label"])
+
+	// Array-of-$ref inside the value struct: synthesised as a single-element slice.
+	items, ok := en["items"].([]interface{})
+	assert.True(t, ok, "items should be a synthesised array")
+	assert.Len(t, items, 1)
+	item, ok := items[0].(map[string]interface{})
+	assert.True(t, ok)
+	assert.Equal(t, 1, item["id"])
+	assert.Equal(t, "floor-1", item["name"])
+
+	// Fix A: full JSON example used verbatim.
+	langsExplicitSchema := parent.Properties["langsExplicit"]
+	assert.NotNil(t, langsExplicitSchema.Example, "langsExplicit should have an example from the tag")
+	explicitExample, ok := langsExplicitSchema.Example.(map[string]interface{})
+	assert.True(t, ok)
+	enExplicit, ok := explicitExample["en"].(map[string]interface{})
+	assert.True(t, ok, "explicit example should be keyed by 'en'")
+	assert.Equal(t, "https://example.com/explicit.pdf", enExplicit["url"])
+	assert.Equal(t, "English", enExplicit["label"])
+
+	// No tag — no example should be injected.
+	langsNoTagSchema := parent.Properties["langsNoTag"]
+	assert.Nil(t, langsNoTagSchema.Example, "map field with no example tag should have no example")
+}
+
+func TestParser_ParseStructMapMemberWithStructExample_NoFieldExamples(t *testing.T) {
+	t.Parallel()
+
+	// When example:"key" is set on a map[string]Struct field but the value
+	// struct has no example tags on any of its fields, no example should be
+	// injected — the key-hint string must not leak into the output.
+	src := `
+package api
+
+type Bare struct {
+	URL   string ` + "`" + `json:"url"` + "`" + `
+	Label string ` + "`" + `json:"label"` + "`" + `
+}
+
+type Owner struct {
+	Langs map[string]Bare ` + "`" + `json:"langs" example:"en"` + "`" + `
+}
+
+// @Success 200 {object} Owner
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	owner := p.swagger.Definitions["api.Owner"]
+	langsSchema := owner.Properties["langs"]
+	assert.Nil(t, langsSchema.Example, "key-hint string must not leak when value struct has no field examples")
+}
+
+func TestParser_ParseStructMapMemberWithStructExample_CycleDetection(t *testing.T) {
+	t.Parallel()
+
+	// Mutually-recursive types must not cause a stack overflow.
+	src := `
+package api
+
+type A struct {
+	Name     string ` + "`" + `json:"name" example:"a"` + "`" + `
+	Children []B    ` + "`" + `json:"children"` + "`" + `
+}
+
+type B struct {
+	Name    string ` + "`" + `json:"name" example:"b"` + "`" + `
+	Parents []A    ` + "`" + `json:"parents"` + "`" + `
+}
+
+type Root struct {
+	Map map[string]A ` + "`" + `json:"map" example:"key"` + "`" + `
+}
+
+// @Success 200 {object} Root
+// @Router /api/{id} [get]
+func Test(){
+}
+`
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	// Must not panic or stack-overflow.
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	root := p.swagger.Definitions["api.Root"]
+	mapSchema := root.Properties["map"]
+	// Example should be set (cycle is broken, partial synthesis is fine).
+	assert.NotNil(t, mapSchema.Example)
+}
+
 func TestParser_ParseRouterApiInfoErr(t *testing.T) {
 	t.Parallel()
 
@@ -4020,6 +4183,26 @@ func TestDefineTypeOfExample(t *testing.T) {
 		}
 
 		assert.Equal(t, obj, map[string]string{"key_one": "one", "key_two": "two", "key_three": "three"})
+	})
+
+	t.Run("Object type with object values (map[string]Struct) accepts raw JSON", func(t *testing.T) {
+		t.Parallel()
+
+		// Valid JSON object — key maps to a nested struct-like object.
+		example, err := defineTypeOfExample("object", "object", `{"en":{"url":"https://example.com","label":"English"}}`)
+		assert.NoError(t, err)
+		result, ok := example.(map[string]interface{})
+		assert.True(t, ok)
+		en, ok := result["en"].(map[string]interface{})
+		assert.True(t, ok)
+		assert.Equal(t, "https://example.com", en["url"])
+		assert.Equal(t, "English", en["label"])
+
+		// Non-JSON plain string is returned as-is (treated as a key-name hint
+		// for auto-synthesis in ComplementSchema — not an error).
+		example, err = defineTypeOfExample("object", "object", "en")
+		assert.NoError(t, err)
+		assert.Equal(t, "en", example)
 	})
 
 	t.Run("Invalid type", func(t *testing.T) {

@@ -1821,7 +1821,10 @@ func (parser *Parser) GetSchemaTypePath(schema *spec.Schema, depth int) []string
 	return []string{ANY}
 }
 
-// defineTypeOfExample example value define the type (object and array unsupported).
+// defineTypeOfExample example value define the type (object values require
+// either key:primitiveValue pairs for map[string]primitive, or raw JSON for
+// map[string]object; a plain non-JSON string on a map[string]object field is
+// treated as the desired example-key name for auto-synthesis).
 func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{}, error) {
 	switch schemaType {
 	case STRING:
@@ -1865,6 +1868,23 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 			return nil, fmt.Errorf("%s is unsupported type in example value `%s`", schemaType, exampleValue)
 		}
 
+		// When the map value type is itself an object (struct), the key:value
+		// comma syntax can't represent nested structure. Two forms are accepted:
+		//
+		//   example:"{\"en\":{...}}"  — raw JSON, used as the full example value
+		//   example:"en"              — plain string, returned as-is so ComplementSchema
+		//                               can use it as the key name for auto-synthesis
+		//
+		if arrayType == OBJECT {
+			var result interface{}
+			if err := json.Unmarshal([]byte(exampleValue), &result); err == nil {
+				// Valid JSON — use as explicit example.
+				return result, nil
+			}
+			// Not JSON — treat as a key-name hint for auto-synthesis.
+			return exampleValue, nil
+		}
+
 		values := strings.Split(exampleValue, ",")
 
 		result := map[string]any{}
@@ -1890,6 +1910,65 @@ func defineTypeOfExample(schemaType, arrayType, exampleValue string) (interface{
 	}
 
 	return nil, fmt.Errorf("%s is unsupported type in example value %s", schemaType, exampleValue)
+}
+
+// buildExampleFromRef synthesises an example object from the properties of a
+// $ref definition. For each property it collects:
+//   - scalar/string properties that carry an Example value directly, and
+//   - array properties whose items are either a $ref (recursed) or carry an
+//     Example value — in both cases the result is wrapped in a single-element
+//     slice so the rendered docs show a realistic array shape.
+//
+// visited guards against infinite recursion in mutually-recursive type graphs.
+// Callers should pass an empty map on the initial call.
+// Returns nil when no examples are found or the ref cannot be resolved.
+func (parser *Parser) buildExampleFromRef(refSchema *spec.Schema, visited map[string]bool) map[string]interface{} {
+	// Cycle guard: extract the definition name and skip if already visited.
+	if url := refSchema.Ref.GetURL(); url != nil {
+		name := url.Fragment
+		if pos := strings.LastIndexByte(name, '/'); pos >= 0 {
+			name = name[pos+1:]
+		}
+		if visited[name] {
+			return nil
+		}
+		visited[name] = true
+		defer func() { delete(visited, name) }()
+	}
+
+	underlying := parser.getUnderlyingSchema(refSchema)
+	if underlying == nil {
+		return nil
+	}
+
+	obj := make(map[string]interface{}, len(underlying.Properties))
+	for name, prop := range underlying.Properties {
+		switch {
+		case prop.Example != nil:
+			// Scalar / string / pre-tagged property — use it directly.
+			obj[name] = prop.Example
+
+		case len(prop.Type) > 0 && prop.Type[0] == ARRAY &&
+			prop.Items != nil && prop.Items.Schema != nil:
+			// Array property: synthesise a single-element slice example.
+			items := prop.Items.Schema
+			if IsRefSchema(items) {
+				// []SomeStruct — recurse into the item definition.
+				if itemExample := parser.buildExampleFromRef(items, visited); itemExample != nil {
+					obj[name] = []interface{}{itemExample}
+				}
+			} else if items.Example != nil {
+				// []primitiveType with an example tag on the item schema.
+				obj[name] = []interface{}{items.Example}
+			}
+		}
+	}
+
+	if len(obj) == 0 {
+		return nil
+	}
+
+	return obj
 }
 
 // GetAllGoFileInfo gets all Go source files information for given searchDir.
