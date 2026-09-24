@@ -53,6 +53,10 @@ type OperationV3 struct {
 func NewOperationV3(parser *Parser, options ...func(*OperationV3)) *OperationV3 {
 	op := *spec.NewOperation().Spec
 	op.Responses = spec.NewResponses()
+	// Keep Response non-nil so an operation with no @Success/@Failure/@Response marshals
+	// responses as {} instead of null (a nil map marshals to JSON null, which fails the
+	// OpenAPI 3.1 meta-schema's requirement that responses be an object).
+	op.Responses.Spec.Response = map[string]*spec.RefOrSpec[spec.Extendable[spec.Response]]{}
 
 	operation := &OperationV3{
 		parser:    parser,

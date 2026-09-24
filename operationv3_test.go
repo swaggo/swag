@@ -1,6 +1,7 @@
 package swag
 
 import (
+	"encoding/json"
 	"go/ast"
 	goparser "go/parser"
 	"go/token"
@@ -767,6 +768,21 @@ func TestParseResponseCommentParamMissingV3(t *testing.T) {
 	paramLenErrComment = `@Success notIntCode "it ok"`
 	paramLenErr = operation.ParseComment(paramLenErrComment, nil)
 	assert.EqualError(t, paramLenErr, `can not parse response comment "notIntCode "it ok""`)
+}
+
+func TestNewOperationV3ResponsesNeverNilV3(t *testing.T) {
+	t.Parallel()
+
+	operation := NewOperationV3(New())
+
+	require.NotNil(t, operation.Responses)
+	require.NotNil(t, operation.Responses.Spec)
+	assert.NotNil(t, operation.Responses.Spec.Response, "Response map must be non-nil so it marshals as {} rather than null")
+	assert.Empty(t, operation.Responses.Spec.Response)
+
+	data, err := json.Marshal(operation.Responses.Spec)
+	require.NoError(t, err)
+	assert.Equal(t, "{}", string(data), "an operation with no @Success/@Failure/@Response must marshal responses as {}, not null")
 }
 
 func TestOperation_ParseParamCommentV3(t *testing.T) {
