@@ -348,3 +348,15 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 `
 	testFormat(t, "db.sql.go", contents, want)
 }
+
+func Test_FormatDoesNotModifyInput(t *testing.T) {
+	contents := []byte(`package main
+
+// @title Foo
+func main() {}`)
+	original := string(contents)
+
+	_, err := NewFormatter().Format("main.go", contents)
+	assert.NoError(t, err)
+	assert.Equal(t, original, string(contents), "Format must not modify the caller's buffer")
+}

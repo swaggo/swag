@@ -98,10 +98,16 @@ func (edits edits) apply(contents []byte) []byte {
 		return edits[i].begin > edits[j].begin
 	})
 
+	// Build a new slice for every edit rather than writing into contents in
+	// place. When the replacement is no longer than the range it replaces,
+	// append reuses the backing array and rewrites the caller's buffer, which
+	// leaves callers unable to tell whether the content actually changed.
 	for _, edit := range edits {
-		prefix := contents[:edit.begin]
-		suffix := contents[edit.end:]
-		contents = append(prefix, append(edit.replacement, suffix...)...)
+		result := make([]byte, 0, len(contents)-(edit.end-edit.begin)+len(edit.replacement))
+		result = append(result, contents[:edit.begin]...)
+		result = append(result, edit.replacement...)
+		result = append(result, contents[edit.end:]...)
+		contents = result
 	}
 
 	return contents
