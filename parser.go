@@ -832,15 +832,14 @@ loopline:
 				description += "\n"
 			}
 			description += value
+			continue
 		}
 
-		// next securityDefinitions
-		if strings.Index(securityAttr, "@securitydefinitions.") == 0 {
-			// Go back to the previous line and break
-			*index--
-
-			break
-		}
+		// Either a new @securityDefinitions block starts here, or the attribute
+		// is unrecognized and belongs to the outer general-info parser.
+		// In both cases, go back to the previous line and stop.
+		*index--
+		break
 	}
 
 	if len(attrMap) != len(search) {
