@@ -524,22 +524,32 @@ func getSecurityDefinitionKey(lines []string) string {
 
 // ParseRouterAPIInfoV3 parses router api info for given astFile.
 func (p *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
-	for _, astDescription := range fileInfo.File.Decls {
-		if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
+	if (fileInfo.ParseFlag & ParseOperations) == ParseNone {
+		return nil
+	}
+
+	var commentGroups []*ast.CommentGroup
+	if p.ParseFuncBody {
+		commentGroups = fileInfo.File.Comments
+	} else {
+		for _, declaration := range fileInfo.File.Decls {
+			if function, ok := declaration.(*ast.FuncDecl); ok && function.Doc != nil {
+				commentGroups = append(commentGroups, function.Doc)
+			}
+		}
+	}
+
+	for _, comments := range commentGroups {
+		if comments.List == nil {
 			continue
 		}
 
-		astDeclaration, ok := astDescription.(*ast.FuncDecl)
-		if !ok || astDeclaration.Doc == nil || astDeclaration.Doc.List == nil {
-			continue
-		}
-
-		if p.matchTags(astDeclaration.Doc.List) &&
-			matchExtension(p.parseExtension, astDeclaration.Doc.List) {
+		if p.matchTags(comments.List) &&
+			matchExtension(p.parseExtension, comments.List) {
 			// for per 'function' comment, create a new 'Operation' object
 			operation := NewOperationV3(p, SetCodeExampleFilesDirectoryV3(p.codeExampleFilesDir))
 
-			for _, comment := range astDeclaration.Doc.List {
+			for _, comment := range comments.List {
 				err := operation.ParseComment(comment.Text, fileInfo.File)
 				if err != nil {
 					return fmt.Errorf("ParseComment error in file %s :%+v", fileInfo.Path, err)

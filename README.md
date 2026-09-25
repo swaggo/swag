@@ -144,6 +144,15 @@ OPTIONS:
    --help, -h                             show help
 ```
 
+By default, API annotations are read from comments above function declarations.
+Use `--parseFuncBody` to also read annotations inside function bodies. This works
+with both Swagger 2.0 and OpenAPI 3.1 output:
+
+```sh
+swag init --parseFuncBody
+swag init --v3.1 --parseFuncBody
+```
+
 ```bash
 swag fmt -h
 NAME:
