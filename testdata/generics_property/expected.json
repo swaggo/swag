@@ -68,6 +68,7 @@
                     },
                     {
                         "type": "integer",
+                        "format": "int32",
                         "name": "rows",
                         "in": "query"
                     }
