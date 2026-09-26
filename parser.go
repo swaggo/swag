@@ -1002,7 +1002,11 @@ func getTagsFromComment(comment string) (tags []string) {
 
 	if lowerAttribute == tagsAttr {
 		for _, tag := range strings.Split(lineRemainder, ",") {
-			tags = append(tags, strings.TrimSpace(tag))
+			tag = strings.TrimSpace(tag)
+			if tag == "" {
+				continue
+			}
+			tags = append(tags, tag)
 		}
 	}
 	return
