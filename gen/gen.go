@@ -234,6 +234,9 @@ func (g *Gen) Build(config *Config) error {
 
 	swagger := p.GetSwagger()
 
+	// Remove unused schema definitions to keep the output clean
+	swag.RemoveUnusedDefinitions(swagger)
+
 	if err := os.MkdirAll(config.OutputDir, os.ModePerm); err != nil {
 		return err
 	}

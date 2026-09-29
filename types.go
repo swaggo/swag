@@ -68,6 +68,24 @@ func (t *TypeSpecDef) TypeName() string {
 	return fullTypeName(names...)
 }
 
+// SimpleTypeName returns a simplified type name (package.Type format).
+func (t *TypeSpecDef) SimpleTypeName() string {
+	if ignoreNameOverride(t.TypeSpec.Name.Name) {
+		return t.TypeSpec.Name.Name[1:]
+	}
+
+	var names []string
+	// Only use package name, not full path
+	if t.File != nil {
+		names = append(names, t.File.Name.Name)
+	}
+	if parentFun, ok := (t.ParentSpec).(*ast.FuncDecl); ok && parentFun != nil {
+		names = append(names, parentFun.Name.Name)
+	}
+	names = append(names, t.TypeSpec.Name.Name)
+	return fullTypeName(names...)
+}
+
 // FullPath return the full path of the typeSpec.
 func (t *TypeSpecDef) FullPath() string {
 	return t.PkgPath + "." + t.Name()
@@ -86,9 +104,19 @@ func (t *TypeSpecDef) SetSchemaName() {
 	t.SchemaName = t.TypeName()
 }
 
+// SetSchemaNameSimple sets schema name using simplified naming (package.Type).
+func (t *TypeSpecDef) SetSchemaNameSimple() {
+	if alias := t.Alias(); alias != "" {
+		t.SchemaName = alias
+		return
+	}
+
+	t.SchemaName = t.SimpleTypeName()
+}
+
 // AstFileInfo information of an ast.File.
 type AstFileInfo struct {
-	//FileSet the FileSet object which is used to parse this go source file
+	// FileSet the FileSet object which is used to parse this go source file
 	FileSet *token.FileSet
 
 	// File ast.File

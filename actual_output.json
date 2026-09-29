@@ -1,0 +1,1688 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "Parse external models.",
+    "title": "Swagger Example API",
+    "contact": {},
+    "version": "1.0"
+  },
+  "basePath": "/v1",
+  "paths": {
+    "/admin/accounts": {
+      "get": {
+        "description": "Retrieves a paginated list of accounts with optional search",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "summary": "List accounts",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Search query",
+            "name": "q",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Results per page",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "description": "Page offset",
+            "name": "offset",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/response.SuccessResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/account.AccountJoinedPublic"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/admin/testUser": {
+      "post": {
+        "description": "Creates a test account with the provided details and optionally logs in as that account",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Create test account",
+        "parameters": [
+          {
+            "description": "Test user details",
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/api.TestUserInput"
+            }
+          },
+          {
+            "type": "string",
+            "description": "Set to login as the created user",
+            "name": "login_as",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/response.SuccessResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/definitions/account.Account"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/api/account/{id}": {
+      "get": {
+        "description": "Retrieves account and associated organization data by account ID",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Get account with organization",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Account ID",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/response.SuccessResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/definitions/api.APIResponse"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "description": "Retrieves the authenticated user's account details with joined data",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "accounts"
+        ],
+        "summary": "Get current user",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/definitions/response.SuccessResponse"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/definitions/account.AccountWithFeaturesPublic"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "schema": {
+              "$ref": "#/definitions/response.ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "account.Account": {
+      "type": "object",
+      "title": "Account",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "properties",
+        "signup_properties",
+        "hashed_password",
+        "password_updated_at_ts",
+        "email_verified_at_ts",
+        "last_login_ts",
+        "config_key",
+        "is_super_user_session"
+      ],
+      "properties": {
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string"
+        },
+        "email_verified_at_ts": {
+          "type": "integer"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "hashed_password": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "is_super_user_session": {
+          "type": "integer"
+        },
+        "last_login_ts": {
+          "type": "integer"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "password_updated_at_ts": {
+          "type": "integer"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "properties": {
+          "$ref": "#/definitions/account.Properties"
+        },
+        "role": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
+        },
+        "signup_properties": {
+          "$ref": "#/definitions/account.SignupProperties"
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
+        },
+        "test_user_type": {
+          "type": "integer"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "account.AccountJoined": {
+      "type": "object",
+      "title": "AccountJoined",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "properties",
+        "signup_properties",
+        "hashed_password",
+        "password_updated_at_ts",
+        "email_verified_at_ts",
+        "last_login_ts",
+        "config_key",
+        "is_super_user_session",
+        "name",
+        "organization_name",
+        "created_by_name",
+        "updated_by_name",
+        "tags",
+        "nested_settings"
+      ],
+      "properties": {
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_name": {
+          "type": "string"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string"
+        },
+        "email_verified_at_ts": {
+          "type": "integer"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "hashed_password": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "is_super_user_session": {
+          "type": "integer"
+        },
+        "last_login_ts": {
+          "type": "integer"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "nested_settings": {
+          "$ref": "#/definitions/account.NestedSettings"
+        },
+        "organization_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "organization_name": {
+          "type": "string"
+        },
+        "password_updated_at_ts": {
+          "type": "integer"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "properties": {
+          "$ref": "#/definitions/account.Properties"
+        },
+        "role": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
+        },
+        "signup_properties": {
+          "$ref": "#/definitions/account.SignupProperties"
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/account.IconTagJoin"
+          }
+        },
+        "test_user_type": {
+          "type": "integer"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_name": {
+          "type": "string"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "account.AccountJoinedPublic": {
+      "type": "object",
+      "title": "AccountJoinedPublic",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "config_key",
+        "is_super_user_session",
+        "tags",
+        "nested_settings"
+      ],
+      "properties": {
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "is_super_user_session": {
+          "type": "integer"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "nested_settings": {
+          "$ref": "#/definitions/account.NestedSettingsPublic"
+        },
+        "organization_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/account.IconTagJoinPublic"
+          }
+        },
+        "test_user_type": {
+          "type": "integer"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "account.AccountPublic": {
+      "type": "object",
+      "title": "AccountPublic",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "config_key",
+        "is_super_user_session"
+      ],
+      "properties": {
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "is_super_user_session": {
+          "type": "integer"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
+        },
+        "test_user_type": {
+          "type": "integer"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "account.AccountWithFeatures": {
+      "type": "object",
+      "title": "AccountWithFeatures",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "properties",
+        "signup_properties",
+        "hashed_password",
+        "password_updated_at_ts",
+        "email_verified_at_ts",
+        "last_login_ts",
+        "config_key",
+        "is_super_user_session",
+        "billing_plan_level",
+        "billing_plan_price",
+        "billing_plan_id",
+        "billing_plan_name",
+        "billing_plan_feature_set",
+        "feature_set_overrides",
+        "feature_set"
+      ],
+      "properties": {
+        "billing_plan_feature_set": {
+          "$ref": "#/definitions/billing_plan.FeatureSet"
+        },
+        "billing_plan_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "billing_plan_level": {
+          "type": "integer"
+        },
+        "billing_plan_name": {
+          "type": "string"
+        },
+        "billing_plan_price": {
+          "type": "integer"
+        },
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string"
+        },
+        "email_verified_at_ts": {
+          "type": "integer"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "feature_set": {
+          "$ref": "#/definitions/billing_plan.FeatureSet"
+        },
+        "feature_set_overrides": {
+          "$ref": "#/definitions/billing_plan.MergeableFeatureSet"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "hashed_password": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "is_super_user_session": {
+          "type": "integer"
+        },
+        "last_login_ts": {
+          "type": "integer"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "password_updated_at_ts": {
+          "type": "integer"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "properties": {
+          "$ref": "#/definitions/account.Properties"
+        },
+        "role": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
+        },
+        "signup_properties": {
+          "$ref": "#/definitions/account.SignupProperties"
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
+        },
+        "test_user_type": {
+          "type": "integer"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "account.AccountWithFeaturesPublic": {
+      "type": "object",
+      "title": "AccountWithFeaturesPublic",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "first_name",
+        "last_name",
+        "email",
+        "phone",
+        "external_id",
+        "test_user_type",
+        "organization_id",
+        "role",
+        "config_key",
+        "is_super_user_session",
+        "billing_plan_level",
+        "billing_plan_price",
+        "billing_plan_id",
+        "billing_plan_name",
+        "feature_set"
+      ],
+      "properties": {
+        "billing_plan_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "billing_plan_level": {
+          "type": "integer"
+        },
+        "billing_plan_name": {
+          "type": "string"
+        },
+        "billing_plan_price": {
+          "type": "integer"
+        },
+        "config_key": {
+          "type": "integer",
+          "enum": [
+            "allow_self_signed_certs",
+            "api_rate_limit_enabled"
+          ],
+          "x-enum-comments": {
+            "GCK_ALLOW_SELF_SIGNED_CERTS": "Allow self-signed SSL certificates",
+            "GCK_API_RATE_LIMIT_ENABLED": "Enable API rate limiting"
+          },
+          "x-enum-descriptions": [
+            "Allow self-signed SSL certificates",
+            "Enable API rate limiting"
+          ],
+          "x-enum-varnames": [
+            "GCK_ALLOW_SELF_SIGNED_CERTS",
+            "GCK_API_RATE_LIMIT_ENABLED"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "email": {
+          "type": "string"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "feature_set": {
+          "$ref": "#/definitions/billing_plan.FeatureSetPublic"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "is_super_user_session": {
+          "type": "integer"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "organization_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "role": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
+        },
+        "test_user_type": {
+          "type": "integer"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "account.IconTagJoin": {
+      "type": "object",
+      "title": "AccountIconTagJoin",
+      "required": [
+        "id",
+        "name",
+        "urn",
+        "status",
+        "created_at",
+        "updated_at",
+        "role"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1,
+            40,
+            50,
+            100
+          ],
+          "x-enum-comments": {
+            "ROLE_ADMIN": "System Admin",
+            "ROLE_ANY_AUTHORIZED": "Any Authorized",
+            "ROLE_ORG_ADMIN": "Org Admin",
+            "ROLE_ORG_OWNER": "Org Owner",
+            "ROLE_UNAUTHORIZED": "Unauthorized",
+            "ROLE_USER": "User"
+          },
+          "x-enum-descriptions": [
+            "Unauthorized",
+            "Any Authorized",
+            "User",
+            "Org Admin",
+            "Org Owner",
+            "System Admin"
+          ],
+          "x-enum-varnames": [
+            "ROLE_UNAUTHORIZED",
+            "ROLE_ANY_AUTHORIZED",
+            "ROLE_USER",
+            "ROLE_ORG_ADMIN",
+            "ROLE_ORG_OWNER",
+            "ROLE_ADMIN"
+          ]
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "account.IconTagJoinPublic": {
+      "type": "object",
+      "title": "AccountIconTagJoinPublic"
+    },
+    "account.NestedSettings": {
+      "type": "object",
+      "title": "AccountNestedSettings",
+      "required": [
+        "role"
+      ],
+      "properties": {
+        "role": {
+          "type": "integer",
+          "enum": [
+            1
+          ],
+          "x-enum-varnames": [
+            "STYLE_TYPE_MIX_IT_UP"
+          ]
+        }
+      }
+    },
+    "account.NestedSettingsPublic": {
+      "type": "object",
+      "title": "AccountNestedSettingsPublic"
+    },
+    "account.Properties": {
+      "type": "object",
+      "title": "AccountProperties",
+      "properties": {
+        "external_user_info": {},
+        "invite_key": {
+          "type": "string"
+        },
+        "invite_ts": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "last_seen": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "verify_email_key": {
+          "type": "string"
+        }
+      }
+    },
+    "account.PropertiesPublic": {
+      "type": "object",
+      "title": "AccountPropertiesPublic"
+    },
+    "account.SignupProperties": {
+      "type": "object",
+      "title": "AccountSignupProperties",
+      "required": [
+        "is_oauth"
+      ],
+      "properties": {
+        "is_oauth": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "account.SignupPropertiesPublic": {
+      "type": "object",
+      "title": "AccountSignupPropertiesPublic"
+    },
+    "api.APIResponse": {
+      "type": "object",
+      "properties": {
+        "account": {
+          "$ref": "#/definitions/account.Account"
+        },
+        "billing_plan": {
+          "$ref": "#/definitions/billing_plan.BillingPlanJoined"
+        }
+      }
+    },
+    "api.TestUserInput": {
+      "type": "object",
+      "properties": {
+        "organization_id": {
+          "type": "string"
+        }
+      }
+    },
+    "billing_plan.BillingPlanJoined": {
+      "type": "object",
+      "title": "BillingPlanJoined",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "name",
+        "description",
+        "internal_name",
+        "feature_set",
+        "properties",
+        "stripe_product_id",
+        "level",
+        "is_default",
+        "created_by_name",
+        "updated_by_name"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_name": {
+          "type": "string"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "feature_set": {
+          "$ref": "#/definitions/billing_plan.FeatureSet"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "internal_name": {
+          "type": "string"
+        },
+        "is_default": {
+          "type": "integer"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "properties": {
+          "$ref": "#/definitions/billing_plan.Properties"
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
+        },
+        "stripe_product_id": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_name": {
+          "type": "string"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "billing_plan.BillingPlanJoinedPublic": {
+      "type": "object",
+      "title": "BillingPlanJoinedPublic",
+      "required": [
+        "id",
+        "urn",
+        "created_by_urn",
+        "updated_by_urn",
+        "status",
+        "deleted",
+        "disabled",
+        "updated_at",
+        "created_at",
+        "name",
+        "description",
+        "feature_set",
+        "properties",
+        "stripe_product_id",
+        "level",
+        "is_default"
+      ],
+      "properties": {
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_urn": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "type": "integer"
+        },
+        "feature_set": {
+          "$ref": "#/definitions/billing_plan.FeatureSetPublic"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "is_default": {
+          "type": "integer"
+        },
+        "level": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "properties": {
+          "$ref": "#/definitions/billing_plan.PropertiesPublic"
+        },
+        "status": {
+          "type": "integer",
+          "enum": [
+            100,
+            200,
+            300
+          ],
+          "x-enum-varnames": [
+            "STATUS_ACTIVE",
+            "STATUS_DISABLED",
+            "STATUS_DELETED"
+          ]
+        },
+        "stripe_product_id": {
+          "type": "string"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_by_urn": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        }
+      }
+    },
+    "billing_plan.FeatureSet": {
+      "type": "object",
+      "title": "BillingPlanFeatureSet",
+      "properties": {
+        "advanced_analytics": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "custom_branding": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "priority_support": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "billing_plan.FeatureSetPublic": {
+      "type": "object",
+      "title": "BillingPlanFeatureSetPublic",
+      "properties": {
+        "advanced_analytics": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "billing_plan.MergeableFeatureSet": {
+      "type": "object",
+      "title": "BillingPlanMergeableFeatureSet"
+    },
+    "billing_plan.MergeableFeatureSetPublic": {
+      "type": "object",
+      "title": "BillingPlanMergeableFeatureSetPublic"
+    },
+    "billing_plan.Properties": {
+      "type": "object",
+      "title": "BillingPlanProperties",
+      "required": [
+        "pricing_text",
+        "default_discount_code"
+      ],
+      "properties": {
+        "default_discount_code": {
+          "type": "string"
+        },
+        "pricing_text": {
+          "type": "string"
+        }
+      }
+    },
+    "billing_plan.PropertiesPublic": {
+      "type": "object",
+      "title": "BillingPlanPropertiesPublic",
+      "required": [
+        "pricing_text"
+      ],
+      "properties": {
+        "pricing_text": {
+          "type": "string"
+        }
+      }
+    },
+    "response.ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "response.SuccessResponse": {
+      "type": "object",
+      "properties": {
+        "data": {}
+      }
+    }
+  }
+}
