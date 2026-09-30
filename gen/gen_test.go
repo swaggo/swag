@@ -320,6 +320,46 @@ func TestGen_BuildDocCustomDelims(t *testing.T) {
 	assert.JSONEq(t, string(expectedJSON), jsonOutput)
 }
 
+func TestGen_BuildOpenAPI3RuntimeDoc(t *testing.T) {
+	conf := &Config{
+		SearchDir:           "../testdata/v3/runtime",
+		MainAPIFile:         "./main.go",
+		OutputDir:           "../testdata/v3/runtime/docs",
+		OutputTypes:         []string{"go"},
+		InstanceName:        "OpenAPI3Runtime",
+		GenerateOpenAPI3Doc: true,
+	}
+
+	require.NoError(t, New().Build(conf))
+
+	goSourceFile := filepath.Join(conf.OutputDir, "OpenAPI3Runtime_docs.go")
+	if _, err := os.Stat(goSourceFile); os.IsNotExist(err) {
+		require.NoError(t, err)
+	}
+	t.Cleanup(func() {
+		_ = os.Remove(goSourceFile)
+	})
+
+	cmd := exec.Command("go", "build", "-buildmode=plugin", "github.com/swaggo/swag/v2/testdata/v3/runtime")
+	cmd.Dir = conf.SearchDir
+
+	output, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(output))
+	t.Cleanup(func() {
+		_ = os.Remove(filepath.Join(conf.SearchDir, "runtime.so"))
+	})
+
+	p, err := plugin.Open(filepath.Join(conf.SearchDir, "runtime.so"))
+	require.NoError(t, err)
+
+	readDoc, err := p.Lookup("ReadDoc")
+	require.NoError(t, err)
+
+	jsonOutput := readDoc.(func() string)()
+
+	requireOpenAPI3Doc(t, jsonOutput)
+}
+
 func TestGen_jsonIndent(t *testing.T) {
 	config := &Config{
 		SearchDir:          searchDir,
@@ -930,4 +970,37 @@ func TestGen_StateUser(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.JSONEq(t, string(expectedJSON), string(jsonOutput))
+}
+
+func requireOpenAPI3Doc(t *testing.T, doc string) {
+	t.Helper()
+
+	var root map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal([]byte(doc), &root))
+
+	allowed := map[string]struct{}{
+		"openapi":           {},
+		"info":              {},
+		"jsonSchemaDialect": {},
+		"servers":           {},
+		"paths":             {},
+		"webhooks":          {},
+		"components":        {},
+		"security":          {},
+		"tags":              {},
+		"externalDocs":      {},
+	}
+
+	for name := range root {
+		if strings.HasPrefix(name, "x-") {
+			continue
+		}
+		assert.Contains(t, allowed, name)
+	}
+
+	var version string
+	require.NoError(t, json.Unmarshal(root["openapi"], &version))
+	assert.Equal(t, "3.1.0", version)
+	assert.Contains(t, root, "info")
+	assert.Contains(t, root, "paths")
 }
