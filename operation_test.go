@@ -32,6 +32,43 @@ func TestParseTagsComment(t *testing.T) {
 	assert.Equal(t, operation.Tags, []string{"pet", "store", "user"})
 }
 
+func TestParseTagsComment_IgnoresEmptyTags(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		comment string
+		want    []string
+	}{
+		{
+			name:    "empty tags annotation",
+			comment: `/@Tags`,
+			want:    []string{},
+		},
+		{
+			name:    "comma only tags",
+			comment: `/@Tags ,`,
+			want:    []string{},
+		},
+		{
+			name:    "mixed empty and non-empty tags",
+			comment: `/@Tags tag1, ,tag2`,
+			want:    []string{"tag1", "tag2"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			operation := NewOperation(nil)
+			err := operation.ParseComment(tt.comment, nil)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, operation.Tags)
+		})
+	}
+}
+
 func TestParseAcceptComment(t *testing.T) {
 	t.Parallel()
 

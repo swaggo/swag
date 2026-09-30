@@ -4296,6 +4296,27 @@ func Test_getTagsFromComment(t *testing.T) {
 			},
 			wantTags: []string{"tag1", "tag2", "tag3"},
 		},
+		{
+			name: "empty tags annotation",
+			args: args{
+				comment: "//@Tags",
+			},
+			wantTags: nil,
+		},
+		{
+			name: "comma only tags annotation",
+			args: args{
+				comment: "//@Tags ,",
+			},
+			wantTags: nil,
+		},
+		{
+			name: "mixed empty and non-empty tags annotation",
+			args: args{
+				comment: "//@Tags tag1, ,tag2",
+			},
+			wantTags: []string{"tag1", "tag2"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

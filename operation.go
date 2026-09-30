@@ -690,7 +690,11 @@ func defineType(schemaType string, value string) (v any, err error) {
 // ParseTagsComment parses comment for given `tag` comment string.
 func (operation *Operation) ParseTagsComment(commentLine string) {
 	for _, tag := range strings.Split(commentLine, ",") {
-		operation.Tags = append(operation.Tags, strings.TrimSpace(tag))
+		tag = strings.TrimSpace(tag)
+		if tag == "" {
+			continue
+		}
+		operation.Tags = append(operation.Tags, tag)
 	}
 }
 
