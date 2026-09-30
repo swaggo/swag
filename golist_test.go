@@ -114,3 +114,22 @@ func TestGetAllGoFileInfoFromDepsByList(t *testing.T) {
 		})
 	}
 }
+
+func TestOperationParsePackages(t *testing.T) {
+	root := &build.Package{ImportPath: "example.com/app", Dir: "/app", Imports: []string{"example.com/direct"}}
+	direct := &build.Package{ImportPath: "example.com/direct", Dir: "/app/direct", Imports: []string{"example.com/transitive"}}
+	transitive := &build.Package{ImportPath: "example.com/transitive", Dir: "/app/transitive"}
+	pkgs := []*build.Package{root, direct, transitive}
+	rootDirs := []string{"/app"}
+
+	depth1 := operationParsePackages(pkgs, rootDirs, 1)
+	assert.Contains(t, depth1, "example.com/app")
+	assert.Contains(t, depth1, "example.com/direct")
+	assert.NotContains(t, depth1, "example.com/transitive")
+
+	depth2 := operationParsePackages(pkgs, rootDirs, 2)
+	assert.Contains(t, depth2, "example.com/transitive")
+
+	unlimited := operationParsePackages(pkgs, rootDirs, 0)
+	assert.Len(t, unlimited, len(pkgs))
+}

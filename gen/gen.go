@@ -102,6 +102,9 @@ type Config struct {
 	// ParseDepth dependency parse depth
 	ParseDepth int
 
+	// ParseDepthSet reports whether ParseDepth was explicitly provided
+	ParseDepthSet bool
+
 	// ParseVendor whether swag should be parse vendor folder
 	ParseVendor bool
 
@@ -227,6 +230,7 @@ func (g *Gen) Build(config *Config) error {
 	p.HostState = config.State
 	p.ParseFuncBody = config.ParseFuncBody
 	p.ParseGoPackages = config.ParseGoPackages
+	p.ParseDepthSet = config.ParseDepthSet
 
 	if err := p.ParseAPIMultiSearchDir(searchDirs, config.MainAPIFile, config.ParseDepth); err != nil {
 		return err

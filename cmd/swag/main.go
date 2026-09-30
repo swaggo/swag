@@ -267,6 +267,7 @@ func initAction(ctx *cli.Context) error {
 		RequiredByDefault:   ctx.Bool(requiredByDefaultFlag),
 		CodeExampleFilesDir: ctx.String(codeExampleFilesFlag),
 		ParseDepth:          ctx.Int(parseDepthFlag),
+		ParseDepthSet:       ctx.IsSet(parseDepthFlag),
 		InstanceName:        ctx.String(instanceNameFlag),
 		OverridesFile:       ctx.String(overridesFileFlag),
 		ParseGoList:         ctx.Bool(parseGoListFlag),

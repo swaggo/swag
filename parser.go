@@ -174,6 +174,9 @@ type Parser struct {
 	// parseGoList whether swag use go list to parse dependency
 	parseGoList bool
 
+	// ParseDepthSet reports whether parseDepth was explicitly provided.
+	ParseDepthSet bool
+
 	// ParseGoPackages whether swag use golang.org/x/tools/go/packages to parse source.
 	// It ignores go source files which build tags do not match.
 	// It throws error when type check failed.
@@ -440,8 +443,18 @@ func (parser *Parser) ParseAPIMultiSearchDir(searchDirs []string, mainAPIFile st
 			}
 
 			length := len(pkgs)
+			var operationPkgs map[string]struct{}
+			if parser.ParseDepthSet {
+				operationPkgs = operationParsePackages(pkgs, allDir, parseDepth)
+			}
 			for i := 0; i < length; i++ {
-				err := parser.getAllGoFileInfoFromDepsByList(pkgs[i], parser.ParseDependency)
+				parseFlag := parser.ParseDependency
+				if operationPkgs != nil {
+					if _, ok := operationPkgs[pkgs[i].ImportPath]; !ok {
+						parseFlag &^= ParseOperations
+					}
+				}
+				err := parser.getAllGoFileInfoFromDepsByList(pkgs[i], parseFlag)
 				if err != nil {
 					return err
 				}
