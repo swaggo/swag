@@ -267,7 +267,37 @@ func (ps *tagBaseFieldParser) ComplementSchema(schema *spec.Schema) error {
 		return nil
 	}
 
-	return ps.complementSchema(schema, types)
+	if err := ps.complementSchema(schema, types); err != nil {
+		return err
+	}
+
+	// Synthesise an example for map[string]SomeStruct when the user provides
+	// a plain string as the example tag value. That string is used as the map
+	// key in the generated example, with the value synthesised from the
+	// referenced struct's own field examples.
+	//
+	// Supported forms:
+	//   example:"en"              → {"en": {<synthesised from SomeStruct fields>}}
+	//   example:"{\"en\":{...}}"  → full explicit JSON, already set by complementSchema
+	//   (no tag)                  → no example injected; docs show {}
+	//
+	// Note: this only fires for inline map[string]SomeStruct field declarations.
+	// Named map type aliases (type M map[string]SomeStruct) are resolved to a
+	// $ref before reaching here, so ComplementSchema takes the IsRefSchema path
+	// above and the synthesis block is never reached for those fields.
+	if keyName, ok := schema.Example.(string); ok &&
+		len(schema.Type) > 0 && schema.Type[0] == OBJECT &&
+		schema.AdditionalProperties != nil &&
+		schema.AdditionalProperties.Schema != nil &&
+		IsRefSchema(schema.AdditionalProperties.Schema) {
+		if valueExample := ps.p.buildExampleFromRef(schema.AdditionalProperties.Schema, map[string]bool{}); valueExample != nil {
+			schema.Example = map[string]any{keyName: valueExample}
+		} else {
+			schema.Example = nil
+		}
+	}
+
+	return nil
 }
 
 // complementSchema complement schema with field properties
