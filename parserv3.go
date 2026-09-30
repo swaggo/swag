@@ -569,6 +569,11 @@ func (p *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 }
 
 func processRouterOperationV3(p *Parser, o *OperationV3) error {
+	if o.Responses != nil && o.Responses.Spec != nil &&
+		len(o.Responses.Spec.Response) == 0 && o.Responses.Spec.Default == nil {
+		p.debug.Printf("warning: operation has no documented responses (missing @Success/@Failure/@Response)")
+	}
+
 	for _, routeProperties := range o.RouterProperties {
 		var (
 			pathItem *spec.RefOrSpec[spec.Extendable[spec.PathItem]]
