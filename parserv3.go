@@ -39,6 +39,7 @@ var (
 
 func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 	previousAttribute := ""
+	var tag *spec.Extendable[spec.Tag]
 
 	// parsing classic meta data model
 	for line := 0; line < len(comments); line++ {
@@ -97,36 +98,43 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 		case "@schemes":
 			println("@schemes is deprecated use servers instead")
 		case "@tag.name":
-			tag := &spec.Extendable[spec.Tag]{
-				Spec: &spec.Tag{
-					Name: value,
-				},
-			}
+			if p.matchTag(value) {
+				tag = &spec.Extendable[spec.Tag]{
+					Spec: &spec.Tag{
+						Name: value,
+					},
+				}
 
-			p.openAPI.Tags = append(p.openAPI.Tags, tag)
+				p.openAPI.Tags = append(p.openAPI.Tags, tag)
+			} else {
+				tag = nil
+			}
 		case "@tag.description":
-			tag := p.openAPI.Tags[len(p.openAPI.Tags)-1]
-			tag.Spec.Description = value
+			if tag != nil {
+				tag.Spec.Description = value
+			}
 		case "@tag.description.markdown":
-			tag := p.openAPI.Tags[len(p.openAPI.Tags)-1]
+			if tag != nil {
+				commentInfo, err := getMarkdownForTag(tag.Spec.Name, p.markdownFileDir)
+				if err != nil {
+					return err
+				}
 
-			commentInfo, err := getMarkdownForTag(tag.Spec.Name, p.markdownFileDir)
-			if err != nil {
-				return err
+				tag.Spec.Description = string(commentInfo)
 			}
-
-			tag.Spec.Description = string(commentInfo)
 		case "@tag.docs.url":
-			tag := p.openAPI.Tags[len(p.openAPI.Tags)-1]
-			tag.Spec.ExternalDocs = spec.NewExternalDocs()
-			tag.Spec.ExternalDocs.Spec.URL = value
-		case "@tag.docs.description":
-			tag := p.openAPI.Tags[len(p.openAPI.Tags)-1]
-			if tag.Spec.ExternalDocs == nil {
-				return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
+			if tag != nil {
+				tag.Spec.ExternalDocs = spec.NewExternalDocs()
+				tag.Spec.ExternalDocs.Spec.URL = value
 			}
+		case "@tag.docs.description":
+			if tag != nil {
+				if tag.Spec.ExternalDocs == nil {
+					return fmt.Errorf("%s needs to come after a @tags.docs.url", attribute)
+				}
 
-			tag.Spec.ExternalDocs.Spec.Description = value
+				tag.Spec.ExternalDocs.Spec.Description = value
+			}
 		case secBasicAttr, secAPIKeyAttr, secApplicationAttr, secImplicitAttr, secPasswordAttr, secAccessCodeAttr, secBearerAuthAttr:
 			key, scheme, err := parseSecAttributesV3(attribute, comments, &line)
 			if err != nil {
