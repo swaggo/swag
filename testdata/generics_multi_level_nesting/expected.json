@@ -35,10 +35,12 @@
             "type": "object",
             "properties": {
                 "timestamp": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 },
                 "value": {
-                    "type": "number"
+                    "type": "number",
+                    "format": "float64"
                 }
             }
         },
@@ -46,10 +48,12 @@
             "type": "object",
             "properties": {
                 "timestamp": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 },
                 "value": {
-                    "type": "integer"
+                    "type": "integer",
+                    "format": "int64"
                 }
             }
         },

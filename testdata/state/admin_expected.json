@@ -329,6 +329,7 @@
                 },
                 "price": {
                     "type": "number",
+                    "format": "float32",
                     "multipleOf": 0.01,
                     "example": 3.25
                 },

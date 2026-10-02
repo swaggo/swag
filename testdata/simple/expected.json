@@ -653,6 +653,7 @@
         },
         "price": {
           "type": "number",
+          "format": "float32",
           "maximum": 1000,
           "minimum": 1,
           "multipleOf": 0.01,
@@ -782,7 +783,8 @@
       "type": "object",
       "properties": {
         "Err": {
-          "type": "integer"
+          "type": "integer",
+          "format": "int32"
         },
         "Status": {
           "type": "boolean"

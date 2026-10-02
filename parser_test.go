@@ -1294,6 +1294,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "format": "float32",
                     "maximum": 130,
                     "minimum": 0,
                     "multipleOf": 0.01,
@@ -1753,6 +1754,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "format": "float32",
                     "multipleOf": 0.01,
                     "example": 3.25
                 },
@@ -3890,6 +3892,45 @@ func TestParseJSONFieldString(t *testing.T) {
 	assert.NoError(t, err)
 	b, _ := json.MarshalIndent(p.swagger, "", "    ")
 	assert.Equal(t, expected, string(b))
+}
+
+func TestParsePrimitiveFieldFormatPreservedWithJSONTag(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package main
+
+type Payload struct {
+	ID     int64   ` + "`" + `json:"id"` + "`" + `
+	Count  *int64  ` + "`" + `json:"count" example:"1"` + "`" + `
+	Code   int32   ` + "`" + `json:"code"` + "`" + `
+	Amount float64 ` + "`" + `json:"amount"` + "`" + `
+	IDs    []int64 ` + "`" + `json:"ids"` + "`" + `
+	Custom int64   ` + "`" + `json:"custom" format:"unix-time"` + "`" + `
+}
+
+// @Success 200 {object} Payload
+// @Router /test [get]
+func Fun() {}
+`
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	_, err = p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	schema, ok := p.swagger.Definitions["main.Payload"]
+	assert.True(t, ok)
+	assert.Equal(t, "int64", schema.Properties["id"].Format)
+	assert.Equal(t, "int64", schema.Properties["count"].Format)
+	assert.Equal(t, "int32", schema.Properties["code"].Format)
+	assert.Equal(t, "float64", schema.Properties["amount"].Format)
+	assert.Equal(t, "int64", schema.Properties["ids"].Items.Schema.Format)
+	assert.Equal(t, "unix-time", schema.Properties["custom"].Format)
 }
 
 func TestParseSwaggerignoreForEmbedded(t *testing.T) {

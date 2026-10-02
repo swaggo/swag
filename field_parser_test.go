@@ -60,6 +60,74 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Equal(t, "csv", schema.Format)
 	})
 
+	t.Run("Preserve inferred format without format tag", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"integer"}
+		schema.Format = "int64"
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"id" example:"1"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "int64", schema.Format)
+	})
+
+	t.Run("Format tag overrides inferred format", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"integer"}
+		schema.Format = "int64"
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"id" format:"unix-time"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "unix-time", schema.Format)
+	})
+
+	t.Run("Preserve inferred array item format without format tag", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"array"}
+		schema.Items = &spec.SchemaOrArray{Schema: &spec.Schema{}}
+		schema.Items.Schema.Type = []string{"integer"}
+		schema.Items.Schema.Format = "int64"
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"ids"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "int64", schema.Items.Schema.Format)
+	})
+
+	t.Run("Format tag overrides inferred array item format", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{}
+		schema.Type = []string{"array"}
+		schema.Items = &spec.SchemaOrArray{Schema: &spec.Schema{}}
+		schema.Items.Schema.Type = []string{"string"}
+		schema.Items.Schema.Format = "byte"
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"ids" format:"uuid"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "uuid", schema.Items.Schema.Format)
+	})
+
 	t.Run("Title tag", func(t *testing.T) {
 		t.Parallel()
 
