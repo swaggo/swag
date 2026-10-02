@@ -687,3 +687,43 @@ func TestGetSchemaByRef(t *testing.T) {
 		assert.Equal(t, &spec.Schema{}, result)
 	})
 }
+
+func TestParseQueryObjectWithNamedTypeFieldsV3(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/v3/query_object_ref"
+	p := New(GenerateOpenAPI3Doc(true))
+
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	require.NoError(t, err)
+
+	operation := p.openAPI.Paths.Spec.Paths["/posts"].Spec.Spec.Get.Spec
+	params := make(map[string]*spec.Parameter, len(operation.Parameters))
+	for _, param := range operation.Parameters {
+		params[param.Spec.Spec.Name] = param.Spec.Spec
+	}
+
+	// A slice of a named string type must be exploded into an array parameter
+	// whose items carry the underlying type and its enum values.
+	includes := params["include"]
+	require.NotNil(t, includes, "expected an `include` query parameter")
+	assert.Equal(t, "query", includes.In)
+	assert.Equal(t, &typeArray, includes.Schema.Spec.Type)
+	assert.Equal(t, &typeString, includes.Schema.Spec.Items.Schema.Spec.Type)
+	assert.Equal(t, []any{"author", "comments"}, includes.Schema.Spec.Items.Schema.Spec.Enum)
+
+	// A scalar field of a named string type must resolve to its underlying type.
+	single := params["single_include"]
+	require.NotNil(t, single, "expected a `single_include` query parameter")
+	assert.Equal(t, &typeString, single.Schema.Spec.Type)
+	assert.Equal(t, []any{"author", "comments"}, single.Schema.Spec.Enum)
+
+	// Primitive fields keep working.
+	limit := params["limit"]
+	require.NotNil(t, limit, "expected a `limit` query parameter")
+	assert.Equal(t, &typeInteger, limit.Schema.Spec.Type)
+
+	// Object-typed fields are not representable as query parameters and are skipped.
+	assert.NotContains(t, params, "item")
+	assert.NotContains(t, params, "items")
+}
