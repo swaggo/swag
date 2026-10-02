@@ -489,9 +489,11 @@ func TestParser_ParseAcceptComment(t *testing.T) {
 		"application/xhtml+xml",
 		"application/health+json",
 		"text/event-stream",
+		"application/json-patch+json",
+		"application/pdf",
 	}
 
-	comment := `@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,event-stream`
+	comment := `@Accept json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,event-stream,json-patch,pdf`
 
 	parser := New()
 	assert.NoError(t, parseGeneralAPIInfo(parser, []string{comment}))
@@ -523,9 +525,11 @@ func TestParser_ParseProduceComment(t *testing.T) {
 		"application/xhtml+xml",
 		"application/health+json",
 		"text/event-stream",
+		"application/json-patch+json",
+		"application/pdf",
 	}
 
-	comment := `@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,event-stream`
+	comment := `@Produce json,xml,plain,html,mpfd,x-www-form-urlencoded,json-api,json-stream,octet-stream,png,jpeg,gif,application/xhtml+xml,application/health+json,event-stream,json-patch,pdf`
 
 	parser := New()
 	assert.NoError(t, parseGeneralAPIInfo(parser, []string{comment}))
