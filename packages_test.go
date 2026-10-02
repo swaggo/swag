@@ -2,6 +2,7 @@ package swag
 
 import (
 	"go/ast"
+	goparser "go/parser"
 	"go/token"
 	"path/filepath"
 	"runtime"
@@ -190,6 +191,33 @@ func TestPackagesDefinitions_FindTypeSpec(t *testing.T) {
 
 	assert.Equal(t, &userDef, pkg.FindTypeSpec("user.Model", nil))
 	assert.Equal(t, nilDef, pkg.FindTypeSpec("Model", nil))
+}
+
+func TestPackagesDefinitions_FindTypeSpecFromExternalPackageFile(t *testing.T) {
+	fileSet := token.NewFileSet()
+	fileA, err := goparser.ParseFile(fileSet, "a.go", `package shared
+type Outer struct {
+	Items []*Inner
+}
+type Inner struct {
+	ID int
+}`, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	fileB, err := goparser.ParseFile(fileSet, "b.go", `package shared
+type Inner struct {
+	Name string
+}`, goparser.ParseComments)
+	assert.NoError(t, err)
+
+	pkgDefs := NewPackagesDefinitions()
+	pkgDefs.parseTypesFromFile(fileA, "example.com/a/shared", nil)
+	pkgDefs.parseTypesFromFile(fileB, "example.com/b/shared", nil)
+	pkgDefs.removeAllNotUniqueTypes()
+
+	innerDef := pkgDefs.FindTypeSpec("Inner", fileA)
+	assert.NotNil(t, innerDef)
+	assert.Equal(t, "example.com/a/shared", innerDef.PkgPath)
 }
 
 func TestPackage_rangeFiles(t *testing.T) {

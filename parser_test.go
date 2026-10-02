@@ -2282,6 +2282,23 @@ func TestParseConflictSchemaName(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseDependencyLocalTypeInNonUniquePackage(t *testing.T) {
+	t.Parallel()
+
+	searchDir := "testdata/dependency_local_type"
+	p := New(SetParseDependency(1))
+	err := p.ParseAPI(searchDir, mainAPIFile, defaultParseDepth)
+	assert.NoError(t, err)
+
+	outer, ok := p.swagger.Definitions["shared.Outer"]
+	assert.True(t, ok)
+
+	items, ok := outer.Properties["items"]
+	assert.True(t, ok)
+	assert.Equal(t, "array", items.Type[0])
+	assert.Equal(t, "#/definitions/github_com_swaggo_swag_testdata_dependency_local_type_pkg_a.Inner", items.Items.Schema.Ref.String())
+}
+
 func TestParseExternalModels(t *testing.T) {
 	searchDir := "testdata/external_models/main"
 	mainAPIFile := "main.go"
