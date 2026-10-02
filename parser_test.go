@@ -4022,6 +4022,36 @@ func TestDefineTypeOfExample(t *testing.T) {
 		assert.Equal(t, obj, map[string]string{"key_one": "one", "key_two": "two", "key_three": "three"})
 	})
 
+	t.Run("Array type with quoted commas", func(t *testing.T) {
+		t.Parallel()
+
+		example, err := defineTypeOfExample("array", "string", `"a,b,c","d,e,f"`)
+		assert.NoError(t, err)
+
+		var arr []string
+
+		for _, v := range example.([]interface{}) {
+			arr = append(arr, v.(string))
+		}
+
+		assert.Equal(t, arr, []string{"a,b,c", "d,e,f"})
+	})
+
+	t.Run("Object type with quoted commas", func(t *testing.T) {
+		t.Parallel()
+
+		example, err := defineTypeOfExample("object", "string", `key_one:"a,b",key_two:two`)
+		assert.NoError(t, err)
+
+		obj := map[string]string{}
+
+		for k, v := range example.(map[string]interface{}) {
+			obj[k] = v.(string)
+		}
+
+		assert.Equal(t, obj, map[string]string{"key_one": "a,b", "key_two": "two"})
+	})
+
 	t.Run("Invalid type", func(t *testing.T) {
 		t.Parallel()
 
