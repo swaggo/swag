@@ -79,6 +79,29 @@ func TestFormat_InvalidSearchDir(t *testing.T) {
 	assert.Error(t, formatter.Build(&Config{SearchDir: "no_such_dir"}))
 }
 
+func TestFormat_RelativePath(t *testing.T) {
+	fx := setup(t)
+	// Create a subdirectory and run format from there with relative path
+	subdir := filepath.Join(fx.basedir, "subdir")
+	if err := os.MkdirAll(subdir, 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Change to subdirectory and format parent with relative path
+	oldWd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(subdir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(oldWd)
+
+	assert.NoError(t, New().Build(&Config{SearchDir: ".."}))
+	assert.True(t, fx.isFormatted("main.go"))
+	assert.True(t, fx.isFormatted("api/api.go"))
+}
+
 type fixture struct {
 	t       *testing.T
 	basedir string
