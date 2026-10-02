@@ -22,7 +22,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 			}},
 		).ComplementSchema(schema)
 		assert.NoError(t, err)
-		assert.Equal(t, "one", schema.Spec.Example)
+		assert.Equal(t, "one", schema.Spec.Examples[0])
 
 		schema = spec.NewSchemaSpec()
 		schema.Spec.Type = &spec.SingleOrArray[string]{STRING}
@@ -34,7 +34,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 			}},
 		).ComplementSchema(schema)
 		assert.NoError(t, err)
-		assert.Equal(t, "", schema.Spec.Example)
+		assert.Nil(t, schema.Spec.Examples)
 
 		schema = spec.NewSchemaSpec()
 		schema.Spec.Type = &spec.SingleOrArray[string]{"float"}
@@ -273,7 +273,7 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		assert.Equal(t, []interface{}{"image", "video"}, componentSchema.Spec.Enum)
 		assert.Equal(t, []string{"PostTypeImage", "PostTypeVideo"}, componentSchema.Spec.Extensions[enumVarNamesExtension])
 		if assert.NotNil(t, schema.Spec) {
-			assert.Equal(t, "video", schema.Spec.Example)
+			assert.Equal(t, "video", schema.Spec.Examples[0])
 			assert.Equal(t, "#/components/schemas/PostType", schema.Spec.Extensions["$ref"])
 			assert.Empty(t, schema.Spec.Enum)
 		}
