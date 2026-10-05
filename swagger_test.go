@@ -1,6 +1,8 @@
 package swag
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -217,7 +219,7 @@ func TestCalledTwicelRegister(t *testing.T) {
 }
 
 func setup() {
-	swags = nil
+	Clear()
 }
 
 func TestGetSwagger(t *testing.T) {
@@ -229,4 +231,158 @@ func TestGetSwagger(t *testing.T) {
 
 	swagger = GetSwagger("invalid")
 	assert.Nil(t, swagger)
+}
+
+func TestUnregister(t *testing.T) {
+	setup()
+	instance := &s{}
+
+	// Register then Read works
+	Register(Name, instance)
+	d, err := ReadDoc()
+	assert.NoError(t, err)
+	assert.Equal(t, doc, d)
+	assert.Equal(t, instance, GetSwagger(Name))
+
+	// Unregister removes the registered instance
+	Unregister(Name)
+	assert.Nil(t, GetSwagger(Name))
+
+	// Read returns ErrDocIsNotRegistered
+	d, err = ReadDoc()
+	assert.Empty(t, d)
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrDocIsNotRegistered)
+
+	// Register again works without panicking
+	assert.NotPanics(t, func() {
+		Register(Name, instance)
+	})
+	d, err = ReadDoc()
+	assert.NoError(t, err)
+	assert.Equal(t, doc, d)
+}
+
+func TestUnregister_Named(t *testing.T) {
+	setup()
+	inst1 := &s{}
+	inst2 := &s{}
+
+	Register("doc1", inst1)
+	Register("doc2", inst2)
+
+	assert.Equal(t, inst1, GetSwagger("doc1"))
+	assert.Equal(t, inst2, GetSwagger("doc2"))
+
+	Unregister("doc1")
+
+	assert.Nil(t, GetSwagger("doc1"))
+	assert.Equal(t, inst2, GetSwagger("doc2"))
+
+	_, err := ReadDoc("doc1")
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrDocIsNotRegistered)
+
+	d2, err := ReadDoc("doc2")
+	assert.NoError(t, err)
+	assert.Equal(t, doc, d2)
+}
+
+func TestUnregister_NilOrNonExistent(t *testing.T) {
+	setup()
+
+	// Calling Unregister on an empty registry does not panic
+	assert.NotPanics(t, func() {
+		Unregister("non_existent")
+	})
+
+	// Calling Unregister for an unregistered name does not affect existing entries
+	Register(Name, &s{})
+	assert.NotPanics(t, func() {
+		Unregister("non_existent")
+	})
+
+	d, err := ReadDoc()
+	assert.NoError(t, err)
+	assert.Equal(t, doc, d)
+}
+
+func TestClear(t *testing.T) {
+	setup()
+	Register(Name, &s{})
+	Register("another_name", &s{})
+	Register("third_name", &s{})
+
+	assert.NotNil(t, GetSwagger(Name))
+	assert.NotNil(t, GetSwagger("another_name"))
+	assert.NotNil(t, GetSwagger("third_name"))
+
+	Clear()
+
+	assert.Nil(t, GetSwagger(Name))
+	assert.Nil(t, GetSwagger("another_name"))
+	assert.Nil(t, GetSwagger("third_name"))
+
+	_, err := ReadDoc()
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrDocIsNotRegistered)
+
+	_, err = ReadDoc("another_name")
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrDocIsNotRegistered)
+
+	// Can register again cleanly after Clear
+	assert.NotPanics(t, func() {
+		Register(Name, &s{})
+	})
+	d, err := ReadDoc()
+	assert.NoError(t, err)
+	assert.Equal(t, doc, d)
+}
+
+func TestClear_NilMap(t *testing.T) {
+	setup()
+	assert.NotPanics(t, func() {
+		Clear()
+	})
+	_, err := ReadDoc()
+	assert.Error(t, err)
+	assert.ErrorIs(t, err, ErrDocIsNotRegistered)
+}
+
+func TestConcurrentAccess(t *testing.T) {
+	setup()
+
+	const workers = 20
+	const iterations = 50
+	var wg sync.WaitGroup
+	wg.Add(workers)
+
+	for i := 0; i < workers; i++ {
+		go func(workerID int) {
+			defer wg.Done()
+			docName := fmt.Sprintf("doc_%d", workerID)
+			instance := &s{}
+
+			for j := 0; j < iterations; j++ {
+				switch j % 5 {
+				case 0:
+					Unregister(docName)
+					Register(docName, instance)
+				case 1:
+					_ = GetSwagger(docName)
+				case 2:
+					_, _ = ReadDoc(docName)
+				case 3:
+					Unregister(docName)
+				case 4:
+					if workerID == 0 && j%10 == 0 {
+						Clear()
+					}
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
 }

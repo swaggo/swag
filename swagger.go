@@ -14,6 +14,9 @@ var (
 	swags     map[string]Swagger
 )
 
+// ErrDocIsNotRegistered is returned when a swag document is not registered.
+var ErrDocIsNotRegistered = errors.New("no swag has yet been registered")
+
 // Swagger is an interface to read swagger document.
 type Swagger interface {
 	ReadDoc() string
@@ -39,6 +42,26 @@ func Register(name string, swagger Swagger) {
 	swags[name] = swagger
 }
 
+// Unregister removes a registered swagger instance by name.
+func Unregister(name string) {
+	swaggerMu.Lock()
+	defer swaggerMu.Unlock()
+
+	if swags == nil {
+		return
+	}
+
+	delete(swags, name)
+}
+
+// Clear removes all registered swagger instances.
+func Clear() {
+	swaggerMu.Lock()
+	defer swaggerMu.Unlock()
+
+	swags = nil
+}
+
 // GetSwagger returns the swagger instance for given name.
 // If not found, returns nil.
 func GetSwagger(name string) Swagger {
@@ -55,7 +78,7 @@ func ReadDoc(optionalName ...string) (string, error) {
 	defer swaggerMu.RUnlock()
 
 	if swags == nil {
-		return "", errors.New("no swag has yet been registered")
+		return "", ErrDocIsNotRegistered
 	}
 
 	name := Name
@@ -65,7 +88,7 @@ func ReadDoc(optionalName ...string) (string, error) {
 
 	swag, ok := swags[name]
 	if !ok {
-		return "", fmt.Errorf("no swag named \"%s\" was registered", name)
+		return "", fmt.Errorf("no swag named \"%s\" was registered: %w", name, ErrDocIsNotRegistered)
 	}
 
 	return swag.ReadDoc(), nil
