@@ -122,6 +122,43 @@ func TestPackagesDefinitions_ParseTypes(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestPackagesDefinitions_ParseTypesEnumsOrderedByFilePath(t *testing.T) {
+	packageDir := "github.com/swaggo/swag/testdata/model"
+	expected := []string{"AbcNotFound", "AbcInternalError", "XyzNotFound", "XyzInternalError"}
+
+	// map iteration is random, repeat to make an unordered result show up
+	for i := 0; i < 50; i++ {
+		pd := NewPackagesDefinitions()
+		assert.NoError(t, pd.ParseFile(packageDir, "testdata/model/b.go", `package model
+
+const (
+	XyzNotFound      ErrCode = 404002
+	XyzInternalError ErrCode = 500002
+)
+`, ParseAll))
+		assert.NoError(t, pd.ParseFile(packageDir, "testdata/model/a.go", `package model
+
+type ErrCode int
+
+const (
+	AbcNotFound      ErrCode = 404001
+	AbcInternalError ErrCode = 500001
+)
+`, ParseAll))
+
+		_, err := pd.ParseTypes()
+		assert.NoError(t, err)
+
+		var names []string
+		for _, enum := range pd.packages[packageDir].TypeDefinitions["ErrCode"].Enums {
+			names = append(names, enum.key)
+		}
+		if !assert.Equal(t, expected, names) {
+			break
+		}
+	}
+}
+
 func TestPackagesDefinitions_parseFunctionScopedTypesFromFile(t *testing.T) {
 	mainAST := &ast.File{
 		Name: &ast.Ident{Name: "main.go"},
