@@ -607,5 +607,14 @@ func (ps *tagBaseFieldParserV3) IsRequired() (bool, error) {
 		}
 	}
 
+	jsonTag := ps.tag.Get(jsonTag)
+	if jsonTag != "" {
+		for _, val := range strings.Split(jsonTag, ",") {
+			if val == omitEmptyLabel {
+				return false, nil
+			}
+		}
+	}
+
 	return ps.p.RequiredByDefault, nil
 }

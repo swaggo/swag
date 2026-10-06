@@ -130,6 +130,30 @@ func TestDefaultFieldParserV3(t *testing.T) {
 		).IsRequired()
 		assert.NoError(t, err)
 		assert.False(t, got)
+
+		got, err = newTagBaseFieldParserV3(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test,omitempty"`,
+			}},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+
+		got, err = newTagBaseFieldParserV3(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.File{Name: &ast.Ident{Name: "test"}},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test,omitempty" validate:"required"`,
+			}},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.True(t, got)
 	})
 
 	t.Run("Skipped tag", func(t *testing.T) {

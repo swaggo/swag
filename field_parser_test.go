@@ -136,6 +136,28 @@ func TestDefaultFieldParser(t *testing.T) {
 		).IsRequired()
 		assert.NoError(t, err)
 		assert.False(t, got)
+
+		got, err = newTagBaseFieldParser(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test,omitempty"`,
+			}},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.False(t, got)
+
+		got, err = newTagBaseFieldParser(
+			&Parser{
+				RequiredByDefault: true,
+			},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"test,omitempty" validate:"required"`,
+			}},
+		).IsRequired()
+		assert.NoError(t, err)
+		assert.True(t, got)
 	})
 
 	t.Run("Extensions tag", func(t *testing.T) {
