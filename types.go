@@ -52,7 +52,7 @@ func (t *TypeSpecDef) TypeName() string {
 	var names []string
 	if t.NotUnique {
 		pkgPath := strings.Map(func(r rune) rune {
-			if r == '\\' || r == '/' || r == '.' {
+			if r == '\\' || r == '/' || r == '.' || r == '-' {
 				return '_'
 			}
 			return r
