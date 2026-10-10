@@ -1220,7 +1220,7 @@ func refRouteMethodOp(item *spec.PathItem, method string) (op **spec.Operation) 
 }
 
 func processRouterOperation(parser *Parser, operation *Operation) error {
-	for _, routeProperties := range operation.RouterProperties {
+	for i, routeProperties := range operation.RouterProperties {
 		var (
 			pathItem spec.PathItem
 			ok       bool
@@ -1254,6 +1254,16 @@ func processRouterOperation(parser *Parser, operation *Operation) error {
 				validParams = append(validParams, param)
 			}
 			newOp.Operation.OperationProps.Parameters = validParams
+			if i > 0 && newOp.Operation.ID != "" {
+				baseID := newOp.Operation.ID
+				suffix := i
+				candidate := fmt.Sprintf("%s-%d", baseID, suffix)
+				for parser.hasOperationID(candidate) {
+					suffix++
+					candidate = fmt.Sprintf("%s-%d", baseID, suffix)
+				}
+				newOp.Operation.ID = candidate
+			}
 			*op = &newOp.Operation
 		} else {
 			*op = &operation.Operation
@@ -1971,36 +1981,112 @@ func (parser *Parser) parseFile(packageDir, path string, src interface{}, flag P
 	return parser.packages.ParseFile(packageDir, path, src, flag)
 }
 
+func (parser *Parser) hasOperationID(id string) bool {
+	if parser.swagger == nil || parser.swagger.Paths == nil {
+		return false
+	}
+	for _, item := range parser.swagger.Paths.Paths {
+		for method := range allMethod {
+			op := refRouteMethodOp(&item, method)
+			if *op != nil && (**op).ID == id {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (parser *Parser) checkOperationIDUniqueness() error {
-	// operationsIds contains all operationId annotations to check it's unique
 	operationsIds := make(map[string]string)
 
-	for path, item := range parser.swagger.Paths.Paths {
-		var method, id string
+	if parser.openAPIVersion {
+		if parser.openAPI == nil || parser.openAPI.Paths == nil || parser.openAPI.Paths.Spec == nil {
+			return nil
+		}
 
-		for method = range allMethod {
-			op := refRouteMethodOp(&item, method)
-			if *op != nil {
-				id = (**op).ID
+		paths := make([]string, 0, len(parser.openAPI.Paths.Spec.Paths))
+		for p := range parser.openAPI.Paths.Spec.Paths {
+			paths = append(paths, p)
+		}
+		sort.Strings(paths)
 
-				break
+		for _, path := range paths {
+			pathItemRef := parser.openAPI.Paths.Spec.Paths[path]
+			if pathItemRef == nil || pathItemRef.Spec == nil || pathItemRef.Spec.Spec == nil {
+				continue
+			}
+			pathItem := pathItemRef.Spec.Spec
+
+			checkOp := func(method string, opRef *openapi.Extendable[openapi.Operation]) error {
+				if opRef == nil || opRef.Spec == nil || opRef.Spec.OperationID == "" {
+					return nil
+				}
+				id := opRef.Spec.OperationID
+				current := fmt.Sprintf("%s %s", method, path)
+				if previous, ok := operationsIds[id]; ok {
+					return fmt.Errorf(
+						"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
+						id, current, previous)
+				}
+				operationsIds[id] = current
+				return nil
+			}
+
+			methods := []struct {
+				name string
+				op   *openapi.Extendable[openapi.Operation]
+			}{
+				{http.MethodGet, pathItem.Get},
+				{http.MethodPost, pathItem.Post},
+				{http.MethodPut, pathItem.Put},
+				{http.MethodDelete, pathItem.Delete},
+				{http.MethodPatch, pathItem.Patch},
+				{http.MethodHead, pathItem.Head},
+				{http.MethodOptions, pathItem.Options},
+				{http.MethodTrace, pathItem.Trace},
+			}
+			for _, m := range methods {
+				if err := checkOp(m.name, m.op); err != nil {
+					return err
+				}
 			}
 		}
 
-		if id == "" {
-			continue
+		return nil
+	}
+
+	paths := make([]string, 0, len(parser.swagger.Paths.Paths))
+	for p := range parser.swagger.Paths.Paths {
+		paths = append(paths, p)
+	}
+	sort.Strings(paths)
+
+	methodNames := []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodDelete,
+		http.MethodPatch,
+		http.MethodHead,
+		http.MethodOptions,
+	}
+
+	for _, path := range paths {
+		item := parser.swagger.Paths.Paths[path]
+		for _, method := range methodNames {
+			op := refRouteMethodOp(&item, method)
+			if *op != nil && (**op).ID != "" {
+				id := (**op).ID
+				current := fmt.Sprintf("%s %s", method, path)
+				previous, ok := operationsIds[id]
+				if ok {
+					return fmt.Errorf(
+						"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
+						id, current, previous)
+				}
+				operationsIds[id] = current
+			}
 		}
-
-		current := fmt.Sprintf("%s %s", method, path)
-
-		previous, ok := operationsIds[id]
-		if ok {
-			return fmt.Errorf(
-				"duplicated @id annotation '%s' found in '%s', previously declared in: '%s'",
-				id, current, previous)
-		}
-
-		operationsIds[id] = current
 	}
 
 	return nil

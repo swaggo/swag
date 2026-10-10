@@ -687,3 +687,113 @@ func TestGetSchemaByRef(t *testing.T) {
 		assert.Equal(t, &spec.Schema{}, result)
 	})
 }
+
+func TestMultiRouterOperationIDUniquenessV3(t *testing.T) {
+	t.Parallel()
+
+	t.Run("Disambiguates duplicate operationId across multiple routers", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(GenerateOpenAPI3Doc(true))
+		operation := NewOperationV3(p)
+
+		comments := []string{
+			`@Summary Multi router operation`,
+			`@Description Handles multiple endpoints`,
+			`@ID getWishlist`,
+			`@Param wishlist_id path string true "Wishlist ID"`,
+			`@Router /customer/get-wishlist/{wishlist_id} [get]`,
+			`@Router /customer/get-the-wishlist/{wishlist_id} [get]`,
+			`@Router /customer/legacy-wishlist [get]`,
+		}
+		for _, comment := range comments {
+			err := operation.ParseComment(comment, nil)
+			require.NoError(t, err)
+		}
+
+		err := processRouterOperationV3(p, operation)
+		require.NoError(t, err)
+
+		err = p.checkOperationIDUniqueness()
+		require.NoError(t, err)
+
+		paths := p.openAPI.Paths.Spec.Paths
+		require.Len(t, paths, 3)
+
+		op1 := paths["/customer/get-wishlist/{wishlist_id}"].Spec.Spec.Get.Spec
+		require.NotNil(t, op1)
+		assert.Equal(t, "getWishlist", op1.OperationID)
+		assert.Len(t, op1.Parameters, 1)
+
+		op2 := paths["/customer/get-the-wishlist/{wishlist_id}"].Spec.Spec.Get.Spec
+		require.NotNil(t, op2)
+		assert.Equal(t, "getWishlist-1", op2.OperationID)
+		assert.Len(t, op2.Parameters, 1)
+
+		op3 := paths["/customer/legacy-wishlist"].Spec.Spec.Get.Spec
+		require.NotNil(t, op3)
+		assert.Equal(t, "getWishlist-2", op3.OperationID)
+		assert.Len(t, op3.Parameters, 0)
+	})
+
+	t.Run("Avoids collision when candidate suffixed ID is already taken", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(GenerateOpenAPI3Doc(true))
+
+		preExistingOp := NewOperationV3(p)
+		require.NoError(t, preExistingOp.ParseComment(`@ID getWishlist-1`, nil))
+		require.NoError(t, preExistingOp.ParseComment(`@Router /existing [get]`, nil))
+		require.NoError(t, processRouterOperationV3(p, preExistingOp))
+
+		op := NewOperationV3(p)
+		require.NoError(t, op.ParseComment(`@ID getWishlist`, nil))
+		require.NoError(t, op.ParseComment(`@Router /route1 [get]`, nil))
+		require.NoError(t, op.ParseComment(`@Router /route2 [get]`, nil))
+		require.NoError(t, processRouterOperationV3(p, op))
+
+		require.NoError(t, p.checkOperationIDUniqueness())
+
+		paths := p.openAPI.Paths.Spec.Paths
+		assert.Equal(t, "getWishlist", paths["/route1"].Spec.Spec.Get.Spec.OperationID)
+		assert.Equal(t, "getWishlist-2", paths["/route2"].Spec.Spec.Get.Spec.OperationID)
+	})
+
+	t.Run("Duplicate @ID across distinct handlers returns error in v3", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(GenerateOpenAPI3Doc(true))
+
+		op1 := NewOperationV3(p)
+		require.NoError(t, op1.ParseComment(`@ID sameID`, nil))
+		require.NoError(t, op1.ParseComment(`@Router /handler1 [get]`, nil))
+		require.NoError(t, processRouterOperationV3(p, op1))
+
+		op2 := NewOperationV3(p)
+		require.NoError(t, op2.ParseComment(`@ID sameID`, nil))
+		require.NoError(t, op2.ParseComment(`@Router /handler2 [get]`, nil))
+		require.NoError(t, processRouterOperationV3(p, op2))
+
+		err := p.checkOperationIDUniqueness()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "duplicated @id annotation 'sameID'")
+	})
+
+	t.Run("Multi router without @ID leaves operationId empty without collision", func(t *testing.T) {
+		t.Parallel()
+
+		p := New(GenerateOpenAPI3Doc(true))
+
+		op := NewOperationV3(p)
+		require.NoError(t, op.ParseComment(`@Summary No ID operation`, nil))
+		require.NoError(t, op.ParseComment(`@Router /noid/1 [get]`, nil))
+		require.NoError(t, op.ParseComment(`@Router /noid/2 [get]`, nil))
+		require.NoError(t, processRouterOperationV3(p, op))
+
+		require.NoError(t, p.checkOperationIDUniqueness())
+
+		paths := p.openAPI.Paths.Spec.Paths
+		assert.Empty(t, paths["/noid/1"].Spec.Spec.Get.Spec.OperationID)
+		assert.Empty(t, paths["/noid/2"].Spec.Spec.Get.Spec.OperationID)
+	})
+}
