@@ -568,13 +568,40 @@ func (p *Parser) ParseRouterAPIInfoV3(fileInfo *AstFileInfo) error {
 	return nil
 }
 
+func (p *Parser) hasOperationIDV3(id string) bool {
+	if p.openAPI == nil || p.openAPI.Paths == nil || p.openAPI.Paths.Spec == nil {
+		return false
+	}
+	for _, pathItemRef := range p.openAPI.Paths.Spec.Paths {
+		if pathItemRef == nil || pathItemRef.Spec == nil || pathItemRef.Spec.Spec == nil {
+			continue
+		}
+		pathItem := pathItemRef.Spec.Spec
+		for _, opRef := range []*spec.Extendable[spec.Operation]{
+			pathItem.Get,
+			pathItem.Post,
+			pathItem.Put,
+			pathItem.Delete,
+			pathItem.Patch,
+			pathItem.Head,
+			pathItem.Options,
+			pathItem.Trace,
+		} {
+			if opRef != nil && opRef.Spec != nil && opRef.Spec.OperationID == id {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func processRouterOperationV3(p *Parser, o *OperationV3) error {
 	if o.Responses != nil && o.Responses.Spec != nil &&
 		len(o.Responses.Spec.Response) == 0 && o.Responses.Spec.Default == nil {
 		p.debug.Printf("warning: operation has no documented responses (missing @Success/@Failure/@Response)")
 	}
 
-	for _, routeProperties := range o.RouterProperties {
+	for i, routeProperties := range o.RouterProperties {
 		var (
 			pathItem *spec.RefOrSpec[spec.Extendable[spec.PathItem]]
 			ok       bool
@@ -601,7 +628,39 @@ func processRouterOperationV3(p *Parser, o *OperationV3) error {
 			p.debug.Printf("warning: %s\n", err)
 		}
 
-		*op = &o.Operation
+		if len(o.RouterProperties) > 1 {
+			newOp := o.Operation
+			if len(newOp.Parameters) > 0 {
+				var validParams []*spec.RefOrSpec[spec.Extendable[spec.Parameter]]
+				for _, param := range newOp.Parameters {
+					if param != nil && param.Spec != nil && param.Spec.Spec != nil {
+						if param.Spec.Spec.In == "path" && !strings.Contains(routeProperties.Path, param.Spec.Spec.Name) {
+							// This path param is not actually contained in the path, skip adding it to the final params
+							continue
+						}
+					}
+					validParams = append(validParams, param)
+				}
+				newOp.Parameters = validParams
+			}
+			if i > 0 && newOp.OperationID != "" {
+				baseID := newOp.OperationID
+				suffix := i
+				candidate := fmt.Sprintf("%s-%d", baseID, suffix)
+				for p.hasOperationIDV3(candidate) {
+					suffix++
+					candidate = fmt.Sprintf("%s-%d", baseID, suffix)
+				}
+				newOp.OperationID = candidate
+			}
+			*op = &newOp
+		} else {
+			*op = &o.Operation
+		}
+
+		if routeProperties.Deprecated {
+			(*op).Deprecated = routeProperties.Deprecated
+		}
 
 		p.openAPI.Paths.Spec.Paths[routeProperties.Path] = pathItem
 	}

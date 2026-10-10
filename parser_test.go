@@ -2989,6 +2989,42 @@ func Test(){
 	assert.Equal(t, 1, len(val.Get.Parameters))
 }
 
+func TestParser_ParseRouterApiMultiplePathsWithOperationID(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package test
+
+// @Success 200
+// @ID getAddress
+// @Router /examples/groups/{group_id}/user/{user_id}/address [get]
+// @Router /examples/user/{user_id}/address [get]
+// @Router /examples/address [get]
+func Test(){
+}
+`
+	p := New()
+	err := p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	err = p.checkOperationIDUniqueness()
+	assert.NoError(t, err)
+
+	ps := p.swagger.Paths.Paths
+
+	op1 := ps["/examples/groups/{group_id}/user/{user_id}/address"]
+	assert.Equal(t, "getAddress", op1.Get.ID)
+
+	op2 := ps["/examples/user/{user_id}/address"]
+	assert.Equal(t, "getAddress-1", op2.Get.ID)
+
+	op3 := ps["/examples/address"]
+	assert.Equal(t, "getAddress-2", op3.Get.ID)
+}
+
 // func TestParseDeterministic(t *testing.T) {
 // 	mainAPIFile := "main.go"
 // 	for _, searchDir := range []string{
