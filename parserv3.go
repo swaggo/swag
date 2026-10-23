@@ -161,7 +161,7 @@ func (p *Parser) parseGeneralAPIInfoV3(comments []string) error {
 			}
 
 		case "@x-taggroups":
-			originalAttribute := strings.Split(commentLine, " ")[0]
+			originalAttribute := strings.Fields(commentLine)[0]
 			if len(value) == 0 {
 				return fmt.Errorf("annotation %s need a value", attribute)
 			}
