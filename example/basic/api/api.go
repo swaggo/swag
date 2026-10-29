@@ -58,7 +58,7 @@ func GetStructArrayByString(w http.ResponseWriter, r *http.Request) {
 //	@Success		200		{string}	string			"ok"
 //	@Failure		400		{object}	web.APIError	"We need ID!!"
 //	@Failure		404		{object}	web.APIError	"Can not find ID"
-//	@Router			/file/upload [post]
+//	@Router			/testapi/upload [post]
 func Upload(w http.ResponseWriter, r *http.Request) {
 	// write your code
 }
