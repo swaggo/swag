@@ -730,7 +730,12 @@ func parseMimeTypeList(mimeTypeList string, typeList *[]string, format string) e
 	return nil
 }
 
-var routerPattern = regexp.MustCompile(`^(/[\w./\-{}\(\)+:$~@]*)[[:blank:]]+\[(\w+)]`)
+// The path whitelist covers the ASCII characters historically supported by
+// swag (word characters, separators, and the {}()+:$~@ signs used by common
+// router frameworks) plus Unicode letters (\p{L}), combining marks (\p{M}),
+// and numbers (\p{N}), so that non-ASCII route paths such as "/用户" or
+// "/café" are parsed instead of being rejected.
+var routerPattern = regexp.MustCompile(`^(/[\w./\-{}\(\)+:$~@\p{L}\p{M}\p{N}]*)[[:blank:]]+\[(\w+)]`)
 
 // ParseRouterComment parses comment for given `router` comment string.
 func (operation *Operation) ParseRouterComment(commentLine string, deprecated bool) error {
