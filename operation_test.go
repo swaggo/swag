@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-openapi/spec"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseEmptyComment(t *testing.T) {
@@ -270,6 +271,79 @@ func TestParseRouterCommentWithAt(t *testing.T) {
 	operation := NewOperation(nil)
 	err := operation.ParseComment(comment, nil)
 	assert.NoError(t, err)
+}
+
+func TestParseRouterCommentWithUnicodePath(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name       string
+		comment    string
+		wantPath   string
+		wantMethod string
+		wantError  bool
+	}{
+		{
+			name:       "ascii path with parameter (control case)",
+			comment:    `// @Router /customer/get-wishlist/{wishlist_id} [get]`,
+			wantPath:   "/customer/get-wishlist/{wishlist_id}",
+			wantMethod: "GET",
+		},
+		{
+			name:       "chinese literal path",
+			comment:    `// @Router /用户 [get]`,
+			wantPath:   "/用户",
+			wantMethod: "GET",
+		},
+		{
+			name:       "chinese path mixed with ascii path parameter",
+			comment:    `// @Router /用户/{id}/订单 [post]`,
+			wantPath:   "/用户/{id}/订单",
+			wantMethod: "POST",
+		},
+		{
+			name:       "latin letters with combining mark (NFD)",
+			comment:    "// @Router /cafe\u0301/{id} [post]",
+			wantPath:   "/cafe\u0301/{id}",
+			wantMethod: "POST",
+		},
+		{
+			name:       "precomposed latin letters",
+			comment:    "// @Router /café/{id} [put]",
+			wantPath:   "/café/{id}",
+			wantMethod: "PUT",
+		},
+		{
+			name:       "unicode digits",
+			comment:    "// @Router /order/१२३ [delete]",
+			wantPath:   "/order/१२३",
+			wantMethod: "DELETE",
+		},
+		{
+			name:      "path must start with slash",
+			comment:   `// @Router 用户 [get]`,
+			wantError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		tcc := tc
+		t.Run(tcc.name, func(t *testing.T) {
+			t.Parallel()
+
+			operation := NewOperation(nil)
+			err := operation.ParseComment(tcc.comment, nil)
+			if tcc.wantError {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Len(t, operation.RouterProperties, 1)
+			assert.Equal(t, tcc.wantPath, operation.RouterProperties[0].Path)
+			assert.Equal(t, tcc.wantMethod, operation.RouterProperties[0].HTTPMethod)
+		})
+	}
 }
 
 func TestParseRouterCommentMethodSeparationErr(t *testing.T) {
