@@ -575,6 +575,18 @@ func (pkgDefs *PackagesDefinitions) loadExternalPackage(importPath string) error
 	for _, info := range loaderProgram.AllPackages {
 		pkgPath := strings.TrimPrefix(info.Pkg.Path(), "vendor/")
 		for _, astFile := range info.Files {
+			if pkgDefs.files == nil {
+				pkgDefs.files = make(map[*ast.File]*AstFileInfo)
+			}
+			if _, exists := pkgDefs.files[astFile]; !exists {
+				pkgDefs.files[astFile] = &AstFileInfo{
+					FileSet:     loaderProgram.Fset,
+					File:        astFile,
+					Path:        loaderProgram.Fset.Position(astFile.Pos()).Filename,
+					PackagePath: pkgPath,
+					ParseFlag:   ParseModels,
+				}
+			}
 			pkgDefs.parseTypesFromFile(astFile, pkgPath, nil)
 		}
 	}
@@ -646,7 +658,11 @@ func (pkgDefs *PackagesDefinitions) findPackagePathFromImports(pkg string, file 
 	}
 
 	if len(pkg) == 0 || file.Name.Name == pkg {
-		matchedPkgPaths = append(matchedPkgPaths, pkgDefs.files[file].PackagePath)
+		if pkgDefs.files != nil {
+			if fi, ok := pkgDefs.files[file]; ok && fi != nil {
+				matchedPkgPaths = append(matchedPkgPaths, fi.PackagePath)
+			}
+		}
 	}
 
 	return

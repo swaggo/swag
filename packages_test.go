@@ -262,3 +262,35 @@ func TestPackagesDefinitions_findTypeSpec(t *testing.T) {
 	assert.Equal(t, nilTypeSpec, pd.findTypeSpec("others", "User"))
 
 }
+
+func TestPackagesDefinitions_findPackagePathFromImports_MissingFile(t *testing.T) {
+	// 1. Missing file in files map does not panic
+	pd := &PackagesDefinitions{
+		files: make(map[*ast.File]*AstFileInfo),
+	}
+	missingFile := &ast.File{
+		Name: &ast.Ident{Name: "main"},
+	}
+	matched, external := pd.findPackagePathFromImports("main", missingFile)
+	assert.Empty(t, matched)
+	assert.Empty(t, external)
+
+	// 2. Nil files map does not panic
+	pdNilFiles := &PackagesDefinitions{
+		files: nil,
+	}
+	matchedNil, externalNil := pdNilFiles.findPackagePathFromImports("main", missingFile)
+	assert.Empty(t, matchedNil)
+	assert.Empty(t, externalNil)
+
+	// 3. Existing file in files map appends PackagePath as expected
+	existingFile := &ast.File{
+		Name: &ast.Ident{Name: "main"},
+	}
+	pd.files[existingFile] = &AstFileInfo{
+		PackagePath: "github.com/example/main",
+	}
+	matchedExisting, externalExisting := pd.findPackagePathFromImports("main", existingFile)
+	assert.Equal(t, []string{"github.com/example/main"}, matchedExisting)
+	assert.Empty(t, externalExisting)
+}
