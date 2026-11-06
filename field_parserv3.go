@@ -14,6 +14,7 @@ type structFieldV3 struct {
 	schemaType   string
 	arrayType    string
 	formatType   string
+	title        string
 	maximum      *int
 	minimum      *int
 	multipleOf   *int
@@ -158,6 +159,7 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 	field := &structFieldV3{
 		schemaType: types[0],
 		formatType: ps.tag.Get(formatTag),
+		title:      ps.tag.Get(titleTag),
 	}
 
 	if len(types) > 1 && (types[0] == ARRAY || types[0] == OBJECT) {
@@ -303,6 +305,8 @@ func (ps *tagBaseFieldParserV3) complementSchema(schema *spec.Schema, types []st
 	if field.schemaType != ARRAY {
 		schema.Format = field.formatType
 	}
+
+	schema.Title = field.title
 
 	extensionsTagValue := ps.tag.Get(extensionsTag)
 	if extensionsTagValue != "" {
