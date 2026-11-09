@@ -106,6 +106,20 @@ func TestParserParseDefinitionV3(t *testing.T) {
 	assert.Equal(t, "model.TestFuncDecl.Test", definition.TypeName())
 }
 
+func TestParserNoExternalDocsV3(t *testing.T) {
+	t.Parallel()
+
+	p := New(GenerateOpenAPI3Doc(true))
+
+	err := p.ParseGeneralAPIInfo("testdata/v3/interface/main.go")
+	require.NoError(t, err)
+
+	result, err := json.Marshal(p.openAPI)
+	require.NoError(t, err)
+
+	assert.NotContains(t, string(result), `"externalDocs"`)
+}
+
 func TestParserParseGeneralApiInfoV3(t *testing.T) {
 	t.Parallel()
 
