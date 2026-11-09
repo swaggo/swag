@@ -147,6 +147,85 @@ func TestParseGenericsFunctionScoped(t *testing.T) {
 	assert.Equal(t, string(expected), string(b))
 }
 
+func TestParseGenericsEnumSliceAndMapParams(t *testing.T) {
+	t.Parallel()
+
+	src := `
+package api
+
+type Status string
+
+const (
+	StatusActive   Status = "active"
+	StatusInactive Status = "inactive"
+)
+
+type Response[T any] struct {
+	Data T ` + "`json:\"data\"`" + `
+}
+
+// @Success 200 {object} Response[[]Status]
+// @Router /list [get]
+func List() {}
+
+// @Success 200 {object} Response[map[string]Status]
+// @Router /map [get]
+func Map() {}
+`
+	p := New()
+	_ = p.packages.ParseFile("api", "api/api.go", src, ParseAll)
+	_, err := p.packages.ParseTypes()
+	assert.NoError(t, err)
+
+	err = p.packages.RangeFiles(p.ParseRouterAPIInfo)
+	assert.NoError(t, err)
+
+	// The enum belongs to the element type. The slice and map built from the
+	// type parameter must reference it, not repeat its enum values.
+	expected := `{
+   "api.Response-array_api_Status": {
+      "type": "object",
+      "properties": {
+         "data": {
+            "type": "array",
+            "items": {
+               "$ref": "#/definitions/api.Status"
+            }
+         }
+      }
+   },
+   "api.Response-map_string_api_Status": {
+      "type": "object",
+      "properties": {
+         "data": {
+            "$ref": "#/definitions/map_string_api.Status"
+         }
+      }
+   },
+   "api.Status": {
+      "type": "string",
+      "enum": [
+         "active",
+         "inactive"
+      ],
+      "x-enum-varnames": [
+         "StatusActive",
+         "StatusInactive"
+      ]
+   },
+   "map_string_api.Status": {
+      "type": "object",
+      "additionalProperties": {
+         "$ref": "#/definitions/api.Status"
+      }
+   }
+}`
+
+	out, err := json.MarshalIndent(p.swagger.Definitions, "", "   ")
+	assert.NoError(t, err)
+	assert.Equal(t, expected, string(out))
+}
+
 func TestParametrizeStruct(t *testing.T) {
 	pd := PackagesDefinitions{
 		packages:          make(map[string]*PackageDefinitions),
