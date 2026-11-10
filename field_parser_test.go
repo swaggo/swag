@@ -60,6 +60,63 @@ func TestDefaultFieldParser(t *testing.T) {
 		assert.Equal(t, "csv", schema.Format)
 	})
 
+	t.Run("Format inferred from Go type is kept without a format tag", func(t *testing.T) {
+		t.Parallel()
+
+		// getTypeSchema builds int64 fields as integer/int64; a plain
+		// `json:"size"` tag must not wipe the inferred format (swaggo/swag#2237).
+		schema := spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}, Format: "int64"}}
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"size"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "int64", schema.Format)
+
+		schema = spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"number"}, Format: "float64"}}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"ratio"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "float64", schema.Format)
+
+		// An explicit format tag still wins over the inferred format.
+		schema = spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"integer"}, Format: "int64"}}
+		err = newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"size" format:"int32"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "int32", schema.Format)
+	})
+
+	t.Run("Format inferred from Go type is kept for array items", func(t *testing.T) {
+		t.Parallel()
+
+		schema := spec.Schema{SchemaProps: spec.SchemaProps{
+			Type: []string{"array"},
+			Items: &spec.SchemaOrArray{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{
+				Type:   []string{"integer"},
+				Format: "int64",
+			}}},
+		}}
+		err := newTagBaseFieldParser(
+			&Parser{},
+			&ast.Field{Tag: &ast.BasicLit{
+				Value: `json:"sizes"`,
+			}},
+		).ComplementSchema(&schema)
+		assert.NoError(t, err)
+		assert.Equal(t, "int64", schema.Items.Schema.Format)
+	})
+
 	t.Run("Title tag", func(t *testing.T) {
 		t.Parallel()
 
