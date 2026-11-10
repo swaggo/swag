@@ -1294,6 +1294,7 @@ func TestParseSimpleApi_ForSnakecase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "format": "float32",
                     "maximum": 130,
                     "minimum": 0,
                     "multipleOf": 0.01,
@@ -1753,6 +1754,7 @@ func TestParseSimpleApi_ForLowerCamelcase(t *testing.T) {
                 },
                 "price": {
                     "type": "number",
+                    "format": "float32",
                     "multipleOf": 0.01,
                     "example": 3.25
                 },
